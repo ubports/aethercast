@@ -32,6 +32,14 @@
 #include <QTimer>
 
 #include "networkp2pmanagerwpasupplicant.h"
+#include "wfddeviceinfo.h"
+
+/*
+ * Supplicant message names
+ */
+
+#define P2P_DEVICE_FOUND  "P2P-DEVICE-FOUND"
+#define P2P_DEVICE_LOST   "P2P-DEVICE-LOST"
 
 NetworkP2pManagerWpaSupplicant::NetworkP2pManagerWpaSupplicant(const QString &iface) :
     interface(iface),
@@ -127,8 +135,8 @@ void NetworkP2pManagerWpaSupplicant::connectToSupplicant()
     notifier = new QSocketNotifier(sock, QSocketNotifier::Read, this);
     QObject::connect(notifier, SIGNAL(activated(int)), SLOT(onSocketReadyRead()));
 
+    // We need to attach to receive all occuring events from wpa-supplicant
     request("ATTACH", [=](const QString &result) {
-        qDebug() << "Attached for events";
         if (!checkResult(result))
             return;
     });
@@ -226,23 +234,58 @@ int NetworkP2pManagerWpaSupplicant::request(const QString &command, std::functio
     return 0;
 }
 
+int parseHex(const QString &str)
+{
+    auto hexStr = str;
+    if (hexStr.startsWith("0x") || hexStr.startsWith("0X"))
+        hexStr = hexStr.mid(2);
+
+    bool ok = true;
+    auto num = hexStr.toInt(&ok, 16);
+    if (!ok)
+        return 0;
+
+    return num;
+}
+
 void NetworkP2pManagerWpaSupplicant::handleUnsolicitedMessage(const QString &message)
 {
-    qDebug() << "Got unsolicited reply:" << message;
-
     auto realMessage = message.mid(3);
 
-    qDebug() << "realMessage:" << realMessage;
+    qDebug() << "Got unsolicited reply:" << realMessage;
 
-    if (realMessage.startsWith("P2P-DEVICE-FOUND")) {
+    if (realMessage.startsWith(P2P_DEVICE_FOUND)) {
         // P2P-DEVICE-FOUND 4e:74:03:70:e2:c1 p2p_dev_addr=4e:74:03:70:e2:c1
         // pri_dev_type=8-0050F204-2 name='Aquaris M10' config_methods=0x188 dev_capab=0x5
         // group_capab=0x0 wfd_dev_info=0x00111c440032 new=1
         QStringList items = realMessage.split(QRegExp(" (?=[^']*('[^']*'[^']*)*$)"));
 
-        peers.push_back(items[1]);
+        auto address = items[1];
+        auto wfdDevInfoStr = items[8].section('=', 1).mid(2);
+        WfdDevInfo wfdDevInfo(parseHex(wfdDevInfoStr.left(4)),
+                              parseHex(wfdDevInfoStr.mid(4, 4)),
+                              parseHex(wfdDevInfoStr.right(4)));
+        auto configMethods = parseHex(items[5].section('=', 1));
+
+        qDebug() << "address" << address
+                 << "deviceType" << wfdDevInfo.deviceTypeAsString()
+                 << "controlPort" << wfdDevInfo.controlPort()
+                 << "maxThroughput" << wfdDevInfo.maxThroughput()
+                 << "configMethods" << configMethods;
+
+        // Only add peer if it is a sink. We don't consider sources at the moment
+        auto deviceType = wfdDevInfo.deviceType();
+        if (deviceType != WFD_DEVICE_TYPE_PRIMARY_SINK &&
+            deviceType != WFD_DEVICE_TYPE_SOURCE_OR_PRIMARY_SINK)
+            return;
+
+        // We require WPS PBC for now
+        if (!(configMethods & WPS_CONFIG_PUSHBUTTON))
+            return;
+
+        peers.push_back(address);
     }
-    else if (realMessage.startsWith("P2P-DEVICE-LOST")) {
+    else if (realMessage.startsWith(P2P_DEVICE_LOST)) {
         // P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1
         QStringList items = realMessage.split(" ");
 
@@ -271,7 +314,7 @@ void NetworkP2pManagerWpaSupplicant::scan(unsigned int timeout)
     auto cmd = QString("P2P_FIND %1").arg(timeout);
 
     request(cmd, [=](const QString &response) {
-        qDebug() << "Successfully started searching for peers";
+        qDebug() << "Successfully started scanning for available peers";
     });
 }
 
