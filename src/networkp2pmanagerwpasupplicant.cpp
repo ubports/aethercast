@@ -128,18 +128,6 @@ void NetworkP2pManagerWpaSupplicant::connectToSupplicant()
             return;
     });
 
-    request("STATUS", [=](const QString &result) {
-        QStringList lines = result.split(QRegExp("\\n"));
-        for (auto line : lines) {
-            int pos = line.indexOf('=') + 1;
-            if (pos < 1)
-                continue;
-
-            if (line.startsWith("wpa_state="))
-                qDebug() << "WPA state:" << line.mid(pos);
-        }
-    });
-
     // Enable WiFi display support
     request("SET wifi_display 1", [=](const QString &result) { });
 
