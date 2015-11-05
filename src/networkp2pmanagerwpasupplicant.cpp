@@ -257,7 +257,7 @@ void NetworkP2pManagerWpaSupplicant::setWfdSubElements(const QStringList &elemen
 {
 }
 
-void NetworkP2pManagerWpaSupplicant::findPeers(unsigned int timeout)
+void NetworkP2pManagerWpaSupplicant::scan(unsigned int timeout)
 {
     auto cmd = QString("P2P_FIND %1").arg(timeout);
 
@@ -271,7 +271,7 @@ QStringList NetworkP2pManagerWpaSupplicant::getPeers()
     return peers;
 }
 
-int NetworkP2pManagerWpaSupplicant::connectPeer(const QString &address)
+int NetworkP2pManagerWpaSupplicant::connect(const QString &address)
 {
     // FIXME We only support WPS PBC for now
     auto cmd = QString("P2P_CONNECT %1 pbc").arg(address);
@@ -283,7 +283,7 @@ int NetworkP2pManagerWpaSupplicant::connectPeer(const QString &address)
     return 0;
 }
 
-int NetworkP2pManagerWpaSupplicant::disconnectAllPeers()
+int NetworkP2pManagerWpaSupplicant::disconnectAll()
 {
     return 0;
 }

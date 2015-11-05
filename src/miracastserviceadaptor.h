@@ -37,7 +37,7 @@ public:
     bool powered() { return false; }
 
 public Q_SLOTS:
-    void FindPeers();
+    void Scan();
     QStringList GetPeers();
     void Connect(const QString &address);
 

@@ -37,11 +37,11 @@ public:
 
     void setWfdSubElements(const QStringList &elements);
 
-    void findPeers(unsigned int timeout = 30);
+    void scan(unsigned int timeout = 30);
     QStringList getPeers();
 
-    int connectPeer(const QString &address);
-    int disconnectAllPeers();
+    int connect(const QString &address);
+    int disconnectAll();
 
 private Q_SLOTS:
     void onSupplicantFinished(int errorCode);

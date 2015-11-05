@@ -25,9 +25,9 @@ MiracastServiceAdaptor::MiracastServiceAdaptor(QCoreApplication *app, MiracastSe
 {
 }
 
-void MiracastServiceAdaptor::FindPeers()
+void MiracastServiceAdaptor::Scan()
 {
-    service->networkManager()->findPeers();
+    service->networkManager()->scan();
 }
 
 QStringList MiracastServiceAdaptor::GetPeers()
@@ -37,5 +37,5 @@ QStringList MiracastServiceAdaptor::GetPeers()
 
 void MiracastServiceAdaptor::Connect(const QString &address)
 {
-    service->networkManager()->connectPeer(address);
+    service->networkManager()->connect(address);
 }

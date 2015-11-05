@@ -28,12 +28,12 @@ class NetworkP2pManager : public QObject
 public:
 	virtual void setWfdSubElements(const QStringList &elements) = 0;
 
-	virtual void findPeers(unsigned int timeout = 30) = 0;
+	virtual void scan(unsigned int timeout = 30) = 0;
 
 	virtual QStringList getPeers() = 0;
 
-	virtual int connectPeer(const QString &address) = 0;
-	virtual int disconnectAllPeers() = 0;
+	virtual int connect(const QString &address) = 0;
+	virtual int disconnectAll() = 0;
 
 Q_SIGNALS:
 	void peerFound(const QString &address);
