@@ -53,7 +53,10 @@ void NetworkP2pManagerWpaSupplicant::startSupplicant()
     QStringList arguments;
     arguments << "-Dnl80211"
               << QString("-i%1").arg(interface)
-              << QString("-C%1").arg(ctrlPath);
+              << QString("-C%1").arg(ctrlPath)
+              << QString("-ddd")
+              << QString("-t")
+              << QString("-K");
 
     qDebug() << "arguments: " << arguments;
     qDebug() << "path" << path;
