@@ -25,6 +25,7 @@
 #include <QProcess>
 #include <QSocketNotifier>
 
+#include "dhcpclient.h"
 #include "networkp2pmanager.h"
 
 class NetworkP2pManagerWpaSupplicant : public NetworkP2pManager
@@ -66,6 +67,7 @@ private:
     int sock;
     QSocketNotifier *notifier;
     QStringList peers;
+    DhcpClient dhcp;
 };
 
 #endif

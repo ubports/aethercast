@@ -38,13 +38,16 @@
  * Supplicant message names
  */
 
-#define P2P_DEVICE_FOUND  "P2P-DEVICE-FOUND"
-#define P2P_DEVICE_LOST   "P2P-DEVICE-LOST"
+#define P2P_DEVICE_FOUND                         "P2P-DEVICE-FOUND"
+#define P2P_DEVICE_LOST                          "P2P-DEVICE-LOST"
+#define P2P_GROUP_FORMATION_SUCCESS              "P2P-GROUP-FORMATION-SUCCESS"
+#define P2P_GROUP_REMOVED                        "P2P-GROUP-REMOVED"
 
 NetworkP2pManagerWpaSupplicant::NetworkP2pManagerWpaSupplicant(const QString &iface) :
     interface(iface),
     supplicantProcess(new QProcess(this)),
-    ctrlPath(QString("/var/run/%1_supplicant").arg(interface))
+    ctrlPath(QString("/var/run/%1_supplicant").arg(interface)),
+    dhcp(iface)
 {
     startSupplicant();
 }
@@ -294,6 +297,14 @@ void NetworkP2pManagerWpaSupplicant::handleUnsolicitedMessage(const QString &mes
 
         auto address = items[1].section('=', 1);
         peers.removeAll(address);
+    }
+    else if (realMessage.startsWith(P2P_GROUP_FORMATION_SUCCESS)) {
+        qDebug() << "Starting DHCP client for interface" << interface;
+        dhcp.start();
+    }
+    else if (realMessage.startsWith(P2P_GROUP_REMOVED)) {
+        qDebug() << "Stopping DHCP client for interface" << interface;
+        dhcp.stop();
     }
 }
 

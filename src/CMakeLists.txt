@@ -1,10 +1,7 @@
 set(SOURCES
-  gdhcp/client.c
-  gdhcp/common.c
-  gdhcp/ipv4ll.c
-  gdhcp/server.c
   main.cpp
   unixsignalhandler.cpp
+  dhcpclient.cpp
   miracastservice.cpp
   miracastserviceadaptor.cpp
   networkp2pmanager.cpp
