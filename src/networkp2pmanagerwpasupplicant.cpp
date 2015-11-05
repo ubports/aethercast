@@ -273,14 +273,19 @@ QStringList NetworkP2pManagerWpaSupplicant::getPeers()
 
 int NetworkP2pManagerWpaSupplicant::connect(const QString &address)
 {
-    // FIXME We only support WPS PBC for now
+    int ret = 0;
+
     auto cmd = QString("P2P_CONNECT %1 pbc").arg(address);
-    request(cmd, [=](const QString &result) {
-        if (checkResult(result))
-            qDebug() << "Successfully started to connect remote" << address;
+    request(cmd, [&](const QString &result) {
+        if (!checkResult(result)) {
+            ret = -EIO;
+            qWarning() << "Failed to connect with remote " << address << ":" << result;
+            return;
+        }
+
     });
 
-    return 0;
+    return ret;
 }
 
 int NetworkP2pManagerWpaSupplicant::disconnectAll()
