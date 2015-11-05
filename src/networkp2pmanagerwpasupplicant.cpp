@@ -140,8 +140,13 @@ void NetworkP2pManagerWpaSupplicant::connectToSupplicant()
         }
     });
 
+    // Enable WiFi display support
     request("SET wifi_display 1", [=](const QString &result) { });
-    request("WFD_SUBELEM_SET 0 000600101C440032", [=](const QString &result) { });
+
+    QStringList wfdSubElements;
+    // FIXME build this rather than specifying a static string here
+    wfdSubElements << "000600101C440032";
+    setWfdSubElements(wfdSubElements);
 }
 
 void NetworkP2pManagerWpaSupplicant::onSupplicantError(QProcess::ProcessError error)
@@ -255,6 +260,17 @@ void NetworkP2pManagerWpaSupplicant::handleUnsolicitedMessage(const QString &mes
 
 void NetworkP2pManagerWpaSupplicant::setWfdSubElements(const QStringList &elements)
 {
+    int n = 0;
+
+    for (auto element : elements) {
+        auto cmd = QString("WFD_SUBELEM_SET %1 %2").arg(n).arg(element);
+        request(cmd, [=](const QString &result) {
+            if (!checkResult(result))
+                qDebug() << "Failed to set WFD subelement" << n << "with value" << element;
+        });
+
+        n++;
+    }
 }
 
 void NetworkP2pManagerWpaSupplicant::scan(unsigned int timeout)
