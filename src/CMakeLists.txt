@@ -4,6 +4,7 @@ set(SOURCES
   gdhcp/ipv4ll.c
   gdhcp/server.c
   main.cpp
+  unixsignalhandler.cpp
   miracastservice.cpp
   miracastserviceadaptor.cpp
   networkp2pmanager.cpp

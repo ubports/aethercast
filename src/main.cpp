@@ -18,12 +18,18 @@
 #include <QCoreApplication>
 #include <QDBusConnection>
 
+#include "unixsignalhandler.h"
 #include "miracastservice.h"
 #include "miracastserviceadaptor.h"
 
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
+
+    util::UnixSignalHandler handler([]{
+        QCoreApplication::exit(0);
+    });
+    handler.setupUnixSignalHandlers();
 
     MiracastService service;
     new MiracastServiceAdaptor(&app, &service);
