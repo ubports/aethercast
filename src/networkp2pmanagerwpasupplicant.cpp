@@ -289,8 +289,11 @@ void NetworkP2pManagerWpaSupplicant::handleUnsolicitedMessage(const QString &mes
         // P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1
         QStringList items = realMessage.split(" ");
 
-        auto addr = items[2].mid(13);
-        peers.removeAll(addr);
+        if (items.size() != 2)
+            return;
+
+        auto address = items[1].section('=', 1);
+        peers.removeAll(address);
     }
 }
 
