@@ -43,6 +43,8 @@ NetworkP2pManagerWpaSupplicant::NetworkP2pManagerWpaSupplicant(const QString &if
 
 NetworkP2pManagerWpaSupplicant::~NetworkP2pManagerWpaSupplicant()
 {
+    if (supplicantProcess->state() == QProcess::Running)
+        supplicantProcess->close();
 }
 
 void NetworkP2pManagerWpaSupplicant::startSupplicant()
