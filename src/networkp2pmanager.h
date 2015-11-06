@@ -27,6 +27,13 @@ class NetworkP2pManager : public QObject
 
 public:
 	virtual void setWfdSubElements(const QStringList &elements) = 0;
+    enum State {
+        Idle,
+        Connecting,
+        Connected,
+        Disconnecting,
+        Disconnected
+    };
 
 	virtual void scan(unsigned int timeout = 30) = 0;
 
@@ -35,12 +42,15 @@ public:
 	virtual int connect(const QString &address, bool persistent = true) = 0;
 	virtual int disconnectAll() = 0;
 
+    virtual State state() const = 0;
+
 Q_SIGNALS:
 	void peerFound(const QString &address);
 	void peerLost(const QString &address);
 
 	void groupStarted(const QString &address);
 	void groupFormationFailed(const QString &address);
+    void stateChanged();
 };
 
 #endif

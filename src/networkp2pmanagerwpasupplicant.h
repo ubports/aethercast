@@ -48,6 +48,8 @@ public:
     int connect(const QString &address, bool persistent = true);
     int disconnectAll();
 
+    State state() const override;
+
 Q_SIGNALS:
     void sinkConnected(const QString &localAddress, const QString &remoteAddress);
 

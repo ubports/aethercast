@@ -168,7 +168,8 @@ NetworkP2pManagerWpaSupplicant::NetworkP2pManagerWpaSupplicant(const QString &if
     ctrlPath(QString("/var/run/%1_supplicant").arg(interface)),
     dhcp(iface),
     parser(new WpaSupplicantParser),
-    commandQueue(new WpaSupplicantCommandQueue(parser))
+    commandQueue(new WpaSupplicantCommandQueue(parser)),
+    currentState(Idle)
 {
     QObject::connect(commandQueue, SIGNAL(transportWriteNeeded(QString)),
                      this, SLOT(onTransportWriteNeeded(QString)));
@@ -182,6 +183,11 @@ NetworkP2pManagerWpaSupplicant::~NetworkP2pManagerWpaSupplicant()
 {
     if (supplicantProcess->state() == QProcess::Running)
         supplicantProcess->close();
+}
+
+NetworkP2pManager::State NetworkP2pManagerWpaSupplicant::state() const
+{
+    return currentState;
 }
 
 void NetworkP2pManagerWpaSupplicant::startSupplicant()
