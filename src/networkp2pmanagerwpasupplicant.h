@@ -48,6 +48,9 @@ public:
     int connect(const QString &address, bool persistent = true);
     int disconnectAll();
 
+Q_SIGNALS:
+    void sinkConnected(const QString &localAddress, const QString &remoteAddress);
+
 private Q_SLOTS:
     void onSupplicantFinished(int errorCode);
     void onSupplicantError(QProcess::ProcessError error);

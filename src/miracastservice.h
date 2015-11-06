@@ -20,6 +20,8 @@
 
 #include <QObject>
 
+#include "miracastsource.h"
+
 class NetworkP2pManager;
 
 class MiracastService : public QObject
@@ -31,8 +33,12 @@ public:
 
     NetworkP2pManager* networkManager() { return manager; }
 
+private Q_SLOTS:
+    void onSinkConnected(const QString &localAddress, const QString &remoteAddress);
+
 private:
     NetworkP2pManager *manager;
+    MiracastSource source;
 };
 
 #endif
