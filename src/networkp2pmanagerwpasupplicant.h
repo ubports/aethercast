@@ -41,7 +41,7 @@ public:
     void scan(unsigned int timeout = 30);
     QStringList getPeers();
 
-    int connect(const QString &address);
+    int connect(const QString &address, bool persistent = true);
     int disconnectAll();
 
 private Q_SLOTS:

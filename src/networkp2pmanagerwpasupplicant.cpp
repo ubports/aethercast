@@ -337,11 +337,14 @@ QStringList NetworkP2pManagerWpaSupplicant::getPeers()
     return peers;
 }
 
-int NetworkP2pManagerWpaSupplicant::connect(const QString &address)
+int NetworkP2pManagerWpaSupplicant::connect(const QString &address, bool persistent)
 {
     int ret = 0;
 
-    auto cmd = QString("P2P_CONNECT %1 pbc").arg(address);
+    auto cmd = QString("P2P_CONNECT %1 pbc %2")
+                    .arg(address)
+                    .arg(persistent ? "persistent" : "");
+
     request(cmd, [&](const QString &result) {
         if (!checkResult(result)) {
             ret = -EIO;

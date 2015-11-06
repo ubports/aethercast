@@ -32,7 +32,7 @@ public:
 
 	virtual QStringList getPeers() = 0;
 
-	virtual int connect(const QString &address) = 0;
+	virtual int connect(const QString &address, bool persistent = true) = 0;
 	virtual int disconnectAll() = 0;
 
 Q_SIGNALS:
