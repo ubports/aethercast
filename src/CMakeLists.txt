@@ -2,8 +2,12 @@ set(SOURCES
   main.cpp
   unixsignalhandler.cpp
   dhcpclient.cpp
+  basesourcemediamanager.cpp
+  mirsourcemediamanager.cpp
   miracastservice.cpp
   miracastserviceadaptor.cpp
+  miracastsource.cpp
+  miracastsourceclient.cpp
   networkp2pmanager.cpp
   networkp2pmanagerwpasupplicant.cpp
 )
@@ -32,6 +36,7 @@ target_link_libraries(miracast-service
   ${GIO_LIBRARIES}
   ${GIO-UNIX_LIBRARIES}
   -ldl
+  -lwds
 )
 
 install(
