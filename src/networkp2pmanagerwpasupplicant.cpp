@@ -17,6 +17,7 @@
 
 #include <sys/select.h>
 #include <sys/un.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -30,9 +31,13 @@
 #include <QDebug>
 #include <QDataStream>
 #include <QTimer>
+#include <QLocalSocket>
+#include <QQueue>
 
 #include "networkp2pmanagerwpasupplicant.h"
 #include "wfddeviceinfo.h"
+
+#define READ_BUFFER_SIZE    1024
 
 /*
  * Supplicant message names
@@ -43,12 +48,133 @@
 #define P2P_GROUP_FORMATION_SUCCESS              "P2P-GROUP-FORMATION-SUCCESS"
 #define P2P_GROUP_REMOVED                        "P2P-GROUP-REMOVED"
 
+class WpaSupplicantCommand
+{
+public:
+    typedef std::function<void(QString)> ResponseCallback;
+
+    WpaSupplicantCommand(const QString &message, ResponseCallback callback) :
+        message(message),
+        callback(callback)
+    {
+    }
+
+    QString message;
+    ResponseCallback callback;
+};
+
+class WpaSupplicantParser : public QObject
+{
+    Q_OBJECT
+public:
+
+    void feed(const QString &message)
+    {
+        if (message.size() == 0)
+            return;
+
+        if (message.startsWith('<')) {
+            Q_EMIT unsolicitedResponse(message);
+            return;
+        }
+
+        Q_EMIT solicitedResponse(message);
+    }
+
+Q_SIGNALS:
+    void unsolicitedResponse(const QString &message);
+    void solicitedResponse(const QString &message);
+};
+
+class WpaSupplicantCommandQueue : public QObject
+{
+    Q_OBJECT
+public:
+    WpaSupplicantCommandQueue(const QPointer<WpaSupplicantParser> &parser) :
+        current(nullptr),
+        parser(parser)
+    {
+        // Just forward all unsolicited response we get
+        QObject::connect(parser, SIGNAL(unsolicitedResponse),
+                         this, SIGNAL(onUnsolicitedResponse));
+
+        QObject::connect(parser, SIGNAL(solicitedResponse(QString)),
+                         this, SLOT(onSolicitedResponse(QString)));
+    }
+
+    void enqueueCommand(const QString &message, WpaSupplicantCommand::ResponseCallback callback)
+    {
+        queue.enqueue(new WpaSupplicantCommand(message, callback));
+        restartQueue();
+    }
+
+Q_SIGNALS:
+    void unsolicitedResponse(const QString &message);
+    void transportWriteNeeded(const QString &message);
+
+private:
+
+    void restartQueue()
+    {
+        QTimer::singleShot(0, [=]() {
+            checkRestartingQueue();
+        });
+    }
+
+    void checkRestartingQueue()
+    {
+        if (current != nullptr || queue.size() == 0)
+            return;
+
+        writeNextCommand();
+        restartQueue();
+    }
+
+    void writeNextCommand()
+    {
+        current = queue.dequeue();
+
+        transportWriteNeeded(current->message);
+
+        if (!current->callback) {
+            delete current;
+            current = nullptr;
+        }
+    }
+
+private Q_SLOTS:
+
+    void onSolicitedResponse(const QString &response)
+    {
+        if (current->callback)
+            current->callback(response);
+
+        delete current;
+        // This will unblock the queue and will allow usto send the next command
+        current = nullptr;
+
+        restartQueue();
+    }
+
+private:
+    WpaSupplicantCommand *current;
+    QPointer<WpaSupplicantParser> parser;
+    QQueue<WpaSupplicantCommand*> queue;
+};
+
 NetworkP2pManagerWpaSupplicant::NetworkP2pManagerWpaSupplicant(const QString &iface) :
     interface(iface),
     supplicantProcess(new QProcess(this)),
     ctrlPath(QString("/var/run/%1_supplicant").arg(interface)),
-    dhcp(iface)
+    dhcp(iface),
+    parser(new WpaSupplicantParser),
+    commandQueue(new WpaSupplicantCommandQueue(parser))
 {
+    QObject::connect(commandQueue, SIGNAL(transportWriteNeeded(QString)),
+                     this, SLOT(onTransportWriteNeeded(QString)));
+    QObject::connect(commandQueue, SIGNAL(unsolicitedResponse(QString)),
+                     this, SLOT(onUnsolicitedResponse(QString)));
+
     startSupplicant();
 }
 
@@ -140,6 +266,7 @@ void NetworkP2pManagerWpaSupplicant::connectToSupplicant()
 
     // We need to attach to receive all occuring events from wpa-supplicant
     request("ATTACH", [=](const QString &result) {
+        qDebug() << "Attached!!";
         if (!checkResult(result))
             return;
     });
@@ -163,23 +290,21 @@ void NetworkP2pManagerWpaSupplicant::onSupplicantFinished(int errorCode)
     qDebug() << "Supplicant finished: " << errorCode;
 }
 
-int NetworkP2pManagerWpaSupplicant::bytesPendingToRead()
+int NetworkP2pManagerWpaSupplicant::bytesAvailableToRead()
 {
-    struct timeval tv;
-    fd_set rfds;
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
-    FD_ZERO(&rfds);
-    FD_SET(sock, &rfds);
-    select(sock + 1, &rfds, NULL, NULL, &tv);
-    return FD_ISSET(sock, &rfds);
+    int nbytes = 0;
+    // gives shorter than true amounts on Unix domain sockets.
+    qint64 available = 0;
+    if (ioctl(sock, FIONREAD, (char *) &nbytes) >= 0)
+        available = (qint64) nbytes;
+    return available;
 }
 
 void NetworkP2pManagerWpaSupplicant::onSocketReadyRead()
 {
-    char buf[256];
+    char buf[READ_BUFFER_SIZE];
 
-    while (bytesPendingToRead() > 0) {
+    while (bytesAvailableToRead() > 0) {
 
         int ret = recv(sock, buf, sizeof(buf) - 1, 0);
         if (ret < 0)
@@ -187,54 +312,23 @@ void NetworkP2pManagerWpaSupplicant::onSocketReadyRead()
 
         buf[ret] = '\0';
 
-        if (ret > 0 && buf[0] == '<')
-            handleUnsolicitedMessage(QString(buf));
+        qDebug() << "IN:" << buf;
+
+        parser->feed(QString(buf));
     }
 }
 
-int NetworkP2pManagerWpaSupplicant::request(const QString &command, std::function<void(QString)> result)
+void NetworkP2pManagerWpaSupplicant::onTransportWriteNeeded(const QString &message)
 {
-    qDebug() << "OUT:" << command;
+    qDebug() << "OUT:" << message;
 
-    if (send(sock, command.toUtf8().constData(), command.size(), 0) < 0) {
+    if (send(sock, message.toUtf8().constData(), message.size(), 0) < 0)
         qWarning() << "Failed to send data to wpa-supplicant";
-        return 0;
-    }
+}
 
-    struct timeval tv;
-    fd_set rfds;
-    int res;
-    char buf[1024];
-
-    for (;;) {
-        tv.tv_sec = 10;
-        tv.tv_usec = 0;
-        FD_ZERO(&rfds);
-        FD_SET(sock, &rfds);
-
-        res = select(sock + 1, &rfds, NULL, NULL, &tv);
-        if (res < 0)
-            return res;
-
-        if (FD_ISSET(sock, &rfds)) {
-            res = recv(sock, buf, sizeof(buf) - 1, 0);
-            if (res < 0)
-                return res;
-
-            buf[res] = '\0';
-
-            if (res > 0 && buf[0] == '<') {
-                handleUnsolicitedMessage(QString(buf));
-                continue;
-            }
-
-            result(QString(buf));
-
-            return 0;
-        }
-    }
-
-    return 0;
+void NetworkP2pManagerWpaSupplicant::request(const QString &command, std::function<void(QString)> callback)
+{
+    commandQueue->enqueueCommand(command, callback);
 }
 
 int parseHex(const QString &str)
@@ -251,17 +345,17 @@ int parseHex(const QString &str)
     return num;
 }
 
-void NetworkP2pManagerWpaSupplicant::handleUnsolicitedMessage(const QString &message)
+void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &response)
 {
-    auto realMessage = message.mid(3);
+    auto realResponse = response.mid(3);
 
-    qDebug() << "Got unsolicited reply:" << realMessage;
+    qDebug() << "Got unsolicited reply:" << realResponse;
 
-    if (realMessage.startsWith(P2P_DEVICE_FOUND)) {
+    if (realResponse.startsWith(P2P_DEVICE_FOUND)) {
         // P2P-DEVICE-FOUND 4e:74:03:70:e2:c1 p2p_dev_addr=4e:74:03:70:e2:c1
         // pri_dev_type=8-0050F204-2 name='Aquaris M10' config_methods=0x188 dev_capab=0x5
         // group_capab=0x0 wfd_dev_info=0x00111c440032 new=1
-        QStringList items = realMessage.split(QRegExp(" (?=[^']*('[^']*'[^']*)*$)"));
+        QStringList items = realResponse.split(QRegExp(" (?=[^']*('[^']*'[^']*)*$)"));
 
         auto address = items[1];
         auto wfdDevInfoStr = items[8].section('=', 1).mid(2);
@@ -288,9 +382,9 @@ void NetworkP2pManagerWpaSupplicant::handleUnsolicitedMessage(const QString &mes
 
         peers.push_back(address);
     }
-    else if (realMessage.startsWith(P2P_DEVICE_LOST)) {
+    else if (realResponse.startsWith(P2P_DEVICE_LOST)) {
         // P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1
-        QStringList items = realMessage.split(" ");
+        QStringList items = realResponse.split(" ");
 
         if (items.size() != 2)
             return;
@@ -298,11 +392,11 @@ void NetworkP2pManagerWpaSupplicant::handleUnsolicitedMessage(const QString &mes
         auto address = items[1].section('=', 1);
         peers.removeAll(address);
     }
-    else if (realMessage.startsWith(P2P_GROUP_FORMATION_SUCCESS)) {
+    else if (realResponse.startsWith(P2P_GROUP_FORMATION_SUCCESS)) {
         qDebug() << "Starting DHCP client for interface" << interface;
         dhcp.start();
     }
-    else if (realMessage.startsWith(P2P_GROUP_REMOVED)) {
+    else if (realResponse.startsWith(P2P_GROUP_REMOVED)) {
         qDebug() << "Stopping DHCP client for interface" << interface;
         dhcp.stop();
     }
@@ -372,3 +466,5 @@ int NetworkP2pManagerWpaSupplicant::disconnectAll()
 
     return ret;
 }
+
+#include "networkp2pmanagerwpasupplicant.moc"

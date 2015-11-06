@@ -24,9 +24,13 @@
 #include <QStringList>
 #include <QProcess>
 #include <QSocketNotifier>
+#include <QPointer>
 
 #include "dhcpclient.h"
 #include "networkp2pmanager.h"
+
+class WpaSupplicantParser;
+class WpaSupplicantCommandQueue;
 
 class NetworkP2pManagerWpaSupplicant : public NetworkP2pManager
 {
@@ -48,17 +52,18 @@ private Q_SLOTS:
     void onSupplicantFinished(int errorCode);
     void onSupplicantError(QProcess::ProcessError error);
     void onSocketReadyRead();
+    void onTransportWriteNeeded(const QString &message);
+    void onUnsolicitedResponse(const QString &response);
 
 private:
     void startSupplicant();
     void connectToSupplicant();
 
-    int request(const QString &command, std::function<void(QString)> result);
-    void handleUnsolicitedMessage(const QString &message);
-
-    int bytesPendingToRead();
+    void request(const QString &command, std::function<void(QString)> result);
 
     bool checkResult(const QString &result);
+
+    int bytesAvailableToRead();
 
 private:
     QString interface;
@@ -68,6 +73,8 @@ private:
     QSocketNotifier *notifier;
     QStringList peers;
     DhcpClient dhcp;
+    QPointer<WpaSupplicantParser> parser;
+    QPointer<WpaSupplicantCommandQueue> commandQueue;
 };
 
 #endif
