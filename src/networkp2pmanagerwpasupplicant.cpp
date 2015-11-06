@@ -356,5 +356,16 @@ int NetworkP2pManagerWpaSupplicant::connect(const QString &address)
 
 int NetworkP2pManagerWpaSupplicant::disconnectAll()
 {
-    return 0;
+    int ret = 0;
+
+    auto cmd = QString("P2P_GROUP_REMOVE %1").arg(interface);
+    request(cmd, [&](const QString &result) {
+        if (!checkResult(result)) {
+            ret = -EIO;
+            qWarning() << "Failed to disconnect all connected devices on interface" << interface;
+            return;
+        }
+    });
+
+    return ret;
 }

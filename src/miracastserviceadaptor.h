@@ -40,6 +40,7 @@ public Q_SLOTS:
     void Scan();
     QStringList GetPeers();
     void Connect(const QString &address);
+    void DisconnectAll();
 
 private:
     MiracastService *service;

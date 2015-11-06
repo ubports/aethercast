@@ -38,4 +38,8 @@ QStringList MiracastServiceAdaptor::GetPeers()
 void MiracastServiceAdaptor::Connect(const QString &address)
 {
     service->networkManager()->connect(address);
+
+void MiracastServiceAdaptor::DisconnectAll()
+{
+    service->networkManager()->disconnectAll();
 }
