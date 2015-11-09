@@ -21,6 +21,7 @@
 #include <QObject>
 
 #include "miracastsource.h"
+#include "networkp2pdevice.h"
 
 class NetworkP2pManager;
 
@@ -33,8 +34,13 @@ public:
 
     NetworkP2pManager* networkManager() { return manager; }
 
+    bool connectSink(const QString &address);
+
 private Q_SLOTS:
-    void onSinkConnected(const QString &localAddress, const QString &remoteAddress);
+    void onPeerChanged(const NetworkP2pDevice::Ptr &peer);
+
+private:
+    void loadRequiredFirmware();
 
 private:
     NetworkP2pManager *manager;

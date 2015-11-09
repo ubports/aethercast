@@ -21,36 +21,28 @@
 #include <QObject>
 #include <QStringList>
 
+#include "networkp2pdevice.h"
+
 class NetworkP2pManager : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	virtual void setWfdSubElements(const QStringList &elements) = 0;
-    enum State {
-        Idle,
-        Connecting,
-        Connected,
-        Disconnecting,
-        Disconnected
-    };
+    virtual void setup() = 0;
 
-	virtual void scan(unsigned int timeout = 30) = 0;
+    virtual void setWfdSubElements(const QStringList &elements) = 0;
 
-	virtual QStringList getPeers() = 0;
+    virtual void scan(unsigned int timeout = 30) = 0;
 
-	virtual int connect(const QString &address, bool persistent = true) = 0;
-	virtual int disconnectAll() = 0;
+    virtual QList<NetworkP2pDevice::Ptr> peers() const = 0;
 
-    virtual State state() const = 0;
+    virtual int connect(const QString &address, bool persistent = true) = 0;
+    virtual int disconnectAll() = 0;
 
 Q_SIGNALS:
-	void peerFound(const QString &address);
-	void peerLost(const QString &address);
-
-	void groupStarted(const QString &address);
-	void groupFormationFailed(const QString &address);
-    void stateChanged();
+    void peerFound(const NetworkP2pDevice::Ptr &peer);
+    void peerChanged(const NetworkP2pDevice::Ptr &peer);
+    void peerLost(const NetworkP2pDevice::Ptr &peer);
 };
 
 #endif

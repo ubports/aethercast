@@ -27,6 +27,7 @@
 #include <QPointer>
 
 #include "dhcpclient.h"
+#include "networkp2pdevice.h"
 #include "networkp2pmanager.h"
 
 class WpaSupplicantParser;
@@ -40,15 +41,15 @@ public:
     NetworkP2pManagerWpaSupplicant(const QString &iface);
     ~NetworkP2pManagerWpaSupplicant();
 
-    void setWfdSubElements(const QStringList &elements);
+    void setup();
 
-    void scan(unsigned int timeout = 30);
-    QStringList getPeers();
+    void setWfdSubElements(const QStringList &elements) override;
 
-    int connect(const QString &address, bool persistent = true);
-    int disconnectAll();
+    void scan(unsigned int timeout = 30) override;
+    QList<NetworkP2pDevice::Ptr> peers() const override;
 
-    State state() const override;
+    int connect(const QString &address, bool persistent = true) override;
+    int disconnectAll() override;
 
 Q_SIGNALS:
     void sinkConnected(const QString &localAddress, const QString &remoteAddress);
@@ -76,7 +77,7 @@ private:
     QString ctrlPath;
     int sock;
     QSocketNotifier *notifier;
-    QStringList peers;
+    QMap<QString,NetworkP2pDevice::Ptr> availablePeers;
     DhcpClient dhcp;
     QPointer<WpaSupplicantParser> parser;
     QPointer<WpaSupplicantCommandQueue> commandQueue;

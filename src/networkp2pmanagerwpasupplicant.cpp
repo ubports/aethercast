@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <errno.h>
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -35,6 +36,7 @@
 #include <QQueue>
 
 #include "networkp2pmanagerwpasupplicant.h"
+#include "networkp2pdevice.h"
 #include "wfddeviceinfo.h"
 
 #define READ_BUFFER_SIZE    1024
@@ -95,8 +97,9 @@ public:
         parser(parser)
     {
         // Just forward all unsolicited response we get
-        QObject::connect(parser, SIGNAL(unsolicitedResponse),
-                         this, SIGNAL(onUnsolicitedResponse));
+        QObject::connect(parser, &WpaSupplicantParser::unsolicitedResponse, [=](const QString &message) {
+            Q_EMIT unsolicitedResponse(message);
+        });
 
         QObject::connect(parser, SIGNAL(solicitedResponse(QString)),
                          this, SLOT(onSolicitedResponse(QString)));
@@ -168,15 +171,12 @@ NetworkP2pManagerWpaSupplicant::NetworkP2pManagerWpaSupplicant(const QString &if
     ctrlPath(QString("/var/run/%1_supplicant").arg(interface)),
     dhcp(iface),
     parser(new WpaSupplicantParser),
-    commandQueue(new WpaSupplicantCommandQueue(parser)),
-    currentState(Idle)
+    commandQueue(new WpaSupplicantCommandQueue(parser))
 {
     QObject::connect(commandQueue, SIGNAL(transportWriteNeeded(QString)),
                      this, SLOT(onTransportWriteNeeded(QString)));
     QObject::connect(commandQueue, SIGNAL(unsolicitedResponse(QString)),
                      this, SLOT(onUnsolicitedResponse(QString)));
-
-    startSupplicant();
 }
 
 NetworkP2pManagerWpaSupplicant::~NetworkP2pManagerWpaSupplicant()
@@ -185,9 +185,9 @@ NetworkP2pManagerWpaSupplicant::~NetworkP2pManagerWpaSupplicant()
         supplicantProcess->close();
 }
 
-NetworkP2pManager::State NetworkP2pManagerWpaSupplicant::state() const
+void NetworkP2pManagerWpaSupplicant::setup()
 {
-    return currentState;
+    startSupplicant();
 }
 
 void NetworkP2pManagerWpaSupplicant::startSupplicant()
@@ -200,9 +200,6 @@ void NetworkP2pManagerWpaSupplicant::startSupplicant()
               << QString("-ddd")
               << QString("-t")
               << QString("-K");
-
-    qDebug() << "arguments: " << arguments;
-    qDebug() << "path" << path;
 
     QObject::connect(supplicantProcess, SIGNAL(error(QProcess::ProcessError)),
                      this, SLOT(onSupplicantError(QProcess::ProcessError)));
@@ -230,8 +227,6 @@ bool NetworkP2pManagerWpaSupplicant::checkResult(const QString &result)
 
 void NetworkP2pManagerWpaSupplicant::connectToSupplicant()
 {
-    qDebug() << "Connecting to wpa-supplicant ...";
-
     QString socketPath = QString("%1/%2").arg(ctrlPath).arg(interface);
 
     struct sockaddr_un local;
@@ -255,9 +250,6 @@ void NetworkP2pManagerWpaSupplicant::connectToSupplicant()
     dest.sun_family = AF_UNIX;
     strncpy(dest.sun_path, socketPath.toUtf8().constData(), sizeof(dest.sun_path));
 
-    qDebug() << "sun_path:" << dest.sun_path;
-    qDebug() << "socketPath:" << socketPath;
-
     if (::connect(sock, (struct sockaddr*) &dest, sizeof(dest)) < 0) {
         qWarning() << "Failed to connect socket";
         return;
@@ -272,9 +264,10 @@ void NetworkP2pManagerWpaSupplicant::connectToSupplicant()
 
     // We need to attach to receive all occuring events from wpa-supplicant
     request("ATTACH", [=](const QString &result) {
-        qDebug() << "Attached!!";
-        if (!checkResult(result))
+        if (!checkResult(result)) {
+            qWarning() << "Failed to attach to wpa-supplicant for unsolicited events";
             return;
+        }
     });
 
     // Enable WiFi display support
@@ -318,16 +311,12 @@ void NetworkP2pManagerWpaSupplicant::onSocketReadyRead()
 
         buf[ret] = '\0';
 
-        qDebug() << "IN:" << buf;
-
         parser->feed(QString(buf));
     }
 }
 
 void NetworkP2pManagerWpaSupplicant::onTransportWriteNeeded(const QString &message)
 {
-    qDebug() << "OUT:" << message;
-
     if (send(sock, message.toUtf8().constData(), message.size(), 0) < 0)
         qWarning() << "Failed to send data to wpa-supplicant";
 }
@@ -355,8 +344,6 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
 {
     auto realResponse = response.mid(3);
 
-    qDebug() << "Got unsolicited reply:" << realResponse;
-
     if (realResponse.startsWith(P2P_DEVICE_FOUND)) {
         // P2P-DEVICE-FOUND 4e:74:03:70:e2:c1 p2p_dev_addr=4e:74:03:70:e2:c1
         // pri_dev_type=8-0050F204-2 name='Aquaris M10' config_methods=0x188 dev_capab=0x5
@@ -364,29 +351,40 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
         QStringList items = realResponse.split(QRegExp(" (?=[^']*('[^']*'[^']*)*$)"));
 
         auto address = items[1];
+        auto name = items[4].section('=', 1);
         auto wfdDevInfoStr = items[8].section('=', 1).mid(2);
-        WfdDevInfo wfdDevInfo(parseHex(wfdDevInfoStr.left(4)),
+        WfdDeviceInfo wfdDevInfo(parseHex(wfdDevInfoStr.left(4)),
                               parseHex(wfdDevInfoStr.mid(4, 4)),
                               parseHex(wfdDevInfoStr.right(4)));
         auto configMethods = parseHex(items[5].section('=', 1));
 
-        qDebug() << "address" << address
+        qDebug() << "P2P device found:";
+        qDebug() << "  address" << address
                  << "deviceType" << wfdDevInfo.deviceTypeAsString()
                  << "controlPort" << wfdDevInfo.controlPort()
                  << "maxThroughput" << wfdDevInfo.maxThroughput()
                  << "configMethods" << configMethods;
 
-        // Only add peer if it is a sink. We don't consider sources at the moment
-        auto deviceType = wfdDevInfo.deviceType();
-        if (deviceType != WFD_DEVICE_TYPE_PRIMARY_SINK &&
-            deviceType != WFD_DEVICE_TYPE_SOURCE_OR_PRIMARY_SINK)
-            return;
+        // Check if we've that peer already in our list, if that is the
+        // case we just update it.
+        for (auto p : availablePeers) {
+            if (p->address() != address)
+                continue;
 
-        // We require WPS PBC for now
-        if (!(configMethods & WPS_CONFIG_PUSHBUTTON))
-            return;
+            Q_EMIT peerChanged(p);
 
-        peers.push_back(address);
+            return;
+        }
+
+        NetworkP2pDevice::Ptr peer(new NetworkP2pDevice);
+        peer->setAddress(address);
+        peer->setName(name);
+        peer->setWfdDeviceInfo(wfdDevInfo);
+        peer->setConfigMethods(configMethods);
+
+        availablePeers.insert(address, peer);
+
+        Q_EMIT peerFound(peer);
     }
     else if (realResponse.startsWith(P2P_DEVICE_LOST)) {
         // P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1
@@ -396,14 +394,16 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
             return;
 
         auto address = items[1].section('=', 1);
-        peers.removeAll(address);
+        auto peer = availablePeers.value(address);
+        if (!peer)
+            return;
+
+        Q_EMIT peerLost(peer);
     }
     else if (realResponse.startsWith(P2P_GROUP_FORMATION_SUCCESS)) {
-        qDebug() << "Starting DHCP client for interface" << interface;
         dhcp.start();
     }
     else if (realResponse.startsWith(P2P_GROUP_REMOVED)) {
-        qDebug() << "Stopping DHCP client for interface" << interface;
         dhcp.stop();
     }
 }
@@ -426,15 +426,14 @@ void NetworkP2pManagerWpaSupplicant::setWfdSubElements(const QStringList &elemen
 void NetworkP2pManagerWpaSupplicant::scan(unsigned int timeout)
 {
     auto cmd = QString("P2P_FIND %1").arg(timeout);
-
     request(cmd, [=](const QString &response) {
         qDebug() << "Successfully started scanning for available peers";
     });
 }
 
-QStringList NetworkP2pManagerWpaSupplicant::getPeers()
+QList<NetworkP2pDevice::Ptr> NetworkP2pManagerWpaSupplicant::peers() const
 {
-    return peers;
+    return availablePeers.values();
 }
 
 int NetworkP2pManagerWpaSupplicant::connect(const QString &address, bool persistent)
@@ -451,7 +450,6 @@ int NetworkP2pManagerWpaSupplicant::connect(const QString &address, bool persist
             qWarning() << "Failed to connect with remote " << address << ":" << result;
             return;
         }
-
     });
 
     return ret;

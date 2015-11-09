@@ -42,10 +42,24 @@
 #define WPS_CONFIG_PUSHBUTTON       0x0080
 #define WPS_CONFIG_KEYPAD           0x0100
 
-class WfdDevInfo
+class WfdDeviceInfo
 {
 public:
-    WfdDevInfo(int devInfo, int ctrlPort, int maxTput) :
+    WfdDeviceInfo() :
+        devInfo(0),
+        ctrlPort(0),
+        maxTput(0)
+    {
+    }
+
+    WfdDeviceInfo(const WfdDeviceInfo &other) :
+        devInfo(other.devInfo),
+        ctrlPort(other.ctrlPort),
+        maxTput(other.maxTput)
+    {
+    }
+
+    WfdDeviceInfo(int devInfo, int ctrlPort, int maxTput) :
         devInfo(devInfo),
         ctrlPort(ctrlPort),
         maxTput(maxTput)
@@ -65,6 +79,12 @@ public:
     int maxThroughput()
     {
         return maxTput;
+    }
+
+    bool isSupportedSink()
+    {
+        return deviceType() == WFD_DEVICE_TYPE_PRIMARY_SINK ||
+               deviceType() == WFD_DEVICE_TYPE_SOURCE_OR_PRIMARY_SINK;
     }
 
     QString deviceTypeAsString()

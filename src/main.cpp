@@ -32,10 +32,10 @@ int main(int argc, char **argv)
     handler.setupUnixSignalHandlers();
 
     MiracastService service;
-    new MiracastServiceAdaptor(&app, &service);
+    new MiracastServiceAdaptor(&service);
 
     QDBusConnection::systemBus().registerService("com.ubuntu.miracast");
-    QDBusConnection::systemBus().registerObject("/", &app);
+    QDBusConnection::systemBus().registerObject("/", &service);
 
     return app.exec();
 }

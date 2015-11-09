@@ -20,6 +20,10 @@
 
 #include <QCoreApplication>
 #include <QDBusAbstractAdaptor>
+#include <QVariantMap>
+#include <QDBusMessage>
+
+#include "networkp2pdevice.h"
 
 class MiracastService;
 
@@ -31,19 +35,30 @@ class MiracastServiceAdaptor : public QDBusAbstractAdaptor
     Q_PROPERTY(bool powered READ powered)
 
 public:
-    MiracastServiceAdaptor(QCoreApplication *app, MiracastService *service);
+    MiracastServiceAdaptor(MiracastService *service);
 
     QString state() { return QString("disconnected"); }
     bool powered() { return false; }
 
 public Q_SLOTS:
     void Scan();
-    QStringList GetPeers();
-    void Connect(const QString &address);
+    void GetPeers(const QDBusMessage &message);
+    void ConnectSink(const QString &address, const QDBusMessage &message);
     void DisconnectAll();
+
+Q_SIGNALS:
+    void PeersChanged(const QVariant &changed, const QStringList &removed);
+
+private:
+    void appendPeer(QVariantMap &info, const NetworkP2pDevice::Ptr &peer);
+    void schedulePeersChanged();
+    void replyWithError(const QDBusMessage &message, const QString &text = "");
 
 private:
     MiracastService *service;
+    QList<NetworkP2pDevice::Ptr> peersAdded;
+    QList<NetworkP2pDevice::Ptr> peersRemoved;
+    bool scheduledPeersUpdate;
 };
 
 #endif

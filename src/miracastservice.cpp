@@ -21,6 +21,7 @@
 #include <QDBusReply>
 #include <QDBusObjectPath>
 #include <QTimer>
+#include <QFile>
 
 #include "miracastservice.h"
 #include "networkp2pmanagerwpasupplicant.h"
@@ -28,6 +29,24 @@
 #define MIRACAST_DEFAULT_RTSP_CTRL_PORT     7236
 
 MiracastService::MiracastService()
+{
+    if (!QFile::exists("/sys/class/net/p2p0/uevent"))
+        loadRequiredFirmware();
+
+    manager = new NetworkP2pManagerWpaSupplicant("p2p0");
+
+    QTimer::singleShot(200, [=]() {
+        manager->setup();
+        connect(manager, SIGNAL(peerChanged(NetworkP2pDevice::Ptr)),
+                this, SLOT(onPeerChanged(NetworkP2pDevice::Ptr)));
+    });
+}
+
+MiracastService::~MiracastService()
+{
+}
+
+void MiracastService::loadRequiredFirmware()
 {
     qDebug() << "Switching device WiFi chip firmware to get P2P support";
 
@@ -46,22 +65,16 @@ MiracastService::MiracastService()
         qDebug() << "Failed to switch WiFi chip firmware:" << reply.error();
         return;
     }
-
-    QTimer::singleShot(200, [=]() {
-        manager = new NetworkP2pManagerWpaSupplicant("p2p0");
-
-        connect(manager, SIGNAL(sinkConnected(QString,QString)),
-                this, SLOT(onSinkConnected(QString,QString)));
-    });
 }
 
-MiracastService::~MiracastService()
+void MiracastService::onPeerChanged(const NetworkP2pDevice::Ptr &peer)
 {
-}
-
-void MiracastService::onSinkConnected(const QString &localAddress, const QString &remoteAddress)
-{
-    qDebug() << "Mircast sink connected remote:" << remoteAddress << "local:" << localAddress;
-
+#if 0
     source.setup(localAddress, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
+#endif
+}
+
+bool MiracastService::connectSink(const QString &address)
+{
+    return true;
 }

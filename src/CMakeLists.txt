@@ -9,6 +9,7 @@ set(SOURCES
   miracastsource.cpp
   miracastsourceclient.cpp
   networkp2pmanager.cpp
+  networkp2pdevice.cpp
   networkp2pmanagerwpasupplicant.cpp
 )
 
