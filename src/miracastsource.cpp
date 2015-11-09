@@ -44,7 +44,7 @@ bool MiracastSource::setup(const QString &address, quint16 port)
 
 void MiracastSource::onNewConnection()
 {
-    qDebug() << "Got a new connection";
+    qDebug() << "Got a new Miracast source connection";
 
     auto socket = server.nextPendingConnection();
 
