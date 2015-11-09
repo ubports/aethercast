@@ -15,11 +15,7 @@
  *
  */
 
-#include <QDebug>
-
 #include "dhcpclient.h"
-
-#define DHCLIENT_BIN_PATH   "/sbin/dhclient"
 
 DhcpClient::DhcpClient(const QString &interface) :
     interface(interface)
@@ -30,44 +26,10 @@ DhcpClient::~DhcpClient()
 {
 }
 
-void DhcpClient::start()
-{
-    process = new QProcess(this);
-
-    QObject::connect(process, SIGNAL(error(QProcess::ProcessError)),
-                     this, SLOT(onProcessError(QProcess::ProcessError)));
-    QObject::connect(process, SIGNAL(finished(int)),
-                     this, SLOT(onProcessFinished(int)));
-
-    QStringList arguments;
-    // Run in foreground so we can control the process
-    arguments << "-d";
-    arguments << interface;
-
-    process->start(DHCLIENT_BIN_PATH, arguments);
-    process->waitForStarted();
-
-    if (process->state() != QProcess::Running) {
-        qWarning() << "Failed to start dhclient for interface" << interface;
-        return;
-    }
-}
-
-void DhcpClient::onProcessError(QProcess::ProcessError error)
-{
-}
-
-void DhcpClient::onProcessFinished(int errorCode)
+bool DhcpClient::start()
 {
 }
 
 void DhcpClient::stop()
 {
-    if (!process)
-        return;
-
-    process->close();
-
-    process->deleteLater();
-    process = nullptr;
 }

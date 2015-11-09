@@ -16,8 +16,10 @@
  */
 
 #include "miracastsource.h"
+#include "miracastsourceclient.h"
 
-MiracastSource::MiracastSource()
+MiracastSource::MiracastSource() :
+    currentClient(nullptr)
 {
     QObject::connect(&server, SIGNAL(newConnection()),
                      this, SLOT(onNewConnection()));
@@ -44,7 +46,9 @@ void MiracastSource::onNewConnection()
 {
     qDebug() << "Got a new connection";
 
-    auto client = server.nextPendingConnection();
+    auto socket = server.nextPendingConnection();
+
+    currentClient = new MiracastSourceClient(socket);
 
     // We stop here accepting any further connections as we only deal
     // with one at a time

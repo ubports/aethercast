@@ -15,30 +15,29 @@
  *
  */
 
-#ifndef MIRACASTSOURCE_H_
-#define MIRACASTSOURCE_H_
+#ifndef DHCPSERVER_H_
+#define DHCPSERVER_H_
 
 #include <QObject>
-#include <QTcpServer>
+#include <QString>
+#include <QScopedPointer>
 
-class MiracastSourceClient;
-
-class MiracastSource : public QObject
+class DhcpServer : public QObject
 {
     Q_OBJECT
 public:
-    MiracastSource();
-    ~MiracastSource();
+    DhcpServer(const QString &interface);
+    ~DhcpServer();
 
-    bool setup(const QString &address, quint16 port);
-    void release();
+    bool start();
+    void stop();
 
-private Q_SLOTS:
-    void onNewConnection();
+Q_SIGNALS:
+    void leaseAdded();
 
 private:
-    QTcpServer server;
-    MiracastSourceClient *currentClient;
+    class Private;
+    QScopedPointer<Private> d;
 };
 
 #endif

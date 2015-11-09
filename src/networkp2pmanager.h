@@ -43,6 +43,9 @@ Q_SIGNALS:
     void peerFound(const NetworkP2pDevice::Ptr &peer);
     void peerChanged(const NetworkP2pDevice::Ptr &peer);
     void peerLost(const NetworkP2pDevice::Ptr &peer);
+    void peerConnected(const NetworkP2pDevice::Ptr &peer);
+    void peerDisconnected(const NetworkP2pDevice::Ptr &peer);
+    void peerFailed(const NetworkP2pDevice::Ptr &peer);
 };
 
 #endif

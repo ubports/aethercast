@@ -18,10 +18,13 @@
 #ifndef MIRACAST_SERVICE_H_
 #define MIRACAST_SERVICE_H_
 
+#include <functional>
 #include <QObject>
 
 #include "miracastsource.h"
 #include "networkp2pdevice.h"
+#include "dhcpclient.h"
+#include "dhcpserver.h"
 
 class NetworkP2pManager;
 
@@ -34,17 +37,35 @@ public:
 
     NetworkP2pManager* networkManager() { return manager; }
 
-    bool connectSink(const QString &address);
+    void connectSink(const QString &address, std::function<void(bool,QString)> callback);
+
+    NetworkP2pDevice::State state() const;
+
+Q_SIGNALS:
+    void stateChanged();
 
 private Q_SLOTS:
     void onPeerChanged(const NetworkP2pDevice::Ptr &peer);
+    void onPeerConnected(const NetworkP2pDevice::Ptr &peer);
+    void onPeerDisconnected(const NetworkP2pDevice::Ptr &peer);
+    void onPeerFailed(const NetworkP2pDevice::Ptr &peer);
 
 private:
     void loadRequiredFirmware();
+    void advanceState(NetworkP2pDevice::State newState);
+    void finishConnectAttempt(bool success, const QString &errorText = "");
+    void startIdleTimer();
+    void setupDhcp();
+    void releaseDhcp();
 
 private:
     NetworkP2pManager *manager;
     MiracastSource source;
+    NetworkP2pDevice::State currentState;
+    NetworkP2pDevice::Ptr currentPeer;
+    std::function<void(bool,QString)> connectCallback;
+    DhcpClient dhcpClient;
+    DhcpServer dhcpServer;
 };
 
 #endif

@@ -23,7 +23,8 @@ class NetworkP2pDevice::Private
 public:
     Private() :
         state(Idle),
-        configMethods(0)
+        configMethods(0),
+        role(NetworkP2pDevice::Undecied)
     {
     }
 
@@ -32,7 +33,28 @@ public:
     NetworkP2pDevice::State state;
     WfdDeviceInfo wfdDeviceInfo;
     int configMethods;
+    NetworkP2pDevice::Role role;
 };
+
+QString NetworkP2pDevice::stateToStr(State state)
+{
+    switch (state) {
+    case Idle:
+        return "idle";
+    case Failure:
+        return "failure";
+    case Connecting:
+        return "connecting";
+    case Connected:
+        return "connected";
+    case Disconnected:
+        return "disconnected";
+    default:
+        break;
+    }
+
+    return "unknown";
+}
 
 NetworkP2pDevice::NetworkP2pDevice() :
     QObject(nullptr),
@@ -61,22 +83,7 @@ NetworkP2pDevice::State NetworkP2pDevice::state() const
 
 QString NetworkP2pDevice::stateAsString() const
 {
-    switch (d->state) {
-    case Idle:
-        return "idle";
-    case Failure:
-        return "failure";
-    case Connecting:
-        return "connecting";
-    case Connected:
-        return "connected";
-    case Disconnecting:
-        return "disconnecting";
-    default:
-        break;
-    }
-
-    return "unknown";
+    return stateToStr(d->state);
 }
 
 WfdDeviceInfo NetworkP2pDevice::wfdDeviceInfo() const
@@ -87,6 +94,11 @@ WfdDeviceInfo NetworkP2pDevice::wfdDeviceInfo() const
 int NetworkP2pDevice::configMethods() const
 {
     return d->configMethods;
+}
+
+NetworkP2pDevice::Role NetworkP2pDevice::role() const
+{
+    return d->role;
 }
 
 void NetworkP2pDevice::setAddress(const QString &address)
@@ -112,4 +124,9 @@ void NetworkP2pDevice::setWfdDeviceInfo(const WfdDeviceInfo &wfdDeviceInfo)
 void NetworkP2pDevice::setConfigMethods(int configMethods)
 {
     d->configMethods = configMethods;
+}
+
+void NetworkP2pDevice::setRole(Role role)
+{
+    d->role = role;
 }

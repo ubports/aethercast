@@ -15,24 +15,35 @@
  *
  */
 
-#ifndef DHCPCLIENT_H_
-#define DHCPCLIENT_H_
-
-#include <QObject>
+#include <QLocalSocket>
+#include <QProcessEnvironment>
 #include <QString>
 
-class DhcpClient : public QObject
+QStringList itemsToIgnore = { };
+
+int main(int argc, char **argv)
 {
-    Q_OBJECT
-public:
-    DhcpClient(const QString &interface);
-    ~DhcpClient();
+    QLocalSocket socket;
+    socket.connectToServer("/var/run/miracast-service/private-dhcp", QIODevice::WriteOnly);
 
-    bool start();
-    void stop();
+    auto environ = QProcessEnvironment::systemEnvironment();
 
-private:
-    QString interface;
-};
+    for (auto name : environ.keys()) {
+        if (itemsToIgnore.contains(name))
+            continue;
 
-#endif
+        auto line = QString("%1=%2")
+                .arg(name)
+                .arg(environ.value(name));
+
+        qDebug() << line;
+
+        socket.write(line.toUtf8());
+    }
+
+    socket.waitForBytesWritten();
+    socket.flush();
+    socket.close();
+
+    return 0;
+}

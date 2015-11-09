@@ -25,10 +25,14 @@
 
 #include "miracastservice.h"
 #include "networkp2pmanagerwpasupplicant.h"
+#include "wfddeviceinfo.h"
 
 #define MIRACAST_DEFAULT_RTSP_CTRL_PORT     7236
 
-MiracastService::MiracastService()
+MiracastService::MiracastService() :
+    currentState(NetworkP2pDevice::Idle),
+    dhcpClient("p2p0"),
+    dhcpServer("p2p0")
 {
     if (!QFile::exists("/sys/class/net/p2p0/uevent"))
         loadRequiredFirmware();
@@ -37,13 +41,25 @@ MiracastService::MiracastService()
 
     QTimer::singleShot(200, [=]() {
         manager->setup();
+
         connect(manager, SIGNAL(peerChanged(NetworkP2pDevice::Ptr)),
                 this, SLOT(onPeerChanged(NetworkP2pDevice::Ptr)));
+        connect(manager, SIGNAL(peerConnected(NetworkP2pDevice::Ptr)),
+                this, SLOT(onPeerConnected(NetworkP2pDevice::Ptr)));
+        connect(manager, SIGNAL(peerDisconnected(NetworkP2pDevice::Ptr)),
+                this, SLOT(onPeerDisconnected(NetworkP2pDevice::Ptr)));
+        connect(manager, SIGNAL(peerFailed(NetworkP2pDevice::Ptr)),
+                this, SLOT(onPeerFailed(NetworkP2pDevice::Ptr)));
     });
 }
 
 MiracastService::~MiracastService()
 {
+}
+
+NetworkP2pDevice::State MiracastService::state() const
+{
+    return currentState;
 }
 
 void MiracastService::loadRequiredFirmware()
@@ -67,14 +83,145 @@ void MiracastService::loadRequiredFirmware()
     }
 }
 
-void MiracastService::onPeerChanged(const NetworkP2pDevice::Ptr &peer)
+void MiracastService::setupDhcp()
 {
-#if 0
-    source.setup(localAddress, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
-#endif
+    if (currentPeer->role() == NetworkP2pDevice::GroupOwner)
+        dhcpServer.start();
+    else
+        dhcpClient.start();
 }
 
-bool MiracastService::connectSink(const QString &address)
+void MiracastService::releaseDhcp()
 {
-    return true;
+    if (currentPeer->role() == NetworkP2pDevice::GroupOwner)
+        dhcpServer.stop();
+    else
+        dhcpClient.stop();
+}
+
+void MiracastService::advanceState(NetworkP2pDevice::State newState)
+{
+    switch (newState) {
+    case NetworkP2pDevice::Connecting:
+        break;
+
+    case NetworkP2pDevice::Connected:
+        qDebug() << "State: connected";
+
+        setupDhcp();
+#if 0
+        source.setup(currentDevice->ipv4().localAddress(),
+                     MIRACAST_DEFAULT_RTSP_CTRL_PORT);
+#else
+        source.setup("192.168.7.1",
+                     MIRACAST_DEFAULT_RTSP_CTRL_PORT);
+#endif
+        finishConnectAttempt(true);
+
+        break;
+
+    case NetworkP2pDevice::Failure:
+        qDebug() << "Failed to connect";
+        if (currentState == NetworkP2pDevice::Connecting)
+            finishConnectAttempt(false, "Failed to connect remote device");
+
+    case NetworkP2pDevice::Disconnected:
+        qDebug() << "Got disconnected";
+        if (currentState == NetworkP2pDevice::Connected) {
+            releaseDhcp();
+            source.release();
+        }
+
+        startIdleTimer();
+        break;
+
+    case NetworkP2pDevice::Idle:
+        break;
+
+    default:
+        break;
+    }
+
+
+    currentState = newState;
+    Q_EMIT stateChanged();
+}
+
+void MiracastService::onPeerConnected(const NetworkP2pDevice::Ptr &peer)
+{
+    qDebug() << "Peer" << peer->address() << "connected";
+
+    QTimer::singleShot(0, [=] {
+        advanceState(NetworkP2pDevice::Connected);
+    });
+}
+
+void MiracastService::onPeerDisconnected(const NetworkP2pDevice::Ptr &peer)
+{
+    QTimer::singleShot(0, [=] {
+        advanceState(NetworkP2pDevice::Disconnected);
+
+        currentPeer.clear();
+    });
+}
+
+void MiracastService::onPeerFailed(const NetworkP2pDevice::Ptr &peer)
+{
+    QTimer::singleShot(0, [=] {
+        advanceState(NetworkP2pDevice::Failure);
+
+        currentPeer.clear();
+
+        finishConnectAttempt(false, "Failed to connect device");
+    });
+}
+
+void MiracastService::onPeerChanged(const NetworkP2pDevice::Ptr &peer)
+{
+}
+
+void MiracastService::startIdleTimer()
+{
+    QTimer::singleShot(1000, [&]() {
+        advanceState(NetworkP2pDevice::Idle);
+    });
+}
+
+void MiracastService::finishConnectAttempt(bool success, const QString &errorText)
+{
+    if (connectCallback)
+        connectCallback(success, errorText);
+
+    connectCallback = nullptr;
+}
+
+void MiracastService::connectSink(const QString &address, std::function<void(bool,QString)> callback)
+{
+    if (!currentPeer.isNull()) {
+        callback(false, "Already connected");
+        return;
+    }
+
+    NetworkP2pDevice::Ptr device;
+
+    for (auto peer : manager->peers()) {
+        if (peer->address() != address)
+            continue;
+
+        device = peer;
+        break;
+    }
+
+    if (device.isNull()) {
+        callback(false, "Couldn't find device");
+        return;
+    }
+
+    if (manager->connect(device->address(), false) < 0) {
+        callback(false, "Failed to connect with remote device");
+        return;
+    }
+
+    currentPeer = device;
+    connectCallback = callback;
 }

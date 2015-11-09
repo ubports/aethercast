@@ -48,6 +48,7 @@
 #define P2P_DEVICE_FOUND                         "P2P-DEVICE-FOUND"
 #define P2P_DEVICE_LOST                          "P2P-DEVICE-LOST"
 #define P2P_GROUP_FORMATION_SUCCESS              "P2P-GROUP-FORMATION-SUCCESS"
+#define P2P_GROUP_STARTED                        "P2P-GROUP-STARTED"
 #define P2P_GROUP_REMOVED                        "P2P-GROUP-REMOVED"
 
 class WpaSupplicantCommand
@@ -169,7 +170,6 @@ NetworkP2pManagerWpaSupplicant::NetworkP2pManagerWpaSupplicant(const QString &if
     interface(iface),
     supplicantProcess(new QProcess(this)),
     ctrlPath(QString("/var/run/%1_supplicant").arg(interface)),
-    dhcp(iface),
     parser(new WpaSupplicantParser),
     commandQueue(new WpaSupplicantCommandQueue(parser))
 {
@@ -344,6 +344,8 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
 {
     auto realResponse = response.mid(3);
 
+    qDebug() << "EVENT:" << realResponse;
+
     if (realResponse.startsWith(P2P_DEVICE_FOUND)) {
         // P2P-DEVICE-FOUND 4e:74:03:70:e2:c1 p2p_dev_addr=4e:74:03:70:e2:c1
         // pri_dev_type=8-0050F204-2 name='Aquaris M10' config_methods=0x188 dev_capab=0x5
@@ -400,11 +402,46 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
 
         Q_EMIT peerLost(peer);
     }
-    else if (realResponse.startsWith(P2P_GROUP_FORMATION_SUCCESS)) {
-        dhcp.start();
+    else if (realResponse.startsWith(P2P_GROUP_STARTED)) {
+        // P2P-GROUP-STARTED p2p0 GO ssid="DIRECT-hB" freq=2412 passphrase="HtP0qYon"
+        // go_dev_addr=4e:74:03:64:95:a7
+        if (currentPeer.isNull())
+            return;
+
+        qDebug() << "Current peer" << currentPeer->address() << "Successfully connected";
+
+        QStringList items = realResponse.split(" ");
+
+        currentPeer->setState(NetworkP2pDevice::Connected);
+
+        if (items[2] == "GO")
+            currentPeer->setRole(NetworkP2pDevice::GroupOwner);
+        else
+            currentPeer->setRole(NetworkP2pDevice::GroupClient);
+
+        Q_EMIT peerConnected(currentPeer);
     }
     else if (realResponse.startsWith(P2P_GROUP_REMOVED)) {
-        dhcp.stop();
+        // P2P-GROUP-REMOVED p2p0 GO reason=FORMATION_FAILED
+        if (currentPeer.isNull())
+            return;
+
+        QStringList items = realResponse.split(" ");
+
+        currentPeer->setState(NetworkP2pDevice::Disconnected);
+
+        auto reason = items[3].section('=', 1);
+
+        qDebug() << "reason" << reason;
+
+        if (reason == "FORMATION_FAILED" ||
+                reason == "PSK_FAILURE" ||
+                reason == "FREQ_CONFLICT")
+            Q_EMIT peerFailed(currentPeer);
+        else
+            Q_EMIT peerDisconnected(currentPeer);
+
+        currentPeer.clear();
     }
 }
 
@@ -439,6 +476,14 @@ QList<NetworkP2pDevice::Ptr> NetworkP2pManagerWpaSupplicant::peers() const
 int NetworkP2pManagerWpaSupplicant::connect(const QString &address, bool persistent)
 {
     int ret = 0;
+
+    if (!availablePeers.contains(address))
+        return -EINVAL;
+
+    if (!currentPeer.isNull())
+        return -EALREADY;
+
+    currentPeer = availablePeers.value(address);
 
     auto cmd = QString("P2P_CONNECT %1 pbc %2")
                     .arg(address)

@@ -15,30 +15,18 @@
  *
  */
 
-#ifndef MIRACASTSOURCE_H_
-#define MIRACASTSOURCE_H_
+#ifndef NETWORKUTILS_H_
+#define NETWORKUTILS_H_
 
-#include <QObject>
-#include <QTcpServer>
+#include <QString>
 
-class MiracastSourceClient;
-
-class MiracastSource : public QObject
+class NetworkUtils
 {
-    Q_OBJECT
 public:
-    MiracastSource();
-    ~MiracastSource();
-
-    bool setup(const QString &address, quint16 port);
-    void release();
-
-private Q_SLOTS:
-    void onNewConnection();
-
-private:
-    QTcpServer server;
-    MiracastSourceClient *currentClient;
+    static int retriveInterfaceIndex(const QString &name);
+    static int modifyAddress(int cmd, int flags, int index, int family,
+                             const char *address, const char *peer,
+                             unsigned char prefixlen, const char *broadcast);
 };
 
 #endif

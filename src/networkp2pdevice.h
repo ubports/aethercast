@@ -36,8 +36,16 @@ public:
         Failure,
         Connecting,
         Connected,
-        Disconnecting
+        Disconnected
     };
+
+    enum Role {
+        Undecied,
+        GroupOwner,
+        GroupClient
+    };
+
+    static QString stateToStr(State state);
 
     NetworkP2pDevice();
     ~NetworkP2pDevice();
@@ -48,12 +56,14 @@ public:
     QString stateAsString() const;
     WfdDeviceInfo wfdDeviceInfo() const;
     int configMethods() const;
+    Role role() const;
 
     void setAddress(const QString &address);
     void setName(const QString &name);
     void setState(State state);
     void setWfdDeviceInfo(const WfdDeviceInfo &wfdDeviceInfo);
     void setConfigMethods(int configMethods);
+    void setRole(Role role);
 
 private:
     class Private;

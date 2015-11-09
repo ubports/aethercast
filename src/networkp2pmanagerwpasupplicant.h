@@ -26,7 +26,6 @@
 #include <QSocketNotifier>
 #include <QPointer>
 
-#include "dhcpclient.h"
 #include "networkp2pdevice.h"
 #include "networkp2pmanager.h"
 
@@ -50,9 +49,6 @@ public:
 
     int connect(const QString &address, bool persistent = true) override;
     int disconnectAll() override;
-
-Q_SIGNALS:
-    void sinkConnected(const QString &localAddress, const QString &remoteAddress);
 
 private Q_SLOTS:
     void onSupplicantFinished(int errorCode);
@@ -78,9 +74,9 @@ private:
     int sock;
     QSocketNotifier *notifier;
     QMap<QString,NetworkP2pDevice::Ptr> availablePeers;
-    DhcpClient dhcp;
     QPointer<WpaSupplicantParser> parser;
     QPointer<WpaSupplicantCommandQueue> commandQueue;
+    NetworkP2pDevice::Ptr currentPeer;
 };
 
 #endif

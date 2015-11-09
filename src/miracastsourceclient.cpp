@@ -25,14 +25,28 @@ MiracastSourceClient::MiracastSourceClient(QTcpSocket *socket) :
 {
     mediaManager.reset(new MirMediaManager);
     source.reset(wds::Source::Create(this, mediaManager.data()));
+
+    connect(socket, SIGNAL(readyRead()), this, SLOT(onSocketReadyRead()));
 }
 
 MiracastSourceClient::~MiracastSourceClient()
 {
 }
 
+void MiracastSourceClient::onSocketReadyRead()
+{
+    while (socket->bytesAvailable()) {
+        auto data = socket->readAll();
+        if (data.size() <= 0)
+            break;
+
+        source->RTSPDataReceived(data.toStdString());
+    }
+}
+
 void MiracastSourceClient::SendRTSPData(const std::string &data)
 {
+    socket->write(QString::fromStdString(data).toUtf8());
 }
 
 std::string MiracastSourceClient::GetLocalIPAddress() const

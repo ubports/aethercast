@@ -46,19 +46,23 @@ public Q_SLOTS:
     void ConnectSink(const QString &address, const QDBusMessage &message);
     void DisconnectAll();
 
-Q_SIGNALS:
-    void PeersChanged(const QVariant &changed, const QStringList &removed);
-
 private:
     void appendPeer(QVariantMap &info, const NetworkP2pDevice::Ptr &peer);
     void schedulePeersChanged();
     void replyWithError(const QDBusMessage &message, const QString &text = "");
+    void sendPropertyChanged(const QString &name, const QVariant &value);
+    int storeDelayedReply(const QDBusMessage &message);
+
+private Q_SLOTS:
+    void onServiceStateChanged();
 
 private:
     MiracastService *service;
     QList<NetworkP2pDevice::Ptr> peersAdded;
     QList<NetworkP2pDevice::Ptr> peersRemoved;
     bool scheduledPeersUpdate;
+    QMap<int,QDBusMessage> delayedMessages;
+    int currentConnectId;
 };
 
 #endif

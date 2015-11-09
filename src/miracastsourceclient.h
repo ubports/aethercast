@@ -43,6 +43,9 @@ public:
     uint CreateTimer(int seconds) override;
     void ReleaseTimer(uint timerId) override;
 
+private Q_SLOTS:
+    void onSocketReadyRead();
+
 private:
     QTcpSocket *socket;
     QMap<int,QTimer*> timers;

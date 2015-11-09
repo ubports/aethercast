@@ -1,7 +1,13 @@
 set(SOURCES
+  gdhcp/common.c
+  gdhcp/ipv4ll.c
+  gdhcp/server.c
+  gdhcp/client.c
   main.cpp
   unixsignalhandler.cpp
+  networkutils.cpp
   dhcpclient.cpp
+  dhcpserver.cpp
   basesourcemediamanager.cpp
   mirsourcemediamanager.cpp
   miracastservice.cpp
