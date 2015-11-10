@@ -35,6 +35,7 @@ public:
     }
 
     QString interface;
+    int ifaceIndex;
     GDHCPServer *server;
 };
 
@@ -42,6 +43,9 @@ DhcpServer::DhcpServer(const QString &interface) :
     d(new Private)
 {
     d->interface = interface;
+    d->ifaceIndex = NetworkUtils::retriveInterfaceIndex(d->interface);
+    if (d->ifaceIndex < 0)
+        qWarning() << "Failed to determine index of network interface" << d->interface;
 }
 
 DhcpServer::~DhcpServer()
@@ -60,19 +64,13 @@ bool DhcpServer::start()
 {
     qWarning() << "Starting up DHCP server";
 
-    int index = NetworkUtils::retriveInterfaceIndex(d->interface);
-    if (index < 0) {
-        qWarning() << "Failed to determine index of network interface" << d->interface;
-        return false;
-    }
-
     // FIXME store those defaults somewhere else
     const char *address = "192.168.7.1";
     const char *subnet = "255.255.255.0";
     const char *broadcast = "192.168.7.255";
     unsigned char prefixlen = 24;
 
-    if (NetworkUtils::modifyAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, index,
+    if (NetworkUtils::modifyAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, d->ifaceIndex,
                                     AF_INET, address,
                                     NULL, prefixlen, broadcast) < 0) {
         qWarning() << "Failed to assign network address for" << d->interface;
@@ -80,7 +78,7 @@ bool DhcpServer::start()
     }
 
     GDHCPServerError error;
-    d->server = g_dhcp_server_new(G_DHCP_IPV4, index, &error);
+    d->server = g_dhcp_server_new(G_DHCP_IPV4, d->ifaceIndex, &error);
     if (!d->server) {
         qWarning() << "Failed to setup DHCP server";
         return false;

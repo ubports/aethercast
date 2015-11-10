@@ -40,9 +40,7 @@ public:
         inst->d->localAddress = g_dhcp_client_get_address(client);
         inst->d->netmask = g_dhcp_client_get_netmask(client);
 
-        int index = NetworkUtils::retriveInterfaceIndex(inst->d->interface);
-
-        if (NetworkUtils::modifyAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, index,
+        if (NetworkUtils::modifyAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, inst->d->ifaceIndex,
                                         AF_INET, inst->d->localAddress.toUtf8().constData(),
                                         NULL, 24, NULL) < 0) {
             qWarning() << "Failed to assign network address for" << inst->d->interface;
@@ -58,6 +56,7 @@ public:
     }
 
     QString interface;
+    int ifaceIndex;
     GDHCPClient *client;
     QString localAddress;
     QString netmask;
@@ -67,6 +66,9 @@ DhcpClient::DhcpClient(const QString &interface) :
     d(new Private)
 {
     d->interface = interface;
+    d->ifaceIndex = NetworkUtils::retriveInterfaceIndex(d->interface);
+    if (d->ifaceIndex < 0)
+        qWarning() << "Failed to determine index of network interface" << d->interface;
 }
 
 DhcpClient::~DhcpClient()
@@ -75,12 +77,8 @@ DhcpClient::~DhcpClient()
 
 bool DhcpClient::start()
 {
-    int index = NetworkUtils::retriveInterfaceIndex(d->interface);
-    if (index < 0)
-        return false;
-
     GDHCPClientError error;
-    d->client = g_dhcp_client_new(G_DHCP_IPV4, index, &error);
+    d->client = g_dhcp_client_new(G_DHCP_IPV4, d->ifaceIndex, &error);
     if (!d->client) {
         qWarning() << "Failed to setup DHCP client";
         return false;
