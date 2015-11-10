@@ -19,6 +19,7 @@
 
 #include "miracastsourceclient.h"
 #include "mirsourcemediamanager.h"
+#include "testsourcemediamanager.h"
 #include "mediamanagerfactory.h"
 
 MiracastSourceClient::MiracastSourceClient(QTcpSocket *socket) :

@@ -10,6 +10,7 @@ set(SOURCES
   dhcpserver.cpp
   mediamanagerfactory.cpp
   basesourcemediamanager.cpp
+  testsourcemediamanager.cpp
   mirsourcemediamanager.cpp
   miracastservice.cpp
   miracastserviceadaptor.cpp
@@ -30,7 +31,6 @@ include_directories(
   ${GLIB_INCLUDE_DIRS}
   ${GIO_INCLUDE_DIRS}
   ${GIO-UNIX_INCLUDE_DIRS}
-  ${GST_LIBRARIES}
   ${GST_INCLUDE_DIRS}
   ${Qt5Core_INCLUDE_DIRS}
   ${Qt5DBus_INCLUDE_DIRS}
@@ -45,6 +45,7 @@ target_link_libraries(miracast-service
   ${GLIB_LIBRARIES}
   ${GIO_LIBRARIES}
   ${GIO-UNIX_LIBRARIES}
+  ${GST_LIBRARIES}
   -ldl
   -lwds
 )

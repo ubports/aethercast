@@ -17,6 +17,7 @@
 
 #include "mediamanagerfactory.h"
 #include "mirsourcemediamanager.h"
+#include "testsourcemediamanager.h"
 
 class NullSourceMediaManager : public BaseSourceMediaManager
 {
@@ -53,6 +54,8 @@ BaseSourceMediaManager* MediaManagerFactory::createSource(const QHostAddress &re
 
     if (type.size() == 0 || type == "mir")
         return new MirSourceMediaManager(remoteAddress);
+    else if (type == "test")
+        return new TestSourceMediaManager(remoteAddress);
 
     return new NullSourceMediaManager();
 }
