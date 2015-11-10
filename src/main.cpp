@@ -15,8 +15,10 @@
  *
  */
 
+#include <QtGlobal>
 #include <QCoreApplication>
 #include <QDBusConnection>
+#include <QCommandLineParser>
 
 #include <gst/gst.h>
 
@@ -24,9 +26,44 @@
 #include "miracastservice.h"
 #include "miracastserviceadaptor.h"
 
+static bool debuggingEnabled = false;
+
+void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    QByteArray localMsg = msg.toLocal8Bit();
+    switch (type) {
+    case QtDebugMsg:
+        if (debuggingEnabled)
+            fprintf(stderr, "DEBUG: %s \n", localMsg.constData());
+        break;
+    case QtWarningMsg:
+        fprintf(stderr, "WARNING: %s \n", localMsg.constData());
+        break;
+    case QtCriticalMsg:
+        fprintf(stderr, "CRITICAL: %s \n", localMsg.constData());
+        break;
+    case QtFatalMsg:
+        fprintf(stderr, "FATAL: %s \n", localMsg.constData());
+        abort();
+    }
+}
+
 int main(int argc, char **argv)
 {
+    qInstallMessageHandler(messageHandler);
+
     QCoreApplication app(argc, argv);
+
+    QCommandLineParser parser;
+    parser.setApplicationDescription("Miracast service");
+    parser.addHelpOption();
+    parser.addVersionOption();
+
+    QCommandLineOption debugOption("d", "Enable debugging output");
+    parser.addOption(debugOption);
+
+    parser.process(app);
+    debuggingEnabled = parser.isSet(debugOption);
 
     gst_init(nullptr, nullptr);
 
