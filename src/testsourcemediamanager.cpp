@@ -45,7 +45,5 @@ QString TestSourceMediaManager::constructPipeline()
     config += QString("host=%1 ").arg(d->remoteAddress.toString());
     config += QString("port=%1 ").arg(sinkPort1);
 
-    qDebug() << "TestSourceMediaManager: " << config;
-
     return config;
 }

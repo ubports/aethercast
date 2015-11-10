@@ -106,7 +106,6 @@ void MiracastService::advanceState(NetworkP2pDevice::State newState)
         break;
 
     case NetworkP2pDevice::Connected:
-        qDebug() << "State: connected";
 
         setupDhcp();
 
@@ -129,12 +128,10 @@ void MiracastService::advanceState(NetworkP2pDevice::State newState)
         break;
 
     case NetworkP2pDevice::Failure:
-        qDebug() << "Failed to connect";
         if (currentState == NetworkP2pDevice::Connecting)
             finishConnectAttempt(false, "Failed to connect remote device");
 
     case NetworkP2pDevice::Disconnected:
-        qDebug() << "Got disconnected";
         if (currentState == NetworkP2pDevice::Connected) {
             releaseDhcp();
             source.release();
@@ -157,7 +154,6 @@ void MiracastService::advanceState(NetworkP2pDevice::State newState)
 
 void MiracastService::onPeerConnected(const NetworkP2pDevice::Ptr &peer)
 {
-    qDebug() << "Peer" << peer->address() << "connected";
 
     QTimer::singleShot(0, [=] {
         advanceState(NetworkP2pDevice::Connected);

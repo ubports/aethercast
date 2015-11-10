@@ -37,11 +37,6 @@ public:
     {
     }
 
-    static void onLeaseAdded(unsigned char *mac, uint32_t ip)
-    {
-        qDebug() << "Lease added";
-    }
-
     QString interface;
     GDHCPServer *server;
 };
@@ -98,8 +93,6 @@ bool DhcpServer::start()
     g_dhcp_server_set_option(d->server, G_DHCP_ROUTER, localAddress().toUtf8().constData());
     g_dhcp_server_set_option(d->server, G_DHCP_DNS_SERVER, NULL);
     g_dhcp_server_set_ip_range(d->server, "192.168.7.5", "192.168.7.100");
-
-    g_dhcp_server_set_lease_added_cb(d->server, &DhcpServer::Private::onLeaseAdded);
 
     if(g_dhcp_server_start(d->server) < 0) {
         qWarning() << "Failed to start DHCP server";

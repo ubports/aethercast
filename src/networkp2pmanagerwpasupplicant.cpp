@@ -413,14 +413,11 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
         if (currentPeer.isNull())
             return;
 
-        qDebug() << "Current peer" << currentPeer->address() << "Successfully connected";
-
         QStringList items = realResponse.split(" ");
 
         currentPeer->setState(NetworkP2pDevice::Connected);
 
         // If we're the GO the other side is the client and vice versa
-        qDebug() << "role" <<  items[2];
         if (items[2] == "GO")
             currentRole = NetworkP2pDevice::GroupOwner;
         else
@@ -438,8 +435,6 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
         currentPeer->setState(NetworkP2pDevice::Disconnected);
 
         auto reason = items[3].section('=', 1);
-
-        qDebug() << "reason" << reason;
 
         if (reason == "FORMATION_FAILED" ||
                 reason == "PSK_FAILURE" ||
@@ -470,9 +465,7 @@ void NetworkP2pManagerWpaSupplicant::setWfdSubElements(const QStringList &elemen
 void NetworkP2pManagerWpaSupplicant::scan(unsigned int timeout)
 {
     auto cmd = QString("P2P_FIND %1").arg(timeout);
-    request(cmd, [=](const QString &response) {
-        qDebug() << "Successfully started scanning for available peers";
-    });
+    request(cmd, [=](const QString &response) { });
 }
 
 QList<NetworkP2pDevice::Ptr> NetworkP2pManagerWpaSupplicant::peers() const
