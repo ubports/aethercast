@@ -39,6 +39,8 @@ public:
     virtual int connect(const QString &address, bool persistent = true) = 0;
     virtual int disconnectAll() = 0;
 
+    virtual NetworkP2pDevice::Role role() const = 0;
+
 Q_SIGNALS:
     void peerFound(const NetworkP2pDevice::Ptr &peer);
     void peerChanged(const NetworkP2pDevice::Ptr &peer);

@@ -50,6 +50,8 @@ public:
     int connect(const QString &address, bool persistent = true) override;
     int disconnectAll() override;
 
+    NetworkP2pDevice::Role role() const override;
+
 private Q_SLOTS:
     void onSupplicantFinished(int errorCode);
     void onSupplicantError(QProcess::ProcessError error);
@@ -77,6 +79,7 @@ private:
     QPointer<WpaSupplicantParser> parser;
     QPointer<WpaSupplicantCommandQueue> commandQueue;
     NetworkP2pDevice::Ptr currentPeer;
+    NetworkP2pDevice::Role currentRole;
 };
 
 #endif

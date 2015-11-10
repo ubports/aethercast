@@ -185,6 +185,11 @@ NetworkP2pManagerWpaSupplicant::~NetworkP2pManagerWpaSupplicant()
         supplicantProcess->close();
 }
 
+NetworkP2pDevice::Role NetworkP2pManagerWpaSupplicant::role() const
+{
+    return currentRole;
+}
+
 void NetworkP2pManagerWpaSupplicant::setup()
 {
     startSupplicant();
@@ -414,10 +419,12 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
 
         currentPeer->setState(NetworkP2pDevice::Connected);
 
+        // If we're the GO the other side is the client and vice versa
+        qDebug() << "role" <<  items[2];
         if (items[2] == "GO")
-            currentPeer->setRole(NetworkP2pDevice::GroupOwner);
+            currentRole = NetworkP2pDevice::GroupOwner;
         else
-            currentPeer->setRole(NetworkP2pDevice::GroupClient);
+            currentRole = NetworkP2pDevice::GroupClient;
 
         Q_EMIT peerConnected(currentPeer);
     }
