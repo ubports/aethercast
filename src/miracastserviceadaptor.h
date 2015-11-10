@@ -44,12 +44,12 @@ public Q_SLOTS:
     void Scan();
     void GetPeers(const QDBusMessage &message);
     void ConnectSink(const QString &address, const QDBusMessage &message);
-    void DisconnectAll();
+    void DisconnectAll(const QDBusMessage &message);
 
 private:
     void appendPeer(QVariantMap &info, const NetworkP2pDevice::Ptr &peer);
     void schedulePeersChanged();
-    void replyWithError(const QDBusMessage &message, const QString &text = "");
+    void replyWithError(const QDBusMessage &message, QDBusError::ErrorType type, const QString &text = "");
     void sendPropertyChanged(const QString &name, const QVariant &value);
     int storeDelayedReply(const QDBusMessage &message);
 

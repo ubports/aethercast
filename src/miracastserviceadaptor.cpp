@@ -140,21 +140,17 @@ void MiracastServiceAdaptor::GetPeers(const QDBusMessage &message)
     QDBusConnection::systemBus().send(reply);
 }
 
-void MiracastServiceAdaptor::replyWithError(const QDBusMessage &message, const QString &text)
+void MiracastServiceAdaptor::replyWithError(const QDBusMessage &message, QDBusError::ErrorType type, const QString &text)
 {
-    QDBusMessage reply;
-
-    if (message.type() == QDBusMessage::ReplyMessage)
-        reply = message;
-    else
-        reply = message.createError(QDBusError::InvalidArgs, text);
-
+    auto reply = message.createErrorReply(type, text);
     QDBusConnection::systemBus().send(reply);
 }
 
 int MiracastServiceAdaptor::storeDelayedReply(const QDBusMessage &message)
 {
     static int nextId = 0;
+
+    message.setDelayedReply(true);
 
     auto id = nextId++;
     delayedMessages.insert(id, message);
@@ -164,25 +160,30 @@ int MiracastServiceAdaptor::storeDelayedReply(const QDBusMessage &message)
 void MiracastServiceAdaptor::ConnectSink(const QString &address, const QDBusMessage &message)
 {
     if (address.size() == 0) {
-        replyWithError(message);
+        replyWithError(message, QDBusError::InvalidArgs);
         return;
     }
 
     if (currentConnectId >= 0) {
-        replyWithError(message, "Already connecting");
+        replyWithError(message, QDBusError::Failed, "Already connecting");
     }
-
-    message.setDelayedReply(true);
 
     // We need to save a class reference here as otherwise it got missed
     // and not carried into the lambda below.
     currentConnectId = storeDelayedReply(message);
 
     service->connectSink(address, [&](bool success, const QString &errorText) {
-        auto msg = delayedMessages.value(currentConnectId);
+        if (currentConnectId < 0)
+            return;
+
+        if (!delayedMessages.contains(currentConnectId))
+            return;
+
+        QDBusMessage msg = delayedMessages.value(currentConnectId);
 
         if (!success) {
-            replyWithError(msg, errorText);
+            replyWithError(msg, QDBusError::Failed, errorText);
+            currentConnectId = -1;
             return;
         }
 
@@ -193,7 +194,13 @@ void MiracastServiceAdaptor::ConnectSink(const QString &address, const QDBusMess
     });
 }
 
-void MiracastServiceAdaptor::DisconnectAll()
+void MiracastServiceAdaptor::DisconnectAll(const QDBusMessage &message)
 {
+    if (service->state() != NetworkP2pDevice::Connecting &&
+            service->state() != NetworkP2pDevice::Connected) {
+
+        replyWithError(message, QDBusError::Failed, "Not connected");
+        return;
+    }
     service->networkManager()->disconnectAll();
 }
