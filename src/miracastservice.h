@@ -49,6 +49,7 @@ private Q_SLOTS:
     void onPeerConnected(const NetworkP2pDevice::Ptr &peer);
     void onPeerDisconnected(const NetworkP2pDevice::Ptr &peer);
     void onPeerFailed(const NetworkP2pDevice::Ptr &peer);
+    void onLocalClientAddressAssigned(const QString &address);
     void onSourceClientDisconnected();
 
 private:

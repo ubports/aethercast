@@ -20,6 +20,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QScopedPointer>
 
 class DhcpClient : public QObject
 {
@@ -31,8 +32,12 @@ public:
     bool start();
     void stop();
 
+Q_SIGNALS:
+    void addressAssigned(const QString &address);
+
 private:
-    QString interface;
+    class Private;
+    QScopedPointer<Private> d;
 };
 
 #endif

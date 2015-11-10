@@ -33,6 +33,9 @@ public:
     bool setup(const QString &address, quint16 port);
     void release();
 
+Q_SIGNALS:
+    void clientDisconnected();
+
 private Q_SLOTS:
     void onNewConnection();
 

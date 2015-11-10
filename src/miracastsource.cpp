@@ -48,6 +48,9 @@ void MiracastSource::onNewConnection()
 
     currentClient = new MiracastSourceClient(socket);
 
+    connect(currentClient, SIGNAL(connectionClosed()),
+            this, SIGNAL(clientDisconnected()));
+
     // We stop here accepting any further connections as we only deal
     // with one at a time
     server.pauseAccepting();
@@ -55,4 +58,7 @@ void MiracastSource::onNewConnection()
 
 void MiracastSource::release()
 {
+    server.close();
+    currentClient->deleteLater();
+    currentClient = nullptr;
 }
