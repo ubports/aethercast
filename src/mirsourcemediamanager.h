@@ -18,12 +18,14 @@
 #ifndef MIRMEDIAMANAGER_H_
 #define MIRMEDIAMANAGER_H_
 
+#include <QHostAddress>
+
 #include "basesourcemediamanager.h"
 
 class MirSourceMediaManager : public BaseSourceMediaManager
 {
 public:
-    explicit MirSourceMediaManager();
+    explicit MirSourceMediaManager(const QHostAddress &remoteAddress);
 
     void Play() override;
     void Pause() override;

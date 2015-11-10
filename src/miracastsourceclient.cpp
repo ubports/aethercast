@@ -25,7 +25,7 @@ MiracastSourceClient::MiracastSourceClient(QTcpSocket *socket) :
 {
     connect(socket, SIGNAL(readyRead()), this, SLOT(onSocketReadyRead()));
 
-    mediaManager.reset(new MirSourceMediaManager);
+    mediaManager.reset(new MirSourceMediaManager(socket->peerAddress()));
     source.reset(wds::Source::Create(this, mediaManager.data()));
 
     source->Start();

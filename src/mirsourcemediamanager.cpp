@@ -17,7 +17,7 @@
 
 #include "mirsourcemediamanager.h"
 
-MirSourceMediaManager::MirSourceMediaManager()
+MirSourceMediaManager::MirSourceMediaManager(const QHostAddress &remoteAddress)
 {
 }
 
