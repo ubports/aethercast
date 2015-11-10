@@ -198,7 +198,7 @@ void NetworkP2pManagerWpaSupplicant::setup()
 
 void NetworkP2pManagerWpaSupplicant::startSupplicant()
 {
-    QString path = "/home/phablet/wpa_supplicant";
+    QString path = "/sbin/wpa_supplicant";
     QStringList arguments;
     arguments << "-Dnl80211"
               << QString("-i%1").arg(interface)
