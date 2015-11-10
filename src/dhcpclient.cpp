@@ -52,6 +52,11 @@ public:
         Q_EMIT inst->addressAssigned(inst->d->localAddress);
     }
 
+    static void onClientDebug(const char *str, gpointer user_data)
+    {
+        qDebug() << "DHCP:" << str;
+    }
+
     QString interface;
     GDHCPClient *client;
     QString localAddress;
@@ -80,6 +85,8 @@ bool DhcpClient::start()
         qWarning() << "Failed to setup DHCP client";
         return false;
     }
+
+    g_dhcp_client_set_debug(d->client, &Private::onClientDebug, this);
 
     g_dhcp_client_register_event(d->client, G_DHCP_CLIENT_EVENT_LEASE_AVAILABLE, &Private::onLeaseAvailable, this);
 
