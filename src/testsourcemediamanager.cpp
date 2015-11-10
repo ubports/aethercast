@@ -40,7 +40,7 @@ QString TestSourceMediaManager::constructPipeline()
     QString config;
 
     config += "videotestsrc ! videoconvert ! video/x-raw,format=I420 ! ";
-    config += "x264enc ! muxer.  audiotestsrc ! avenc_ac3 ! muxer.  mpegtsmux name=muxer ! ";
+    config += "x264enc ! mpegtsmux ! ";
     config += "rtpmp2tpay ! udpsink name=sink ";
     config += QString("host=%1 ").arg(d->remoteAddress.toString());
     config += QString("port=%1 ").arg(sinkPort1);
