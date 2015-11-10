@@ -171,7 +171,8 @@ NetworkP2pManagerWpaSupplicant::NetworkP2pManagerWpaSupplicant(const QString &if
     supplicantProcess(new QProcess(this)),
     ctrlPath(QString("/var/run/%1_supplicant").arg(interface)),
     parser(new WpaSupplicantParser),
-    commandQueue(new WpaSupplicantCommandQueue(parser))
+    commandQueue(new WpaSupplicantCommandQueue(parser)),
+    currentRole(NetworkP2pDevice::Undecied)
 {
     QObject::connect(commandQueue, SIGNAL(transportWriteNeeded(QString)),
                      this, SLOT(onTransportWriteNeeded(QString)));

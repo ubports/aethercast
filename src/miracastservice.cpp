@@ -91,7 +91,7 @@ void MiracastService::loadRequiredFirmware()
 
 void MiracastService::setupDhcp()
 {
-    if (currentPeer->role() == NetworkP2pDevice::GroupOwner)
+    if (manager->role() == NetworkP2pDevice::GroupOwner)
         dhcpServer.start();
     else
         dhcpClient.start();
