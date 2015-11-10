@@ -109,4 +109,6 @@ void DhcpServer::stop()
     g_dhcp_server_stop(d->server);
 
     g_dhcp_server_unref(d->server);
+
+    NetworkUtils::resetInterface(d->ifaceIndex);
 }

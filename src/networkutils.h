@@ -27,6 +27,7 @@ public:
     static int modifyAddress(int cmd, int flags, int index, int family,
                              const char *address, const char *peer,
                              unsigned char prefixlen, const char *broadcast);
+    static int resetInterface(int index);
 };
 
 #endif

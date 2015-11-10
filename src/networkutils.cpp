@@ -25,6 +25,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include <QDebug>
+
 #include "networkutils.h"
 
 #define NLMSG_TAIL(nmsg)				\
@@ -191,4 +193,40 @@ int NetworkUtils::retriveInterfaceIndex(const QString &name)
         return -1;
 
     return ifr.ifr_ifindex;;
+}
+
+int NetworkUtils::resetInterface(int index)
+{
+    struct ifreq ifr, addr_ifr;
+    struct sockaddr_in *addr;
+    int sk, err;
+
+    sk = socket(PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+    if (sk < 0)
+        return -errno;
+
+    memset(&ifr, 0, sizeof(ifr));
+    ifr.ifr_ifindex = index;
+
+    if (ioctl(sk, SIOCGIFNAME, &ifr) < 0) {
+        err = -errno;
+        goto done;
+    }
+
+    if (ioctl(sk, SIOCGIFFLAGS, &ifr) < 0) {
+        err = -errno;
+        goto done;
+    }
+
+    memset(&addr_ifr, 0, sizeof(addr_ifr));
+    memcpy(&addr_ifr.ifr_name, &ifr.ifr_name, sizeof(ifr.ifr_name) - 1);
+    addr = (struct sockaddr_in *)&addr_ifr.ifr_addr;
+    addr->sin_family = AF_INET;
+    if (ioctl(sk, SIOCSIFADDR, &addr_ifr) < 0)
+        qWarning() << "Could not clear IPv4 address of interface with index" << index;
+
+done:
+    close(sk);
+
+    return err;
 }

@@ -102,4 +102,6 @@ void DhcpClient::stop()
 
     d->localAddress = "";
     d->netmask = "";
+
+    NetworkUtils::resetInterface(d->ifaceIndex);
 }
