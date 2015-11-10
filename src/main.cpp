@@ -18,6 +18,8 @@
 #include <QCoreApplication>
 #include <QDBusConnection>
 
+#include <gst/gst.h>
+
 #include "unixsignalhandler.h"
 #include "miracastservice.h"
 #include "miracastserviceadaptor.h"
@@ -25,6 +27,8 @@
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
+
+    gst_init(nullptr, nullptr);
 
     util::UnixSignalHandler handler([]{
         QCoreApplication::exit(0);
