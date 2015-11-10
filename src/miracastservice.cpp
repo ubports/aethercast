@@ -99,7 +99,7 @@ void MiracastService::setupDhcp()
 
 void MiracastService::releaseDhcp()
 {
-    if (currentPeer->role() == NetworkP2pDevice::GroupOwner)
+    if (manager->role() == NetworkP2pDevice::GroupOwner)
         dhcpServer.stop();
     else
         dhcpClient.stop();
