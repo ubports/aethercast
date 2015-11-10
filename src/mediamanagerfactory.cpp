@@ -52,6 +52,8 @@ BaseSourceMediaManager* MediaManagerFactory::createSource(const QHostAddress &re
 {
     auto type = qgetenv("MIRACAST_SOURCE_TYPE");
 
+    qDebug() << "Creating source media manager of type" << type;
+
     if (type.size() == 0 || type == "mir")
         return new MirSourceMediaManager(remoteAddress);
     else if (type == "test")

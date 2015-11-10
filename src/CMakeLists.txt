@@ -10,6 +10,7 @@ set(SOURCES
   dhcpserver.cpp
   mediamanagerfactory.cpp
   basesourcemediamanager.cpp
+  gstsourcemediamanager.cpp
   testsourcemediamanager.cpp
   mirsourcemediamanager.cpp
   miracastservice.cpp

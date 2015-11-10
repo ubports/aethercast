@@ -15,22 +15,29 @@
  *
  */
 
-#ifndef TESTMEDIAMANAGER_H_
-#define TESTMEDIAMANAGER_H_
+#ifndef GSTMEDIAMANAGER_H_
+#define GSTMEDIAMANAGER_H_
 
 #include <QScopedPointer>
 #include <QHostAddress>
 
-#include "gstsourcemediamanager.h"
+#include "basesourcemediamanager.h"
 
-class TestSourceMediaManager : public GstSourceMediaManager
+class GstSourceMediaManager : public BaseSourceMediaManager
 {
 public:
-    explicit TestSourceMediaManager(const QHostAddress &remoteAddress);
-    ~TestSourceMediaManager();
+    explicit GstSourceMediaManager();
+    ~GstSourceMediaManager();
+
+    void Play() override;
+    void Pause() override;
+    void Teardown() override;
+    bool IsPaused() const override;
 
 protected:
-    QString constructPipeline() override;
+    void configure() override;
+
+    virtual QString constructPipeline() = 0;
 
 private:
     class Private;
