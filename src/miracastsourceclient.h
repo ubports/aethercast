@@ -43,8 +43,12 @@ public:
     uint CreateTimer(int seconds) override;
     void ReleaseTimer(uint timerId) override;
 
+Q_SIGNALS:
+    void connectionClosed();
+
 private Q_SLOTS:
     void onSocketReadyRead();
+    void onSocketDisconnected();
 
 private:
     QTcpSocket *socket;

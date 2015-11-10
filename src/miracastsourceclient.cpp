@@ -26,6 +26,7 @@ MiracastSourceClient::MiracastSourceClient(QTcpSocket *socket) :
     socket(socket)
 {
     connect(socket, SIGNAL(readyRead()), this, SLOT(onSocketReadyRead()));
+    connect(socket, SIGNAL(disconnected()), this, SLOT(onSocketDisconnected()));
 
     mediaManager.reset(MediaManagerFactory::createSource(socket->peerAddress()));
     source.reset(wds::Source::Create(this, mediaManager.data()));
@@ -48,6 +49,11 @@ void MiracastSourceClient::onSocketReadyRead()
 
         source->RTSPDataReceived(data.toStdString());
     }
+}
+
+void MiracastSourceClient::onSocketDisconnected()
+{
+    Q_EMIT connectionClosed();
 }
 
 void MiracastSourceClient::SendRTSPData(const std::string &data)

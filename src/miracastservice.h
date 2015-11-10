@@ -49,6 +49,7 @@ private Q_SLOTS:
     void onPeerConnected(const NetworkP2pDevice::Ptr &peer);
     void onPeerDisconnected(const NetworkP2pDevice::Ptr &peer);
     void onPeerFailed(const NetworkP2pDevice::Ptr &peer);
+    void onSourceClientDisconnected();
 
 private:
     void loadRequiredFirmware();

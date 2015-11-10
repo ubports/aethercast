@@ -51,6 +51,9 @@ MiracastService::MiracastService() :
         connect(manager, SIGNAL(peerFailed(NetworkP2pDevice::Ptr)),
                 this, SLOT(onPeerFailed(NetworkP2pDevice::Ptr)));
     });
+
+    connect(&source, SIGNAL(clientDisconnected()),
+            this, SLOT(onSourceClientDisconnected()));
 }
 
 MiracastService::~MiracastService()
@@ -182,6 +185,15 @@ void MiracastService::onPeerFailed(const NetworkP2pDevice::Ptr &peer)
 
 void MiracastService::onPeerChanged(const NetworkP2pDevice::Ptr &peer)
 {
+}
+
+
+void MiracastService::onSourceClientDisconnected()
+{
+    QTimer::singleShot(0, [=] {
+        advanceState(NetworkP2pDevice::Failure);
+        currentPeer.clear();
+    });
 }
 
 void MiracastService::startIdleTimer()
