@@ -28,6 +28,8 @@ void BaseSourceMediaManager::SetSinkRtpPorts(int port1, int port2)
 {
     sinkPort1 = port1;
     sinkPort2 = port2;
+
+    configure();
 }
 
 std::pair<int, int> BaseSourceMediaManager::GetSinkRtpPorts() const

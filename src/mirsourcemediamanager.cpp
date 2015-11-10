@@ -37,3 +37,7 @@ bool MirSourceMediaManager::IsPaused() const
 {
     return true;
 }
+
+void MirSourceMediaManager::configure()
+{
+}

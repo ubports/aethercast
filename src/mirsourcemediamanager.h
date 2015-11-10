@@ -29,6 +29,9 @@ public:
     void Pause() override;
     void Teardown() override;
     bool IsPaused() const override;
+
+protected:
+    void configure() override;
 };
 
 #endif
