@@ -19,13 +19,14 @@
 
 #include "miracastsourceclient.h"
 #include "mirsourcemediamanager.h"
+#include "mediamanagerfactory.h"
 
 MiracastSourceClient::MiracastSourceClient(QTcpSocket *socket) :
     socket(socket)
 {
     connect(socket, SIGNAL(readyRead()), this, SLOT(onSocketReadyRead()));
 
-    mediaManager.reset(new MirSourceMediaManager(socket->peerAddress()));
+    mediaManager.reset(MediaManagerFactory::createSource(socket->peerAddress()));
     source.reset(wds::Source::Create(this, mediaManager.data()));
 
     source->Start();

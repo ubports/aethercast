@@ -8,6 +8,7 @@ set(SOURCES
   networkutils.cpp
   dhcpclient.cpp
   dhcpserver.cpp
+  mediamanagerfactory.cpp
   basesourcemediamanager.cpp
   mirsourcemediamanager.cpp
   miracastservice.cpp
