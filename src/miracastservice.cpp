@@ -109,14 +109,22 @@ void MiracastService::advanceState(NetworkP2pDevice::State newState)
         qDebug() << "State: connected";
 
         setupDhcp();
+
+        // If we're the group owner we can just start the source as we
+        // already know on which address we have to listen for incoming
+        // connections. If we're the client then we have to wait until
+        // we get a IP assigned through DHCP.
+        if (currentPeer->role() == NetworkP2pDevice::GroupClient) {
+            source.setup(dhcpServer.localAddress(),
+                         MIRACAST_DEFAULT_RTSP_CTRL_PORT);
+
+            finishConnectAttempt(true);
+        }
+
 #if 0
         source.setup(currentDevice->ipv4().localAddress(),
                      MIRACAST_DEFAULT_RTSP_CTRL_PORT);
-#else
-        source.setup("192.168.7.1",
-                     MIRACAST_DEFAULT_RTSP_CTRL_PORT);
 #endif
-        finishConnectAttempt(true);
 
         break;
 

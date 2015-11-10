@@ -58,6 +58,12 @@ DhcpServer::~DhcpServer()
         g_dhcp_server_unref(d->server);
 }
 
+QString DhcpServer::localAddress() const
+{
+    // FIXME this should be stored somewhere else
+    return QString("192.168.7.1");
+}
+
 bool DhcpServer::start()
 {
     qWarning() << "Starting up DHCP server";
@@ -69,13 +75,13 @@ bool DhcpServer::start()
     }
 
     // FIXME store those defaults somewhere else
-    const char *gateway = "192.168.7.1";
     const char *subnet = "255.255.255.0";
     const char *broadcast = "192.168.7.255";
     unsigned char prefixlen = 24;
 
     if (NetworkUtils::modifyAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, index,
-                                    AF_INET, gateway, NULL, prefixlen, broadcast) < 0) {
+                                    AF_INET, localAddress().toUtf8().constData(),
+                                    NULL, prefixlen, broadcast) < 0) {
         qWarning() << "Failed to assign network address for" << d->interface;
         return false;
     }
@@ -89,7 +95,7 @@ bool DhcpServer::start()
 
     g_dhcp_server_set_lease_time(d->server, 3600);
     g_dhcp_server_set_option(d->server, G_DHCP_SUBNET, subnet);
-    g_dhcp_server_set_option(d->server, G_DHCP_ROUTER, gateway);
+    g_dhcp_server_set_option(d->server, G_DHCP_ROUTER, localAddress().toUtf8().constData());
     g_dhcp_server_set_option(d->server, G_DHCP_DNS_SERVER, NULL);
     g_dhcp_server_set_ip_range(d->server, "192.168.7.5", "192.168.7.100");
 
