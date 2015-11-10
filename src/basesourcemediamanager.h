@@ -20,7 +20,7 @@
 
 #include <wds/media_manager.h>
 
-class BaseMediaManager : public wds::SourceMediaManager
+class BaseSourceMediaManager : public wds::SourceMediaManager
 {
 public:
     void SetSinkRtpPorts(int port1, int port2) override;

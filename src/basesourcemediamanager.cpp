@@ -19,23 +19,23 @@
 
 #include "basesourcemediamanager.h"
 
-wds::SessionType BaseMediaManager::GetSessionType() const
+wds::SessionType BaseSourceMediaManager::GetSessionType() const
 {
     return wds::VideoSession;
 }
 
-void BaseMediaManager::SetSinkRtpPorts(int port1, int port2)
+void BaseSourceMediaManager::SetSinkRtpPorts(int port1, int port2)
 {
     sinkPort1 = port1;
     sinkPort2 = port2;
 }
 
-std::pair<int, int> BaseMediaManager::GetSinkRtpPorts() const
+std::pair<int, int> BaseSourceMediaManager::GetSinkRtpPorts() const
 {
     return std::pair<int, int>(sinkPort1, sinkPort2);
 }
 
-int BaseMediaManager::GetLocalRtpPort() const
+int BaseSourceMediaManager::GetLocalRtpPort() const
 {
     return sinkPort1;
 }
@@ -64,7 +64,7 @@ std::vector<wds::H264VideoCodec> GetH264VideoCodecs()
     return codecs;
 }
 
-bool BaseMediaManager::InitOptimalVideoFormat(const wds::NativeVideoFormat& sink_native_format,
+bool BaseSourceMediaManager::InitOptimalVideoFormat(const wds::NativeVideoFormat& sink_native_format,
     const std::vector<wds::H264VideoCodec>& sink_supported_codecs)
 {
 
@@ -81,12 +81,12 @@ bool BaseMediaManager::InitOptimalVideoFormat(const wds::NativeVideoFormat& sink
     return true;
 }
 
-wds::H264VideoFormat BaseMediaManager::GetOptimalVideoFormat() const
+wds::H264VideoFormat BaseSourceMediaManager::GetOptimalVideoFormat() const
 {
     return format;
 }
 
-bool BaseMediaManager::InitOptimalAudioFormat(const std::vector<wds::AudioCodec>& sink_codecs)
+bool BaseSourceMediaManager::InitOptimalAudioFormat(const std::vector<wds::AudioCodec>& sink_codecs)
 {
     for (const auto& codec : sink_codecs) {
         if (codec.format == wds::AAC && codec.modes.test(wds::AAC_48K_16B_2CH))
@@ -96,7 +96,7 @@ bool BaseMediaManager::InitOptimalAudioFormat(const std::vector<wds::AudioCodec>
     return false;
 }
 
-wds::AudioCodec BaseMediaManager::GetOptimalAudioFormat() const
+wds::AudioCodec BaseSourceMediaManager::GetOptimalAudioFormat() const
 {
   wds::AudioModes audio_modes;
   audio_modes.set(wds::AAC_48K_16B_2CH);
@@ -104,7 +104,7 @@ wds::AudioCodec BaseMediaManager::GetOptimalAudioFormat() const
   return wds::AudioCodec(wds::AAC, audio_modes, 0);
 }
 
-void BaseMediaManager::SendIDRPicture()
+void BaseSourceMediaManager::SendIDRPicture()
 {
     qWarning() << "Unimplemented IDR picture request";
 }

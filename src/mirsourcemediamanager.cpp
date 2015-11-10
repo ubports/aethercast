@@ -17,23 +17,23 @@
 
 #include "mirsourcemediamanager.h"
 
-MirMediaManager::MirMediaManager()
+MirSourceMediaManager::MirSourceMediaManager()
 {
 }
 
-void MirMediaManager::Play()
+void MirSourceMediaManager::Play()
 {
 }
 
-void MirMediaManager::Pause()
+void MirSourceMediaManager::Pause()
 {
 }
 
-void MirMediaManager::Teardown()
+void MirSourceMediaManager::Teardown()
 {
 }
 
-bool MirMediaManager::IsPaused() const
+bool MirSourceMediaManager::IsPaused() const
 {
     return true;
 }

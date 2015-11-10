@@ -20,10 +20,10 @@
 
 #include "basesourcemediamanager.h"
 
-class MirMediaManager : public BaseMediaManager
+class MirSourceMediaManager : public BaseSourceMediaManager
 {
 public:
-    explicit MirMediaManager();
+    explicit MirSourceMediaManager();
 
     void Play() override;
     void Pause() override;
