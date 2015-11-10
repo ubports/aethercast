@@ -38,6 +38,18 @@ MiracastSourceClient::~MiracastSourceClient()
 {
 }
 
+void MiracastSourceClient::dumpRtsp(const QString &prefix, const QString &data)
+{
+    QStringList lines = data.split("\n", QString::SkipEmptyParts);
+
+    for (auto line : lines) {
+        if (line.size() == 0)
+            continue;
+
+        qDebug("RTSP %s: %s", prefix.toUtf8().constData(), line.toUtf8().constData());
+    }
+}
+
 void MiracastSourceClient::onSocketReadyRead()
 {
     while (socket->bytesAvailable()) {
@@ -45,7 +57,7 @@ void MiracastSourceClient::onSocketReadyRead()
         if (data.size() <= 0)
             break;
 
-        qDebug() << "RTSP OUT:" << data;
+        dumpRtsp("IN", data);
 
         source->RTSPDataReceived(data.toStdString());
     }
@@ -58,9 +70,10 @@ void MiracastSourceClient::onSocketDisconnected()
 
 void MiracastSourceClient::SendRTSPData(const std::string &data)
 {
-    qDebug() << "RTSP OUT:" << QString::fromStdString(data);
+    auto dataStr = QString::fromStdString(data);
+    dumpRtsp("OUT", dataStr);
 
-    if (socket->write(QString::fromStdString(data).toUtf8()) < 0) {
+    if (socket->write(dataStr.toUtf8()) < 0) {
         qWarning() << "Failed to write data to RTSP client";
         return;
     }

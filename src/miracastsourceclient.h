@@ -51,6 +51,9 @@ private Q_SLOTS:
     void onSocketDisconnected();
 
 private:
+    void dumpRtsp(const QString &prefix, const QString &data);
+
+private:
     QTcpSocket *socket;
     QMap<int,QTimer*> timers;
     QScopedPointer<wds::Source> source;
