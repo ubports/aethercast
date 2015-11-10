@@ -67,12 +67,13 @@ bool DhcpServer::start()
     }
 
     // FIXME store those defaults somewhere else
+    const char *address = "192.168.7.1";
     const char *subnet = "255.255.255.0";
     const char *broadcast = "192.168.7.255";
     unsigned char prefixlen = 24;
 
     if (NetworkUtils::modifyAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, index,
-                                    AF_INET, localAddress().toUtf8().constData(),
+                                    AF_INET, address,
                                     NULL, prefixlen, broadcast) < 0) {
         qWarning() << "Failed to assign network address for" << d->interface;
         return false;
