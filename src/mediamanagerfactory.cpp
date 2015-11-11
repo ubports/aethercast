@@ -45,6 +45,7 @@ public:
 protected:
     void configure() override
     {
+        qWarning() << "NullSourceMediaManager: Not implemented";
     }
 };
 
