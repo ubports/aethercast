@@ -75,6 +75,11 @@ DhcpClient::~DhcpClient()
 {
 }
 
+QString DhcpClient::localAddress() const
+{
+    return d->localAddress;
+}
+
 bool DhcpClient::start()
 {
     GDHCPClientError error;

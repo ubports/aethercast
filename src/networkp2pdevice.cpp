@@ -43,7 +43,7 @@ QString NetworkP2pDevice::stateToStr(State state)
         return "idle";
     case Failure:
         return "failure";
-    case Connecting:
+    case Association:
         return "connecting";
     case Connected:
         return "connected";

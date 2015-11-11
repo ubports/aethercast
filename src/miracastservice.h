@@ -49,7 +49,6 @@ private Q_SLOTS:
     void onPeerConnected(const NetworkP2pDevice::Ptr &peer);
     void onPeerDisconnected(const NetworkP2pDevice::Ptr &peer);
     void onPeerFailed(const NetworkP2pDevice::Ptr &peer);
-    void onLocalClientAddressAssigned(const QString &address);
     void onSourceClientDisconnected();
 
 private:
@@ -57,8 +56,6 @@ private:
     void advanceState(NetworkP2pDevice::State newState);
     void finishConnectAttempt(bool success, const QString &errorText = "");
     void startIdleTimer();
-    void setupDhcp();
-    void releaseDhcp();
 
 private:
     NetworkP2pManager *manager;
@@ -66,8 +63,6 @@ private:
     NetworkP2pDevice::State currentState;
     NetworkP2pDevice::Ptr currentPeer;
     std::function<void(bool,QString)> connectCallback;
-    DhcpClient dhcpClient;
-    DhcpServer dhcpServer;
 };
 
 #endif

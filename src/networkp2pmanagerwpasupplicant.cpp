@@ -39,7 +39,10 @@
 #include "networkp2pdevice.h"
 #include "wfddeviceinfo.h"
 
-#define READ_BUFFER_SIZE    1024
+#define READ_BUFFER_SIZE            1024
+
+#define DHCP_IP_ASSIGNMENT_TIMEOUT  5000 /* 5 seconds */
+#define PEER_FAILURE_TIMEOUT        5000 /* 5 seconds */
 
 /*
  * Supplicant message names
@@ -172,12 +175,17 @@ NetworkP2pManagerWpaSupplicant::NetworkP2pManagerWpaSupplicant(const QString &if
     ctrlPath(QString("/var/run/%1_supplicant").arg(interface)),
     parser(new WpaSupplicantParser),
     commandQueue(new WpaSupplicantCommandQueue(parser)),
-    currentRole(NetworkP2pDevice::Undecied)
+    currentRole(NetworkP2pDevice::Undecied),
+    dhcpClient(iface),
+    dhcpServer(iface)
 {
     QObject::connect(commandQueue, SIGNAL(transportWriteNeeded(QString)),
                      this, SLOT(onTransportWriteNeeded(QString)));
     QObject::connect(commandQueue, SIGNAL(unsolicitedResponse(QString)),
                      this, SLOT(onUnsolicitedResponse(QString)));
+
+    QObject::connect(&dhcpClient, SIGNAL(addressAssigned(QString)),
+                     this, SLOT(onGroupClientAddressAssigned(QString)));
 }
 
 NetworkP2pManagerWpaSupplicant::~NetworkP2pManagerWpaSupplicant()
@@ -189,6 +197,18 @@ NetworkP2pManagerWpaSupplicant::~NetworkP2pManagerWpaSupplicant()
 NetworkP2pDevice::Role NetworkP2pManagerWpaSupplicant::role() const
 {
     return currentRole;
+}
+
+QString NetworkP2pManagerWpaSupplicant::localAddress() const
+{
+    QString address;
+
+    if (currentRole == NetworkP2pDevice::GroupOwner)
+        address = dhcpServer.localAddress();
+    else
+        address = dhcpClient.localAddress();
+
+    return address;
 }
 
 void NetworkP2pManagerWpaSupplicant::setup()
@@ -332,6 +352,32 @@ void NetworkP2pManagerWpaSupplicant::request(const QString &command, std::functi
     commandQueue->enqueueCommand(command, callback);
 }
 
+void NetworkP2pManagerWpaSupplicant::onGroupClientAddressAssigned(const QString &address)
+{
+    if (currentPeer.isNull())
+        return;
+
+    currentPeer->setAddress(address);
+    currentPeer->setState(NetworkP2pDevice::Connected);
+
+    Q_EMIT peerConnected(currentPeer);
+}
+
+void NetworkP2pManagerWpaSupplicant::onGroupClientDhcpTimeout()
+{
+    if (currentPeer.isNull())
+        return;
+
+    currentPeer->setState(NetworkP2pDevice::Failure);
+
+    // Switch peer back into idle state after some time
+    QTimer::singleShot(PEER_FAILURE_TIMEOUT, [=]() {
+        currentPeer->setState(NetworkP2pDevice::Idle);
+    });
+
+    Q_EMIT peerFailed(currentPeer);
+}
+
 int parseHex(const QString &str)
 {
     auto hexStr = str;
@@ -416,15 +462,34 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
 
         QStringList items = realResponse.split(" ");
 
-        currentPeer->setState(NetworkP2pDevice::Connected);
+        currentPeer->setState(NetworkP2pDevice::Configuration);
 
         // If we're the GO the other side is the client and vice versa
-        if (items[2] == "GO")
+        if (items[2] == "GO") {
             currentRole = NetworkP2pDevice::GroupOwner;
-        else
+
+            currentPeer->setState(NetworkP2pDevice::Connected);
+
+            // As we're the owner we can now just startup the DHCP server
+            // and report we're connected as there is not much more to do
+            // from our side.
+            dhcpServer.start();
+
+            Q_EMIT peerConnected(currentPeer);
+        }
+        else {
             currentRole = NetworkP2pDevice::GroupClient;
 
-        Q_EMIT peerConnected(currentPeer);
+            // We're a client of a formed group now and have to acquire
+            // our IP address via DHCP so we have to wait until we're
+            // reporting our upper layers that we're connected.
+            dhcpClient.start();
+
+            // To not wait forever we're starting a timeout here which
+            // will bring everything down if we didn't received a IP
+            // address once it happens.
+            QTimer::singleShot(DHCP_IP_ASSIGNMENT_TIMEOUT, this, SLOT(onGroupClientDhcpTimeout()));
+        }
     }
     else if (realResponse.startsWith(P2P_GROUP_REMOVED)) {
         // P2P-GROUP-REMOVED p2p0 GO reason=FORMATION_FAILED
@@ -433,6 +498,7 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
 
         QStringList items = realResponse.split(" ");
 
+        currentPeer->setAddress("");
         currentPeer->setState(NetworkP2pDevice::Disconnected);
 
         auto reason = items[3].section('=', 1);

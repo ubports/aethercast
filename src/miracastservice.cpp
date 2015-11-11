@@ -30,9 +30,7 @@
 #define MIRACAST_DEFAULT_RTSP_CTRL_PORT     7236
 
 MiracastService::MiracastService() :
-    currentState(NetworkP2pDevice::Idle),
-    dhcpClient("p2p0"),
-    dhcpServer("p2p0")
+    currentState(NetworkP2pDevice::Idle)
 {
     if (!QFile::exists("/sys/class/net/p2p0/uevent"))
         loadRequiredFirmware();
@@ -51,9 +49,6 @@ MiracastService::MiracastService() :
         connect(manager, SIGNAL(peerFailed(NetworkP2pDevice::Ptr)),
                 this, SLOT(onPeerFailed(NetworkP2pDevice::Ptr)));
     });
-
-    connect(&dhcpClient, SIGNAL(addressAssigned(QString)),
-            this, SLOT(onLocalClientAddressAssigned(QString)));
 
     connect(&source, SIGNAL(clientDisconnected()),
             this, SLOT(onSourceClientDisconnected()));
@@ -89,54 +84,34 @@ void MiracastService::loadRequiredFirmware()
     }
 }
 
-void MiracastService::setupDhcp()
-{
-    if (manager->role() == NetworkP2pDevice::GroupOwner)
-        dhcpServer.start();
-    else
-        dhcpClient.start();
-}
-
-void MiracastService::releaseDhcp()
-{
-    if (manager->role() == NetworkP2pDevice::GroupOwner)
-        dhcpServer.stop();
-    else
-        dhcpClient.stop();
-}
-
 void MiracastService::advanceState(NetworkP2pDevice::State newState)
 {
+    QString address;
+
     switch (newState) {
-    case NetworkP2pDevice::Connecting:
+    case NetworkP2pDevice::Association:
         break;
 
     case NetworkP2pDevice::Connected:
+        // We've have to pick the right address we need to tell our source to
+        // push all streaming data to.
+        address = currentPeer->address();
+        if (manager->role() == NetworkP2pDevice::GroupOwner)
+            address = manager->localAddress();
 
-        setupDhcp();
+        source.setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
 
-        // If we're the group owner we can just start the source as we
-        // already know on which address we have to listen for incoming
-        // connections. If we're the client then we have to wait until
-        // we get a IP assigned through DHCP.
-        if (manager->role() == NetworkP2pDevice::GroupOwner) {
-            source.setup(dhcpServer.localAddress(),
-                         MIRACAST_DEFAULT_RTSP_CTRL_PORT);
-
-            finishConnectAttempt(true);
-        }
+        finishConnectAttempt(true);
 
         break;
 
     case NetworkP2pDevice::Failure:
-        if (currentState == NetworkP2pDevice::Connecting)
+        if (currentState == NetworkP2pDevice::Association)
             finishConnectAttempt(false, "Failed to connect remote device");
 
     case NetworkP2pDevice::Disconnected:
-        if (currentState == NetworkP2pDevice::Connected) {
-            releaseDhcp();
+        if (currentState == NetworkP2pDevice::Connected)
             source.release();
-        }
 
         startIdleTimer();
         break;
@@ -182,15 +157,6 @@ void MiracastService::onPeerFailed(const NetworkP2pDevice::Ptr &peer)
 
 void MiracastService::onPeerChanged(const NetworkP2pDevice::Ptr &peer)
 {
-}
-
-void MiracastService::onLocalClientAddressAssigned(const QString &address)
-{
-    // We can now setup our source endpoint so that the remote side can
-    // connect to it.
-    source.setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
-
-    finishConnectAttempt(true);
 }
 
 void MiracastService::onSourceClientDisconnected()

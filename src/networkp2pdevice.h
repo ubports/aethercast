@@ -34,7 +34,8 @@ public:
     enum State {
         Idle,
         Failure,
-        Connecting,
+        Association,
+        Configuration,
         Connected,
         Disconnected
     };

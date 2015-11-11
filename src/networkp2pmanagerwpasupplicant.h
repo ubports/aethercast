@@ -29,6 +29,9 @@
 #include "networkp2pdevice.h"
 #include "networkp2pmanager.h"
 
+#include "dhcpclient.h"
+#include "dhcpserver.h"
+
 class WpaSupplicantParser;
 class WpaSupplicantCommandQueue;
 
@@ -51,6 +54,7 @@ public:
     int disconnectAll() override;
 
     NetworkP2pDevice::Role role() const override;
+    QString localAddress() const override;
 
 private Q_SLOTS:
     void onSupplicantFinished(int errorCode);
@@ -58,6 +62,8 @@ private Q_SLOTS:
     void onSocketReadyRead();
     void onTransportWriteNeeded(const QString &message);
     void onUnsolicitedResponse(const QString &response);
+    void onGroupClientAddressAssigned(const QString &address);
+    void onGroupClientDhcpTimeout();
 
 private:
     void startSupplicant();
@@ -80,6 +86,8 @@ private:
     QPointer<WpaSupplicantCommandQueue> commandQueue;
     NetworkP2pDevice::Ptr currentPeer;
     NetworkP2pDevice::Role currentRole;
+    DhcpClient dhcpClient;
+    DhcpServer dhcpServer;
 };
 
 #endif

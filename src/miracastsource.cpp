@@ -46,14 +46,15 @@ void MiracastSource::onNewConnection()
 {
     auto socket = server.nextPendingConnection();
 
+    if (currentClient) {
+        socket->close();
+        return;
+    }
+
     currentClient = new MiracastSourceClient(socket);
 
     connect(currentClient, SIGNAL(connectionClosed()),
             this, SIGNAL(clientDisconnected()));
-
-    // We stop here accepting any further connections as we only deal
-    // with one at a time
-    server.pauseAccepting();
 }
 
 void MiracastSource::release()

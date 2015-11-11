@@ -32,6 +32,8 @@ public:
     bool start();
     void stop();
 
+    QString localAddress() const;
+
 Q_SIGNALS:
     void addressAssigned(const QString &address);
 

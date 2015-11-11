@@ -40,6 +40,7 @@ public:
     virtual int disconnectAll() = 0;
 
     virtual NetworkP2pDevice::Role role() const = 0;
+    virtual QString localAddress() const = 0;
 
 Q_SIGNALS:
     void peerFound(const NetworkP2pDevice::Ptr &peer);

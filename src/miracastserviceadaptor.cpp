@@ -196,7 +196,7 @@ void MiracastServiceAdaptor::ConnectSink(const QString &address, const QDBusMess
 
 void MiracastServiceAdaptor::DisconnectAll(const QDBusMessage &message)
 {
-    if (service->state() != NetworkP2pDevice::Connecting &&
+    if (service->state() != NetworkP2pDevice::Association &&
             service->state() != NetworkP2pDevice::Connected) {
 
         replyWithError(message, QDBusError::Failed, "Not connected");
