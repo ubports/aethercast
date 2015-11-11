@@ -19,7 +19,7 @@
 #include "miracastsourceclient.h"
 
 MiracastSource::MiracastSource() :
-    currentClient(nullptr)
+    activeSink(nullptr)
 {
     QObject::connect(&server, SIGNAL(newConnection()),
                      this, SLOT(onNewConnection()));
@@ -46,20 +46,22 @@ void MiracastSource::onNewConnection()
 {
     auto socket = server.nextPendingConnection();
 
-    if (currentClient) {
+    // If we add support for a coupled sink some day we can allow
+    // more than one client to connect here.
+
+    if (activeSink) {
         socket->close();
         return;
     }
 
-    currentClient = new MiracastSourceClient(socket);
-
-    connect(currentClient, SIGNAL(connectionClosed()),
+    activeSink = new MiracastSourceClient(socket);
+    connect(activeSink, SIGNAL(connectionClosed()),
             this, SIGNAL(clientDisconnected()));
 }
 
 void MiracastSource::release()
 {
     server.close();
-    currentClient->deleteLater();
-    currentClient = nullptr;
+    activeSink->deleteLater();
+    activeSink = nullptr;
 }

@@ -41,7 +41,7 @@ private Q_SLOTS:
 
 private:
     QTcpServer server;
-    MiracastSourceClient *currentClient;
+    MiracastSourceClient *activeSink;
 };
 
 #endif
