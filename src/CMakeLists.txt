@@ -1,13 +1,7 @@
 set(SOURCES
-  gdhcp/common.c
-  gdhcp/ipv4ll.c
-  gdhcp/server.c
-  gdhcp/client.c
   main.cpp
   unixsignalhandler.cpp
   networkutils.cpp
-  dhcpclient.cpp
-  dhcpserver.cpp
   mediamanagerfactory.cpp
   basesourcemediamanager.cpp
   gstsourcemediamanager.cpp
@@ -19,7 +13,13 @@ set(SOURCES
   miracastsourceclient.cpp
   networkp2pmanager.cpp
   networkp2pdevice.cpp
-  networkp2pmanagerwpasupplicant.cpp
+  wpa/gdhcp/common.c
+  wpa/gdhcp/ipv4ll.c
+  wpa/gdhcp/server.c
+  wpa/gdhcp/client.c
+  wpa/dhcpclient.cpp
+  wpa/dhcpserver.cpp
+  wpa/networkp2pmanagerwpasupplicant.cpp
 )
 
 link_directories(
@@ -35,7 +35,8 @@ include_directories(
   ${GST_INCLUDE_DIRS}
   ${Qt5Core_INCLUDE_DIRS}
   ${Qt5DBus_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/gdhcp
+  ${CMAKE_CURRENT_SOURCE_DIR}/wpa
+  ${CMAKE_CURRENT_SOURCE_DIR}/wpa/gdhcp
 )
 
 add_executable(miracast-service ${SOURCES})
