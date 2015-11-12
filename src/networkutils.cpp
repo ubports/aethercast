@@ -170,12 +170,12 @@ done:
     return err;
 }
 
-int NetworkUtils::retriveInterfaceIndex(const QString &name)
+int NetworkUtils::retriveInterfaceIndex(const char *name)
 {
     struct ifreq ifr;
     int sk, err;
 
-    if (name.size() == 0)
+    if (name == nullptr)
         return -1;
 
     sk = socket(PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
@@ -183,7 +183,7 @@ int NetworkUtils::retriveInterfaceIndex(const QString &name)
         return -1;
 
     memset(&ifr, 0, sizeof(ifr));
-    strncpy(ifr.ifr_name, name.toUtf8().constData(), sizeof(ifr.ifr_name) - 1);
+    strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name) - 1);
 
     err = ioctl(sk, SIOCGIFINDEX, &ifr);
 

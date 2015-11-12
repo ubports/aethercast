@@ -66,7 +66,7 @@ DhcpClient::DhcpClient(const QString &interface) :
     d(new Private)
 {
     d->interface = interface;
-    d->ifaceIndex = NetworkUtils::retriveInterfaceIndex(d->interface);
+    d->ifaceIndex = NetworkUtils::retriveInterfaceIndex(d->interface.toUtf8().constData());
     if (d->ifaceIndex < 0)
         qWarning() << "Failed to determine index of network interface" << d->interface;
 }

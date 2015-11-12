@@ -18,12 +18,10 @@
 #ifndef NETWORKUTILS_H_
 #define NETWORKUTILS_H_
 
-#include <QString>
-
 class NetworkUtils
 {
 public:
-    static int retriveInterfaceIndex(const QString &name);
+    static int retriveInterfaceIndex(const char *name);
     static int modifyAddress(int cmd, int flags, int index, int family,
                              const char *address, const char *peer,
                              unsigned char prefixlen, const char *broadcast);
