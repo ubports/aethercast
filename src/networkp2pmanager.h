@@ -28,6 +28,20 @@ class NetworkP2pManager : public QObject
     Q_OBJECT
 
 public:
+    class Delegate
+    {
+    public:
+        virtual void peerFound(const NetworkP2pDevice::Ptr &peer) { }
+        virtual void peerChanged(const NetworkP2pDevice::Ptr &peer) { }
+        virtual void peerLost(const NetworkP2pDevice::Ptr &peer) { }
+        virtual void peerConnected(const NetworkP2pDevice::Ptr &peer) { }
+        virtual void peerDisconnected(const NetworkP2pDevice::Ptr &peer) { }
+        virtual void peerFailed(const NetworkP2pDevice::Ptr &peer) { }
+
+    protected:
+        virtual ~Delegate() { }
+    };
+
     virtual void setup() = 0;
 
     virtual void setWfdSubElements(const QStringList &elements) = 0;
@@ -41,14 +55,6 @@ public:
 
     virtual NetworkP2pDevice::Role role() const = 0;
     virtual QString localAddress() const = 0;
-
-Q_SIGNALS:
-    void peerFound(const NetworkP2pDevice::Ptr &peer);
-    void peerChanged(const NetworkP2pDevice::Ptr &peer);
-    void peerLost(const NetworkP2pDevice::Ptr &peer);
-    void peerConnected(const NetworkP2pDevice::Ptr &peer);
-    void peerDisconnected(const NetworkP2pDevice::Ptr &peer);
-    void peerFailed(const NetworkP2pDevice::Ptr &peer);
 };
 
 #endif

@@ -34,24 +34,24 @@ MiracastServiceAdaptor::MiracastServiceAdaptor(MiracastService *service) :
 {
     connect(service, SIGNAL(stateChanged()),
             this, SLOT(onServiceStateChanged()));
+}
 
-    connect(service->networkManager(), &NetworkP2pManager::peerFound,
-            [&](const NetworkP2pDevice::Ptr &peer) {
-        peersAdded.append(peer);
-        schedulePeersChanged();
-    });
+void MiracastServiceAdaptor::handlePeerFound(const NetworkP2pDevice::Ptr &peer)
+{
+    peersAdded.append(peer);
+    schedulePeersChanged();
+}
 
-    connect(service->networkManager(), &NetworkP2pManager::peerChanged,
-            [&](const NetworkP2pDevice::Ptr &peer) {
-        peersAdded.append(peer);
-        schedulePeersChanged();
-    });
+void MiracastServiceAdaptor::handlePeerChanged(const NetworkP2pDevice::Ptr &peer)
+{
+    peersAdded.append(peer);
+    schedulePeersChanged();
+}
 
-    connect(service->networkManager(), &NetworkP2pManager::peerLost,
-            [&](const NetworkP2pDevice::Ptr &peer) {
-        peersRemoved.append(peer);
-        schedulePeersChanged();
-    });
+void MiracastServiceAdaptor::handlePeerLost(const NetworkP2pDevice::Ptr &peer)
+{
+    peersRemoved.append(peer);
+    schedulePeersChanged();
 }
 
 void MiracastServiceAdaptor::onServiceStateChanged()

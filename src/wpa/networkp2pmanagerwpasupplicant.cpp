@@ -169,7 +169,8 @@ private:
     QQueue<WpaSupplicantCommand*> queue;
 };
 
-NetworkP2pManagerWpaSupplicant::NetworkP2pManagerWpaSupplicant(const QString &iface) :
+NetworkP2pManagerWpaSupplicant::NetworkP2pManagerWpaSupplicant(NetworkP2pManager::Delegate *delegate, const QString &iface) :
+    delegate(delegate),
     interface(iface),
     supplicantProcess(new QProcess(this)),
     ctrlPath(QString("/var/run/%1_supplicant").arg(interface)),
@@ -360,7 +361,8 @@ void NetworkP2pManagerWpaSupplicant::onGroupClientAddressAssigned(const QString 
     currentPeer->setAddress(address);
     currentPeer->setState(NetworkP2pDevice::Connected);
 
-    Q_EMIT peerConnected(currentPeer);
+    if (delegate)
+        delegate->peerConnected(currentPeer);
 }
 
 void NetworkP2pManagerWpaSupplicant::onGroupClientDhcpTimeout()
@@ -375,7 +377,8 @@ void NetworkP2pManagerWpaSupplicant::onGroupClientDhcpTimeout()
         currentPeer->setState(NetworkP2pDevice::Idle);
     });
 
-    Q_EMIT peerFailed(currentPeer);
+    if (delegate)
+        delegate->peerFailed(currentPeer);
 }
 
 int parseHex(const QString &str)
@@ -425,7 +428,8 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
             if (p->address() != address)
                 continue;
 
-            Q_EMIT peerChanged(p);
+            if (delegate)
+                delegate->peerChanged(p);
 
             return;
         }
@@ -438,7 +442,8 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
 
         availablePeers.insert(address, peer);
 
-        Q_EMIT peerFound(peer);
+        if (delegate)
+            delegate->peerFound(peer);
     }
     else if (realResponse.startsWith(P2P_DEVICE_LOST)) {
         // P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1
@@ -452,7 +457,8 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
         if (!peer)
             return;
 
-        Q_EMIT peerLost(peer);
+        if (delegate)
+            delegate->peerLost(peer);
     }
     else if (realResponse.startsWith(P2P_GROUP_STARTED)) {
         // P2P-GROUP-STARTED p2p0 GO ssid="DIRECT-hB" freq=2412 passphrase="HtP0qYon"
@@ -475,7 +481,8 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
             // from our side.
             dhcpServer.start();
 
-            Q_EMIT peerConnected(currentPeer);
+            if (delegate)
+                delegate->peerFound(currentPeer);
         }
         else {
             currentRole = NetworkP2pDevice::GroupClient;
@@ -503,12 +510,14 @@ void NetworkP2pManagerWpaSupplicant::onUnsolicitedResponse(const QString &respon
 
         auto reason = items[3].section('=', 1);
 
-        if (reason == "FORMATION_FAILED" ||
-                reason == "PSK_FAILURE" ||
-                reason == "FREQ_CONFLICT")
-            Q_EMIT peerFailed(currentPeer);
-        else
-            Q_EMIT peerDisconnected(currentPeer);
+        if (delegate) {
+            if (reason == "FORMATION_FAILED" ||
+                    reason == "PSK_FAILURE" ||
+                    reason == "FREQ_CONFLICT")
+                delegate->peerFailed(currentPeer);
+            else
+                delegate->peerDisconnected(currentPeer);
+        }
 
         currentPeer.clear();
     }

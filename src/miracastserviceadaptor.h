@@ -40,6 +40,10 @@ public:
     QString state() { return QString("disconnected"); }
     bool powered() { return false; }
 
+    void handlePeerFound(const NetworkP2pDevice::Ptr &peer);
+    void handlePeerChanged(const NetworkP2pDevice::Ptr &peer);
+    void handlePeerLost(const NetworkP2pDevice::Ptr &peer);
+
 public Q_SLOTS:
     void Scan();
     void GetPeers(const QDBusMessage &message);

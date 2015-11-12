@@ -22,13 +22,13 @@
 #include <QObject>
 
 #include "miracastsource.h"
+#include "networkp2pmanager.h"
 #include "networkp2pdevice.h"
 #include "dhcpclient.h"
 #include "dhcpserver.h"
 
-class NetworkP2pManager;
-
-class MiracastService : public QObject
+class MiracastService : public QObject,
+                        public NetworkP2pManager::Delegate
 {
     Q_OBJECT
 public:
@@ -41,15 +41,17 @@ public:
 
     NetworkP2pDevice::State state() const;
 
-Q_SIGNALS:
-    void stateChanged();
+public:
+    void peerChanged(const NetworkP2pDevice::Ptr &peer);
+    void peerConnected(const NetworkP2pDevice::Ptr &peer);
+    void peerDisconnected(const NetworkP2pDevice::Ptr &peer);
+    void peerFailed(const NetworkP2pDevice::Ptr &peer);
 
 private Q_SLOTS:
-    void onPeerChanged(const NetworkP2pDevice::Ptr &peer);
-    void onPeerConnected(const NetworkP2pDevice::Ptr &peer);
-    void onPeerDisconnected(const NetworkP2pDevice::Ptr &peer);
-    void onPeerFailed(const NetworkP2pDevice::Ptr &peer);
     void onSourceClientDisconnected();
+
+Q_SIGNALS:
+    void stateChanged();
 
 private:
     void loadRequiredFirmware();

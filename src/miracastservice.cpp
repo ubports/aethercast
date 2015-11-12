@@ -35,19 +35,10 @@ MiracastService::MiracastService() :
     if (!QFile::exists("/sys/class/net/p2p0/uevent"))
         loadRequiredFirmware();
 
-    manager = new NetworkP2pManagerWpaSupplicant("p2p0");
+    manager = new NetworkP2pManagerWpaSupplicant(this, "p2p0");
 
     QTimer::singleShot(200, [=]() {
         manager->setup();
-
-        connect(manager, SIGNAL(peerChanged(NetworkP2pDevice::Ptr)),
-                this, SLOT(onPeerChanged(NetworkP2pDevice::Ptr)));
-        connect(manager, SIGNAL(peerConnected(NetworkP2pDevice::Ptr)),
-                this, SLOT(onPeerConnected(NetworkP2pDevice::Ptr)));
-        connect(manager, SIGNAL(peerDisconnected(NetworkP2pDevice::Ptr)),
-                this, SLOT(onPeerDisconnected(NetworkP2pDevice::Ptr)));
-        connect(manager, SIGNAL(peerFailed(NetworkP2pDevice::Ptr)),
-                this, SLOT(onPeerFailed(NetworkP2pDevice::Ptr)));
     });
 
     connect(&source, SIGNAL(clientDisconnected()),
@@ -128,34 +119,28 @@ void MiracastService::advanceState(NetworkP2pDevice::State newState)
     Q_EMIT stateChanged();
 }
 
-void MiracastService::onPeerConnected(const NetworkP2pDevice::Ptr &peer)
+void MiracastService::peerConnected(const NetworkP2pDevice::Ptr &peer)
 {
-    QTimer::singleShot(0, [=] {
-        advanceState(NetworkP2pDevice::Connected);
-    });
+    advanceState(NetworkP2pDevice::Connected);
 }
 
-void MiracastService::onPeerDisconnected(const NetworkP2pDevice::Ptr &peer)
+void MiracastService::peerDisconnected(const NetworkP2pDevice::Ptr &peer)
 {
-    QTimer::singleShot(0, [=] {
-        advanceState(NetworkP2pDevice::Disconnected);
+    advanceState(NetworkP2pDevice::Disconnected);
 
-        currentPeer.clear();
-    });
+    currentPeer.clear();
 }
 
-void MiracastService::onPeerFailed(const NetworkP2pDevice::Ptr &peer)
+void MiracastService::peerFailed(const NetworkP2pDevice::Ptr &peer)
 {
-    QTimer::singleShot(0, [=] {
-        advanceState(NetworkP2pDevice::Failure);
+    advanceState(NetworkP2pDevice::Failure);
 
-        currentPeer.clear();
+    currentPeer.clear();
 
-        finishConnectAttempt(false, "Failed to connect device");
-    });
+    finishConnectAttempt(false, "Failed to connect device");
 }
 
-void MiracastService::onPeerChanged(const NetworkP2pDevice::Ptr &peer)
+void MiracastService::peerChanged(const NetworkP2pDevice::Ptr &peer)
 {
 }
 

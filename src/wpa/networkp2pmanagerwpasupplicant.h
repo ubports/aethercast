@@ -40,7 +40,7 @@ class NetworkP2pManagerWpaSupplicant : public NetworkP2pManager
     Q_OBJECT
 
 public:
-    NetworkP2pManagerWpaSupplicant(const QString &iface);
+    NetworkP2pManagerWpaSupplicant(NetworkP2pManager::Delegate *delegate, const QString &iface);
     ~NetworkP2pManagerWpaSupplicant();
 
     void setup();
@@ -76,6 +76,7 @@ private:
     int bytesAvailableToRead();
 
 private:
+    NetworkP2pManager::Delegate *delegate;
     QString interface;
     QProcess *supplicantProcess;
     QString ctrlPath;
