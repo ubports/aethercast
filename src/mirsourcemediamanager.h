@@ -18,22 +18,18 @@
 #ifndef MIRMEDIAMANAGER_H_
 #define MIRMEDIAMANAGER_H_
 
-#include <QHostAddress>
+#include "gstsourcemediamanager.h"
 
-#include "basesourcemediamanager.h"
-
-class MirSourceMediaManager : public BaseSourceMediaManager
-{
+class MirSourceMediaManager : public GstSourceMediaManager {
 public:
-    explicit MirSourceMediaManager(const QHostAddress &remoteAddress);
-
-    void Play() override;
-    void Pause() override;
-    void Teardown() override;
-    bool IsPaused() const override;
+    explicit MirSourceMediaManager(const std::string &remote_address);
+    ~MirSourceMediaManager();
 
 protected:
-    void configure() override;
+    std::string ConstructPipeline(const wds::H264VideoFormat &format) override;
+
+private:
+    std::string remote_address_;
 };
 
 #endif

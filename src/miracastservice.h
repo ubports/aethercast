@@ -19,52 +19,56 @@
 #define MIRACAST_SERVICE_H_
 
 #include <functional>
-#include <QObject>
+
+#include <glib.h>
 
 #include "miracastsource.h"
-#include "networkp2pmanager.h"
-#include "networkp2pdevice.h"
-#include "dhcpclient.h"
-#include "dhcpserver.h"
+#include "networkmanager.h"
+#include "networkdevice.h"
 
-class MiracastService : public QObject,
-                        public NetworkP2pManager::Delegate
+class MiracastService : public NetworkManager::Delegate,
+                        public MiracastSource::Delegate
 {
-    Q_OBJECT
 public:
-    MiracastService();
+    class Delegate {
+    public:
+        virtual void OnStateChanged(NetworkDeviceState state) { }
+    };
+
+    MiracastService(Delegate *delegate);
     ~MiracastService();
 
-    NetworkP2pManager* networkManager() { return manager; }
+    void ConnectSink(const std::string &address, std::function<void(bool,std::string)> callback);
+    void Scan();
 
-    void connectSink(const QString &address, std::function<void(bool,QString)> callback);
+    NetworkDeviceState State() const;
 
-    NetworkP2pDevice::State state() const;
+    void OnClientDisconnected();
 
 public:
-    void peerChanged(const NetworkP2pDevice::Ptr &peer);
-    void peerConnected(const NetworkP2pDevice::Ptr &peer);
-    void peerDisconnected(const NetworkP2pDevice::Ptr &peer);
-    void peerFailed(const NetworkP2pDevice::Ptr &peer);
-
-private Q_SLOTS:
-    void onSourceClientDisconnected();
-
-Q_SIGNALS:
-    void stateChanged();
+    void OnDeviceChanged(const NetworkDevice::Ptr &peer);
+    void OnDeviceConnected(const NetworkDevice::Ptr &peer);
+    void OnDeviceDisconnected(const NetworkDevice::Ptr &peer);
+    void OnDeviceFailed(const NetworkDevice::Ptr &peer);
 
 private:
-    void loadRequiredFirmware();
-    void advanceState(NetworkP2pDevice::State newState);
-    void finishConnectAttempt(bool success, const QString &errorText = "");
-    void startIdleTimer();
+    static gboolean OnIdleTimer(gpointer user_data);
+    static gboolean OnRetryLoadFirmware(gpointer user_data);
+    static void OnWiFiFirmwareLoaded(GDBusConnection *conn, GAsyncResult *res, gpointer user_data);
 
 private:
-    NetworkP2pManager *manager;
-    MiracastSource source;
-    NetworkP2pDevice::State currentState;
-    NetworkP2pDevice::Ptr currentPeer;
-    std::function<void(bool,QString)> connectCallback;
+    void AdvanceState(NetworkDeviceState new_state);
+    void FinishConnectAttempt(bool success, const std::string &error_text = "");
+    void StartIdleTimer();
+    void LoadWiFiFirmware();
+
+private:
+    Delegate *delegate_;
+    NetworkManager *manager_;
+    MiracastSource source_;
+    NetworkDeviceState current_state_;
+    NetworkDevice::Ptr current_peer_;
+    std::function<void(bool,std::string)> connect_callback_;
 };
 
 #endif

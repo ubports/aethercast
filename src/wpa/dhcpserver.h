@@ -18,28 +18,32 @@
 #ifndef DHCPSERVER_H_
 #define DHCPSERVER_H_
 
-#include <QObject>
-#include <QString>
-#include <QScopedPointer>
+#include <string>
 
-class DhcpServer : public QObject
-{
-    Q_OBJECT
+#include "gdhcp.h"
+
+class DhcpServer {
 public:
-    DhcpServer(const QString &interface);
+    class Delegate {
+    public:
+        virtual void OnLeaseAdded() = 0;
+    };
+
+    DhcpServer(Delegate *delegate, const std::string &interface_name_h);
     ~DhcpServer();
 
-    bool start();
-    void stop();
+    bool Start();
+    void Stop();
 
-    QString localAddress() const;
-
-Q_SIGNALS:
-    void leaseAdded();
+    std::string LocalAddress() const;
 
 private:
-    class Private;
-    QScopedPointer<Private> d;
+    static void OnDebug(const char *str, gpointer user_data);
+
+private:
+    std::string interface_name_;
+    int interface_index_;
+    GDHCPServer *server_;
 };
 
 #endif

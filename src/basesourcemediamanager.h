@@ -36,12 +36,12 @@ public:
     void SendIDRPicture() override;
 
 protected:
-    virtual void configure() = 0;
+    virtual void Configure() = 0;
 
 protected:
-    int sinkPort1;
-    int sinkPort2;
-    wds::H264VideoFormat format;
+    int sink_port1_;
+    int sink_port2_;
+    wds::H264VideoFormat format_;
 };
 
 #endif

@@ -10,7 +10,6 @@ set(CMAKE_C_FLAGS "-Wall")
 set(CMAKE_C_FLAGS_DEBUG "-O0 -ggdb -g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
-set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 add_definitions(-DQT_NO_KEYWORDS=1)
@@ -21,12 +20,10 @@ pkg_check_modules(GIO gio-2.0)
 pkg_check_modules(GIO-UNIX gio-unix-2.0)
 pkg_check_modules (GST REQUIRED gstreamer-1.0)
 
-find_package(Qt5Core REQUIRED)
-include_directories(${Qt5Core_INCLUDE_DIRS})
-
-find_package(Qt5DBus REQUIRED)
-include_directories(${Qt5DBus_INCLUDE_DIRS})
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -fPIC")
+
+enable_testing()
+
+find_program(GDBUS_CODEGEN_EXECUTABLE NAMES gdbus-codegen)
 
 add_subdirectory(src)

@@ -18,32 +18,17 @@
 #include <gst/gst.h>
 
 #include "testsourcemediamanager.h"
+#include "utilities.h"
 
-class TestSourceMediaManager::Private
-{
-public:
-    QHostAddress remoteAddress;
-};
-
-TestSourceMediaManager::TestSourceMediaManager(const QHostAddress &remoteAddress) :
-    d(new Private)
-{
-    d->remoteAddress = remoteAddress;
+TestSourceMediaManager::TestSourceMediaManager(const std::string &remote_address) :
+    remote_address_(remote_address) {
 }
 
-TestSourceMediaManager::~TestSourceMediaManager()
-{
+TestSourceMediaManager::~TestSourceMediaManager() {
 }
 
-QString TestSourceMediaManager::constructPipeline()
-{
-    QString config;
-
-    config += "videotestsrc ! videoconvert ! video/x-raw,format=I420 ! ";
-    config += "x264enc ! mpegtsmux ! ";
-    config += "rtpmp2tpay ! udpsink name=sink ";
-    config += QString("host=%1 ").arg(d->remoteAddress.toString());
-    config += QString("port=%1 ").arg(sinkPort1);
-
+std::string TestSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
+    auto config = utilities::StringFormat("videotestsrc ! videoconvert ! video/x-raw,format=I420 ! x264enc ! mpegtsmux ! rtpmp2tpay ! udpsink name=sink host=%s port=%d",
+                                     remote_address_.c_str(), sink_port1_);
     return config;
 }

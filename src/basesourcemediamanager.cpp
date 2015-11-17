@@ -15,35 +15,28 @@
  *
  */
 
-#include <QDebug>
+#include <glib.h>
 
 #include "basesourcemediamanager.h"
 
-wds::SessionType BaseSourceMediaManager::GetSessionType() const
-{
+wds::SessionType BaseSourceMediaManager::GetSessionType() const {
     return wds::VideoSession;
 }
 
-void BaseSourceMediaManager::SetSinkRtpPorts(int port1, int port2)
-{
-    sinkPort1 = port1;
-    sinkPort2 = port2;
-
-    configure();
+void BaseSourceMediaManager::SetSinkRtpPorts(int port1, int port2) {
+    sink_port1_ = port1;
+    sink_port2_ = port2;
 }
 
-std::pair<int, int> BaseSourceMediaManager::GetSinkRtpPorts() const
-{
-    return std::pair<int, int>(sinkPort1, sinkPort2);
+std::pair<int, int> BaseSourceMediaManager::GetSinkRtpPorts() const {
+    return std::pair<int, int>(sink_port1_, sink_port2_);
 }
 
-int BaseSourceMediaManager::GetLocalRtpPort() const
-{
-    return sinkPort1;
+int BaseSourceMediaManager::GetLocalRtpPort() const {
+    return sink_port1_;
 }
 
-std::vector<wds::H264VideoCodec> GetH264VideoCodecs()
-{
+std::vector<wds::H264VideoCodec> GetH264VideoCodecs() {
     static std::vector<wds::H264VideoCodec> codecs;
     if (codecs.empty()) {
         wds::RateAndResolutionsBitmap cea_rr;
@@ -67,29 +60,28 @@ std::vector<wds::H264VideoCodec> GetH264VideoCodecs()
 }
 
 bool BaseSourceMediaManager::InitOptimalVideoFormat(const wds::NativeVideoFormat& sink_native_format,
-    const std::vector<wds::H264VideoCodec>& sink_supported_codecs)
-{
+    const std::vector<wds::H264VideoCodec>& sink_supported_codecs) {
 
-    format = wds::FindOptimalVideoFormat(sink_native_format,
+    format_ = wds::FindOptimalVideoFormat(sink_native_format,
                                          GetH264VideoCodecs(),
                                          sink_supported_codecs);
 
-    qWarning() << "Found optimal video format:"
-               << "profile: " << format.profile
-               << "level: " << format.level
-               << "res type: " << format.type
-               << "rate & resolution: " << format.rate_resolution;
+    g_warning("Found optimal video format");
+    g_warning("  profile: %d", format_.profile);
+    g_warning("  level: %d", format_.level);
+    g_warning("  res type %d", format_.type);
+    g_warning("  rate & resolution %d", format_.rate_resolution);
+
+    Configure();
 
     return true;
 }
 
-wds::H264VideoFormat BaseSourceMediaManager::GetOptimalVideoFormat() const
-{
-    return format;
+wds::H264VideoFormat BaseSourceMediaManager::GetOptimalVideoFormat() const {
+    return format_;
 }
 
-bool BaseSourceMediaManager::InitOptimalAudioFormat(const std::vector<wds::AudioCodec>& sink_codecs)
-{
+bool BaseSourceMediaManager::InitOptimalAudioFormat(const std::vector<wds::AudioCodec>& sink_codecs) {
     for (const auto& codec : sink_codecs) {
         if (codec.format == wds::AAC && codec.modes.test(wds::AAC_48K_16B_2CH))
             return true;
@@ -98,15 +90,13 @@ bool BaseSourceMediaManager::InitOptimalAudioFormat(const std::vector<wds::Audio
     return false;
 }
 
-wds::AudioCodec BaseSourceMediaManager::GetOptimalAudioFormat() const
-{
+wds::AudioCodec BaseSourceMediaManager::GetOptimalAudioFormat() const {
   wds::AudioModes audio_modes;
   audio_modes.set(wds::AAC_48K_16B_2CH);
 
   return wds::AudioCodec(wds::AAC, audio_modes, 0);
 }
 
-void BaseSourceMediaManager::SendIDRPicture()
-{
-    qWarning() << "Unimplemented IDR picture request";
+void BaseSourceMediaManager::SendIDRPicture() {
+    g_warning("Unimplemented IDR picture request");
 }

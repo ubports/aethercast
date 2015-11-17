@@ -18,6 +18,8 @@
 #ifndef WFDDEVICEINFO_H_
 #define WFDDEVICEINFO_H_
 
+#include <string>
+
 /*
  * WFD Device Type
  */
@@ -46,51 +48,51 @@ class WfdDeviceInfo
 {
 public:
     WfdDeviceInfo() :
-        devInfo(0),
-        ctrlPort(0),
-        maxTput(0)
+        dev_info_(0),
+        ctrl_port_(0),
+        max_tput_(0)
     {
     }
 
     WfdDeviceInfo(const WfdDeviceInfo &other) :
-        devInfo(other.devInfo),
-        ctrlPort(other.ctrlPort),
-        maxTput(other.maxTput)
+        dev_info_(other.dev_info_),
+        ctrl_port_(other.ctrl_port_),
+        max_tput_(other.max_tput_)
     {
     }
 
-    WfdDeviceInfo(int devInfo, int ctrlPort, int maxTput) :
-        devInfo(devInfo),
-        ctrlPort(ctrlPort),
-        maxTput(maxTput)
+    WfdDeviceInfo(int dev_info, int ctrl_port, int max_tput) :
+        dev_info_(dev_info),
+        ctrl_port_(ctrl_port),
+        max_tput_(max_tput)
     {
     }
 
-    int deviceType()
+    int DeviceType()
     {
-        return (devInfo & WFD_DEVICE_INFO_DEVICE_TYPE);
+        return (dev_info_ & WFD_DEVICE_INFO_DEVICE_TYPE);
     }
 
-    int controlPort()
+    int ControlPort()
     {
-        return ctrlPort;
+        return ctrl_port_;
     }
 
-    int maxThroughput()
+    int MaxThroughput()
     {
-        return maxTput;
+        return max_tput_;
     }
 
-    bool isSupportedSink()
+    bool IsSupportedSink()
     {
-        return deviceType() == WFD_DEVICE_TYPE_PRIMARY_SINK ||
-               deviceType() == WFD_DEVICE_TYPE_SOURCE_OR_PRIMARY_SINK;
+        return DeviceType() == WFD_DEVICE_TYPE_PRIMARY_SINK ||
+               DeviceType() == WFD_DEVICE_TYPE_SOURCE_OR_PRIMARY_SINK;
     }
 
-    QString deviceTypeAsString()
+    std::string DeviceTypeAsString()
     {
-        QString str = "unknown";
-        auto devType = deviceType();
+        std::string str = "unknown";
+        auto devType = DeviceType();
 
         if (devType == WFD_DEVICE_TYPE_SOURCE)
             str = "source";
@@ -105,9 +107,9 @@ public:
     }
 
 private:
-    int devInfo;
-    int ctrlPort;
-    int maxTput;
+    int dev_info_;
+    int ctrl_port_;
+    int max_tput_;
 };
 
 #endif

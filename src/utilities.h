@@ -15,21 +15,19 @@
  *
  */
 
-#ifndef TESTMEDIAMANAGER_H_
-#define TESTMEDIAMANAGER_H_
+#ifndef UTILITIES_H_
+#define UTILITIES_H_
 
-#include "gstsourcemediamanager.h"
+#include <string>
+#include <vector>
 
-class TestSourceMediaManager : public GstSourceMediaManager {
-public:
-    explicit TestSourceMediaManager(const std::string &remote_address);
-    ~TestSourceMediaManager();
+namespace utilities {
 
-protected:
-    std::string ConstructPipeline(const wds::H264VideoFormat &format) override;
+bool StringStartsWith(const std::string &text, const std::string &prefix);
+int ParseHex(const std::string &str);
+std::vector<std::string> StringSplit(const std::string &text, char sep);
+std::string StringFormat(const std::string fmt_str, ...);
 
-private:
-    std::string remote_address_;
-};
+} // namespace utilities
 
 #endif

@@ -24,8 +24,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <errno.h>
+#include <memory.h>
 
-#include <QDebug>
+#include <glib.h>
 
 #include "networkutils.h"
 
@@ -53,7 +55,7 @@ int __rtnl_addattr_l(struct nlmsghdr *n, size_t max_length,
     return 0;
 }
 
-int NetworkUtils::modifyAddress(int cmd, int flags,
+int NetworkUtils::ModifyInterfaceAddress(int cmd, int flags,
                 int index, int family,
                 const char *address,
                 const char *peer,
@@ -170,7 +172,7 @@ done:
     return err;
 }
 
-int NetworkUtils::retriveInterfaceIndex(const char *name)
+int NetworkUtils::RetrieveInterfaceIndex(const char *name)
 {
     struct ifreq ifr;
     int sk, err;
@@ -195,7 +197,7 @@ int NetworkUtils::retriveInterfaceIndex(const char *name)
     return ifr.ifr_ifindex;;
 }
 
-int NetworkUtils::resetInterface(int index)
+int NetworkUtils::ResetInterface(int index)
 {
     struct ifreq ifr, addr_ifr;
     struct sockaddr_in *addr;
@@ -223,10 +225,19 @@ int NetworkUtils::resetInterface(int index)
     addr = (struct sockaddr_in *)&addr_ifr.ifr_addr;
     addr->sin_family = AF_INET;
     if (ioctl(sk, SIOCSIFADDR, &addr_ifr) < 0)
-        qWarning() << "Could not clear IPv4 address of interface with index" << index;
+        g_warning("Could not clear IPv4 address of interface with index %d", index);
 
 done:
     close(sk);
 
     return err;
+}
+
+int NetworkUtils::BytesAvailableToRead(int fd) {
+    int nbytes = 0;
+    // gives shorter than true amounts on Unix domain sockets.
+    int64_t available = 0;
+    if (ioctl(fd, FIONREAD, (char *) &nbytes) >= 0)
+        available = (int64_t) nbytes;
+    return available;
 }

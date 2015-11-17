@@ -809,7 +809,7 @@ void g_dhcpv6_client_set_iaid(GDHCPClient *dhcp_client, uint32_t iaid)
 void g_dhcpv6_client_create_iaid(GDHCPClient *dhcp_client, int index,
 				unsigned char *iaid)
 {
-	uint8_t buf[6];
+    uint8_t buf[6] = { };
 
 	get_interface_mac_address(index, buf);
 

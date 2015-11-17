@@ -15,8 +15,6 @@
  *
  */
 
-#include <QDebug>
-
 #include <asm/types.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -26,87 +24,75 @@
 #include "networkutils.h"
 #include "gdhcp.h"
 
-class DhcpClient::Private
-{
-public:
-    Private()
-    {
-    }
-
-    static void onLeaseAvailable(GDHCPClient *client, gpointer user_data)
-    {
-        auto inst = static_cast<DhcpClient*>(user_data);
-
-        inst->d->localAddress = g_dhcp_client_get_address(client);
-        inst->d->netmask = g_dhcp_client_get_netmask(client);
-
-        if (NetworkUtils::modifyAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, inst->d->ifaceIndex,
-                                        AF_INET, inst->d->localAddress.toUtf8().constData(),
-                                        NULL, 24, NULL) < 0) {
-            qWarning() << "Failed to assign network address for" << inst->d->interface;
-            return;
-        }
-
-        Q_EMIT inst->addressAssigned(inst->d->localAddress);
-    }
-
-    static void onClientDebug(const char *str, gpointer user_data)
-    {
-        qDebug() << "DHCP:" << str;
-    }
-
-    QString interface;
-    int ifaceIndex;
-    GDHCPClient *client;
-    QString localAddress;
-    QString netmask;
-};
-
-DhcpClient::DhcpClient(const QString &interface) :
-    d(new Private)
-{
-    d->interface = interface;
-    d->ifaceIndex = NetworkUtils::retriveInterfaceIndex(d->interface.toUtf8().constData());
-    if (d->ifaceIndex < 0)
-        qWarning() << "Failed to determine index of network interface" << d->interface;
+DhcpClient::DhcpClient(Delegate *delegate, const std::string &interface_name) :
+    delegate_(delegate),
+    interface_name_(interface_name) {
+    interface_index_ = NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
+    if (interface_index_ < 0)
+        g_warning("Failed to determine index of network interface %s", interface_name_.c_str());
 }
 
-DhcpClient::~DhcpClient()
-{
+DhcpClient::~DhcpClient() {
 }
 
-QString DhcpClient::localAddress() const
-{
-    return d->localAddress;
+void DhcpClient::OnLeaseAvailable(GDHCPClient *client, gpointer user_data) {
+    auto inst = static_cast<DhcpClient*>(user_data);
+
+    char *address = g_dhcp_client_get_address(inst->client_);
+    char *netmask = g_dhcp_client_get_netmask(inst->client_);
+
+    if (!address) {
+        g_warning("Received invalid IP configuration over DHCP");
+        return;
+    }
+
+    if (NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, inst->interface_index_,
+                                    AF_INET, address,
+                                    NULL, 24, NULL) < 0) {
+        g_warning("Failed to assign network address for %s", inst->interface_name_.c_str());
+        return;
+    }
+
+    inst->local_address_.assign(address);
+
+    if (netmask)
+        inst->netmask_.assign(netmask);
+
+    inst->delegate_->OnAddressAssigned(inst->local_address_);
 }
 
-bool DhcpClient::start()
-{
+void DhcpClient::OnClientDebug(const char *str, gpointer user_data) {
+    g_warning("DHCP: %s", str);
+}
+
+std::string DhcpClient::LocalAddress() const {
+    return local_address_;
+}
+
+bool DhcpClient::Start() {
     GDHCPClientError error;
-    d->client = g_dhcp_client_new(G_DHCP_IPV4, d->ifaceIndex, &error);
-    if (!d->client) {
-        qWarning() << "Failed to setup DHCP client";
+    client_ = g_dhcp_client_new(G_DHCP_IPV4, interface_index_, &error);
+    if (!client_) {
+        g_warning("Failed to setup DHCP client");
         return false;
     }
 
-    g_dhcp_client_set_debug(d->client, &Private::onClientDebug, this);
+    g_dhcp_client_set_debug(client_, &DhcpClient::OnClientDebug, this);
+    g_dhcp_client_register_event(client_, G_DHCP_CLIENT_EVENT_LEASE_AVAILABLE, &DhcpClient::OnLeaseAvailable, this);
+    g_dhcp_client_start(client_, NULL);
 
-    g_dhcp_client_register_event(d->client, G_DHCP_CLIENT_EVENT_LEASE_AVAILABLE, &Private::onLeaseAvailable, this);
-
-    g_dhcp_client_start(d->client, NULL);
+    return true;
 }
 
-void DhcpClient::stop()
-{
-    if (!d->client)
+void DhcpClient::Stop() {
+    if (!client_)
         return;
 
-    g_dhcp_client_stop(d->client);
+    g_dhcp_client_stop(client_);
+    g_dhcp_client_unref(client_);
 
-    g_dhcp_client_unref(d->client);
+    local_address_ = "";
+    netmask_ = "";
 
-    d->localAddress = "";
-    d->netmask = "";
-
-    NetworkUtils::resetInterface(d->ifaceIndex);
+    NetworkUtils::ResetInterface(interface_index_);
 }

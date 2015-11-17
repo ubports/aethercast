@@ -18,14 +18,12 @@
 #ifndef MEDIAMANAGERFACTORY_H_
 #define MEDIAMANAGERFACTORY_H_
 
-#include <QHostAddress>
-
 #include "basesourcemediamanager.h"
 
 class MediaManagerFactory
 {
 public:
-    static BaseSourceMediaManager* createSource(const QHostAddress &remoteAddress);
+    static BaseSourceMediaManager* CreateSource(const std::string &remote_address);
 };
 
 #endif

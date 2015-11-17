@@ -15,39 +15,39 @@
  *
  */
 
-#ifndef DHCPCLIENT_H_
-#define DHCPCLIENT_H_
+#ifndef WPASUPPLICANTCOMMANDQUEUE_H_
+#define WPASUPPLICANTCOMMANDQUEUE_H_
 
 #include <string>
+#include <queue>
 
-#include <gdhcp.h>
+#include "wpasupplicantcommand.h"
 
-class DhcpClient {
+class WpaSupplicantCommandQueue {
 public:
     class Delegate {
     public:
-        virtual void OnAddressAssigned(const std::string &address) = 0;
+        virtual void OnUnsolicitedResponse(WpaSupplicantMessage message) = 0;
+        virtual void OnWriteMessage(WpaSupplicantMessage message) = 0;
     };
 
-    DhcpClient(Delegate *delegate, const std::string &interface_name);
-    ~DhcpClient();
+    WpaSupplicantCommandQueue(Delegate *delegate);
 
-    bool Start();
-    void Stop();
-
-    std::string LocalAddress() const;
+    void EnqueueCommand(const WpaSupplicantMessage &message, WpaSupplicantCommand::ResponseCallback callback);
+    void HandleMessage(WpaSupplicantMessage message);
 
 private:
-    static void OnClientDebug(const char *str, gpointer user_data);
-    static void OnLeaseAvailable(GDHCPClient *client, gpointer user_data);
+    void RestartQueue();
+    void CheckRestartingQueue();
+    void WriteNextCommand();
+
+private:
+    static gboolean OnRestartQueue(gpointer user_data);
 
 private:
     Delegate *delegate_;
-    std::string interface_name_;
-    int interface_index_;
-    GDHCPClient *client_;
-    std::string local_address_;
-    std::string netmask_;
+    WpaSupplicantCommand *current_;
+    std::queue<WpaSupplicantCommand*> queue_;
 };
 
 #endif

@@ -22,43 +22,40 @@
 class NullSourceMediaManager : public BaseSourceMediaManager
 {
 public:
-    void Play() override
-    {
-        qWarning() << "NullSourceMediaManager: Not implemented";
+    void Play() override {
+        g_warning("NullSourceMediaManager: Not implemented");
     }
 
-    void Pause() override
-    {
-        qWarning() << "NullSourceMediaManager: Not implemented";
+    void Pause() override {
+        g_warning("NullSourceMediaManager: Not implemented");
     }
 
-    void Teardown() override
-    {
-        qWarning() << "NullSourceMediaManager: Not implemented";
+    void Teardown() override {
+        g_warning("NullSourceMediaManager: Not implemented");
     }
 
-    bool IsPaused() const override
-    {
-        qWarning() << "NullSourceMediaManager: Not implemented";
+    bool IsPaused() const override {
+        g_warning("NullSourceMediaManager: Not implemented");
     }
 
 protected:
-    void configure() override
-    {
-        qWarning() << "NullSourceMediaManager: Not implemented";
+    void Configure() override {
+        g_warning("NullSourceMediaManager: Not implemented");
     }
 };
 
-BaseSourceMediaManager* MediaManagerFactory::createSource(const QHostAddress &remoteAddress)
-{
-    auto type = qgetenv("MIRACAST_SOURCE_TYPE");
+BaseSourceMediaManager* MediaManagerFactory::CreateSource(const std::string &remote_address) {
+    auto type = getenv("MIRACAST_SOURCE_TYPE");
 
-    qDebug() << "Creating source media manager of type" << type;
+    g_warning("Creating source media manager of type %s", type);
 
-    if (type.size() == 0 || type == "mir")
-        return new MirSourceMediaManager(remoteAddress);
-    else if (type == "test")
-        return new TestSourceMediaManager(remoteAddress);
+    if (!type)
+        return new NullSourceMediaManager();
+
+    if (g_strcmp0(type, "mir") == 0)
+        return new MirSourceMediaManager(remote_address);
+    else if (g_strcmp0(type, "test") == 0)
+        return new TestSourceMediaManager(remote_address);
 
     return new NullSourceMediaManager();
 }

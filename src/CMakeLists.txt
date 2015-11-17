@@ -1,25 +1,38 @@
+
+execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
+                        --c-namespace MiracastInterface
+                        --c-generate-object-manager
+                        --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/miracastinterface
+                        --interface-prefix org.freedesktop.miracast.
+                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/org.freedesktop.miracast.xml)
+
 set(SOURCES
   main.cpp
-  unixsignalhandler.cpp
+  utilities.cpp
   networkutils.cpp
+  wfddeviceinfo.cpp
   mediamanagerfactory.cpp
   basesourcemediamanager.cpp
   gstsourcemediamanager.cpp
   testsourcemediamanager.cpp
   mirsourcemediamanager.cpp
   miracastservice.cpp
-  miracastserviceadaptor.cpp
+  miracastserviceadapter.cpp
   miracastsource.cpp
   miracastsourceclient.cpp
-  networkp2pmanager.cpp
-  networkp2pdevice.cpp
+  networkmanager.cpp
+  networkdevice.cpp
   wpa/gdhcp/common.c
   wpa/gdhcp/ipv4ll.c
   wpa/gdhcp/server.c
   wpa/gdhcp/client.c
   wpa/dhcpclient.cpp
   wpa/dhcpserver.cpp
-  wpa/networkp2pmanagerwpasupplicant.cpp
+  wpa/wpasupplicantmessage.cpp
+  wpa/wpasupplicantcommand.cpp
+  wpa/wpasupplicantcommandqueue.cpp
+  wpa/wpasupplicantnetworkmanager.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/miracastinterface.c
 )
 
 link_directories(
@@ -33,15 +46,12 @@ include_directories(
   ${GIO_INCLUDE_DIRS}
   ${GIO-UNIX_INCLUDE_DIRS}
   ${GST_INCLUDE_DIRS}
-  ${Qt5Core_INCLUDE_DIRS}
-  ${Qt5DBus_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/wpa
   ${CMAKE_CURRENT_SOURCE_DIR}/wpa/gdhcp
+  ${CMAKE_CURRENT_BINARY_DIR}/src
 )
 
 add_executable(miracast-service ${SOURCES})
-
-qt5_use_modules(miracast-service Core DBus Network)
 
 target_link_libraries(miracast-service
   ${GLIB_LIBRARIES}
@@ -58,3 +68,12 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static
 )
+
+
+add_executable(test-wpasupplicantmessage
+    utilities.cpp
+    wpa/wpasupplicantmessage.cpp
+    wpa/wpasupplicantmessage_test.cpp)
+target_link_libraries(test-wpasupplicantmessage ${GLIB_LIBRARIES})
+target_link_libraries (test-wpasupplicantmessage)
+add_test(WpaSupplicantMessage test-wpasupplicantmessage)

@@ -21,11 +21,12 @@
 class NetworkUtils
 {
 public:
-    static int retriveInterfaceIndex(const char *name);
-    static int modifyAddress(int cmd, int flags, int index, int family,
+    static int RetrieveInterfaceIndex(const char *name);
+    static int ModifyInterfaceAddress(int cmd, int flags, int index, int family,
                              const char *address, const char *peer,
                              unsigned char prefixlen, const char *broadcast);
-    static int resetInterface(int index);
+    static int ResetInterface(int index);
+    static int BytesAvailableToRead(int fd);
 };
 
 #endif

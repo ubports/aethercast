@@ -19,22 +19,26 @@
 #define MIRACASTSOURCECLIENT_H_
 
 #include <string>
+#include <memory>
+#include <map>
 
-#include <QObject>
-#include <QScopedPointer>
-#include <QTimer>
-#include <QTcpSocket>
+#include <glib.h>
+#include <gio/gio.h>
 
 #include <wds/peer.h>
 #include <wds/source.h>
 #include <wds/media_manager.h>
 
-class MiracastSourceClient : public QObject,
-                             public wds::Peer::Delegate
-{
-    Q_OBJECT
+class TimerCallbackData;
+
+class MiracastSourceClient : public wds::Peer::Delegate {
 public:
-    MiracastSourceClient(QTcpSocket *socket);
+    class Delegate {
+    public:
+        virtual void OnConnectionClosed() { }
+    };
+
+    MiracastSourceClient(Delegate *delegate, GSocket *socket);
     ~MiracastSourceClient();
 
 public:
@@ -43,21 +47,27 @@ public:
     uint CreateTimer(int seconds) override;
     void ReleaseTimer(uint timerId) override;
 
-Q_SIGNALS:
-    void connectionClosed();
-
-private Q_SLOTS:
-    void onSocketReadyRead();
-    void onSocketDisconnected();
-
-private:
-    void dumpRtsp(const QString &prefix, const QString &data);
+public:
+    static gboolean OnTimeout(gpointer user_data);
+    static void OnTimeoutRemove(gpointer user_data);
+    static gboolean OnIncomingData(GSocket *socket, GIOCondition condition,
+                                     gpointer user_data);
 
 private:
-    QTcpSocket *socket;
-    QMap<int,QTimer*> timers;
-    QScopedPointer<wds::Source> source;
-    QScopedPointer<wds::SourceMediaManager> mediaManager;
+    void DumpRtsp(const std::string &prefix, const std::string &data);
+
+private:
+    Delegate *delegate_;
+    GSocket *socket_;
+    guint socket_source_;
+    std::string local_address_;
+    GIOChannel *channel_;
+    std::vector<guint> timers_;
+    std::unique_ptr<wds::Source> source_;
+    std::unique_ptr<wds::SourceMediaManager> media_manager_;
+    guint watch_;
+
+    friend class TimerCallbackData;
 };
 
 #endif

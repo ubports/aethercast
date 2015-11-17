@@ -16,28 +16,68 @@
  */
 
 #include "mirsourcemediamanager.h"
+#include "utilities.h"
 
-MirSourceMediaManager::MirSourceMediaManager(const QHostAddress &remoteAddress)
-{
+MirSourceMediaManager::MirSourceMediaManager(const std::string &remote_address) :
+    remote_address_(remote_address) {
 }
 
-void MirSourceMediaManager::Play()
-{
+MirSourceMediaManager::~MirSourceMediaManager() {
 }
 
-void MirSourceMediaManager::Pause()
-{
-}
+std::string MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
+    int width = 0;
+    int height = 0;
 
-void MirSourceMediaManager::Teardown()
-{
-}
+    switch (format.type) {
+    case wds::CEA:
+        switch (format.rate_resolution) {
+        case wds::CEA640x480p60:
+            width = 640;
+            height = 480;
+            break;
+        case wds::CEA720x480p60:
+        case wds::CEA720x480i60:
+            width = 720;
+            height = 480;
+            break;
+        case wds::CEA720x576p50:
+        case wds::CEA720x576i50:
+            width = 720;
+            height = 576;
+            break;
+        case wds::CEA1280x720p30:
+        case wds::CEA1280x720p60:
+            width = 1280;
+            height = 720;
+            break;
+        case wds::CEA1920x1080p30:
+        case wds::CEA1920x1080p60:
+        case wds::CEA1920x1080i60:
+            width = 1920;
+            height = 1080;
+            break;
+        case wds::CEA1280x720p25:
+        case wds::CEA1280x720p50:
+        case wds::CEA1280x720p24:
+            width = 1280;
+            height = 720;
+            break;
+        case wds::CEA1920x1080p25:
+        case wds::CEA1920x1080p50:
+        case wds::CEA1920x1080i50:
+        case wds::CEA1920x1080p24:
+            width = 1920;
+            height = 1080;
+            break;
+        }
 
-bool MirSourceMediaManager::IsPaused() const
-{
-    return true;
-}
+        break;
+    default:
+        break;
+    }
 
-void MirSourceMediaManager::configure()
-{
+    auto config = utilities::StringFormat("mirimagesrc mir-socket=/run/mir_socket ! videoconvert ! videoscale ! video/x-raw,width=%d,height=%d ! videoflip method=counterclockwise ! queue2 ! video/x-raw,format=I420 ! x264enc aud=false byte-stream=true tune=zerolatency ! mpegtsmux ! rtpmp2tpay ! udpsink name=sink host=%s port=%d",
+                                     width, height, remote_address_.c_str(), sink_port1_);
+    return config;
 }

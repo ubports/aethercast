@@ -15,4 +15,4 @@
  *
  */
 
-#include "networkp2pmanager.h"
+#include "networkmanager.h"

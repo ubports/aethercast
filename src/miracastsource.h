@@ -18,30 +18,35 @@
 #ifndef MIRACASTSOURCE_H_
 #define MIRACASTSOURCE_H_
 
-#include <QObject>
-#include <QTcpServer>
+#include <glib.h>
+#include <gio/gio.h>
 
-class MiracastSourceClient;
+#include "miracastsourceclient.h"
 
-class MiracastSource : public QObject
-{
-    Q_OBJECT
+class MiracastSource : public MiracastSourceClient::Delegate {
 public:
-    MiracastSource();
+    class Delegate {
+    public:
+        virtual void OnClientDisconnected() { }
+    };
+
+    MiracastSource(Delegate *delegate);
     ~MiracastSource();
 
-    bool setup(const QString &address, quint16 port);
-    void release();
+    bool Setup(const std::string &address, unsigned short port);
+    void Release();
 
-Q_SIGNALS:
-    void clientDisconnected();
-
-private Q_SLOTS:
-    void onNewConnection();
+public:
+    void OnConnectionClosed();
 
 private:
-    QTcpServer server;
-    MiracastSourceClient *activeSink;
+    static gboolean OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data);
+
+private:
+    Delegate *delegate_;
+    GSocket *socket_;
+    guint socket_source_;
+    MiracastSourceClient *active_sink_;
 };
 
 #endif

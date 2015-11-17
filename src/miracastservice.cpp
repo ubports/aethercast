@@ -15,99 +15,111 @@
  *
  */
 
-#include <QDebug>
-#include <QDBusConnection>
-#include <QDBusInterface>
-#include <QDBusReply>
-#include <QDBusObjectPath>
-#include <QTimer>
-#include <QFile>
-
 #include "miracastservice.h"
-#include "networkp2pmanagerwpasupplicant.h"
+#include "wpasupplicantnetworkmanager.h"
 #include "wfddeviceinfo.h"
 
 #define MIRACAST_DEFAULT_RTSP_CTRL_PORT     7236
 
-MiracastService::MiracastService() :
-    currentState(NetworkP2pDevice::Idle)
-{
-    if (!QFile::exists("/sys/class/net/p2p0/uevent"))
-        loadRequiredFirmware();
+#define STATE_IDLE_TIMEOUT                  1000
 
-    manager = new NetworkP2pManagerWpaSupplicant(this, "p2p0");
-
-    QTimer::singleShot(200, [=]() {
-        manager->setup();
-    });
-
-    connect(&source, SIGNAL(clientDisconnected()),
-            this, SLOT(onSourceClientDisconnected()));
+MiracastService::MiracastService(Delegate *delegate) :
+    delegate_(delegate),
+    current_state_(kIdle),
+    source_(this),
+    current_peer_(nullptr) {
+    LoadWiFiFirmware();
 }
 
-MiracastService::~MiracastService()
-{
+MiracastService::~MiracastService() {
 }
 
-NetworkP2pDevice::State MiracastService::state() const
-{
-    return currentState;
+NetworkDeviceState MiracastService::State() const {
+    return current_state_;
 }
 
-void MiracastService::loadRequiredFirmware()
-{
-    qDebug() << "Switching device WiFi chip firmware to get P2P support";
+void MiracastService::OnClientDisconnected() {
+    AdvanceState(kFailure);
+    current_peer_.reset();
+}
 
-    QDBusInterface iface("fi.w1.wpa_supplicant1", "/fi/w1/wpa_supplicant1",
-                         "fi.w1.wpa_supplicant1", QDBusConnection::systemBus());
+gboolean MiracastService::OnRetryLoadFirmware(gpointer user_data) {
+    auto inst = static_cast<MiracastService*>(user_data);
+    inst->LoadWiFiFirmware();
+}
 
-    if (!iface.isValid()) {
-        qWarning() << "Could not reach wpa-supplicant on dbus";
+void MiracastService::OnWiFiFirmwareLoaded(GDBusConnection *conn, GAsyncResult *res, gpointer user_data) {
+    auto inst = static_cast<MiracastService*>(user_data);
+    guint timeout = 200;
+    GError *error = nullptr;
+
+    GVariant *result = g_dbus_connection_call_finish(conn, res, &error);
+    if (error) {
+        g_warning("Failed to load required WiFi firmware: %s", error->message);
+        timeout = 2000;
+    }
+
+    g_timeout_add(timeout, &MiracastService::OnRetryLoadFirmware, inst);
+}
+
+void MiracastService::LoadWiFiFirmware() {
+    if (!g_file_test("/sys/class/net/p2p0/uevent", (GFileTest) (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
+
+        g_warning("Switching device WiFi chip firmware to get P2P support");
+
+
+        auto conn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, nullptr);
+
+        GVariant *params = g_variant_new("(ss)", "/fi/w1/wpa_supplicant1/Interfaces/1", "p2p");
+
+        g_dbus_connection_call(conn, "fi.w1.wpa_supplicant1", "/fi/w1/wpa_supplicant1",
+                               "fi.w1.wpa_supplicant1", "SetInterfaceFirmware", params,
+                               nullptr, (GDBusCallFlags) G_DBUS_CALL_FLAGS_NONE, 0,
+                               nullptr, (GAsyncReadyCallback) &MiracastService::OnWiFiFirmwareLoaded, this);
+
         return;
     }
 
-    QDBusReply<void> reply = iface.call("SetInterfaceFirmware",
-                                QVariant::fromValue(QDBusObjectPath("/fi/w1/wpa_supplicant1/Interfaces/1")),
-                                "p2p");
-    if (!reply.isValid()) {
-        qDebug() << "Failed to switch WiFi chip firmware:" << reply.error();
-        return;
-    }
+    manager_ = new WpaSupplicantNetworkManager(this, "p2p0");
+    manager_->Setup();
 }
 
-void MiracastService::advanceState(NetworkP2pDevice::State newState)
-{
-    QString address;
 
-    switch (newState) {
-    case NetworkP2pDevice::Association:
+void MiracastService::AdvanceState(NetworkDeviceState new_state) {
+    std::string address;
+
+    g_warning("AdvanceState newsstate %d current state %d", new_state, current_state_);
+
+    switch (new_state) {
+    case kAssociation:
         break;
 
-    case NetworkP2pDevice::Connected:
+    case kConnected:
         // We've have to pick the right address we need to tell our source to
         // push all streaming data to.
-        address = currentPeer->address();
-        if (manager->role() == NetworkP2pDevice::GroupOwner)
-            address = manager->localAddress();
+        address = current_peer_->Address();
+        if (manager_->Role() == kGroupOwner)
+            address = manager_->LocalAddress();
 
-        source.setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
+        source_.Setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
 
-        finishConnectAttempt(true);
+        FinishConnectAttempt(true);
 
         break;
 
-    case NetworkP2pDevice::Failure:
-        if (currentState == NetworkP2pDevice::Association)
-            finishConnectAttempt(false, "Failed to connect remote device");
+    case kFailure:
+        if (current_state_ == kAssociation ||
+                current_state_ == kConfiguration)
+            FinishConnectAttempt(false, "Failed to connect remote device");
 
-    case NetworkP2pDevice::Disconnected:
-        if (currentState == NetworkP2pDevice::Connected)
-            source.release();
+    case kDisconnected:
+        if (current_state_ == kConnected)
+            source_.Release();
 
-        startIdleTimer();
+        StartIdleTimer();
         break;
 
-    case NetworkP2pDevice::Idle:
+    case kIdle:
         break;
 
     default:
@@ -115,85 +127,78 @@ void MiracastService::advanceState(NetworkP2pDevice::State newState)
     }
 
 
-    currentState = newState;
-    Q_EMIT stateChanged();
+    current_state_ = new_state;
+    if (delegate_)
+        delegate_->OnStateChanged(current_state_);
 }
 
-void MiracastService::peerConnected(const NetworkP2pDevice::Ptr &peer)
-{
-    advanceState(NetworkP2pDevice::Connected);
+void MiracastService::OnDeviceConnected(const NetworkDevice::Ptr &peer) {
+    AdvanceState(kConnected);
 }
 
-void MiracastService::peerDisconnected(const NetworkP2pDevice::Ptr &peer)
-{
-    advanceState(NetworkP2pDevice::Disconnected);
+void MiracastService::OnDeviceDisconnected(const NetworkDevice::Ptr &peer) {
+    AdvanceState(kDisconnected);
 
-    currentPeer.clear();
+    current_peer_.reset();
 }
 
-void MiracastService::peerFailed(const NetworkP2pDevice::Ptr &peer)
-{
-    advanceState(NetworkP2pDevice::Failure);
+void MiracastService::OnDeviceFailed(const NetworkDevice::Ptr &peer) {
+    AdvanceState(kFailure);
 
-    currentPeer.clear();
+    current_peer_.reset();
 
-    finishConnectAttempt(false, "Failed to connect device");
+    FinishConnectAttempt(false, "Failed to connect device");
 }
 
-void MiracastService::peerChanged(const NetworkP2pDevice::Ptr &peer)
-{
+void MiracastService::OnDeviceChanged(const NetworkDevice::Ptr &peer) {
 }
 
-void MiracastService::onSourceClientDisconnected()
-{
-    QTimer::singleShot(0, [=] {
-        advanceState(NetworkP2pDevice::Failure);
-        currentPeer.clear();
-    });
+gboolean MiracastService::OnIdleTimer(gpointer user_data) {
+    auto inst = static_cast<MiracastService*>(user_data);
+    inst->AdvanceState(kIdle);
 }
 
-void MiracastService::startIdleTimer()
-{
-    QTimer::singleShot(1000, [&]() {
-        advanceState(NetworkP2pDevice::Idle);
-    });
+void MiracastService::StartIdleTimer() {
+    g_timeout_add(STATE_IDLE_TIMEOUT, &MiracastService::OnIdleTimer, this);
 }
 
-void MiracastService::finishConnectAttempt(bool success, const QString &errorText)
-{
-    if (connectCallback)
-        connectCallback(success, errorText);
+void MiracastService::FinishConnectAttempt(bool success, const std::string &error_text) {
+    if (connect_callback_)
+        connect_callback_(success, error_text);
 
-    connectCallback = nullptr;
+    connect_callback_ = nullptr;
 }
 
-void MiracastService::connectSink(const QString &address, std::function<void(bool,QString)> callback)
-{
-    if (!currentPeer.isNull()) {
+void MiracastService::ConnectSink(const std::string &address, std::function<void(bool,std::string)> callback) {
+    if (current_peer_.get()) {
         callback(false, "Already connected");
         return;
     }
 
-    NetworkP2pDevice::Ptr device;
+    NetworkDevice::Ptr device;
 
-    for (auto peer : manager->peers()) {
-        if (peer->address() != address)
+    for (auto peer : manager_->Devices()) {
+        if (peer->Address() != address)
             continue;
 
         device = peer;
         break;
     }
 
-    if (device.isNull()) {
+    if (!device) {
         callback(false, "Couldn't find device");
         return;
     }
 
-    if (manager->connect(device->address(), false) < 0) {
+    if (manager_->Connect(device->Address(), false) < 0) {
         callback(false, "Failed to connect with remote device");
         return;
     }
 
-    currentPeer = device;
-    connectCallback = callback;
+    current_peer_ = device;
+    connect_callback_ = callback;
+}
+
+void MiracastService::Scan() {
+    manager_->Scan();
 }

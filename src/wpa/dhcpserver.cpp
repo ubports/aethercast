@@ -15,8 +15,6 @@
  *
  */
 
-#include <QDebug>
-
 #include <asm/types.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -24,45 +22,34 @@
 
 #include "dhcpserver.h"
 #include "networkutils.h"
-#include "gdhcp.h"
 
-class DhcpServer::Private
-{
-public:
-    static void onServerDebug(const char *str, gpointer user_data)
-    {
-        qDebug() << "DHCP:" << str;
-    }
-
-    QString interface;
-    int ifaceIndex;
-    GDHCPServer *server;
-};
-
-DhcpServer::DhcpServer(const QString &interface) :
-    d(new Private)
-{
-    d->interface = interface;
-    d->ifaceIndex = NetworkUtils::retriveInterfaceIndex(d->interface.toUtf8().constData());
-    if (d->ifaceIndex < 0)
-        qWarning() << "Failed to determine index of network interface" << d->interface;
+DhcpServer::DhcpServer(Delegate *delegate, const std::string &interface_name) :
+    interface_name_(interface_name) {
+    interface_index_ = NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
+    if (interface_index_ < 0)
+        g_warning("Failed to determine index of network interface: %s", interface_name_.c_str());
 }
 
 DhcpServer::~DhcpServer()
 {
-    if (d->server)
-        g_dhcp_server_unref(d->server);
+    if (server_)
+        g_dhcp_server_unref(server_);
 }
 
-QString DhcpServer::localAddress() const
+std::string DhcpServer::LocalAddress() const
 {
     // FIXME this should be stored somewhere else
-    return QString("192.168.7.1");
+    return std::string("192.168.7.1");
 }
 
-bool DhcpServer::start()
+void DhcpServer::OnDebug(const char *str, gpointer user_data)
 {
-    qWarning() << "Starting up DHCP server";
+    g_warning("DHCP: %s", str);
+}
+
+bool DhcpServer::Start()
+{
+    g_warning("Starting up DHCP server");
 
     // FIXME store those defaults somewhere else
     const char *address = "192.168.7.1";
@@ -70,45 +57,44 @@ bool DhcpServer::start()
     const char *broadcast = "192.168.7.255";
     unsigned char prefixlen = 24;
 
-    if (NetworkUtils::modifyAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, d->ifaceIndex,
+    if (NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, interface_index_,
                                     AF_INET, address,
                                     NULL, prefixlen, broadcast) < 0) {
-        qWarning() << "Failed to assign network address for" << d->interface;
+        g_warning("Failed to assign network address for %s", interface_name_.c_str());
         return false;
     }
 
     GDHCPServerError error;
-    d->server = g_dhcp_server_new(G_DHCP_IPV4, d->ifaceIndex, &error);
-    if (!d->server) {
-        qWarning() << "Failed to setup DHCP server";
+    server_ = g_dhcp_server_new(G_DHCP_IPV4, interface_index_, &error);
+    if (!server_) {
+        g_warning("Failed to setup DHCP server");
         return false;
     }
 
-    g_dhcp_server_set_lease_time(d->server, 3600);
-    g_dhcp_server_set_option(d->server, G_DHCP_SUBNET, subnet);
-    g_dhcp_server_set_option(d->server, G_DHCP_ROUTER, localAddress().toUtf8().constData());
-    g_dhcp_server_set_option(d->server, G_DHCP_DNS_SERVER, NULL);
-    g_dhcp_server_set_ip_range(d->server, "192.168.7.5", "192.168.7.100");
+    g_dhcp_server_set_lease_time(server_, 3600);
+    g_dhcp_server_set_option(server_, G_DHCP_SUBNET, subnet);
+    g_dhcp_server_set_option(server_, G_DHCP_ROUTER, LocalAddress().c_str());
+    g_dhcp_server_set_option(server_, G_DHCP_DNS_SERVER, NULL);
+    g_dhcp_server_set_ip_range(server_, "192.168.7.5", "192.168.7.100");
 
-    g_dhcp_server_set_debug(d->server, &Private::onServerDebug, this);
+    g_dhcp_server_set_debug(server_, &DhcpServer::OnDebug, this);
 
-    if(g_dhcp_server_start(d->server) < 0) {
-        qWarning() << "Failed to start DHCP server";
-        g_dhcp_server_unref(d->server);
+    if(g_dhcp_server_start(server_) < 0) {
+        g_warning("Failed to start DHCP server");
+        g_dhcp_server_unref(server_);
         return false;
     }
 
     return true;
 }
 
-void DhcpServer::stop()
+void DhcpServer::Stop()
 {
-    if (!d->server)
+    if (!server_)
         return;
 
-    g_dhcp_server_stop(d->server);
+    g_dhcp_server_stop(server_);
+    g_dhcp_server_unref(server_);
 
-    g_dhcp_server_unref(d->server);
-
-    NetworkUtils::resetInterface(d->ifaceIndex);
+    NetworkUtils::ResetInterface(interface_index_);
 }

@@ -15,68 +15,63 @@
  *
  */
 
-#include <QtGlobal>
-#include <QCoreApplication>
-#include <QDBusConnection>
-#include <QCommandLineParser>
+#include <sys/signalfd.h>
 
 #include <gst/gst.h>
 
-#include "unixsignalhandler.h"
 #include "miracastservice.h"
-#include "miracastserviceadaptor.h"
+#include "miracastserviceadapter.h"
 
-static bool debuggingEnabled = false;
+#define VERSION     "0.1"
 
-void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
-{
-    QByteArray localMsg = msg.toLocal8Bit();
-    switch (type) {
-    case QtDebugMsg:
-        if (debuggingEnabled)
-            fprintf(stderr, "DEBUG: %s \n", localMsg.constData());
-        break;
-    case QtWarningMsg:
-        fprintf(stderr, "WARNING: %s \n", localMsg.constData());
-        break;
-    case QtCriticalMsg:
-        fprintf(stderr, "CRITICAL: %s \n", localMsg.constData());
-        break;
-    case QtFatalMsg:
-        fprintf(stderr, "FATAL: %s \n", localMsg.constData());
-        abort();
+static gboolean option_debug = FALSE;
+static gboolean option_version = FALSE;
+
+static GMainLoop *main_loop = nullptr;
+
+static unsigned int __terminated = 0;
+
+static GOptionEntry options[] = {
+    { "debug", 'd', 0, G_OPTION_ARG_NONE, &option_debug,
+                "Enable debugging mode" },
+    { "version", 'v', 0, G_OPTION_ARG_NONE, &option_version,
+                "Show version information and exit" },
+    { NULL },
+};
+
+int main(int argc, char **argv) {
+    GOptionContext *context;
+    GError *error = nullptr;
+
+    context = g_option_context_new(NULL);
+    g_option_context_add_main_entries(context, options, NULL);
+
+    if (!g_option_context_parse(context, &argc, &argv, &error)) {
+        if (error) {
+            g_printerr("%s\n", error->message);
+            g_error_free(error);
+        } else
+            g_printerr("An unknown error occurred\n");
+        exit(1);
     }
-}
 
-int main(int argc, char **argv)
-{
-    qInstallMessageHandler(messageHandler);
+    g_option_context_free(context);
 
-    QCoreApplication app(argc, argv);
-
-    QCommandLineParser parser;
-    parser.setApplicationDescription("Miracast service");
-    parser.addHelpOption();
-    parser.addVersionOption();
-
-    QCommandLineOption debugOption("d", "Enable debugging output");
-    parser.addOption(debugOption);
-
-    parser.process(app);
-    debuggingEnabled = parser.isSet(debugOption);
+    if (option_version) {
+        printf("%s\n", VERSION);
+        return 0;
+    }
 
     gst_init(nullptr, nullptr);
 
-    util::UnixSignalHandler handler([]{
-        QCoreApplication::exit(0);
-    });
-    handler.setupUnixSignalHandlers();
+    main_loop = g_main_loop_new(nullptr, FALSE);
 
-    MiracastService service;
-    new MiracastServiceAdaptor(&service);
+    MiracastService service(nullptr);
+    MiracastServiceAdapter adapter(&service);
 
-    QDBusConnection::systemBus().registerService("com.ubuntu.miracast");
-    QDBusConnection::systemBus().registerObject("/", &service);
+    g_main_loop_run(main_loop);
 
-    return app.exec();
+    g_main_loop_unref(main_loop);
+
+    return 0;
 }

@@ -18,8 +18,8 @@
 #ifndef GSTMEDIAMANAGER_H_
 #define GSTMEDIAMANAGER_H_
 
-#include <QScopedPointer>
-#include <QHostAddress>
+#include <glib.h>
+#include <gst/gst.h>
 
 #include "basesourcemediamanager.h"
 
@@ -35,13 +35,17 @@ public:
     bool IsPaused() const override;
 
 protected:
-    void configure() override;
+    void Configure() override;
 
-    virtual QString constructPipeline() = 0;
+    virtual std::string ConstructPipeline(const wds::H264VideoFormat &format) = 0;
 
 private:
-    class Private;
-    QScopedPointer<Private> d;
+    static gboolean OnGstBusEvent(GstBus *bus, GstMessage *message, gpointer data);
+
+private:
+    GstElement *pipeline_;
+    std::string remote_address_;
+    guint bus_watch_id_;
 };
 
 #endif

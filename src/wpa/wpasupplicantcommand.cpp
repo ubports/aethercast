@@ -15,21 +15,9 @@
  *
  */
 
-#ifndef TESTMEDIAMANAGER_H_
-#define TESTMEDIAMANAGER_H_
+#include "wpasupplicantcommand.h"
 
-#include "gstsourcemediamanager.h"
-
-class TestSourceMediaManager : public GstSourceMediaManager {
-public:
-    explicit TestSourceMediaManager(const std::string &remote_address);
-    ~TestSourceMediaManager();
-
-protected:
-    std::string ConstructPipeline(const wds::H264VideoFormat &format) override;
-
-private:
-    std::string remote_address_;
-};
-
-#endif
+WpaSupplicantCommand::WpaSupplicantCommand(const WpaSupplicantMessage &message, ResponseCallback callback) :
+    message(message),
+    callback(callback) {
+}
