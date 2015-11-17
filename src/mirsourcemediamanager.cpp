@@ -15,6 +15,8 @@
  *
  */
 
+#include <sstream>
+
 #include "mirsourcemediamanager.h"
 #include "utilities.h"
 
@@ -26,8 +28,17 @@ MirSourceMediaManager::~MirSourceMediaManager() {
 }
 
 std::string MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
-    int width = 0;
-    int height = 0;
+    int width = 0, height = 0;
+    std::string profile = "constrained-baseline";
+
+    switch (format.profile) {
+    case wds::CBP:
+        profile = "constrained-baseline";
+        break;
+    case wds::CHP:
+        profile = "high";
+        break;
+    }
 
     switch (format.type) {
     case wds::CEA:
@@ -70,14 +81,22 @@ std::string MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat 
             width = 1920;
             height = 1080;
             break;
+        default:
+            break;
         }
-
         break;
     default:
         break;
     }
 
-    auto config = utilities::StringFormat("mirimagesrc mir-socket=/run/mir_socket ! videoconvert ! videoscale ! video/x-raw,width=%d,height=%d ! videoflip method=counterclockwise ! queue2 ! video/x-raw,format=I420 ! x264enc aud=false byte-stream=true tune=zerolatency ! mpegtsmux ! rtpmp2tpay ! udpsink name=sink host=%s port=%d",
-                                     width, height, remote_address_.c_str(), sink_port1_);
-    return config;
+    std::stringstream ss;
+    ss << "mirimagesrc mir-socket=/run/mir_socket ! videoconvert ! videoscale ! ";
+    ss << utilities::StringFormat("video/x-raw,width=%d,height=%d ! ", width, height);
+    ss << "videoflip method=counterclockwise ! queue2 ! video/x-raw,format=I420 ! ";
+    ss << "x264enc aud=false byte-stream=true tune=zerolatency ! ";
+    ss << utilities::StringFormat("video/x-h264,profile=%s ! ", profile.c_str());
+    ss << "mpegtsmux ! rtpmp2tpay ! ";
+    ss << utilities::StringFormat("udpsink name=sink host=%s port=%d", remote_address_.c_str(), sink_port1_);
+
+    return ss.str();
 }
