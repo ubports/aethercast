@@ -26,7 +26,7 @@ public:
     ~MirSourceMediaManager();
 
 protected:
-    std::string ConstructPipeline(const wds::H264VideoFormat &format) override;
+    GstElement* ConstructPipeline(const wds::H264VideoFormat &format) override;
 
 private:
     std::string remote_address_;

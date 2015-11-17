@@ -27,7 +27,7 @@ MirSourceMediaManager::MirSourceMediaManager(const std::string &remote_address) 
 MirSourceMediaManager::~MirSourceMediaManager() {
 }
 
-std::string MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
+GstElement* MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
     int width = 0, height = 0;
     std::string profile = "constrained-baseline";
 
@@ -98,5 +98,13 @@ std::string MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat 
     ss << "mpegtsmux ! rtpmp2tpay ! ";
     ss << utilities::StringFormat("udpsink name=sink host=%s port=%d", remote_address_.c_str(), sink_port1_);
 
-    return ss.str();
+    GError *error;
+    GstElement *pipeline = gst_parse_launch(ss.str().c_str(), &error);
+    if (error) {
+        g_warning("Failed to setup GStreamer pipeline: %s", error->message);
+        g_error_free(error);
+        return nullptr;
+    }
+
+    return pipeline;
 }

@@ -37,7 +37,7 @@ public:
 protected:
     void Configure() override;
 
-    virtual std::string ConstructPipeline(const wds::H264VideoFormat &format) = 0;
+    virtual GstElement* ConstructPipeline(const wds::H264VideoFormat &format) = 0;
 
 private:
     static gboolean OnGstBusEvent(GstBus *bus, GstMessage *message, gpointer data);

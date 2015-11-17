@@ -60,17 +60,7 @@ gboolean GstSourceMediaManager::OnGstBusEvent(GstBus *bus, GstMessage *message, 
 }
 
 void GstSourceMediaManager::Configure() {
-    auto config = ConstructPipeline(format_);
-
-    g_warning("pipeline: %s", config.c_str());
-
-    GError *error = nullptr;
-    pipeline_ = gst_parse_launch(config.c_str(), &error);
-    if (error) {
-        g_warning("Failed to setup GStreamer pipeline: %s", error->message);
-        g_error_free(error);
-        return;
-    }
+    pipeline_ = ConstructPipeline(format_);
 
     auto bus = gst_pipeline_get_bus (GST_PIPELINE(pipeline_));
     bus_watch_id_ = gst_bus_add_watch(bus, &GstSourceMediaManager::OnGstBusEvent, this);

@@ -27,8 +27,17 @@ TestSourceMediaManager::TestSourceMediaManager(const std::string &remote_address
 TestSourceMediaManager::~TestSourceMediaManager() {
 }
 
-std::string TestSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
+GstElement* TestSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
     auto config = utilities::StringFormat("videotestsrc ! videoconvert ! video/x-raw,format=I420 ! x264enc ! mpegtsmux ! rtpmp2tpay ! udpsink name=sink host=%s port=%d",
                                      remote_address_.c_str(), sink_port1_);
-    return config;
+
+    GError *error = nullptr;
+    GstElement *pipeline = gst_parse_launch(config.c_str(), &error);
+    if (error) {
+        g_warning("Failed to setup GStreamer pipeline: %s", error->message);
+        g_error_free(error);
+        return nullptr;
+    }
+
+    return pipeline;
 }
