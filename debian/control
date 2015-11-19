@@ -1,0 +1,22 @@
+Source: miracast-service
+Section: utils
+Priority: optional
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: Simon Fels <simon.fels@canonical.com>
+Build-Depends: cmake,
+               debhelper (>= 9),
+               libglib2.0-dev
+Standards-Version: 3.9.4
+Homepage: http://launchpad.net/miracast-service
+# If you aren't a member of ~phablet-team but need to upload packaging changes,
+# just go ahead.  ~phablet-team will notice and sync up the code again.
+# Vcs-Bzr: https://code.launchpad.net/~phablet-team/miracast-service/trunk
+# Vcs-Browser: http://bazaar.launchpad.net/~phablet-team/miracast-service/trunk/files
+
+Package: miracast-service
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
+Description: Miracast screen sharing service
+ Implements a service which allows screen sharing of one device to
+ another over the Miracast / WiFi Display protocol.
