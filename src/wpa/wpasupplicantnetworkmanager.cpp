@@ -338,12 +338,10 @@ void WpaSupplicantNetworkManager::ConnectSupplicant() {
     // We need to attach to receive all occuring events from wpa-supplicant
     auto m = WpaSupplicantMessage::CreateRequest("ATTACH");
     Request(m, [=](const WpaSupplicantMessage &message) {
-#if 0
-        if (!CheckResult(result)) {
+        if (message.IsFail()) {
             g_warning("Failed to attach to wpa-supplicant for unsolicited events");
             return;
         }
-#endif
     });
 
     // Enable WiFi display support
