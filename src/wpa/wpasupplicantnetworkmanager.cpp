@@ -579,12 +579,8 @@ int WpaSupplicantNetworkManager::Connect(const std::string &address, bool persis
     if (available_devices_.find(address) == available_devices_.end())
         return -EINVAL;
 
-    g_warning("test1");
-
     if (current_peer_.get())
         return -EALREADY;
-
-    g_warning("test2");
 
     current_peer_ = available_devices_[address];
 
