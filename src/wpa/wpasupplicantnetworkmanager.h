@@ -40,7 +40,7 @@ public:
     WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate_, const std::string &iface);
     ~WpaSupplicantNetworkManager();
 
-    void Setup();
+    bool Setup();
 
     void SetWfdSubElements(const std::list<std::string> &elements) override;
 
@@ -52,6 +52,7 @@ public:
 
     NetworkDeviceRole Role() const override;
     std::string LocalAddress() const override;
+    bool Running() const override;
 
     void OnUnsolicitedResponse(WpaSupplicantMessage message);
     void OnWriteMessage(WpaSupplicantMessage message);
@@ -59,12 +60,21 @@ public:
     void OnAddressAssigned(const std::string &address);
 
 private:
-    void StartService();
-    void ConnectSupplicant();
-    void Request(const WpaSupplicantMessage &message, std::function<void(WpaSupplicantMessage)> callback);
-    bool CheckResult(const std::string &result);
+    bool StartSupplicant();
+    void StopSupplicant();
+    bool ConnectSupplicant();
+    void DisconnectSupplicant();
+    void RequestAsync(const WpaSupplicantMessage &message, std::function<void(WpaSupplicantMessage)> callback);
+    bool CreateSupplicantConfig();
+    void HandleSupplicantFailed();
+    void Reset();
 
-    static gboolean OnSupplicantConnected(gpointer user_data);
+    void OnP2pDeviceFound(WpaSupplicantMessage &message);
+    void OnP2pDeviceLost(WpaSupplicantMessage &message);
+    void OnP2pGroupStarted(WpaSupplicantMessage &message);
+    void OnP2pGroupRemoved(WpaSupplicantMessage &message);
+
+    static gboolean OnConnectSupplicant(gpointer user_data);
     static void OnSupplicantWatch(GPid pid, gint status, gpointer user_data);
     static gboolean OnGroupClientDhcpTimeout(gpointer user_data);
     static gboolean OnDeviceFailureTimeout(gpointer user_data);
@@ -84,6 +94,7 @@ private:
     DhcpServer dhcp_server_;
     GPid supplicant_pid_;
     GIOChannel *channel_;
+    guint channel_watch_;
     guint dhcp_timeout_;
 };
 

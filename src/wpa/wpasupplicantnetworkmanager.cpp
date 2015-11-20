@@ -67,156 +67,158 @@ WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegat
     dhcp_client_(this, interface_name),
     dhcp_server_(nullptr, interface_name),
     channel_(nullptr),
+    channel_watch_(0),
     dhcp_timeout_(0) {
 }
 
 WpaSupplicantNetworkManager::~WpaSupplicantNetworkManager() {
-    // FIXME
+    StopSupplicant();
 }
 
 void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage message) {
     g_warning("EVENT: %s", message.Dump().c_str());
-    g_warning("EVENT NAME: %s", message.Name().c_str());
 
-    if (message.Name() == P2P_DEVICE_FOUND) {
-        // P2P-DEVICE-FOUND 4e:74:03:70:e2:c1 p2p_dev_addr=4e:74:03:70:e2:c1
-        // pri_dev_type=8-0050F204-2 name='Aquaris M10' config_methods=0x188 dev_capab=0x5
-        // group_capab=0x0 wfd_dev_info=0x00111c440032 new=1
-
-        char *address = nullptr;
-        char *name = nullptr;
-        char *config_methods_str = nullptr;
-
-        message.Read("s", &address);
-        message.Skip("ee");
-        message.Read("ee", &name, &config_methods_str);
-
-#if 0
-        auto wfdDevInfoStr = items[8].section('=', 1).mid(2);
-        WfdDeviceInfo wfdDevInfo(parseHex(wfdDevInfoStr.left(4).toStdString()),
-                              parseHex(wfdDevInfoStr.mid(4, 4).toStdString()),
-                              parseHex(wfdDevInfoStr.right(4).toStdString()));
-        auto configMethods = parseHex(items[5].section('=', 1).toStdString());
-
-        qDebug() << "P2P device found:";
-        qDebug() << "  address" << address.c_str()
-                 << "deviceType" << wfdDevInfo.device_type_as_string().c_str()
-                 << "controlPort" << wfdDevInfo.control_port()
-                 << "maxThroughput" << wfdDevInfo.max_throughput()
-                 << "configMethods" << configMethods;
-#endif
-
-        g_warning("Found device with address %s name %s config_methods %s", address, name, config_methods_str);
-
-        // Check if we've that peer already in our list, if that is the
-        // case we just update it.
-        for (auto iter : available_devices_) {
-            if (iter.second->Address() != std::string(address))
-                continue;
-
-            if (delegate_)
-                delegate_->OnDeviceChanged(iter.second);
-
-            return;
-        }
-
-        NetworkDevice::Ptr peer(new NetworkDevice);
-        peer->SetAddress(address);
-        peer->SetName(name);
-        // peer->set_wfd_device_info(wfdDevInfo);
-        peer->SetConfigMethods(utilities::ParseHex(std::string(config_methods_str)));
-
-        available_devices_.insert(std::pair<std::string,NetworkDevice::Ptr>(std::string(address), NetworkDevice::Ptr(peer)));
-
-        if (delegate_)
-            delegate_->OnDeviceFound(peer);
-
-        g_warning("Found new device");
-    } else if (message.Name() == P2P_DEVICE_LOST) {
-        // P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1
-
-        const char *address = nullptr;
-
-        message.Read("e", &address);
-
-        auto peer = available_devices_[std::string(address)];
-        if (!peer)
-            return;
-
-        if (delegate_)
-            delegate_->OnDeviceLost(peer);
-
-    } else if (message.Name() == P2P_GROUP_STARTED) {
-        // P2P-GROUP-STARTED p2p0 GO ssid="DIRECT-hB" freq=2412 passphrase="HtP0qYon"
-        // go_dev_addr=4e:74:03:64:95:a7
-        if (!current_peer_.get())
-            return;
-
-        const char *role = nullptr;
-
-        message.Skip("s");
-        message.Read("s", &role);
-
-
-        g_warning("Group started: role %s", role);
-
-        current_peer_->SetState(kConfiguration);
-
-        // If we're the GO the other side is the client and vice versa
-        if (g_strcmp0(role, "GO") == 0) {
-            current_role_ = kGroupOwner;
-
-            current_peer_->SetState(kConnected);
-
-            // As we're the owner we can now just startup the DHCP server
-            // and report we're connected as there is not much more to do
-            // from our side.
-            dhcp_server_.Start();
-
-            if (delegate_)
-                delegate_->OnDeviceFound(current_peer_);
-        } else {
-            current_role_ = kGroupClient;
-
-            // We're a client of a formed group now and have to acquire
-            // our IP address via DHCP so we have to wait until we're
-            // reporting our upper layers that we're connected.
-            dhcp_client_.Start();
-
-            // To not wait forever we're starting a timeout here which
-            // will bring everything down if we didn't received a IP
-            // address once it happens.
-            dhcp_timeout_ = g_timeout_add(DHCP_IP_ASSIGNMENT_TIMEOUT, &WpaSupplicantNetworkManager::OnGroupClientDhcpTimeout, this);
-        }
-    } else if (message.Name() == P2P_GROUP_REMOVED) {
-        // P2P-GROUP-REMOVED p2p0 GO reason=FORMATION_FAILED
-        if (current_peer_.get())
-            return;
-
-        current_peer_->SetAddress("");
-        current_peer_->SetState(kDisconnected);
-
-        const char *reason = nullptr;
-
-        message.Skip("ss");
-        message.Read("e", &reason);
-
-        if (delegate_) {
-            if (g_strcmp0(reason, "FORMATION_FAILED") == 0 ||
-                    g_strcmp0(reason, "PSK_FAILURE") == 0 ||
-                    g_strcmp0(reason, "FREQ_CONFLICT") == 0)
-                delegate_->OnDeviceFailed(current_peer_);
-            else
-                delegate_->OnDeviceDisconnected(current_peer_);
-        }
-
-        current_peer_.reset();
+    if (message.Type() != kEvent) {
+        g_warning("unhandled supplicant message: %s", message.Raw().c_str());
+        return;
     }
+
+    if (message.Name() == P2P_DEVICE_FOUND)
+        OnP2pDeviceFound(message);
+    else if (message.Name() == P2P_DEVICE_LOST)
+        OnP2pDeviceLost(message);
+    else if (message.Name() == P2P_GROUP_STARTED)
+        OnP2pGroupStarted(message);
+    else if (message.Name() == P2P_GROUP_REMOVED)
+        OnP2pGroupRemoved(message);
+    else
+        g_warning("unhandled supplicant event: %s", message.Raw().c_str());
+}
+
+void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message) {
+    // P2P-DEVICE-FOUND 4e:74:03:70:e2:c1 p2p_dev_addr=4e:74:03:70:e2:c1
+    // pri_dev_type=8-0050F204-2 name='Aquaris M10' config_methods=0x188 dev_capab=0x5
+    // group_capab=0x0 wfd_dev_info=0x00111c440032 new=1
+
+    char *address = nullptr;
+    char *name = nullptr;
+    char *config_methods_str = nullptr;
+
+    message.Read("s", &address);
+    message.Skip("ee");
+    message.Read("ee", &name, &config_methods_str);
+
+    g_warning("Found device with address %s name %s config_methods %s", address, name, config_methods_str);
+
+    // Check if we've that peer already in our list, if that is the
+    // case we just update it.
+    for (auto iter : available_devices_) {
+        if (iter.second->Address() != std::string(address))
+            continue;
+
+        if (delegate_)
+            delegate_->OnDeviceChanged(iter.second);
+
+        return;
+    }
+
+    NetworkDevice::Ptr peer(new NetworkDevice);
+    peer->SetAddress(address);
+    peer->SetName(name);
+    peer->SetConfigMethods(utilities::ParseHex(std::string(config_methods_str)));
+
+    available_devices_.insert(std::pair<std::string,NetworkDevice::Ptr>(std::string(address), NetworkDevice::Ptr(peer)));
+
+    if (delegate_)
+        delegate_->OnDeviceFound(peer);
+}
+
+void WpaSupplicantNetworkManager::OnP2pDeviceLost(WpaSupplicantMessage &message) {
+    // P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1
+
+    const char *address = nullptr;
+
+    message.Read("e", &address);
+
+    auto peer = available_devices_[std::string(address)];
+    if (!peer)
+        return;
+
+    if (delegate_)
+        delegate_->OnDeviceLost(peer);
+}
+
+void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &message) {
+    // P2P-GROUP-STARTED p2p0 GO ssid="DIRECT-hB" freq=2412 passphrase="HtP0qYon"
+    // go_dev_addr=4e:74:03:64:95:a7
+    if (!current_peer_.get())
+        return;
+
+    const char *role = nullptr;
+
+    message.Skip("s");
+    message.Read("s", &role);
+
+
+    g_warning("Group started: role %s", role);
+
+    current_peer_->SetState(kConfiguration);
+
+    // If we're the GO the other side is the client and vice versa
+    if (g_strcmp0(role, "GO") == 0) {
+        current_role_ = kGroupOwner;
+
+        current_peer_->SetState(kConnected);
+
+        // As we're the owner we can now just startup the DHCP server
+        // and report we're connected as there is not much more to do
+        // from our side.
+        dhcp_server_.Start();
+
+        if (delegate_)
+            delegate_->OnDeviceFound(current_peer_);
+    } else {
+        current_role_ = kGroupClient;
+
+        // We're a client of a formed group now and have to acquire
+        // our IP address via DHCP so we have to wait until we're
+        // reporting our upper layers that we're connected.
+        dhcp_client_.Start();
+
+        // To not wait forever we're starting a timeout here which
+        // will bring everything down if we didn't received a IP
+        // address once it happens.
+        dhcp_timeout_ = g_timeout_add(DHCP_IP_ASSIGNMENT_TIMEOUT, &WpaSupplicantNetworkManager::OnGroupClientDhcpTimeout, this);
+    }
+}
+
+void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &message) {
+    // P2P-GROUP-REMOVED p2p0 GO reason=FORMATION_FAILED
+    if (current_peer_.get())
+        return;
+
+    current_peer_->SetAddress("");
+    current_peer_->SetState(kDisconnected);
+
+    const char *reason = nullptr;
+
+    message.Skip("ss");
+    message.Read("e", &reason);
+
+    if (delegate_) {
+        if (g_strcmp0(reason, "FORMATION_FAILED") == 0 ||
+                g_strcmp0(reason, "PSK_FAILURE") == 0 ||
+                g_strcmp0(reason, "FREQ_CONFLICT") == 0)
+            delegate_->OnDeviceFailed(current_peer_);
+        else
+            delegate_->OnDeviceDisconnected(current_peer_);
+    }
+
+    current_peer_.reset();
 }
 
 void WpaSupplicantNetworkManager::OnWriteMessage(WpaSupplicantMessage message) {
     auto data = message.Raw();
-    g_warning("Sending %s", data.c_str());
     if (send(sock_, data.c_str(), data.length(), 0) < 0)
         g_warning("Failed to send data to wpa-supplicant");
 }
@@ -236,62 +238,124 @@ std::string WpaSupplicantNetworkManager::LocalAddress() const {
     return address;
 }
 
-void WpaSupplicantNetworkManager::Setup() {
-    StartService();
+bool WpaSupplicantNetworkManager::Running() const {
+    return supplicant_pid_ > 0;
 }
 
-gboolean WpaSupplicantNetworkManager::OnSupplicantConnected(gpointer user_data) {
-    auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
-    inst->ConnectSupplicant();
+bool WpaSupplicantNetworkManager::Setup() {
+    return StartSupplicant();
+}
 
-    return FALSE;
+gboolean WpaSupplicantNetworkManager::OnConnectSupplicant(gpointer user_data) {
+    auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
+    // If we're no able to connect to supplicant we try it again next time
+    return !inst->ConnectSupplicant();
 }
 
 void WpaSupplicantNetworkManager::OnSupplicantWatch(GPid pid, gint status, gpointer user_data) {
     auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
 
-    if (status < 0)
+    if (status < 0) {
         g_warning("Supplicant process failed with status %d", status);
-
-    // FIXME bring everything down
+        inst->HandleSupplicantFailed();
+    }
 }
 
-void WpaSupplicantNetworkManager::StartService() {
-    char buf[1024];
-    g_snprintf(buf, 1024, "%s -Dnl80211 -i%s -C%s -ddd -t -K",
-               WPA_SUPPLICANT_BIN_PATH,
-               interface_name_.c_str(),
-               ctrl_path_.c_str());
+void WpaSupplicantNetworkManager::HandleSupplicantFailed() {
+    StopSupplicant();
+    DisconnectSupplicant();
+    Reset();
+}
 
-    auto argv = g_strsplit(buf, " ", -1);
+void WpaSupplicantNetworkManager::Reset() {
+    if (current_peer_) {
+        if (delegate_)
+            delegate_->OnDeviceDisconnected(current_peer_);
 
-    GError *error;
+        current_peer_ = nullptr;
+
+        if (dhcp_timeout_ > 0) {
+            g_source_remove(dhcp_timeout_);
+            dhcp_timeout_ = 0;
+        }
+
+        dhcp_client_.Stop();
+        dhcp_server_.Stop();
+    }
+
+    if (delegate_) {
+        for (auto peer : available_devices_)
+            delegate_->OnDeviceLost(peer.second);
+    }
+
+    available_devices_.clear();
+    current_role_ = kUndecided;
+
+}
+
+bool WpaSupplicantNetworkManager::CreateSupplicantConfig() {
+    auto conf_path = utilities::StringFormat("/tmp/supplicant-%s.conf", interface_name_.c_str());
+    auto config = utilities::StringFormat(
+                "# GENERATED - DO NOT EDIT!\n"
+                "config_methods=pbc\n" // We're only supporting PBC for now
+                "ap_scan=1\n"
+                "device_name=%s",
+                "unknown");
+
+    GError *error = nullptr;
+    if (!g_file_set_contents(conf_path.c_str(), config.c_str(), config.length(), &error)) {
+        g_warning("Failed to create configuration file for supplicant: %s",
+                  error->message);
+        g_error_free(error);
+        return false;
+    }
+
+    return true;
+}
+
+bool WpaSupplicantNetworkManager::StartSupplicant() {
+    if (!CreateSupplicantConfig())
+        return false;
+
+    auto cmdline = utilities::StringFormat("%s -Dnl80211 -i%s -C%s -ddd -t -K",
+                                           WPA_SUPPLICANT_BIN_PATH,
+                                           interface_name_.c_str(),
+                                           ctrl_path_.c_str());
+    auto argv = g_strsplit(cmdline.c_str(), " ", -1);
+
+    GError *error = nullptr;
     int err = g_spawn_async(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_DEFAULT | G_SPAWN_STDERR_TO_DEV_NULL | G_SPAWN_STDOUT_TO_DEV_NULL),
                             NULL, NULL, &supplicant_pid_, &error);
     if (err < 0) {
         g_warning("Failed to spawn wpa-supplicant process: %s", error->message);
         g_strfreev(argv);
         g_error_free(error);
-        return;
+        return false;
     }
 
     err = g_child_watch_add(supplicant_pid_, &WpaSupplicantNetworkManager::OnSupplicantWatch, this);
-    if (err < 0)
+    if (err < 0) {
         g_warning("Failed to setup watch for supplicant");
+        StopSupplicant();
+        return false;
+    }
 
     g_strfreev(argv);
 
-    g_timeout_add(500, &WpaSupplicantNetworkManager::OnSupplicantConnected, this);
+    g_timeout_add(500, &WpaSupplicantNetworkManager::OnConnectSupplicant, this);
+
+    return true;
 }
 
-bool WpaSupplicantNetworkManager::CheckResult(const std::string &result) {
-    if (result.length() == 0)
-        return true;
+void WpaSupplicantNetworkManager::StopSupplicant() {
+    if (supplicant_pid_ < 0)
+        return;
 
-    return result.length() == 3 && result == "OK\n";
+    g_spawn_close_pid(supplicant_pid_);
+    supplicant_pid_ = 0;
 }
 
-void WpaSupplicantNetworkManager::ConnectSupplicant() {
+bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     std::string socket_path = utilities::StringFormat("%s/%s",
                                                       ctrl_path_.c_str(),
                                                       interface_name_.c_str());
@@ -302,7 +366,7 @@ void WpaSupplicantNetworkManager::ConnectSupplicant() {
     sock_ = ::socket(PF_UNIX, SOCK_DGRAM, 0);
     if (sock_ < 0) {
         g_warning("Failed to create socket");
-        return;
+        return false;
     }
 
     local.sun_family = AF_UNIX;
@@ -312,7 +376,7 @@ void WpaSupplicantNetworkManager::ConnectSupplicant() {
 
     if (::bind(sock_, (struct sockaddr *) &local, sizeof(local)) < 0) {
         g_warning("Failed to bind socket");
-        return;
+        return false;
     }
 
     struct sockaddr_un dest;
@@ -321,7 +385,7 @@ void WpaSupplicantNetworkManager::ConnectSupplicant() {
 
     if (::connect(sock_, (struct sockaddr*) &dest, sizeof(dest)) < 0) {
         g_warning("Failed to connect socket");
-        return;
+        return false;
     }
 
     int flags = ::fcntl(sock_, F_GETFL);
@@ -329,15 +393,16 @@ void WpaSupplicantNetworkManager::ConnectSupplicant() {
     ::fcntl(sock_, F_SETFL, flags);
 
     channel_ = g_io_channel_unix_new(sock_);
-    if (g_io_add_watch(channel_, (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR),
-                       &WpaSupplicantNetworkManager::OnIncomingMessages, this) < 0) {
+    channel_watch_ = g_io_add_watch(channel_, (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR),
+                       &WpaSupplicantNetworkManager::OnIncomingMessages, this);
+    if (channel_watch_ == 0) {
         g_warning("Failed to setup watch for incoming messages from wpa-supplicant");
-        return;
+        return false;
     }
 
     // We need to attach to receive all occuring events from wpa-supplicant
     auto m = WpaSupplicantMessage::CreateRequest("ATTACH");
-    Request(m, [=](const WpaSupplicantMessage &message) {
+    RequestAsync(m, [=](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
             g_warning("Failed to attach to wpa-supplicant for unsolicited events");
             return;
@@ -347,18 +412,42 @@ void WpaSupplicantNetworkManager::ConnectSupplicant() {
     // Enable WiFi display support
     m = WpaSupplicantMessage::CreateRequest("SET");
     g_assert(m.Append("si", "wifi_display", 1));
-    Request(m, [=](const WpaSupplicantMessage &message) { });
+    RequestAsync(m, [=](const WpaSupplicantMessage &message) { });
 
     std::list<std::string> wfd_sub_elements;
     // FIXME build this rather than specifying a static string here
     wfd_sub_elements.push_back(std::string("000600101C440032"));
     SetWfdSubElements(wfd_sub_elements);
+
+    return true;
+}
+
+void WpaSupplicantNetworkManager::DisconnectSupplicant() {
+    if (sock_ < 0)
+        return;
+
+    if (channel_) {
+        g_io_channel_shutdown(channel_, FALSE, nullptr);
+        g_io_channel_unref(channel_);
+        channel_ = nullptr;
+    }
+
+    if (channel_watch_ > 0) {
+        g_source_remove(channel_watch_);
+        channel_watch_ = 0;
+    }
 }
 
 gboolean WpaSupplicantNetworkManager::OnIncomingMessages(GIOChannel *source, GIOCondition condition,
                                                        gpointer user_data) {
     auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
     char buf[READ_BUFFER_SIZE];
+
+    if (condition & G_IO_HUP) {
+        g_warning("Got disconnected from supplicant");
+        inst->StopSupplicant();
+        return TRUE;
+    }
 
     while (NetworkUtils::BytesAvailableToRead(inst->sock_) > 0) {
         int ret = recv(inst->sock_, buf, sizeof(buf) - 1, 0);
@@ -373,7 +462,7 @@ gboolean WpaSupplicantNetworkManager::OnIncomingMessages(GIOChannel *source, GIO
     return TRUE;
 }
 
-void WpaSupplicantNetworkManager::Request(const WpaSupplicantMessage &message, std::function<void(WpaSupplicantMessage)> callback) {
+void WpaSupplicantNetworkManager::RequestAsync(const WpaSupplicantMessage &message, std::function<void(WpaSupplicantMessage)> callback) {
     command_queue_->EnqueueCommand(message, callback);
 }
 
@@ -422,7 +511,7 @@ void WpaSupplicantNetworkManager::SetWfdSubElements(const std::list<std::string>
     for (auto element : elements) {
         auto m = WpaSupplicantMessage::CreateRequest("WFD_SUBELEM_SET");
         m.Append("is", n, element.c_str());
-        Request(m, [=](const WpaSupplicantMessage &message) { });
+        RequestAsync(m, [=](const WpaSupplicantMessage &message) { });
         n++;
     }
 }
@@ -430,7 +519,7 @@ void WpaSupplicantNetworkManager::SetWfdSubElements(const std::list<std::string>
 void WpaSupplicantNetworkManager::Scan(unsigned int timeout) {
     auto m = WpaSupplicantMessage::CreateRequest("P2P_FIND");
     m.Append("i", timeout);
-    Request(m, [=](const WpaSupplicantMessage &message) { });
+    RequestAsync(m, [=](const WpaSupplicantMessage &message) { });
 }
 
 std::vector<NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() const {
@@ -461,7 +550,7 @@ int WpaSupplicantNetworkManager::Connect(const std::string &address, bool persis
     auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
     m.Append("sss", address.c_str(), "pbc", persistent ? "persistent" : "");
 
-    Request(m, [&](const WpaSupplicantMessage &message) {
+    RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
             ret = -EIO;
             g_warning("Failed to connect with remote %s", address.c_str());
@@ -478,7 +567,7 @@ int WpaSupplicantNetworkManager::DisconnectAll() {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_GROUP_REMOVE");
     m.Append("s", interface_name_.c_str());
 
-    Request(m, [&](const WpaSupplicantMessage &message) {
+    RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
             ret = -EIO;
             g_warning("Failed to disconnect all connected devices on interface %s", interface_name_.c_str());

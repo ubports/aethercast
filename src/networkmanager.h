@@ -40,7 +40,7 @@ public:
 
     virtual ~NetworkManager() { }
 
-    virtual void Setup() = 0;
+    virtual bool Setup() = 0;
 
     virtual void SetWfdSubElements(const std::list<std::string> &elements) = 0;
 
@@ -53,6 +53,7 @@ public:
 
     virtual NetworkDeviceRole Role() const = 0;
     virtual std::string LocalAddress() const = 0;
+    virtual bool Running() const = 0;
 };
 
 #endif
