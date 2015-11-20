@@ -50,7 +50,7 @@ gboolean MiracastService::OnRetryLoadFirmware(gpointer user_data) {
 
 void MiracastService::OnWiFiFirmwareLoaded(GDBusConnection *conn, GAsyncResult *res, gpointer user_data) {
     auto inst = static_cast<MiracastService*>(user_data);
-    guint timeout = 200;
+    guint timeout = 500;
     GError *error = nullptr;
 
     GVariant *result = g_dbus_connection_call_finish(conn, res, &error);
