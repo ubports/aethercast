@@ -67,14 +67,13 @@ void MiracastService::LoadWiFiFirmware() {
 
         g_warning("Switching device WiFi chip firmware to get P2P support");
 
-
         auto conn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, nullptr);
 
-        GVariant *params = g_variant_new("(ss)", "/fi/w1/wpa_supplicant1/Interfaces/1", "p2p");
+        GVariant *params = g_variant_new("(os)", "/", "p2p");
 
         g_dbus_connection_call(conn, "fi.w1.wpa_supplicant1", "/fi/w1/wpa_supplicant1",
                                "fi.w1.wpa_supplicant1", "SetInterfaceFirmware", params,
-                               nullptr, (GDBusCallFlags) G_DBUS_CALL_FLAGS_NONE, 0,
+                               nullptr, (GDBusCallFlags) G_DBUS_CALL_FLAGS_NONE, -1,
                                nullptr, (GAsyncReadyCallback) &MiracastService::OnWiFiFirmwareLoaded, this);
 
         return;
