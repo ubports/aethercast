@@ -35,8 +35,6 @@ void WpaSupplicantCommandQueue::HandleMessage(WpaSupplicantMessage message) {
         return;
     }
 
-    g_warning("IN: %s", message.Raw().c_str());
-
     if (message.Type() == kEvent) {
         if (delegate_)
             delegate_->OnUnsolicitedResponse(message);
