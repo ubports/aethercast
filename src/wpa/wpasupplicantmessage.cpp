@@ -251,6 +251,45 @@ bool WpaSupplicantMessage::ReadBasic(char type, void *out) {
     return true;
 }
 
+bool WpaSupplicantMessage::ReadDictEntry(const std::string &name, char type, void *out) {
+    const char *entry = nullptr;
+
+    if (name.length() == 0 || !out)
+        return false;
+
+    for (int n = 0; n < argv_.size(); n++) {
+        if (argv_[n].compare(0, name.length(), name) != 0)
+            continue;
+
+        entry = argv_[n].c_str();
+        entry = strchr(entry, '=');
+        if (!entry)
+            continue;
+
+        entry = entry + 1;
+
+        switch (type) {
+        case kString:
+            *(const char**) out = entry;
+            break;
+        case kInt32:
+            if (sscanf(entry, "%" SCNd32, (int32_t*) out) != 1)
+                return false;
+            break;
+        case kUInt32:
+            if (sscanf(entry, "%" SCNu32, (uint32_t*) out) != 1)
+                return false;
+            break;
+        default:
+            return false;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
 bool WpaSupplicantMessage::SkipBasic(char type) {
     if (iter_ >= argv_.size())
         return false;

@@ -47,6 +47,7 @@ public:
 
     bool Append(const char *types, ...);
     bool Read(const char *types, ...);
+    bool ReadDictEntry(const std::string &name, char type, void *out);
     bool Skip(const char *types);
     void Rewind();
     void Seal();

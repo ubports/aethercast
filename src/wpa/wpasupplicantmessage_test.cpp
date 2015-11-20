@@ -70,6 +70,14 @@ void test_wpasupplicant_message_read_skip(void) {
     g_assert(m.Skip("s"));
     g_assert(m.Read("i", &i32));
     g_assert(i32 == -12);
+
+    ssid = nullptr;
+    i32 = 0;
+
+    g_assert(m.ReadDictEntry("ssid", 's', &ssid));
+    g_assert(g_strcmp0(ssid, "\"DIRECT-hB\"") == 0);
+    g_assert(m.ReadDictEntry("freq", 'i', &i32));
+    g_assert(i32 == 2412);
 }
 
 void test_wpasupplicant_message_append(void) {
