@@ -112,9 +112,9 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     char *name = nullptr;
     char *config_methods_str = nullptr;
 
-    message.Read("s", &address);
-    message.Skip("ee");
-    message.Read("ee", &name, &config_methods_str);
+    message.ReadDictEntry("p2p_dev_addr", 's', &address);
+    message.ReadDictEntry("name", 's', &name);
+    message.ReadDictEntry("config_methods", 's', &config_methods_str);
 
     g_warning("Found device with address %s name %s config_methods %s", address, name, config_methods_str);
 
@@ -133,7 +133,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     NetworkDevice::Ptr peer(new NetworkDevice);
     peer->SetAddress(address);
     peer->SetName(name);
-    peer->SetConfigMethods(utilities::ParseHex(std::string(config_methods_str)));
+    peer->SetConfigMethods(utilities::ParseHex(config_methods_str));
 
     available_devices_.insert(std::pair<std::string,NetworkDevice::Ptr>(std::string(address), NetworkDevice::Ptr(peer)));
 
