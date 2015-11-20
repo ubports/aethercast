@@ -86,8 +86,6 @@ WpaSupplicantNetworkManager::~WpaSupplicantNetworkManager() {
 }
 
 void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage message) {
-    g_warning("EVENT: %s", message.Dump().c_str());
-
     if (message.Type() != kEvent) {
         g_warning("unhandled supplicant message: %s", message.Raw().c_str());
         return;
