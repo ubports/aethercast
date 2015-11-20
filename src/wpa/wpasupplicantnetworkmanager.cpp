@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include <glib.h>
+#include <glib/gstdio.h>
 
 #include <algorithm>
 
@@ -47,6 +48,9 @@
 
 #define DHCP_IP_ASSIGNMENT_TIMEOUT  5000 /* 5 seconds */
 #define PEER_FAILURE_TIMEOUT        5000 /* 5 seconds */
+
+#define SUPPLICANT_RESPAWN_LIMIT    10
+#define SUPPLICANT_RESPAWN_TIMEOUT  2000 /* 2 seconds */
 
 /*
  * Supplicant message names
@@ -68,11 +72,17 @@ WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegat
     dhcp_server_(nullptr, interface_name),
     channel_(nullptr),
     channel_watch_(0),
-    dhcp_timeout_(0) {
+    dhcp_timeout_(0),
+    respawn_limit_(SUPPLICANT_RESPAWN_LIMIT),
+    respawn_source_(0) {
 }
 
 WpaSupplicantNetworkManager::~WpaSupplicantNetworkManager() {
+    DisconnectSupplicant();
     StopSupplicant();
+
+    if (respawn_source_)
+        g_source_remove(respawn_source_);
 }
 
 void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage message) {
@@ -255,15 +265,36 @@ gboolean WpaSupplicantNetworkManager::OnConnectSupplicant(gpointer user_data) {
 void WpaSupplicantNetworkManager::OnSupplicantWatch(GPid pid, gint status, gpointer user_data) {
     auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
 
-    if (status < 0) {
-        g_warning("Supplicant process failed with status %d", status);
+    g_warning("Supplicant process exited with status %d", status);
+
+    if (!g_spawn_check_exit_status(status, nullptr))
         inst->HandleSupplicantFailed();
+}
+
+gboolean WpaSupplicantNetworkManager::OnSupplicantRespawn(gpointer user_data) {
+    auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
+
+    if (!inst->StartSupplicant() && inst->respawn_limit_ > 0) {
+        // If we directly failed to start supplicant we schedule the next try
+        // right away
+        inst->respawn_limit_--;
+        return TRUE;
     }
+
+    return FALSE;
 }
 
 void WpaSupplicantNetworkManager::HandleSupplicantFailed() {
-    StopSupplicant();
+    if (respawn_limit_ > 0) {
+        if (respawn_source_)
+            g_source_remove(respawn_source_);
+
+        respawn_source_ = g_timeout_add(SUPPLICANT_RESPAWN_TIMEOUT, &WpaSupplicantNetworkManager::OnSupplicantRespawn, this);
+        respawn_limit_--;
+    }
+
     DisconnectSupplicant();
+    StopSupplicant();
     Reset();
 }
 
@@ -293,8 +324,7 @@ void WpaSupplicantNetworkManager::Reset() {
 
 }
 
-bool WpaSupplicantNetworkManager::CreateSupplicantConfig() {
-    auto conf_path = utilities::StringFormat("/tmp/supplicant-%s.conf", interface_name_.c_str());
+bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf_path) {
     auto config = utilities::StringFormat(
                 "# GENERATED - DO NOT EDIT!\n"
                 "config_methods=pbc\n" // We're only supporting PBC for now
@@ -314,17 +344,20 @@ bool WpaSupplicantNetworkManager::CreateSupplicantConfig() {
 }
 
 bool WpaSupplicantNetworkManager::StartSupplicant() {
-    if (!CreateSupplicantConfig())
+    auto conf_path = utilities::StringFormat("/tmp/supplicant-%s.conf", interface_name_.c_str());
+
+    if (!CreateSupplicantConfig(conf_path))
         return false;
 
-    auto cmdline = utilities::StringFormat("%s -Dnl80211 -i%s -C%s -ddd -t -K",
+    auto cmdline = utilities::StringFormat("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s",
                                            WPA_SUPPLICANT_BIN_PATH,
                                            interface_name_.c_str(),
-                                           ctrl_path_.c_str());
+                                           ctrl_path_.c_str(),
+                                           conf_path.c_str());
     auto argv = g_strsplit(cmdline.c_str(), " ", -1);
 
     GError *error = nullptr;
-    int err = g_spawn_async(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_DEFAULT | G_SPAWN_STDERR_TO_DEV_NULL | G_SPAWN_STDOUT_TO_DEV_NULL),
+    int err = g_spawn_async(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_DEFAULT | G_SPAWN_STDERR_TO_DEV_NULL | G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_DO_NOT_REAP_CHILD),
                             NULL, NULL, &supplicant_pid_, &error);
     if (err < 0) {
         g_warning("Failed to spawn wpa-supplicant process: %s", error->message);
@@ -372,6 +405,9 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     local.sun_family = AF_UNIX;
 
     std::string local_path = utilities::StringFormat("/tmp/p2p0-%d", getpid());
+    if (g_file_test(local_path.c_str(), G_FILE_TEST_EXISTS))
+        g_remove(local_path.c_str());
+
     strncpy(local.sun_path, local_path.c_str(), sizeof(local.sun_path));
 
     if (::bind(sock_, (struct sockaddr *) &local, sizeof(local)) < 0) {
@@ -419,6 +455,8 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     wfd_sub_elements.push_back(std::string("000600101C440032"));
     SetWfdSubElements(wfd_sub_elements);
 
+    respawn_limit_ = SUPPLICANT_RESPAWN_LIMIT;
+
     return true;
 }
 
@@ -435,6 +473,11 @@ void WpaSupplicantNetworkManager::DisconnectSupplicant() {
     if (channel_watch_ > 0) {
         g_source_remove(channel_watch_);
         channel_watch_ = 0;
+    }
+
+    if (sock_ > 0) {
+        ::close(sock_);
+        sock_ = 0;
     }
 }
 

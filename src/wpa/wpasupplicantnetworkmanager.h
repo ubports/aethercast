@@ -65,7 +65,7 @@ private:
     bool ConnectSupplicant();
     void DisconnectSupplicant();
     void RequestAsync(const WpaSupplicantMessage &message, std::function<void(WpaSupplicantMessage)> callback);
-    bool CreateSupplicantConfig();
+    bool CreateSupplicantConfig(const std::string &conf_path);
     void HandleSupplicantFailed();
     void Reset();
 
@@ -80,6 +80,7 @@ private:
     static gboolean OnDeviceFailureTimeout(gpointer user_data);
     static gboolean OnIncomingMessages(GIOChannel *source, GIOCondition condition,
                                          gpointer user_data);
+    static gboolean OnSupplicantRespawn(gpointer user_data);
 
 private:
     NetworkManager::Delegate *delegate_;
@@ -96,6 +97,8 @@ private:
     GIOChannel *channel_;
     guint channel_watch_;
     guint dhcp_timeout_;
+    guint respawn_limit_;
+    guint respawn_source_;
 };
 
 #endif
