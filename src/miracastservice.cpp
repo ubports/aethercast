@@ -28,6 +28,9 @@ MiracastService::MiracastService(Delegate *delegate) :
     current_state_(kIdle),
     source_(this),
     current_peer_(nullptr) {
+    // FIXME this really needs to move somewhere else as it's something
+    // specific for some devices and somehow goes together with the
+    // network manager implementation
     LoadWiFiFirmware();
 }
 
