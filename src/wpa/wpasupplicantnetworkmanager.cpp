@@ -170,10 +170,9 @@ void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &messag
     message.Skip("s");
     message.Read("s", &role);
 
-
-    g_warning("Group started: role %s", role);
-
     current_peer_->SetState(kConfiguration);
+    if (delegate_)
+        delegate_->OnDeviceStateChanged(current_peer_);
 
     // If we're the GO the other side is the client and vice versa
     if (g_strcmp0(role, "GO") == 0) {
@@ -187,7 +186,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &messag
         dhcp_server_.Start();
 
         if (delegate_)
-            delegate_->OnDeviceFound(current_peer_);
+            delegate_->OnDeviceStateChanged(current_peer_);
     } else {
         current_role_ = kGroupClient;
 
@@ -518,7 +517,6 @@ void WpaSupplicantNetworkManager::OnAddressAssigned(const std::string &address) 
         dhcp_timeout_ = 0;
     }
 
-    current_peer_->SetAddress(address);
     current_peer_->SetState(kConnected);
 
     if (delegate_)
