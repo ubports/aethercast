@@ -121,11 +121,17 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     // Check if we've that peer already in our list, if that is the
     // case we just update it.
     for (auto iter : available_devices_) {
-        if (iter.second->Address() != std::string(address))
+        auto peer = iter.second;
+
+        if (peer->Address() != std::string(address))
             continue;
 
+        peer->SetAddress(address);
+        peer->SetName(name);
+        peer->SetConfigMethods(utilities::ParseHex(config_methods_str));
+
         if (delegate_)
-            delegate_->OnDeviceChanged(iter.second);
+            delegate_->OnDeviceChanged(peer);
 
         return;
     }
