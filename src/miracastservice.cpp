@@ -23,8 +23,8 @@
 
 #define STATE_IDLE_TIMEOUT                  1000
 
-MiracastService::MiracastService(Delegate *delegate) :
-    delegate_(delegate),
+MiracastService::MiracastService() :
+    delegate_(nullptr),
     current_state_(kIdle),
     source_(this),
     current_peer_(nullptr) {
@@ -35,6 +35,10 @@ MiracastService::MiracastService(Delegate *delegate) :
 }
 
 MiracastService::~MiracastService() {
+}
+
+void MiracastService::SetDelegate(Delegate *delegate) {
+    delegate_ = delegate;
 }
 
 NetworkDeviceState MiracastService::State() const {
@@ -145,6 +149,16 @@ void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &peer) {
         current_peer_.reset();
         FinishConnectAttempt(false, "Failed to connect device");
     }
+}
+
+void MiracastService::OnDeviceFound(const NetworkDevice::Ptr &peer) {
+    if (delegate_)
+        delegate_->OnDeviceFound(peer);
+}
+
+void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &peer) {
+    if (delegate_)
+        delegate_->OnDeviceLost(peer);
 }
 
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {

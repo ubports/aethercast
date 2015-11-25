@@ -18,13 +18,14 @@
 #include <glib.h>
 
 #include "miracastserviceadapter.h"
-#include "miracastservice.h"
 
 MiracastServiceAdapter::MiracastServiceAdapter(MiracastService *service) :
     service_(service),
     manager_obj_(nullptr),
     bus_id_(0),
     object_manager_(nullptr) {
+
+    service_->SetDelegate(this);
 
     g_message("Created miracast service adapter");
 
@@ -45,6 +46,12 @@ MiracastServiceAdapter::~MiracastServiceAdapter() {
 
     if (object_manager_)
         g_object_unref(object_manager_);
+}
+
+void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &peer) {
+}
+
+void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &peer) {
 }
 
 void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {

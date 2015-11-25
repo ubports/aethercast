@@ -26,17 +26,20 @@ extern "C" {
 }
 #endif
 
+#include "miracastservice.h"
+
 #define MIRACAST_SERVICE_BUS_NAME       "com.canonical.miracast"
 
 #define MIRACAST_SERVICE_MANAGER_PATH   "/"
 #define MIRACAST_SERVICE_MANAGER_IFACE  "com.canonical.miracast.Manager"
 
-class MiracastService;
-
-class MiracastServiceAdapter {
+class MiracastServiceAdapter : public MiracastService::Delegate {
 public:
     MiracastServiceAdapter(MiracastService *service);
     ~MiracastServiceAdapter();
+
+    void OnDeviceFound(const NetworkDevice::Ptr &peer) override;
+    void OnDeviceLost(const NetworkDevice::Ptr &peer) override;
 
 private:
     static void OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data);

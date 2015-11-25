@@ -33,10 +33,14 @@ public:
     class Delegate {
     public:
         virtual void OnStateChanged(NetworkDeviceState state) { }
+        virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) { }
+        virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) { }
     };
 
-    MiracastService(Delegate *delegate);
+    MiracastService();
     ~MiracastService();
+
+    void SetDelegate(Delegate *delegate);
 
     void ConnectSink(const std::string &address, std::function<void(bool,std::string)> callback);
     void Scan();
@@ -46,7 +50,9 @@ public:
     void OnClientDisconnected();
 
 public:
-    void OnDeviceStateChanged(const NetworkDevice::Ptr &peer);
+    void OnDeviceStateChanged(const NetworkDevice::Ptr &peer) override;
+    void OnDeviceFound(const NetworkDevice::Ptr &peer) override;
+    void OnDeviceLost(const NetworkDevice::Ptr &peer) override;
 
 private:
     static gboolean OnIdleTimer(gpointer user_data);
