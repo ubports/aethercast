@@ -20,7 +20,6 @@
 #include "miracastserviceadapter.h"
 #include "miracastservice.h"
 
-
 MiracastServiceAdapter::MiracastServiceAdapter(MiracastService *service) :
     service_(service),
     manager_obj_(nullptr),
@@ -28,7 +27,7 @@ MiracastServiceAdapter::MiracastServiceAdapter(MiracastService *service) :
 
     g_message("Created miracast service adapter");
 
-    bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, "org.freedesktop.miracast", G_BUS_NAME_OWNER_FLAGS_NONE,
+    bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, MIRACAST_SERVICE_BUS_NAME, G_BUS_NAME_OWNER_FLAGS_NONE,
                    nullptr, &MiracastServiceAdapter::OnNameAcquired, nullptr, this, nullptr);
     if (bus_id_ == 0) {
         g_warning("Failed to register bus name 'org.freedesktop.miracast'");
@@ -52,7 +51,7 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
                      G_CALLBACK(&MiracastServiceAdapter::OnHandleConnectSink), inst);
 
     g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(inst->manager_obj_),
-                                     connection, "/", nullptr);
+                                     connection, MIRACAST_SERVICE_MANAGER_PATH, nullptr);
 
     g_message("Registered bus name %s", name);
 }

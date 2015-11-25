@@ -26,6 +26,11 @@ extern "C" {
 }
 #endif
 
+#define MIRACAST_SERVICE_BUS_NAME       "com.canonical.miracast"
+
+#define MIRACAST_SERVICE_MANAGER_PATH   "/"
+#define MIRACAST_SERVICE_MANAGER_IFACE  "com.canonical.miracast.Manager"
+
 class MiracastService;
 
 class MiracastServiceAdapter {
