@@ -23,7 +23,8 @@
 MiracastServiceAdapter::MiracastServiceAdapter(MiracastService *service) :
     service_(service),
     manager_obj_(nullptr),
-    bus_id_(0) {
+    bus_id_(0),
+    object_manager_(nullptr) {
 
     g_message("Created miracast service adapter");
 
@@ -38,6 +39,12 @@ MiracastServiceAdapter::MiracastServiceAdapter(MiracastService *service) :
 MiracastServiceAdapter::~MiracastServiceAdapter() {
     if (bus_id_ > 0)
         g_bus_unown_name(bus_id_);
+
+    if (manager_obj_)
+        g_object_unref(manager_obj_);
+
+    if (object_manager_)
+        g_object_unref(object_manager_);
 }
 
 void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
@@ -52,6 +59,10 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
 
     g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(inst->manager_obj_),
                                      connection, MIRACAST_SERVICE_MANAGER_PATH, nullptr);
+
+
+    inst->object_manager_ = g_dbus_object_manager_server_new(MIRACAST_SERVICE_MANAGER_PATH);
+    g_dbus_object_manager_server_set_connection(inst->object_manager_, connection);
 
     g_message("Registered bus name %s", name);
 }

@@ -50,6 +50,7 @@ private:
     MiracastService *service_;
     MiracastInterfaceManager *manager_obj_;
     guint bus_id_;
+    GDBusObjectManagerServer *object_manager_;
 };
 
 #endif
