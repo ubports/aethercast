@@ -128,31 +128,23 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
         break;
     }
 
-
     current_state_ = new_state;
     if (delegate_)
         delegate_->OnStateChanged(current_state_);
 }
 
-void MiracastService::OnDeviceConnected(const NetworkDevice::Ptr &peer) {
-    AdvanceState(kConnected);
-}
-
-void MiracastService::OnDeviceDisconnected(const NetworkDevice::Ptr &peer) {
-    AdvanceState(kDisconnected);
-
-    current_peer_.reset();
-}
-
-void MiracastService::OnDeviceFailed(const NetworkDevice::Ptr &peer) {
-    AdvanceState(kFailure);
-
-    current_peer_.reset();
-
-    FinishConnectAttempt(false, "Failed to connect device");
-}
-
-void MiracastService::OnDeviceChanged(const NetworkDevice::Ptr &peer) {
+void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &peer) {
+    if (peer->State() == kConnected)
+        AdvanceState(kConnected);
+    else if (peer->State() == kDisconnected) {
+        AdvanceState(kDisconnected);
+        current_peer_.reset();
+    }
+    else if (peer->State() == kFailure) {
+        AdvanceState(kFailure);
+        current_peer_.reset();
+        FinishConnectAttempt(false, "Failed to connect device");
+    }
 }
 
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {

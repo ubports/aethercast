@@ -28,11 +28,8 @@ public:
     class Delegate {
     public:
         virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) { }
-        virtual void OnDeviceChanged(const NetworkDevice::Ptr &peer) { }
         virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) { }
-        virtual void OnDeviceConnected(const NetworkDevice::Ptr &peer) { }
-        virtual void OnDeviceDisconnected(const NetworkDevice::Ptr &peer) { }
-        virtual void OnDeviceFailed(const NetworkDevice::Ptr &peer) { }
+        virtual void OnDeviceStateChanged(const NetworkDevice::Ptr &peer) { }
 
     protected:
         virtual ~Delegate() { }

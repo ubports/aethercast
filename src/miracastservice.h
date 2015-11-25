@@ -46,10 +46,7 @@ public:
     void OnClientDisconnected();
 
 public:
-    void OnDeviceChanged(const NetworkDevice::Ptr &peer);
-    void OnDeviceConnected(const NetworkDevice::Ptr &peer);
-    void OnDeviceDisconnected(const NetworkDevice::Ptr &peer);
-    void OnDeviceFailed(const NetworkDevice::Ptr &peer);
+    void OnDeviceStateChanged(const NetworkDevice::Ptr &peer);
 
 private:
     static gboolean OnIdleTimer(gpointer user_data);

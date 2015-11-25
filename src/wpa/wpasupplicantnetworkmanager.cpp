@@ -130,9 +130,6 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
         peer->SetName(name);
         peer->SetConfigMethods(utilities::ParseHex(config_methods_str));
 
-        if (delegate_)
-            delegate_->OnDeviceChanged(peer);
-
         return;
     }
 
@@ -211,22 +208,20 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
     if (current_peer_.get())
         return;
 
-    current_peer_->SetAddress("");
-    current_peer_->SetState(kDisconnected);
-
     const char *reason = nullptr;
 
-    message.Skip("ss");
-    message.Read("e", &reason);
+    message.ReadDictEntry("reason", 's', &reason);
 
-    if (delegate_) {
-        if (g_strcmp0(reason, "FORMATION_FAILED") == 0 ||
-                g_strcmp0(reason, "PSK_FAILURE") == 0 ||
-                g_strcmp0(reason, "FREQ_CONFLICT") == 0)
-            delegate_->OnDeviceFailed(current_peer_);
-        else
-            delegate_->OnDeviceDisconnected(current_peer_);
-    }
+    current_peer_->SetAddress("");
+    if (g_strcmp0(reason, "FORMATION_FAILED") == 0 ||
+            g_strcmp0(reason, "PSK_FAILURE") == 0 ||
+            g_strcmp0(reason, "FREQ_CONFLICT") == 0)
+        current_peer_->SetState(kFailure);
+    else
+        current_peer_->SetState(kDisconnected);
+
+    if (delegate_)
+        delegate_->OnDeviceStateChanged(current_peer_);
 
     current_peer_.reset();
 }
@@ -304,8 +299,9 @@ void WpaSupplicantNetworkManager::HandleSupplicantFailed() {
 
 void WpaSupplicantNetworkManager::Reset() {
     if (current_peer_) {
+        current_peer_->SetState(kDisconnected);
         if (delegate_)
-            delegate_->OnDeviceDisconnected(current_peer_);
+            delegate_->OnDeviceStateChanged(current_peer_);
 
         current_peer_ = nullptr;
 
@@ -526,7 +522,7 @@ void WpaSupplicantNetworkManager::OnAddressAssigned(const std::string &address) 
     current_peer_->SetState(kConnected);
 
     if (delegate_)
-        delegate_->OnDeviceConnected(current_peer_);
+        delegate_->OnDeviceStateChanged(current_peer_);
 }
 
 gboolean WpaSupplicantNetworkManager::OnDeviceFailureTimeout(gpointer user_data) {
@@ -548,7 +544,7 @@ gboolean WpaSupplicantNetworkManager::OnGroupClientDhcpTimeout(gpointer user_dat
     g_timeout_add(PEER_FAILURE_TIMEOUT, &WpaSupplicantNetworkManager::OnDeviceFailureTimeout, inst);
 
     if (inst->delegate_)
-        inst->delegate_->OnDeviceFailed(inst->current_peer_);
+        inst->delegate_->OnDeviceStateChanged(inst->current_peer_);
 
     return FALSE;
 }
