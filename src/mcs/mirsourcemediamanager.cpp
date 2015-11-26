@@ -109,4 +109,4 @@ GstElement* MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat 
 
     return pipeline;
 }
-}
+} // namespace mcs

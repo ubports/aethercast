@@ -211,4 +211,4 @@ void MiracastService::ConnectSink(const std::string &address, std::function<void
 void MiracastService::Scan() {
     manager_->Scan();
 }
-}
+} // namespace miracast
