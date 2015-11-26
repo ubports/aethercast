@@ -2,26 +2,28 @@
 execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
                         --c-namespace MiracastInterface
                         --c-generate-object-manager
-                        --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/miracastinterface
+                        --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface
                         --interface-prefix org.freedesktop.miracast.
                         ${CMAKE_CURRENT_SOURCE_DIR}/../data/org.freedesktop.miracast.xml)
 
 set(SOURCES
-  main.cpp
-  utilities.cpp
-  networkutils.cpp
-  wfddeviceinfo.cpp
-  mediamanagerfactory.cpp
-  basesourcemediamanager.cpp
-  gstsourcemediamanager.cpp
-  testsourcemediamanager.cpp
-  mirsourcemediamanager.cpp
-  miracastservice.cpp
-  miracastserviceadapter.cpp
-  miracastsource.cpp
-  miracastsourceclient.cpp
-  networkmanager.cpp
-  networkdevice.cpp
+  mcs/main.cpp
+  mcs/utilities.cpp
+  mcs/networkutils.cpp
+  mcs/wfddeviceinfo.cpp
+  mcs/mediamanagerfactory.cpp
+  mcs/basesourcemediamanager.cpp
+  mcs/gstsourcemediamanager.cpp
+  mcs/testsourcemediamanager.cpp
+  mcs/mirsourcemediamanager.cpp
+  mcs/miracastservice.cpp
+  mcs/miracastserviceadapter.cpp
+  mcs/miracastsource.cpp
+  mcs/miracastsourceclient.cpp
+  mcs/networkmanager.cpp
+  mcs/networkdevice.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface.c
+  
   wpa/gdhcp/common.c
   wpa/gdhcp/ipv4ll.c
   wpa/gdhcp/server.c
@@ -32,7 +34,6 @@ set(SOURCES
   wpa/wpasupplicantcommand.cpp
   wpa/wpasupplicantcommandqueue.cpp
   wpa/wpasupplicantnetworkmanager.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/miracastinterface.c
 )
 
 link_directories(
