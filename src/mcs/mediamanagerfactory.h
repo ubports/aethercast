@@ -20,10 +20,11 @@
 
 #include "basesourcemediamanager.h"
 
+namespace mcs {
 class MediaManagerFactory
 {
 public:
     static BaseSourceMediaManager* CreateSource(const std::string &remote_address);
 };
-
+} // namespace mcs
 #endif

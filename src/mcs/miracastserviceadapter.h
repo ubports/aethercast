@@ -33,6 +33,7 @@ extern "C" {
 #define MIRACAST_SERVICE_MANAGER_PATH   "/"
 #define MIRACAST_SERVICE_MANAGER_IFACE  "com.canonical.miracast.Manager"
 
+namespace mcs {
 class MiracastServiceAdapter : public MiracastService::Delegate {
 public:
     MiracastServiceAdapter(MiracastService *service);
@@ -55,5 +56,5 @@ private:
     guint bus_id_;
     GDBusObjectManagerServer *object_manager_;
 };
-
+} // namespace mcs
 #endif

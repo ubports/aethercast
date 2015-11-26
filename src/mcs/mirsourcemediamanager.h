@@ -20,6 +20,7 @@
 
 #include "gstsourcemediamanager.h"
 
+namespace mcs {
 class MirSourceMediaManager : public GstSourceMediaManager {
 public:
     explicit MirSourceMediaManager(const std::string &remote_address);
@@ -31,5 +32,5 @@ protected:
 private:
     std::string remote_address_;
 };
-
+} // namespace mcs
 #endif

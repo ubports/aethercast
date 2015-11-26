@@ -2,9 +2,9 @@
 execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
                         --c-namespace MiracastInterface
                         --c-generate-object-manager
-                        --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface
-                        --interface-prefix org.freedesktop.miracast.
-                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/org.freedesktop.miracast.xml)
+                        --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/miracastinterface
+                        --interface-prefix com.canonical.miracast.
+                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/com.canonical.miracast.xml)
 
 set(SOURCES
   mcs/main.cpp
@@ -22,7 +22,7 @@ set(SOURCES
   mcs/miracastsourceclient.cpp
   mcs/networkmanager.cpp
   mcs/networkdevice.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface.c
+  ${CMAKE_CURRENT_BINARY_DIR}/miracastinterface.c
   
   wpa/gdhcp/common.c
   wpa/gdhcp/ipv4ll.c
@@ -72,7 +72,7 @@ install(
 
 
 add_executable(test-wpasupplicantmessage
-    utilities.cpp
+    mcs/utilities.cpp
     wpa/wpasupplicantmessage.cpp
     wpa/wpasupplicantmessage_test.cpp)
 target_link_libraries(test-wpasupplicantmessage ${GLIB_LIBRARIES})

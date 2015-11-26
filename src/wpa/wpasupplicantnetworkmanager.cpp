@@ -36,11 +36,10 @@
 
 #include "wpasupplicantnetworkmanager.h"
 
-#include "networkdevice.h"
-#include "wfddeviceinfo.h"
-
-#include "networkutils.h"
-#include "utilities.h"
+#include "mcs/networkdevice.h"
+#include "mcs/networkutils.h"
+#include "mcs/utilities.h"
+#include "mcs/wfddeviceinfo.h"
 
 #define WPA_SUPPLICANT_BIN_PATH     "/sbin/wpa_supplicant"
 
@@ -65,9 +64,9 @@
 WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate, const std::string &interface_name) :
     delegate_(delegate),
     interface_name_(interface_name),
-    ctrl_path_(utilities::StringFormat("/var/run/%s_supplicant", interface_name_.c_str())),
+    ctrl_path_(mcs::utilities::StringFormat("/var/run/%s_supplicant", interface_name_.c_str())),
     command_queue_(new WpaSupplicantCommandQueue(this)),
-    current_role_(kUndecided),
+    current_role_(mcs::kUndecided),
     dhcp_client_(this, interface_name),
     dhcp_server_(nullptr, interface_name),
     channel_(nullptr),
@@ -128,17 +127,17 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
 
         peer->SetAddress(address);
         peer->SetName(name);
-        peer->SetConfigMethods(utilities::ParseHex(config_methods_str));
+        peer->SetConfigMethods(mcs::utilities::ParseHex(config_methods_str));
 
         return;
     }
 
-    NetworkDevice::Ptr peer(new NetworkDevice);
+    mcs::NetworkDevice::Ptr peer(new mcs::NetworkDevice);
     peer->SetAddress(address);
     peer->SetName(name);
-    peer->SetConfigMethods(utilities::ParseHex(config_methods_str));
+    peer->SetConfigMethods(mcs::utilities::ParseHex(config_methods_str));
 
-    available_devices_.insert(std::pair<std::string,NetworkDevice::Ptr>(std::string(address), NetworkDevice::Ptr(peer)));
+    available_devices_.insert(std::pair<std::string, mcs::NetworkDevice::Ptr>(std::string(address), mcs::NetworkDevice::Ptr(peer)));
 
     if (delegate_)
         delegate_->OnDeviceFound(peer);
@@ -170,15 +169,15 @@ void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &messag
     message.Skip("s");
     message.Read("s", &role);
 
-    current_peer_->SetState(kConfiguration);
+    current_peer_->SetState(mcs::kConfiguration);
     if (delegate_)
         delegate_->OnDeviceStateChanged(current_peer_);
 
     // If we're the GO the other side is the client and vice versa
     if (g_strcmp0(role, "GO") == 0) {
-        current_role_ = kGroupOwner;
+        current_role_ = mcs::kGroupOwner;
 
-        current_peer_->SetState(kConnected);
+        current_peer_->SetState(mcs::kConnected);
 
         // As we're the owner we can now just startup the DHCP server
         // and report we're connected as there is not much more to do
@@ -188,7 +187,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &messag
         if (delegate_)
             delegate_->OnDeviceStateChanged(current_peer_);
     } else {
-        current_role_ = kGroupClient;
+        current_role_ = mcs::kGroupClient;
 
         // We're a client of a formed group now and have to acquire
         // our IP address via DHCP so we have to wait until we're
@@ -215,9 +214,9 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
     if (g_strcmp0(reason, "FORMATION_FAILED") == 0 ||
             g_strcmp0(reason, "PSK_FAILURE") == 0 ||
             g_strcmp0(reason, "FREQ_CONFLICT") == 0)
-        current_peer_->SetState(kFailure);
+        current_peer_->SetState(mcs::kFailure);
     else
-        current_peer_->SetState(kDisconnected);
+        current_peer_->SetState(mcs::kDisconnected);
 
     if (delegate_)
         delegate_->OnDeviceStateChanged(current_peer_);
@@ -231,14 +230,14 @@ void WpaSupplicantNetworkManager::OnWriteMessage(WpaSupplicantMessage message) {
         g_warning("Failed to send data to wpa-supplicant");
 }
 
-NetworkDeviceRole WpaSupplicantNetworkManager::Role() const {
+mcs::NetworkDeviceRole WpaSupplicantNetworkManager::Role() const {
     return current_role_;
 }
 
 std::string WpaSupplicantNetworkManager::LocalAddress() const {
     std::string address;
 
-    if (current_role_ == kGroupOwner)
+    if (current_role_ == mcs::kGroupOwner)
         address = dhcp_server_.LocalAddress();
     else
         address = dhcp_client_.LocalAddress();
@@ -298,7 +297,7 @@ void WpaSupplicantNetworkManager::HandleSupplicantFailed() {
 
 void WpaSupplicantNetworkManager::Reset() {
     if (current_peer_) {
-        current_peer_->SetState(kDisconnected);
+        current_peer_->SetState(mcs::kDisconnected);
         if (delegate_)
             delegate_->OnDeviceStateChanged(current_peer_);
 
@@ -319,12 +318,12 @@ void WpaSupplicantNetworkManager::Reset() {
     }
 
     available_devices_.clear();
-    current_role_ = kUndecided;
+    current_role_ = mcs::kUndecided;
 
 }
 
 bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf_path) {
-    auto config = utilities::StringFormat(
+    auto config = mcs::utilities::StringFormat(
                 "# GENERATED - DO NOT EDIT!\n"
                 "config_methods=pbc\n" // We're only supporting PBC for now
                 "ap_scan=1\n"
@@ -343,12 +342,12 @@ bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf
 }
 
 bool WpaSupplicantNetworkManager::StartSupplicant() {
-    auto conf_path = utilities::StringFormat("/tmp/supplicant-%s.conf", interface_name_.c_str());
+    auto conf_path = mcs::utilities::StringFormat("/tmp/supplicant-%s.conf", interface_name_.c_str());
 
     if (!CreateSupplicantConfig(conf_path))
         return false;
 
-    auto cmdline = utilities::StringFormat("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s",
+    auto cmdline = mcs::utilities::StringFormat("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s",
                                            WPA_SUPPLICANT_BIN_PATH,
                                            interface_name_.c_str(),
                                            ctrl_path_.c_str(),
@@ -388,7 +387,7 @@ void WpaSupplicantNetworkManager::StopSupplicant() {
 }
 
 bool WpaSupplicantNetworkManager::ConnectSupplicant() {
-    std::string socket_path = utilities::StringFormat("%s/%s",
+    std::string socket_path = mcs::utilities::StringFormat("%s/%s",
                                                       ctrl_path_.c_str(),
                                                       interface_name_.c_str());
 
@@ -403,7 +402,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
 
     local.sun_family = AF_UNIX;
 
-    std::string local_path = utilities::StringFormat("/tmp/p2p0-%d", getpid());
+    std::string local_path = mcs::utilities::StringFormat("/tmp/p2p0-%d", getpid());
     if (g_file_test(local_path.c_str(), G_FILE_TEST_EXISTS))
         g_remove(local_path.c_str());
 
@@ -491,7 +490,7 @@ gboolean WpaSupplicantNetworkManager::OnIncomingMessages(GIOChannel *source, GIO
         return TRUE;
     }
 
-    while (NetworkUtils::BytesAvailableToRead(inst->sock_) > 0) {
+    while (mcs::NetworkUtils::BytesAvailableToRead(inst->sock_) > 0) {
         int ret = recv(inst->sock_, buf, sizeof(buf) - 1, 0);
         if (ret < 0)
             return TRUE;
@@ -517,7 +516,7 @@ void WpaSupplicantNetworkManager::OnAddressAssigned(const std::string &address) 
         dhcp_timeout_ = 0;
     }
 
-    current_peer_->SetState(kConnected);
+    current_peer_->SetState(mcs::kConnected);
 
     if (delegate_)
         delegate_->OnDeviceStateChanged(current_peer_);
@@ -525,7 +524,7 @@ void WpaSupplicantNetworkManager::OnAddressAssigned(const std::string &address) 
 
 gboolean WpaSupplicantNetworkManager::OnDeviceFailureTimeout(gpointer user_data) {
     auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
-    inst->current_peer_->SetState(kIdle);
+    inst->current_peer_->SetState(mcs::kIdle);
 
     return FALSE;
 }
@@ -536,7 +535,7 @@ gboolean WpaSupplicantNetworkManager::OnGroupClientDhcpTimeout(gpointer user_dat
     if (!inst->current_peer_)
         return FALSE;
 
-    inst->current_peer_->SetState(kFailure);
+    inst->current_peer_->SetState(mcs::kFailure);
 
     // Switch peer back into idle state after some time
     g_timeout_add(PEER_FAILURE_TIMEOUT, &WpaSupplicantNetworkManager::OnDeviceFailureTimeout, inst);
@@ -563,11 +562,11 @@ void WpaSupplicantNetworkManager::Scan(unsigned int timeout) {
     RequestAsync(m, [=](const WpaSupplicantMessage &message) { });
 }
 
-std::vector<NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() const {
-    std::vector<NetworkDevice::Ptr> values;
+std::vector<mcs::NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() const {
+    std::vector<mcs::NetworkDevice::Ptr> values;
     std::transform(available_devices_.begin(), available_devices_.end(),
                    std::back_inserter(values),
-                   [=](const std::pair<std::string,NetworkDevice::Ptr> &value) {
+                   [=](const std::pair<std::string,mcs::NetworkDevice::Ptr> &value) {
         return value.second;
     });
     return values;

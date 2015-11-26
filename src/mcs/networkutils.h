@@ -18,6 +18,7 @@
 #ifndef NETWORKUTILS_H_
 #define NETWORKUTILS_H_
 
+namespace mcs {
 class NetworkUtils
 {
 public:
@@ -28,5 +29,5 @@ public:
     static int ResetInterface(int index);
     static int BytesAvailableToRead(int fd);
 };
-
+} // namespace mcs
 #endif

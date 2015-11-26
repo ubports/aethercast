@@ -23,6 +23,7 @@
 
 #include "miracastsourceclient.h"
 
+namespace mcs {
 class MiracastSource : public MiracastSourceClient::Delegate {
 public:
     class Delegate {
@@ -48,5 +49,5 @@ private:
     guint socket_source_;
     MiracastSourceClient *active_sink_;
 };
-
+} // namespace mcs
 #endif

@@ -24,8 +24,8 @@
 
 #include <glib.h>
 
-#include "networkdevice.h"
-#include "networkmanager.h"
+#include <mcs/networkdevice.h>
+#include <mcs/networkmanager.h>
 
 #include "dhcpclient.h"
 #include "dhcpserver.h"
@@ -33,11 +33,11 @@
 #include "wpasupplicantmessage.h"
 #include "wpasupplicantcommandqueue.h"
 
-class WpaSupplicantNetworkManager : public NetworkManager,
+class WpaSupplicantNetworkManager : public mcs::NetworkManager,
                                     public WpaSupplicantCommandQueue::Delegate,
                                     public DhcpClient::Delegate {
 public:
-    WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate_, const std::string &iface);
+    WpaSupplicantNetworkManager(mcs::NetworkManager::Delegate *delegate_, const std::string &iface);
     ~WpaSupplicantNetworkManager();
 
     bool Setup();
@@ -45,12 +45,12 @@ public:
     void SetWfdSubElements(const std::list<std::string> &elements) override;
 
     void Scan(unsigned int timeout = 30) override;
-    std::vector<NetworkDevice::Ptr> Devices() const override;
+    std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
 
     int Connect(const std::string &address, bool persistent = true) override;
     int DisconnectAll() override;
 
-    NetworkDeviceRole Role() const override;
+    mcs::NetworkDeviceRole Role() const override;
     std::string LocalAddress() const override;
     bool Running() const override;
 
@@ -87,10 +87,10 @@ private:
     std::string interface_name_;
     std::string ctrl_path_;
     int sock_;
-    std::map<std::string,NetworkDevice::Ptr> available_devices_;
+    std::map<std::string,mcs::NetworkDevice::Ptr> available_devices_;
     std::unique_ptr<WpaSupplicantCommandQueue> command_queue_;
-    NetworkDevice::Ptr current_peer_;
-    NetworkDeviceRole current_role_;
+    mcs::NetworkDevice::Ptr current_peer_;
+    mcs::NetworkDeviceRole current_role_;
     DhcpClient dhcp_client_;
     DhcpServer dhcp_server_;
     GPid supplicant_pid_;

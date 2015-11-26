@@ -20,8 +20,9 @@
 
 #include <glib.h>
 
+#include <mcs/utilities.h>
+
 #include "wpasupplicantmessage.h"
-#include "utilities.h"
 
 WpaSupplicantMessage::WpaSupplicantMessage() :
     type_(kInvalid),
@@ -100,7 +101,7 @@ void WpaSupplicantMessage::Parse(const std::string &payload) {
 
     argv_.clear();
 
-    std::vector<std::string> parts = utilities::StringSplit(payload, ' ');
+    std::vector<std::string> parts = mcs::utilities::StringSplit(payload, ' ');
 
     sealed_ = true;
     raw_ = payload;

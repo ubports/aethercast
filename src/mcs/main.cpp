@@ -66,8 +66,8 @@ int main(int argc, char **argv) {
 
     main_loop = g_main_loop_new(nullptr, FALSE);
 
-    MiracastService service;
-    MiracastServiceAdapter adapter(&service);
+    mcs::MiracastService service;
+    mcs::MiracastServiceAdapter adapter(&service);
 
     g_main_loop_run(main_loop);
 

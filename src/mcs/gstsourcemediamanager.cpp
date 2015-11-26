@@ -17,6 +17,7 @@
 
 #include "gstsourcemediamanager.h"
 
+namespace mcs {
 GstSourceMediaManager::GstSourceMediaManager() {
 }
 
@@ -100,3 +101,4 @@ bool GstSourceMediaManager::IsPaused() const {
 
     return state != GST_STATE_PLAYING;
 }
+} // namespace mcs

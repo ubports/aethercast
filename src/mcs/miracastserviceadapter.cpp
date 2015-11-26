@@ -19,6 +19,7 @@
 
 #include "miracastserviceadapter.h"
 
+namespace mcs {
 MiracastServiceAdapter::MiracastServiceAdapter(MiracastService *service) :
     service_(service),
     manager_obj_(nullptr),
@@ -32,7 +33,7 @@ MiracastServiceAdapter::MiracastServiceAdapter(MiracastService *service) :
     bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, MIRACAST_SERVICE_BUS_NAME, G_BUS_NAME_OWNER_FLAGS_NONE,
                    nullptr, &MiracastServiceAdapter::OnNameAcquired, nullptr, this, nullptr);
     if (bus_id_ == 0) {
-        g_warning("Failed to register bus name 'org.freedesktop.miracast'");
+        g_warning("Failed to register bus name 'com.canonical.miracast'");
         return;
     }
 }
@@ -101,3 +102,4 @@ void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skele
     });
 
 }
+} // namespace mcs

@@ -26,6 +26,7 @@
 #include "networkmanager.h"
 #include "networkdevice.h"
 
+namespace mcs {
 class MiracastService : public NetworkManager::Delegate,
                         public MiracastSource::Delegate
 {
@@ -73,5 +74,5 @@ private:
     NetworkDevice::Ptr current_peer_;
     std::function<void(bool,std::string)> connect_callback_;
 };
-
+} // namespace mcs
 #endif

@@ -19,6 +19,7 @@
 
 #include "basesourcemediamanager.h"
 
+namespace mcs {
 wds::SessionType BaseSourceMediaManager::GetSessionType() const {
     return wds::VideoSession;
 }
@@ -100,3 +101,4 @@ wds::AudioCodec BaseSourceMediaManager::GetOptimalAudioFormat() const {
 void BaseSourceMediaManager::SendIDRPicture() {
     g_warning("Unimplemented IDR picture request");
 }
+} // namespace mcs

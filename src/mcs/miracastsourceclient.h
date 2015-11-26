@@ -29,6 +29,7 @@
 #include <wds/source.h>
 #include <wds/media_manager.h>
 
+namespace mcs {
 class TimerCallbackData;
 
 class MiracastSourceClient : public wds::Peer::Delegate {
@@ -69,5 +70,5 @@ private:
 
     friend class TimerCallbackData;
 };
-
+} // namespace mcs
 #endif

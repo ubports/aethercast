@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+namespace mcs {
 namespace utilities {
 
 bool StringStartsWith(const std::string &text, const std::string &prefix);
@@ -29,5 +30,6 @@ std::vector<std::string> StringSplit(const std::string &text, char sep);
 std::string StringFormat(const std::string fmt_str, ...);
 
 } // namespace utilities
+} // namespace mcs
 
 #endif
