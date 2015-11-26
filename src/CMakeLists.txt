@@ -3,8 +3,8 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
                         --c-namespace MiracastInterface
                         --c-generate-object-manager
                         --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/miracastinterface
-                        --interface-prefix org.freedesktop.miracast.
-                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/org.freedesktop.miracast.xml)
+                        --interface-prefix com.canonical.miracast.
+                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/com.canonical.miracast.xml)
 
 set(SOURCES
   main.cpp
