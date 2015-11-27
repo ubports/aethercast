@@ -39,6 +39,7 @@ link_directories(
   ${GLIB_LIBRARY_DIRS}
   ${GIO_LIBRARY_DIRS}
   ${GIO-UNIX_LIBRARY_DIRS}
+  ${WDS_LIBRARY_DIRS}
 )
 
 include_directories(
@@ -46,6 +47,7 @@ include_directories(
   ${GIO_INCLUDE_DIRS}
   ${GIO-UNIX_INCLUDE_DIRS}
   ${GST_INCLUDE_DIRS}
+  ${WDS_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/wpa
   ${CMAKE_CURRENT_SOURCE_DIR}/wpa/gdhcp
   ${CMAKE_CURRENT_BINARY_DIR}/src
@@ -58,8 +60,8 @@ target_link_libraries(miracast-service
   ${GIO_LIBRARIES}
   ${GIO-UNIX_LIBRARIES}
   ${GST_LIBRARIES}
+  ${WDS_LIBRARIES}
   -ldl
-  -lwds
 )
 
 install(

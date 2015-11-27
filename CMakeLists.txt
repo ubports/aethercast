@@ -18,7 +18,8 @@ find_package(PkgConfig)
 pkg_check_modules(GLIB glib-2.0)
 pkg_check_modules(GIO gio-2.0)
 pkg_check_modules(GIO-UNIX gio-unix-2.0)
-pkg_check_modules (GST REQUIRED gstreamer-1.0)
+pkg_check_modules(GST REQUIRED gstreamer-1.0)
+pkg_check_modules(WDS REQUIRED wds)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -fPIC")
 
