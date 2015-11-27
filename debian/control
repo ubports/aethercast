@@ -7,6 +7,7 @@ Build-Depends: cmake,
                debhelper (>= 9),
                libglib2.0-dev,
                libgstreamer1.0-dev,
+               libwds1,
                libwds-dev
 Standards-Version: 3.9.4
 Homepage: http://launchpad.net/miracast-service
@@ -18,7 +19,8 @@ Vcs-Browser: http://bazaar.launchpad.net/miracast-service/trunk/files
 Package: miracast-service
 Architecture: any
 Depends: ${misc:Depends},
-         ${shlibs:Depends}
+         ${shlibs:Depends},
+         wpasupplicant
 Description: Miracast screen sharing service
  Implements a service which allows screen sharing of one device to
  another over the Miracast / WiFi Display protocol.
