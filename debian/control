@@ -12,8 +12,8 @@ Standards-Version: 3.9.4
 Homepage: http://launchpad.net/miracast-service
 # If you aren't a member of ~phablet-team but need to upload packaging changes,
 # just go ahead.  ~phablet-team will notice and sync up the code again.
-# Vcs-Bzr: https://code.launchpad.net/~phablet-team/miracast-service/trunk
-# Vcs-Browser: http://bazaar.launchpad.net/~phablet-team/miracast-service/trunk/files
+Vcs-Bzr: https://code.launchpad.net/miracast-service/trunk
+Vcs-Browser: http://bazaar.launchpad.net/miracast-service/trunk/files
 
 Package: miracast-service
 Architecture: any
