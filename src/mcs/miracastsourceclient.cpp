@@ -28,7 +28,7 @@
 #include "mediamanagerfactory.h"
 
 #include "networkutils.h"
-#include "utilities.h"
+#include "utils.h"
 
 namespace mcs {
 MiracastSourceClient::MiracastSourceClient(Delegate *delegate, GSocket *socket) :
@@ -82,7 +82,7 @@ MiracastSourceClient::~MiracastSourceClient() {
 }
 
 void MiracastSourceClient::DumpRtsp(const std::string &prefix, const std::string &data) {
-    auto lines = utilities::StringSplit(data, '\n');
+    auto lines = Utils::StringSplit(data, '\n');
     for (auto current : lines)
         g_warning("RTSP: %s: %s", prefix.c_str(), current.c_str());
 }

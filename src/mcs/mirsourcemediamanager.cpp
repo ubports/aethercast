@@ -18,7 +18,7 @@
 #include <sstream>
 
 #include "mirsourcemediamanager.h"
-#include "utilities.h"
+#include "utils.h"
 
 namespace mcs {
 MirSourceMediaManager::MirSourceMediaManager(const std::string &remote_address) :
@@ -92,12 +92,12 @@ GstElement* MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat 
 
     std::stringstream ss;
     ss << "mirimagesrc mir-socket=/run/mir_socket ! videoconvert ! videoscale ! ";
-    ss << utilities::StringFormat("video/x-raw,width=%d,height=%d ! ", width, height);
+    ss << Utils::Sprintf("video/x-raw,width=%d,height=%d ! ", width, height);
     ss << "videoflip method=counterclockwise ! queue2 ! video/x-raw,format=I420 ! ";
     ss << "x264enc aud=false byte-stream=true tune=zerolatency ! ";
-    ss << utilities::StringFormat("video/x-h264,profile=%s ! ", profile.c_str());
+    ss << Utils::Sprintf("video/x-h264,profile=%s ! ", profile.c_str());
     ss << "mpegtsmux ! rtpmp2tpay ! ";
-    ss << utilities::StringFormat("udpsink name=sink host=%s port=%d", remote_address_.c_str(), sink_port1_);
+    ss << Utils::Sprintf("udpsink name=sink host=%s port=%d", remote_address_.c_str(), sink_port1_);
 
     GError *error;
     GstElement *pipeline = gst_parse_launch(ss.str().c_str(), &error);

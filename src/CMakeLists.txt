@@ -13,8 +13,7 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
 
 set(SOURCES
-  mcs/main.cpp
-  mcs/utilities.cpp
+  mcs/utils.cpp
   mcs/networkutils.cpp
   mcs/wfddeviceinfo.cpp
   mcs/mediamanagerfactory.cpp
@@ -49,6 +48,7 @@ link_directories(
 )
 
 include_directories(
+  ${Boost_INCLUDE_DIRS}
   ${GLIB_INCLUDE_DIRS}
   ${GIO_INCLUDE_DIRS}
   ${GIO-UNIX_INCLUDE_DIRS}
@@ -58,9 +58,11 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/src
 )
 
-add_executable(miracast-service ${SOURCES})
+add_library(miracast ${SOURCES})
 
-target_link_libraries(miracast-service
+add_executable(miracast-service mcs/main.cpp)
+
+target_link_libraries(miracast
   ${GLIB_LIBRARIES}
   ${GIO_LIBRARIES}
   ${GIO-UNIX_LIBRARIES}
@@ -68,6 +70,8 @@ target_link_libraries(miracast-service
   -ldl
   -lwds
 )
+
+target_link_libraries(miracast-service miracast)
 
 install(
   TARGETS miracast-service
@@ -78,7 +82,7 @@ install(
 
 
 add_executable(test-wpasupplicantmessage
-    mcs/utilities.cpp
+    mcs/utils.cpp
     wpa/wpasupplicantmessage.cpp
     wpa/wpasupplicantmessage_test.cpp)
 target_link_libraries(test-wpasupplicantmessage ${GLIB_LIBRARIES})

@@ -20,7 +20,7 @@
 
 #include <glib.h>
 
-#include <mcs/utilities.h>
+#include <mcs/utils.h>
 
 #include "wpasupplicantmessage.h"
 
@@ -101,7 +101,7 @@ void WpaSupplicantMessage::Parse(const std::string &payload) {
 
     argv_.clear();
 
-    std::vector<std::string> parts = mcs::utilities::StringSplit(payload, ' ');
+    std::vector<std::string> parts = mcs::Utils::StringSplit(payload, ' ');
 
     sealed_ = true;
     raw_ = payload;
