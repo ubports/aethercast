@@ -29,6 +29,7 @@ extern "C" {
 #include <memory>
 
 #include "miracastservice.h"
+#include "scoped_gobject.h"
 
 namespace mcs {
 class MiracastServiceAdapter : public std::enable_shared_from_this<MiracastServiceAdapter>,
@@ -58,9 +59,9 @@ private:
     std::shared_ptr<MiracastServiceAdapter> FinalizeConstruction();
 private:
     MiracastService &service_;
-    MiracastInterfaceManager *manager_obj_;
+    ScopedGObject<MiracastInterfaceManager> manager_obj_;
     guint bus_id_;
-    GDBusObjectManagerServer *object_manager_;
+    ScopedGObject<GDBusObjectManagerServer> object_manager_;
 };
 } // namespace mcs
 #endif

@@ -58,11 +58,10 @@ MiracastServiceAdapter::~MiracastServiceAdapter() {
     if (bus_id_ > 0)
         g_bus_unown_name(bus_id_);
 
-    if (manager_obj_)
-        g_object_unref(manager_obj_);
-
-    if (object_manager_)
-        g_object_unref(object_manager_);
+    // We do not have to disconnect our handlers from:
+    //   - handle-scan
+    //   - handle-connect-sink
+    // as we own the object emitting those signals.
 }
 
 void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
@@ -76,19 +75,19 @@ void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &peer) {
 
 void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
     auto inst = static_cast<KeepAlive<MiracastServiceAdapter>*>(user_data)->ShouldDie();
-    inst->manager_obj_ = miracast_interface_manager_skeleton_new();
+    inst->manager_obj_.reset(miracast_interface_manager_skeleton_new());
 
-    g_signal_connect(inst->manager_obj_, "handle-scan",
+    g_signal_connect(inst->manager_obj_.get(), "handle-scan",
                      G_CALLBACK(&MiracastServiceAdapter::OnHandleScan), inst.get());
-    g_signal_connect(inst->manager_obj_, "handle-connect-sink",
+    g_signal_connect(inst->manager_obj_.get(), "handle-connect-sink",
                      G_CALLBACK(&MiracastServiceAdapter::OnHandleConnectSink), inst.get());
 
-    g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(inst->manager_obj_),
+    g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(inst->manager_obj_.get()),
                                      connection, kManagerPath, nullptr);
 
 
-    inst->object_manager_ = g_dbus_object_manager_server_new(kManagerPath);
-    g_dbus_object_manager_server_set_connection(inst->object_manager_, connection);
+    inst->object_manager_.reset(g_dbus_object_manager_server_new(kManagerPath));
+    g_dbus_object_manager_server_set_connection(inst->object_manager_.get(), connection);
 
     g_message("Registered bus name %s", name);
 }
