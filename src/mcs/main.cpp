@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
     main_loop = g_main_loop_new(nullptr, FALSE);
 
     mcs::MiracastService service;
-    mcs::MiracastServiceAdapter adapter(&service);
+    auto mcsa = mcs::MiracastServiceAdapter::create(service);
 
     g_main_loop_run(main_loop);
 

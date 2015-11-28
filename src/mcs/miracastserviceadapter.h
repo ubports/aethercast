@@ -28,17 +28,18 @@ extern "C" {
 
 #include "miracastservice.h"
 
-#define MIRACAST_SERVICE_BUS_NAME       "com.canonical.miracast"
-
-#define MIRACAST_SERVICE_MANAGER_PATH   "/"
-#define MIRACAST_SERVICE_MANAGER_IFACE  "com.canonical.miracast.Manager"
-
 namespace mcs {
 class MiracastServiceAdapter : public MiracastService::Delegate {
 public:
-    MiracastServiceAdapter(MiracastService *service);
+    static constexpr const char* kBusName{"com.canonical.miracast"};
+    static constexpr const char* kManagerPath{"/"};
+    static constexpr const char* kManagerIface{"com.canonical.miracast.Manager"};
+
+    static std::shared_ptr<MiracastServiceAdapter> create(MiracastService &service);
+
     ~MiracastServiceAdapter();
 
+    void OnStateChanged(NetworkDeviceState state) override;
     void OnDeviceFound(const NetworkDevice::Ptr &peer) override;
     void OnDeviceLost(const NetworkDevice::Ptr &peer) override;
 
@@ -50,8 +51,10 @@ private:
     static void OnHandleConnectSink(MiracastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                                       const gchar *address, gpointer user_data);
 
+    MiracastServiceAdapter(MiracastService& service);
+
 private:
-    MiracastService *service_;
+    MiracastService &service_;
     MiracastInterfaceManager *manager_obj_;
     guint bus_id_;
     GDBusObjectManagerServer *object_manager_;
