@@ -26,14 +26,17 @@ extern "C" {
 }
 #endif
 
+#include <memory>
+
 #include "miracastservice.h"
 
 namespace mcs {
-class MiracastServiceAdapter : public MiracastService::Delegate {
+class MiracastServiceAdapter : public std::enable_shared_from_this<MiracastServiceAdapter>,
+                               public MiracastService::Delegate {
 public:
-    static constexpr const char* kBusName{"com.canonical.miracast"};
-    static constexpr const char* kManagerPath{"/"};
-    static constexpr const char* kManagerIface{"com.canonical.miracast.Manager"};
+    static constexpr const char *kBusName{"com.canonical.miracast"};
+    static constexpr const char *kManagerPath{"/"};
+    static constexpr const char *kManagerIface{"com.canonical.miracast.Manager"};
 
     static std::shared_ptr<MiracastServiceAdapter> create(MiracastService &service);
 
@@ -52,7 +55,7 @@ private:
                                       const gchar *address, gpointer user_data);
 
     MiracastServiceAdapter(MiracastService& service);
-
+    std::shared_ptr<MiracastServiceAdapter> FinalizeConstruction();
 private:
     MiracastService &service_;
     MiracastInterfaceManager *manager_obj_;

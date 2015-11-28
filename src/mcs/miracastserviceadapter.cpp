@@ -19,12 +19,32 @@
 
 #include "miracastserviceadapter.h"
 
+namespace {
+// KeepAlive helps in delivering an object securely through a callback-based
+// system that takes context as a void* (e.g., the glib calls in this class).
+// A KeepAlive<T> instance simply wraps a managed ptr to an instance of T and keeps
+// it alive while an async operation is in progress. ShouldDie() is just a concise way of
+// unwrapping the instance and cleaning up the KeepAlive<T> instance itself.
+template<typename T>
+class KeepAlive {
+public:
+    KeepAlive(const std::shared_ptr<T>& inst) : inst_(inst) {
+    }
+
+    std::shared_ptr<T> ShouldDie() {
+        auto inst = inst_;
+        delete this;
+        return inst;
+    }
+
+private:
+    std::shared_ptr<T> inst_;
+};
+}
+
 namespace mcs {
 std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(MiracastService &service) {
-    auto adapter = std::shared_ptr<MiracastServiceAdapter>(new MiracastServiceAdapter(service));
-    adapter->service_.SetDelegate(adapter);
-
-    return adapter;
+    return std::shared_ptr<MiracastServiceAdapter>(new MiracastServiceAdapter(service))->FinalizeConstruction();
 }
 
 MiracastServiceAdapter::MiracastServiceAdapter(MiracastService &service) :
@@ -32,15 +52,6 @@ MiracastServiceAdapter::MiracastServiceAdapter(MiracastService &service) :
     manager_obj_(nullptr),
     bus_id_(0),
     object_manager_(nullptr) {
-
-    g_message("Created miracast service adapter");
-
-    bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, kBusName, G_BUS_NAME_OWNER_FLAGS_NONE,
-                   nullptr, &MiracastServiceAdapter::OnNameAcquired, nullptr, this, nullptr);
-    if (bus_id_ == 0) {
-        g_warning("Failed to register bus name 'com.canonical.miracast'");
-        return;
-    }
 }
 
 MiracastServiceAdapter::~MiracastServiceAdapter() {
@@ -64,14 +75,13 @@ void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &peer) {
 }
 
 void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
-    auto inst = static_cast<MiracastServiceAdapter*>(user_data);
-
+    auto inst = static_cast<KeepAlive<MiracastServiceAdapter>*>(user_data)->ShouldDie();
     inst->manager_obj_ = miracast_interface_manager_skeleton_new();
 
     g_signal_connect(inst->manager_obj_, "handle-scan",
-                     G_CALLBACK(&MiracastServiceAdapter::OnHandleScan), inst);
+                     G_CALLBACK(&MiracastServiceAdapter::OnHandleScan), inst.get());
     g_signal_connect(inst->manager_obj_, "handle-connect-sink",
-                     G_CALLBACK(&MiracastServiceAdapter::OnHandleConnectSink), inst);
+                     G_CALLBACK(&MiracastServiceAdapter::OnHandleConnectSink), inst.get());
 
     g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(inst->manager_obj_),
                                      connection, kManagerPath, nullptr);
@@ -85,9 +95,7 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
 
 void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
                                         GDBusMethodInvocation *invocation, gpointer user_data) {
-
-    auto inst = static_cast<MiracastServiceAdapter*>(user_data);
-
+    auto inst = static_cast<KeepAlive<MiracastServiceAdapter>*>(user_data)->ShouldDie();
     g_message("Scanning for remote devices");
 
     inst->service_.Scan();
@@ -97,8 +105,7 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
 
 void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skeleton,
                                         GDBusMethodInvocation *invocation, const gchar *address, gpointer user_data) {
-    auto inst = static_cast<MiracastServiceAdapter*>(user_data);
-
+    auto inst = static_cast<KeepAlive<MiracastServiceAdapter>*>(user_data)->ShouldDie();
     inst->service_.ConnectSink(std::string(address), [=](bool success, const std::string &error_text) {
         if (!success) {
             g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
@@ -109,5 +116,20 @@ void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skele
         g_dbus_method_invocation_return_value(invocation, nullptr);
     });
 
+}
+
+std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruction() {
+    auto sp = shared_from_this();
+
+    g_message("Created miracast service adapter");
+
+    bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, kBusName, G_BUS_NAME_OWNER_FLAGS_NONE,
+                   nullptr, &MiracastServiceAdapter::OnNameAcquired, nullptr, new KeepAlive<MiracastServiceAdapter>{sp}, nullptr);
+    if (bus_id_ == 0) {
+        g_warning("Failed to register bus name 'com.canonical.miracast'");
+    }
+
+    service_.SetDelegate(sp);
+    return sp;
 }
 } // namespace mcs
