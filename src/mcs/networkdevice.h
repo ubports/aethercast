@@ -23,6 +23,7 @@
 
 #include "wfddeviceinfo.h"
 
+namespace mcs {
 enum NetworkDeviceState {
     kIdle,
     kFailure,
@@ -70,5 +71,5 @@ private:
     int config_methods_;
     NetworkDeviceRole role_;
 };
-
+} // namespace mcs
 #endif

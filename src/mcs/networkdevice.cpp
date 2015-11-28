@@ -18,6 +18,7 @@
 #include "networkdevice.h"
 #include "wfddeviceinfo.h"
 
+namespace mcs {
 std::string NetworkDevice::StateToStr(NetworkDeviceState state) {
     switch (state) {
     case kIdle:
@@ -97,3 +98,4 @@ void NetworkDevice::SetConfigMethods(int config_methods) {
 void NetworkDevice::SetRole(NetworkDeviceRole role) {
     role_ = role;
 }
+} // namespace mcs

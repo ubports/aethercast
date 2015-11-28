@@ -20,6 +20,7 @@
 #include "mirsourcemediamanager.h"
 #include "utilities.h"
 
+namespace mcs {
 MirSourceMediaManager::MirSourceMediaManager(const std::string &remote_address) :
     remote_address_(remote_address) {
 }
@@ -108,3 +109,4 @@ GstElement* MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat 
 
     return pipeline;
 }
+} // namespace mcs

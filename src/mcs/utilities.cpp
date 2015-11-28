@@ -22,6 +22,7 @@
 
 #include "utilities.h"
 
+namespace mcs {
 namespace utilities {
 
 bool StringStartsWith(const std::string &text, const std::string &prefix) {
@@ -66,3 +67,4 @@ std::string StringFormat(const std::string fmt_str, ...) {
 }
 
 } // namespace utilities
+} // namespace mcs

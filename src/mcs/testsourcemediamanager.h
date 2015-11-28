@@ -15,38 +15,22 @@
  *
  */
 
-#ifndef MIRACASTSOURCE_H_
-#define MIRACASTSOURCE_H_
+#ifndef TESTMEDIAMANAGER_H_
+#define TESTMEDIAMANAGER_H_
 
-#include <glib.h>
-#include <gio/gio.h>
+#include "gstsourcemediamanager.h"
 
-#include "miracastsourceclient.h"
-
-class MiracastSource : public MiracastSourceClient::Delegate {
+namespace mcs {
+class TestSourceMediaManager : public GstSourceMediaManager {
 public:
-    class Delegate {
-    public:
-        virtual void OnClientDisconnected() { }
-    };
+    explicit TestSourceMediaManager(const std::string &remote_address);
+    ~TestSourceMediaManager();
 
-    MiracastSource(Delegate *delegate);
-    ~MiracastSource();
-
-    bool Setup(const std::string &address, unsigned short port);
-    void Release();
-
-public:
-    void OnConnectionClosed();
+protected:
+    GstElement* ConstructPipeline(const wds::H264VideoFormat &format) override;
 
 private:
-    static gboolean OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data);
-
-private:
-    Delegate *delegate_;
-    GSocket *socket_;
-    guint socket_source_;
-    MiracastSourceClient *active_sink_;
+    std::string remote_address_;
 };
-
+} // namespace mcs
 #endif

@@ -20,12 +20,13 @@
 #include <linux/rtnetlink.h>
 #include <sys/socket.h>
 
+#include <mcs/networkutils.h>
+
 #include "dhcpserver.h"
-#include "networkutils.h"
 
 DhcpServer::DhcpServer(Delegate *delegate, const std::string &interface_name) :
     interface_name_(interface_name) {
-    interface_index_ = NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
+    interface_index_ = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
     if (interface_index_ < 0)
         g_warning("Failed to determine index of network interface: %s", interface_name_.c_str());
 }
@@ -57,7 +58,7 @@ bool DhcpServer::Start()
     const char *broadcast = "192.168.7.255";
     unsigned char prefixlen = 24;
 
-    if (NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, interface_index_,
+    if (mcs::NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, interface_index_,
                                     AF_INET, address,
                                     NULL, prefixlen, broadcast) < 0) {
         g_warning("Failed to assign network address for %s", interface_name_.c_str());
@@ -96,5 +97,5 @@ void DhcpServer::Stop()
     g_dhcp_server_stop(server_);
     g_dhcp_server_unref(server_);
 
-    NetworkUtils::ResetInterface(interface_index_);
+    mcs::NetworkUtils::ResetInterface(interface_index_);
 }

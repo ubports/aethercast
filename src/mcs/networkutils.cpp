@@ -55,6 +55,7 @@ int __rtnl_addattr_l(struct nlmsghdr *n, size_t max_length,
     return 0;
 }
 
+namespace mcs {
 int NetworkUtils::ModifyInterfaceAddress(int cmd, int flags,
                 int index, int family,
                 const char *address,
@@ -241,3 +242,4 @@ int NetworkUtils::BytesAvailableToRead(int fd) {
         available = (int64_t) nbytes;
     return available;
 }
+} // namespace mcs

@@ -19,6 +19,7 @@
 #include "mirsourcemediamanager.h"
 #include "testsourcemediamanager.h"
 
+namespace mcs {
 class NullSourceMediaManager : public BaseSourceMediaManager
 {
 public:
@@ -59,3 +60,4 @@ BaseSourceMediaManager* MediaManagerFactory::CreateSource(const std::string &rem
 
     return new NullSourceMediaManager();
 }
+} // namespace mcs

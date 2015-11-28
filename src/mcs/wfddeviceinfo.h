@@ -44,6 +44,7 @@
 #define WPS_CONFIG_PUSHBUTTON       0x0080
 #define WPS_CONFIG_KEYPAD           0x0100
 
+namespace mcs {
 class WfdDeviceInfo
 {
 public:
@@ -111,5 +112,6 @@ private:
     int ctrl_port_;
     int max_tput_;
 };
+} // namespace mcs
 
 #endif

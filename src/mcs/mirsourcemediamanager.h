@@ -15,19 +15,22 @@
  *
  */
 
-#ifndef UTILITIES_H_
-#define UTILITIES_H_
+#ifndef MIRMEDIAMANAGER_H_
+#define MIRMEDIAMANAGER_H_
 
-#include <string>
-#include <vector>
+#include "gstsourcemediamanager.h"
 
-namespace utilities {
+namespace mcs {
+class MirSourceMediaManager : public GstSourceMediaManager {
+public:
+    explicit MirSourceMediaManager(const std::string &remote_address);
+    ~MirSourceMediaManager();
 
-bool StringStartsWith(const std::string &text, const std::string &prefix);
-int ParseHex(const std::string &str);
-std::vector<std::string> StringSplit(const std::string &text, char sep);
-std::string StringFormat(const std::string fmt_str, ...);
+protected:
+    GstElement* ConstructPipeline(const wds::H264VideoFormat &format) override;
 
-} // namespace utilities
-
+private:
+    std::string remote_address_;
+};
+} // namespace mcs
 #endif

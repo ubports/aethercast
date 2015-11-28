@@ -23,6 +23,7 @@
 
 #include "networkdevice.h"
 
+namespace mcs {
 class NetworkManager {
 public:
     class Delegate {
@@ -52,5 +53,5 @@ public:
     virtual std::string LocalAddress() const = 0;
     virtual bool Running() const = 0;
 };
-
+} // namespace mcs
 #endif

@@ -23,6 +23,7 @@
 
 #include "basesourcemediamanager.h"
 
+namespace mcs {
 class GstSourceMediaManager : public BaseSourceMediaManager
 {
 public:
@@ -47,5 +48,5 @@ private:
     std::string remote_address_;
     guint bus_watch_id_;
 };
-
+} // namespace mcs
 #endif

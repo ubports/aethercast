@@ -15,21 +15,19 @@
  *
  */
 
-#ifndef TESTMEDIAMANAGER_H_
-#define TESTMEDIAMANAGER_H_
+#ifndef NETWORKUTILS_H_
+#define NETWORKUTILS_H_
 
-#include "gstsourcemediamanager.h"
-
-class TestSourceMediaManager : public GstSourceMediaManager {
+namespace mcs {
+class NetworkUtils
+{
 public:
-    explicit TestSourceMediaManager(const std::string &remote_address);
-    ~TestSourceMediaManager();
-
-protected:
-    GstElement* ConstructPipeline(const wds::H264VideoFormat &format) override;
-
-private:
-    std::string remote_address_;
+    static int RetrieveInterfaceIndex(const char *name);
+    static int ModifyInterfaceAddress(int cmd, int flags, int index, int family,
+                             const char *address, const char *peer,
+                             unsigned char prefixlen, const char *broadcast);
+    static int ResetInterface(int index);
+    static int BytesAvailableToRead(int fd);
 };
-
+} // namespace mcs
 #endif

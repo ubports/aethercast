@@ -23,6 +23,7 @@
 
 #define STATE_IDLE_TIMEOUT                  1000
 
+namespace mcs {
 MiracastService::MiracastService() :
     delegate_(nullptr),
     current_state_(kIdle),
@@ -210,3 +211,4 @@ void MiracastService::ConnectSink(const std::string &address, std::function<void
 void MiracastService::Scan() {
     manager_->Scan();
 }
+} // namespace miracast

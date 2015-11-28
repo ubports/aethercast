@@ -18,6 +18,7 @@
 #include "miracastsource.h"
 #include "miracastsourceclient.h"
 
+namespace mcs {
 MiracastSource::MiracastSource(Delegate *delegate) :
     delegate_(delegate),
     active_sink_(nullptr),
@@ -129,3 +130,4 @@ void MiracastSource::OnConnectionClosed() {
     if (delegate_)
         delegate_->OnClientDisconnected();
 }
+} // namespace mcs

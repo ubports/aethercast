@@ -20,6 +20,7 @@
 
 #include <wds/media_manager.h>
 
+namespace mcs {
 class BaseSourceMediaManager : public wds::SourceMediaManager
 {
 public:
@@ -43,5 +44,5 @@ protected:
     int sink_port2_;
     wds::H264VideoFormat format_;
 };
-
+} // namespace mcs
 #endif

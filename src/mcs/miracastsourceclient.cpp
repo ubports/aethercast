@@ -30,6 +30,7 @@
 #include "networkutils.h"
 #include "utilities.h"
 
+namespace mcs {
 MiracastSourceClient::MiracastSourceClient(Delegate *delegate, GSocket *socket) :
     delegate_(delegate),
     socket_(socket),
@@ -169,3 +170,4 @@ gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  con
 
     return TRUE;
 }
+} // namespace mcs

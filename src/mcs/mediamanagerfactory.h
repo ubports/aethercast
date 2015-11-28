@@ -15,18 +15,16 @@
  *
  */
 
-#ifndef NETWORKUTILS_H_
-#define NETWORKUTILS_H_
+#ifndef MEDIAMANAGERFACTORY_H_
+#define MEDIAMANAGERFACTORY_H_
 
-class NetworkUtils
+#include "basesourcemediamanager.h"
+
+namespace mcs {
+class MediaManagerFactory
 {
 public:
-    static int RetrieveInterfaceIndex(const char *name);
-    static int ModifyInterfaceAddress(int cmd, int flags, int index, int family,
-                             const char *address, const char *peer,
-                             unsigned char prefixlen, const char *broadcast);
-    static int ResetInterface(int index);
-    static int BytesAvailableToRead(int fd);
+    static BaseSourceMediaManager* CreateSource(const std::string &remote_address);
 };
-
+} // namespace mcs
 #endif

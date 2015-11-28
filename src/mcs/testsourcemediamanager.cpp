@@ -20,6 +20,7 @@
 #include "testsourcemediamanager.h"
 #include "utilities.h"
 
+namespace mcs {
 TestSourceMediaManager::TestSourceMediaManager(const std::string &remote_address) :
     remote_address_(remote_address) {
 }
@@ -41,3 +42,4 @@ GstElement* TestSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat
 
     return pipeline;
 }
+} // namespace mcs

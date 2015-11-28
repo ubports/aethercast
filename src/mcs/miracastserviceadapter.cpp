@@ -19,6 +19,7 @@
 
 #include "miracastserviceadapter.h"
 
+namespace mcs {
 MiracastServiceAdapter::MiracastServiceAdapter(MiracastService *service) :
     service_(service),
     manager_obj_(nullptr),
@@ -101,3 +102,4 @@ void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skele
     });
 
 }
+} // namespace mcs

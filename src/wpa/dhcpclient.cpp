@@ -20,14 +20,15 @@
 #include <linux/rtnetlink.h>
 #include <sys/socket.h>
 
+#include <mcs/networkutils.h>
+
 #include "dhcpclient.h"
-#include "networkutils.h"
 #include "gdhcp.h"
 
 DhcpClient::DhcpClient(Delegate *delegate, const std::string &interface_name) :
     delegate_(delegate),
     interface_name_(interface_name) {
-    interface_index_ = NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
+    interface_index_ = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
     if (interface_index_ < 0)
         g_warning("Failed to determine index of network interface %s", interface_name_.c_str());
 }
@@ -46,7 +47,7 @@ void DhcpClient::OnLeaseAvailable(GDHCPClient *client, gpointer user_data) {
         return;
     }
 
-    if (NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, inst->interface_index_,
+    if (mcs::NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, inst->interface_index_,
                                     AF_INET, address,
                                     NULL, 24, NULL) < 0) {
         g_warning("Failed to assign network address for %s", inst->interface_name_.c_str());
@@ -94,5 +95,5 @@ void DhcpClient::Stop() {
     local_address_ = "";
     netmask_ = "";
 
-    NetworkUtils::ResetInterface(interface_index_);
+    mcs::NetworkUtils::ResetInterface(interface_index_);
 }
