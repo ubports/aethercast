@@ -18,25 +18,25 @@
 #ifndef NETWORKMANAGER_H_
 #define NETWORKMANAGER_H_
 
+#include <boost/core/noncopyable.hpp>
+
 #include <list>
 #include <vector>
 
 #include "networkdevice.h"
 
 namespace mcs {
-class NetworkManager {
+class NetworkManager : private boost::noncopyable {
 public:
-    class Delegate {
+    class Delegate : private boost::noncopyable {
     public:
-        virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) { }
-        virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) { }
-        virtual void OnDeviceStateChanged(const NetworkDevice::Ptr &peer) { }
+        virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) = 0;
+        virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) = 0;
+        virtual void OnDeviceStateChanged(const NetworkDevice::Ptr &peer) = 0;
 
     protected:
-        virtual ~Delegate() { }
+        Delegate() = default;
     };
-
-    virtual ~NetworkManager() { }
 
     virtual bool Setup() = 0;
 
@@ -52,6 +52,9 @@ public:
     virtual NetworkDeviceRole Role() const = 0;
     virtual std::string LocalAddress() const = 0;
     virtual bool Running() const = 0;
+
+protected:
+    NetworkManager() = default;
 };
 } // namespace mcs
 #endif

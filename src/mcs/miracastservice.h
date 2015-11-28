@@ -18,6 +18,8 @@
 #ifndef MIRACAST_SERVICE_H_
 #define MIRACAST_SERVICE_H_
 
+#include <boost/core/noncopyable.hpp>
+
 #include <functional>
 
 #include <glib.h>
@@ -31,11 +33,14 @@ class MiracastService : public NetworkManager::Delegate,
                         public MiracastSource::Delegate
 {
 public:
-    class Delegate {
+    class Delegate : private boost::noncopyable {
     public:
-        virtual void OnStateChanged(NetworkDeviceState state) { }
-        virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) { }
-        virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) { }
+        virtual void OnStateChanged(NetworkDeviceState state) = 0;
+        virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) = 0;
+        virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) = 0;
+
+    protected:
+        Delegate() = default;
     };
 
     MiracastService();

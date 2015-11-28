@@ -18,15 +18,20 @@
 #ifndef DHCPCLIENT_H_
 #define DHCPCLIENT_H_
 
+#include <boost/core/noncopyable.hpp>
+
 #include <string>
 
 #include <gdhcp.h>
 
 class DhcpClient {
 public:
-    class Delegate {
+    class Delegate : private boost::noncopyable {
     public:
         virtual void OnAddressAssigned(const std::string &address) = 0;
+
+    protected:
+        Delegate() = default;
     };
 
     DhcpClient(Delegate *delegate, const std::string &interface_name);
