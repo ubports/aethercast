@@ -5,8 +5,11 @@ Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: Simon Fels <simon.fels@canonical.com>
 Build-Depends: cmake,
                debhelper (>= 9),
+               google-mock,
+               libboost-dev,
                libglib2.0-dev,
                libgstreamer1.0-dev,
+               libgtest-dev,
                libwds-dev
 Standards-Version: 3.9.4
 Homepage: http://launchpad.net/miracast-service

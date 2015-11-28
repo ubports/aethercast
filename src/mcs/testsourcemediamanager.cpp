@@ -18,7 +18,7 @@
 #include <gst/gst.h>
 
 #include "testsourcemediamanager.h"
-#include "utilities.h"
+#include "utils.h"
 
 namespace mcs {
 TestSourceMediaManager::TestSourceMediaManager(const std::string &remote_address) :
@@ -29,7 +29,7 @@ TestSourceMediaManager::~TestSourceMediaManager() {
 }
 
 GstElement* TestSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
-    auto config = utilities::StringFormat("videotestsrc ! videoconvert ! video/x-raw,format=I420 ! x264enc ! mpegtsmux ! rtpmp2tpay ! udpsink name=sink host=%s port=%d",
+    auto config = Utils::Sprintf("videotestsrc ! videoconvert ! video/x-raw,format=I420 ! x264enc ! mpegtsmux ! rtpmp2tpay ! udpsink name=sink host=%s port=%d",
                                      remote_address_.c_str(), sink_port1_);
 
     GError *error = nullptr;

@@ -38,7 +38,7 @@
 
 #include "mcs/networkdevice.h"
 #include "mcs/networkutils.h"
-#include "mcs/utilities.h"
+#include "mcs/utils.h"
 #include "mcs/wfddeviceinfo.h"
 
 #define WPA_SUPPLICANT_BIN_PATH     "/sbin/wpa_supplicant"
@@ -64,7 +64,7 @@
 WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate, const std::string &interface_name) :
     delegate_(delegate),
     interface_name_(interface_name),
-    ctrl_path_(mcs::utilities::StringFormat("/var/run/%s_supplicant", interface_name_.c_str())),
+    ctrl_path_(mcs::Utils::Sprintf("/var/run/%s_supplicant", interface_name_.c_str())),
     command_queue_(new WpaSupplicantCommandQueue(this)),
     current_role_(mcs::kUndecided),
     dhcp_client_(this, interface_name),
@@ -127,7 +127,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
 
         peer->SetAddress(address);
         peer->SetName(name);
-        peer->SetConfigMethods(mcs::utilities::ParseHex(config_methods_str));
+        peer->SetConfigMethods(mcs::Utils::ParseHex(config_methods_str));
 
         return;
     }
@@ -135,7 +135,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     mcs::NetworkDevice::Ptr peer(new mcs::NetworkDevice);
     peer->SetAddress(address);
     peer->SetName(name);
-    peer->SetConfigMethods(mcs::utilities::ParseHex(config_methods_str));
+    peer->SetConfigMethods(mcs::Utils::ParseHex(config_methods_str));
 
     available_devices_.insert(std::pair<std::string, mcs::NetworkDevice::Ptr>(std::string(address), mcs::NetworkDevice::Ptr(peer)));
 
@@ -323,7 +323,7 @@ void WpaSupplicantNetworkManager::Reset() {
 }
 
 bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf_path) {
-    auto config = mcs::utilities::StringFormat(
+    auto config = mcs::Utils::Sprintf(
                 "# GENERATED - DO NOT EDIT!\n"
                 "config_methods=pbc\n" // We're only supporting PBC for now
                 "ap_scan=1\n"
@@ -342,12 +342,12 @@ bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf
 }
 
 bool WpaSupplicantNetworkManager::StartSupplicant() {
-    auto conf_path = mcs::utilities::StringFormat("/tmp/supplicant-%s.conf", interface_name_.c_str());
+    auto conf_path = mcs::Utils::Sprintf("/tmp/supplicant-%s.conf", interface_name_.c_str());
 
     if (!CreateSupplicantConfig(conf_path))
         return false;
 
-    auto cmdline = mcs::utilities::StringFormat("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s",
+    auto cmdline = mcs::Utils::Sprintf("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s",
                                            WPA_SUPPLICANT_BIN_PATH,
                                            interface_name_.c_str(),
                                            ctrl_path_.c_str(),
@@ -387,7 +387,7 @@ void WpaSupplicantNetworkManager::StopSupplicant() {
 }
 
 bool WpaSupplicantNetworkManager::ConnectSupplicant() {
-    std::string socket_path = mcs::utilities::StringFormat("%s/%s",
+    std::string socket_path = mcs::Utils::Sprintf("%s/%s",
                                                       ctrl_path_.c_str(),
                                                       interface_name_.c_str());
 
@@ -402,7 +402,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
 
     local.sun_family = AF_UNIX;
 
-    std::string local_path = mcs::utilities::StringFormat("/tmp/p2p0-%d", getpid());
+    std::string local_path = mcs::Utils::Sprintf("/tmp/p2p0-%d", getpid());
     if (g_file_test(local_path.c_str(), G_FILE_TEST_EXISTS))
         g_remove(local_path.c_str());
 
