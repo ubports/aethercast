@@ -17,7 +17,7 @@
 
 #include <glib.h>
 
-#include "wpasupplicantmessage.h"
+#include "wpa/wpasupplicantmessage.h"
 
 void test_wpasupplicant_message_ctor(void) {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");

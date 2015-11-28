@@ -28,7 +28,7 @@ set(SOURCES
   mcs/networkmanager.cpp
   mcs/networkdevice.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface.c
-  
+
   wpa/gdhcp/common.c
   wpa/gdhcp/ipv4ll.c
   wpa/gdhcp/server.c
@@ -81,12 +81,3 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static
 )
-
-
-add_executable(test-wpasupplicantmessage
-    mcs/utils.cpp
-    wpa/wpasupplicantmessage.cpp
-    wpa/wpasupplicantmessage_test.cpp)
-target_link_libraries(test-wpasupplicantmessage ${GLIB_LIBRARIES})
-target_link_libraries (test-wpasupplicantmessage)
-add_test(WpaSupplicantMessage test-wpasupplicantmessage)
