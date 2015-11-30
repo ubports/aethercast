@@ -15,5 +15,6 @@ add_executable(wpasupplicantcommandqueue_tests
 target_link_libraries(wpasupplicantcommandqueue_tests
     miracast
     gtest
-    gtest_main)
+    gtest_main
+    gmock)
 add_test(wpasupplicantcommandqueue_tests wpasupplicantcommandqueue_tests)

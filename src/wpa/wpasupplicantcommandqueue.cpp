@@ -41,6 +41,9 @@ void WpaSupplicantCommandQueue::HandleMessage(WpaSupplicantMessage message) {
         return;
     }
 
+    if (!current_)
+        return;
+
     if (current_->callback)
         current_->callback(message);
 

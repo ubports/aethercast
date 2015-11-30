@@ -38,7 +38,7 @@ public:
 
     WpaSupplicantCommandQueue(Delegate *delegate);
 
-    void EnqueueCommand(const WpaSupplicantMessage &message, WpaSupplicantCommand::ResponseCallback callback);
+    void EnqueueCommand(const WpaSupplicantMessage &message, WpaSupplicantCommand::ResponseCallback callback = nullptr);
     void HandleMessage(WpaSupplicantMessage message);
 
 private:
