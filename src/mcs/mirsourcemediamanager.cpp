@@ -28,7 +28,7 @@ MirSourceMediaManager::MirSourceMediaManager(const std::string &remote_address) 
 MirSourceMediaManager::~MirSourceMediaManager() {
 }
 
-GstElement* MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
+SharedGObject<GstElement> MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
     int width = 0, height = 0;
     std::string profile = "constrained-baseline";
 
@@ -107,6 +107,6 @@ GstElement* MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat 
         return nullptr;
     }
 
-    return pipeline;
+    return make_shared_gobject(pipeline);
 }
 } // namespace mcs

@@ -14,23 +14,22 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#ifndef GOBJECT_DELETER_H_
+#define GOBJECT_DELETER_H_
 
-#ifndef MIRMEDIAMANAGER_H_
-#define MIRMEDIAMANAGER_H_
-
-#include "gstsourcemediamanager.h"
+#include <glib-object.h>
 
 namespace mcs {
-class MirSourceMediaManager : public GstSourceMediaManager {
-public:
-    explicit MirSourceMediaManager(const std::string &remote_address);
-    ~MirSourceMediaManager();
-
-protected:
-    SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) override;
-
-private:
-    std::string remote_address_;
+// A GObjectDeleter considers T to be a GObject and
+// provides an operator() that decrements the reference
+// count of an instance of T.
+template<typename T>
+struct GObjectDeleter {
+    void operator()(T *object) const {
+        if (object)
+            g_object_unref(object);
+    }
 };
-} // namespace mcs
-#endif
+}
+
+#endif // GOBJECT_DELETER_H_

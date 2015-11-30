@@ -22,17 +22,9 @@
 
 #include <glib-object.h>
 
+#include "gobject_deleter.h"
+
 namespace mcs {
-// A GObjectDeleter considers T to be a GObject and
-// provides an operator() that decrements the reference
-// count of an instance of T.
-template<typename T>
-struct GObjectDeleter {
-    void operator()(T *object) const {
-        if (object)
-            g_object_unref(object);
-    }
-};
 // A ScopedGObject instance handles raw GObject instances
 // and automatically cleans them up on destruction.
 template<typename T>

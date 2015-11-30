@@ -27,7 +27,7 @@ public:
     ~TestSourceMediaManager();
 
 protected:
-    GstElement* ConstructPipeline(const wds::H264VideoFormat &format) override;
+    SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) override;
 
 private:
     std::string remote_address_;
