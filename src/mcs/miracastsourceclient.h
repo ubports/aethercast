@@ -31,6 +31,8 @@
 #include <wds/source.h>
 #include <wds/media_manager.h>
 
+#include "scoped_gobject.h"
+
 namespace mcs {
 class TimerCallbackData;
 
@@ -41,7 +43,7 @@ public:
         virtual void OnConnectionClosed() = 0;
     };
 
-    MiracastSourceClient(Delegate *delegate, GSocket *socket);
+    MiracastSourceClient(Delegate *delegate, ScopedGObject<GSocket>&& socket);
     ~MiracastSourceClient();
 
 public:
@@ -61,10 +63,9 @@ private:
 
 private:
     Delegate *delegate_;
-    GSocket *socket_;
+    ScopedGObject<GSocket> socket_;
     guint socket_source_;
     std::string local_address_;
-    GIOChannel *channel_;
     std::vector<guint> timers_;
     std::unique_ptr<wds::Source> source_;
     std::unique_ptr<wds::SourceMediaManager> media_manager_;

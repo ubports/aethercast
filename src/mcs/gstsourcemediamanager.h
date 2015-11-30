@@ -22,6 +22,7 @@
 #include <gst/gst.h>
 
 #include "basesourcemediamanager.h"
+#include "shared_gobject.h"
 
 namespace mcs {
 class GstSourceMediaManager : public BaseSourceMediaManager
@@ -38,13 +39,13 @@ public:
 protected:
     void Configure() override;
 
-    virtual GstElement* ConstructPipeline(const wds::H264VideoFormat &format) = 0;
+    virtual SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) = 0;
 
 private:
     static gboolean OnGstBusEvent(GstBus *bus, GstMessage *message, gpointer data);
 
 private:
-    GstElement *pipeline_;
+    SharedGObject<GstElement> pipeline_;
     std::string remote_address_;
     guint bus_watch_id_;
 };
