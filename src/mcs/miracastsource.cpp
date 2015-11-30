@@ -113,7 +113,7 @@ gboolean MiracastSource::OnNewConnection(GSocket *socket, GIOCondition  cond, gp
         return FALSE;
     }
 
-    inst->active_sink_ = new MiracastSourceClient(inst, client_socket);
+    inst->active_sink_ = new MiracastSourceClient(inst, ScopedGObject<GSocket>{client_socket});
 
     return FALSE;
 }
