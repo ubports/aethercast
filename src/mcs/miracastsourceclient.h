@@ -18,6 +18,8 @@
 #ifndef MIRACASTSOURCECLIENT_H_
 #define MIRACASTSOURCECLIENT_H_
 
+#include <boost/noncopyable.hpp>
+
 #include <string>
 #include <memory>
 #include <map>
@@ -29,18 +31,23 @@
 #include <wds/source.h>
 #include <wds/media_manager.h>
 
+#include "scoped_gobject.h"
+
 namespace mcs {
 class TimerCallbackData;
 
 class MiracastSourceClient : public wds::Peer::Delegate {
 public:
-    class Delegate {
+    class Delegate : private boost::noncopyable {
     public:
-        virtual void OnConnectionClosed() { }
+        virtual void OnConnectionClosed() = 0;
     };
 
-    MiracastSourceClient(Delegate *delegate, GSocket *socket);
+    MiracastSourceClient(ScopedGObject<GSocket>&& socket);
     ~MiracastSourceClient();
+
+    void SetDelegate(const std::weak_ptr<Delegate>& delegate);
+    void ResetDelegate();
 
 public:
     void SendRTSPData(const std::string &data) override;
@@ -58,11 +65,10 @@ private:
     void DumpRtsp(const std::string &prefix, const std::string &data);
 
 private:
-    Delegate *delegate_;
-    GSocket *socket_;
+    std::weak_ptr<Delegate> delegate_;
+    ScopedGObject<GSocket> socket_;
     guint socket_source_;
     std::string local_address_;
-    GIOChannel *channel_;
     std::vector<guint> timers_;
     std::unique_ptr<wds::Source> source_;
     std::unique_ptr<wds::SourceMediaManager> media_manager_;

@@ -24,10 +24,14 @@
 #define STATE_IDLE_TIMEOUT                  1000
 
 namespace mcs {
+std::shared_ptr<MiracastService> MiracastService::create() {
+    auto sp = std::shared_ptr<MiracastService>{new MiracastService{}};
+    return sp->FinalizeConstruction();
+}
+
 MiracastService::MiracastService() :
-    delegate_(nullptr),
     current_state_(kIdle),
-    source_(this),
+    source_(MiracastSource::create()),
     current_peer_(nullptr) {
     // FIXME this really needs to move somewhere else as it's something
     // specific for some devices and somehow goes together with the
@@ -35,11 +39,21 @@ MiracastService::MiracastService() :
     LoadWiFiFirmware();
 }
 
+std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction() {
+    auto sp = shared_from_this();
+    source_->SetDelegate(sp);
+    return sp;
+}
+
 MiracastService::~MiracastService() {
 }
 
-void MiracastService::SetDelegate(Delegate *delegate) {
+void MiracastService::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
     delegate_ = delegate;
+}
+
+void MiracastService::ResetDelegate() {
+    delegate_.reset();
 }
 
 NetworkDeviceState MiracastService::State() const {
@@ -108,7 +122,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
         if (manager_->Role() == kGroupOwner)
             address = manager_->LocalAddress();
 
-        source_.Setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
+        source_->Setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
 
         FinishConnectAttempt(true);
 
@@ -121,7 +135,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
 
     case kDisconnected:
         if (current_state_ == kConnected)
-            source_.Release();
+            source_->Release();
 
         StartIdleTimer();
         break;
@@ -134,8 +148,8 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     }
 
     current_state_ = new_state;
-    if (delegate_)
-        delegate_->OnStateChanged(current_state_);
+    if (auto sp = delegate_.lock())
+        sp->OnStateChanged(current_state_);
 }
 
 void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &peer) {
@@ -153,13 +167,13 @@ void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &peer) {
 }
 
 void MiracastService::OnDeviceFound(const NetworkDevice::Ptr &peer) {
-    if (delegate_)
-        delegate_->OnDeviceFound(peer);
+    if (auto sp = delegate_.lock())
+        sp->OnDeviceFound(peer);
 }
 
 void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &peer) {
-    if (delegate_)
-        delegate_->OnDeviceLost(peer);
+    if (auto sp = delegate_.lock())
+        sp->OnDeviceLost(peer);
 }
 
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {

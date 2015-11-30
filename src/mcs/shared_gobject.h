@@ -15,22 +15,25 @@
  *
  */
 
-#ifndef MIRMEDIAMANAGER_H_
-#define MIRMEDIAMANAGER_H_
+#ifndef SHARED_GOBJECT_H_
+#define SHARED_GOBJECT_H_
 
-#include "gstsourcemediamanager.h"
+#include <memory>
+
+#include <glib-object.h>
+
+#include "gobject_deleter.h"
 
 namespace mcs {
-class MirSourceMediaManager : public GstSourceMediaManager {
-public:
-    explicit MirSourceMediaManager(const std::string &remote_address);
-    ~MirSourceMediaManager();
+// A SharedGObject instance handles raw GObject instances
+// and automatically cleans them up on destruction.
+template<typename T>
+using SharedGObject = std::shared_ptr<T>;
 
-protected:
-    SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) override;
+template<typename T>
+SharedGObject<T> make_shared_gobject(T *gobject) {
+    return SharedGObject<T>{gobject, GObjectDeleter<T>{}};
+}
+}
 
-private:
-    std::string remote_address_;
-};
-} // namespace mcs
-#endif
+#endif // SHARED_GOBJECT_H_

@@ -26,19 +26,24 @@ extern "C" {
 }
 #endif
 
+#include <memory>
+
 #include "miracastservice.h"
-
-#define MIRACAST_SERVICE_BUS_NAME       "com.canonical.miracast"
-
-#define MIRACAST_SERVICE_MANAGER_PATH   "/"
-#define MIRACAST_SERVICE_MANAGER_IFACE  "com.canonical.miracast.Manager"
+#include "scoped_gobject.h"
 
 namespace mcs {
-class MiracastServiceAdapter : public MiracastService::Delegate {
+class MiracastServiceAdapter : public std::enable_shared_from_this<MiracastServiceAdapter>,
+                               public MiracastService::Delegate {
 public:
-    MiracastServiceAdapter(MiracastService *service);
+    static constexpr const char *kBusName{"com.canonical.miracast"};
+    static constexpr const char *kManagerPath{"/"};
+    static constexpr const char *kManagerIface{"com.canonical.miracast.Manager"};
+
+    static std::shared_ptr<MiracastServiceAdapter> create(const std::shared_ptr<MiracastService> &service);
+
     ~MiracastServiceAdapter();
 
+    void OnStateChanged(NetworkDeviceState state) override;
     void OnDeviceFound(const NetworkDevice::Ptr &peer) override;
     void OnDeviceLost(const NetworkDevice::Ptr &peer) override;
 
@@ -50,11 +55,13 @@ private:
     static void OnHandleConnectSink(MiracastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                                       const gchar *address, gpointer user_data);
 
+    MiracastServiceAdapter(const std::shared_ptr<MiracastService> &service);
+    std::shared_ptr<MiracastServiceAdapter> FinalizeConstruction();
 private:
-    MiracastService *service_;
-    MiracastInterfaceManager *manager_obj_;
+    std::shared_ptr<MiracastService> service_;
+    ScopedGObject<MiracastInterfaceManager> manager_obj_;
     guint bus_id_;
-    GDBusObjectManagerServer *object_manager_;
+    ScopedGObject<GDBusObjectManagerServer> object_manager_;
 };
 } // namespace mcs
 #endif

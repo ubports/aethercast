@@ -18,15 +18,20 @@
 #ifndef DHCPSERVER_H_
 #define DHCPSERVER_H_
 
+#include <boost/core/noncopyable.hpp>
+
 #include <string>
 
 #include "gdhcp.h"
 
 class DhcpServer {
 public:
-    class Delegate {
+    class Delegate : private boost::noncopyable {
     public:
         virtual void OnLeaseAdded() = 0;
+
+    protected:
+        Delegate() = default;
     };
 
     DhcpServer(Delegate *delegate, const std::string &interface_name_h);

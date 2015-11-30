@@ -31,13 +31,12 @@
 #include "utils.h"
 
 namespace mcs {
-MiracastSourceClient::MiracastSourceClient(Delegate *delegate, GSocket *socket) :
-    delegate_(delegate),
-    socket_(socket),
+MiracastSourceClient::MiracastSourceClient(ScopedGObject<GSocket>&& socket) :
+    socket_(std::move(socket)),
     socket_source_(0) {
 
     GError *error = nullptr;
-    auto address = g_socket_get_remote_address(socket_, &error);
+    auto address = g_socket_get_remote_address(socket_.get(), &error);
     if (error) {
         g_warning("Failed to receive address from socket: %s", error->message);
         g_error_free(error);
@@ -52,10 +51,9 @@ MiracastSourceClient::MiracastSourceClient(Delegate *delegate, GSocket *socket) 
 
     std::string peer_address = g_inet_address_to_string(G_INET_ADDRESS(inet_address));
 
-    auto source = g_socket_create_source(socket_, (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR), nullptr);
+    auto source = g_socket_create_source(socket_.get(), (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR), nullptr);
     if (!source) {
         g_warning("Failed to setup event listener for source client");
-        g_object_unref(socket_);
         return;
     }
 
@@ -76,9 +74,14 @@ MiracastSourceClient::MiracastSourceClient(Delegate *delegate, GSocket *socket) 
 MiracastSourceClient::~MiracastSourceClient() {
     if (socket_source_ > 0)
         g_source_remove(socket_source_);
+}
 
-    if (channel_)
-        g_io_channel_unref(channel_);
+void MiracastSourceClient::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+    delegate_ = delegate;
+}
+
+void MiracastSourceClient::ResetDelegate() {
+    delegate_.reset();
 }
 
 void MiracastSourceClient::DumpRtsp(const std::string &prefix, const std::string &data) {
@@ -90,7 +93,7 @@ void MiracastSourceClient::DumpRtsp(const std::string &prefix, const std::string
 void MiracastSourceClient::SendRTSPData(const std::string &data) {
     DumpRtsp("OUT", data);
     GError *error = nullptr;
-    g_socket_send(socket_, data.c_str(), data.length(), nullptr, &error);
+    g_socket_send(socket_.get(), data.c_str(), data.length(), nullptr, &error);
     if (error) {
         g_warning("Failed to write data to RTSP client: %s", error->message);
         g_error_free(error);
@@ -155,10 +158,16 @@ void MiracastSourceClient::OnTimeoutRemove(gpointer user_data) {
 gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  cond, gpointer user_data) {
     auto inst = static_cast<MiracastSourceClient*>(user_data);
 
-    int fd = g_socket_get_fd(inst->socket_);
-    while (g_socket_get_available_bytes(inst->socket_) > 0) {
+    if (cond == G_IO_ERR || cond == G_IO_HUP) {
+        if (auto sp = inst->delegate_.lock())
+            sp->OnConnectionClosed();
+        return FALSE;
+    }
+
+    int fd = g_socket_get_fd(inst->socket_.get());        
+    while (g_socket_get_available_bytes(inst->socket_.get()) > 0) {
         gchar buf[1024] = { };
-        gssize nbytes = g_socket_receive(inst->socket_, buf, 1024, NULL, NULL);
+        gssize nbytes = g_socket_receive(inst->socket_.get(), buf, 1024, NULL, NULL);
         if (nbytes <= 0)
             break;
 

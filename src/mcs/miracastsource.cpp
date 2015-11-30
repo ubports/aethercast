@@ -19,8 +19,11 @@
 #include "miracastsourceclient.h"
 
 namespace mcs {
-MiracastSource::MiracastSource(Delegate *delegate) :
-    delegate_(delegate),
+std::shared_ptr<MiracastSource> MiracastSource::create() {
+    return std::shared_ptr<MiracastSource>{new MiracastSource{}};
+}
+
+MiracastSource::MiracastSource() :
     active_sink_(nullptr),
     socket_(nullptr),
     socket_source_(0) {
@@ -30,41 +33,44 @@ MiracastSource::~MiracastSource() {
     Release();
 }
 
+void MiracastSource::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+    delegate_ = delegate;
+}
+
+void MiracastSource::ResetDelegate() {
+    delegate_.reset();
+}
+
 bool MiracastSource::Setup(const std::string &address, unsigned short port) {
     GError *error;
 
     if (socket_)
         return false;
 
-    socket_ = g_socket_new(G_SOCKET_FAMILY_IPV4, G_SOCKET_TYPE_STREAM, G_SOCKET_PROTOCOL_TCP, &error);
-    if (!socket_) {
+    ScopedGObject<GSocket> socket{g_socket_new(G_SOCKET_FAMILY_IPV4, G_SOCKET_TYPE_STREAM, G_SOCKET_PROTOCOL_TCP, &error)};
+
+    if (!socket) {
         g_warning("Failed to setup socket for incoming source connections: %s", error->message);
         g_error_free(error);
         return false;
     }
 
     auto addr = g_inet_socket_address_new_from_string(address.c_str(), port);
-    if (!g_socket_bind(socket_, addr, TRUE, &error)) {
+    if (!g_socket_bind(socket.get(), addr, TRUE, &error)) {
         g_warning("Failed to setup socket for incoming source connections: %s", error->message);
         g_error_free(error);
-        g_object_unref(socket_);
-        socket_ = nullptr;
         return false;
     }
 
-    if (!g_socket_listen(socket_, &error)) {
+    if (!g_socket_listen(socket.get(), &error)) {
         g_warning("Failed start listening for incoming connections: %s", error->message);
         g_error_free(error);
-        g_object_unref(socket_);
-        socket_ = nullptr;
         return false;
     }
 
-    auto source = g_socket_create_source(socket_, G_IO_IN, nullptr);
+    auto source = g_socket_create_source(socket.get(), G_IO_IN, nullptr);
     if (!source) {
         g_warning("Failed to setup listener for incoming connections");
-        g_object_unref(socket_);
-        socket_ = nullptr;
         return false;
     }
 
@@ -81,15 +87,12 @@ bool MiracastSource::Setup(const std::string &address, unsigned short port) {
     g_info("Successfully setup source on %s:%d and awaiting incoming connection requests",
            address.c_str(), port);
 
+    socket_.swap(socket);
+
     return true;
 }
 
-void MiracastSource::Release() {
-    if (socket_) {
-        g_object_unref(socket_);
-        socket_ = nullptr;
-    }
-
+void MiracastSource::Release() {    
     if (socket_source_ > 0) {
         g_source_remove(socket_source_);
         socket_source_ = 0;
@@ -105,7 +108,7 @@ gboolean MiracastSource::OnNewConnection(GSocket *socket, GIOCondition  cond, gp
     auto inst = static_cast<MiracastSource*>(user_data);
 
     GError *error = nullptr;
-    auto client_socket = g_socket_accept(inst->socket_, NULL, &error);
+    auto client_socket = g_socket_accept(inst->socket_.get(), NULL, &error);
     if (!client_socket) {
         g_warning("Failed to accept incoming connection: %s", error->message);
         g_error_free(error);
@@ -121,13 +124,14 @@ gboolean MiracastSource::OnNewConnection(GSocket *socket, GIOCondition  cond, gp
         return FALSE;
     }
 
-    inst->active_sink_ = new MiracastSourceClient(inst, client_socket);
+    inst->active_sink_ = new MiracastSourceClient(ScopedGObject<GSocket>{client_socket});
+    inst->active_sink_->SetDelegate(inst->shared_from_this());
 
     return FALSE;
 }
 
 void MiracastSource::OnConnectionClosed() {
-    if (delegate_)
-        delegate_->OnClientDisconnected();
+    if (auto sp = delegate_.lock())
+        sp->OnClientDisconnected();
 }
 } // namespace mcs

@@ -18,7 +18,10 @@
 #ifndef MIRACAST_SERVICE_H_
 #define MIRACAST_SERVICE_H_
 
+#include <boost/core/noncopyable.hpp>
+
 #include <functional>
+#include <memory>
 
 #include <glib.h>
 
@@ -27,21 +30,27 @@
 #include "networkdevice.h"
 
 namespace mcs {
-class MiracastService : public NetworkManager::Delegate,
+class MiracastService : public std::enable_shared_from_this<MiracastService>,
+                        public NetworkManager::Delegate,
                         public MiracastSource::Delegate
 {
 public:
-    class Delegate {
+    class Delegate : private boost::noncopyable {
     public:
-        virtual void OnStateChanged(NetworkDeviceState state) { }
-        virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) { }
-        virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) { }
+        virtual void OnStateChanged(NetworkDeviceState state) = 0;
+        virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) = 0;
+        virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) = 0;
+
+    protected:
+        Delegate() = default;
     };
 
-    MiracastService();
+    static std::shared_ptr<MiracastService> create();
+
     ~MiracastService();
 
-    void SetDelegate(Delegate *delegate);
+    void SetDelegate(const std::weak_ptr<Delegate> &delegate);
+    void ResetDelegate();
 
     void ConnectSink(const std::string &address, std::function<void(bool,std::string)> callback);
     void Scan();
@@ -61,15 +70,18 @@ private:
     static void OnWiFiFirmwareLoaded(GDBusConnection *conn, GAsyncResult *res, gpointer user_data);
 
 private:
+    MiracastService();
+    std::shared_ptr<MiracastService> FinalizeConstruction();
+
     void AdvanceState(NetworkDeviceState new_state);
     void FinishConnectAttempt(bool success, const std::string &error_text = "");
     void StartIdleTimer();
     void LoadWiFiFirmware();
 
 private:
-    Delegate *delegate_;
+    std::weak_ptr<Delegate> delegate_;
     NetworkManager *manager_;
-    MiracastSource source_;
+    std::shared_ptr<MiracastSource> source_;
     NetworkDeviceState current_state_;
     NetworkDevice::Ptr current_peer_;
     std::function<void(bool,std::string)> connect_callback_;

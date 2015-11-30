@@ -15,22 +15,20 @@
  *
  */
 
-#ifndef MIRMEDIAMANAGER_H_
-#define MIRMEDIAMANAGER_H_
+#ifndef SCOPED_GOBJECT_H_
+#define SCOPED_GOBJECT_H_
 
-#include "gstsourcemediamanager.h"
+#include <memory>
+
+#include <glib-object.h>
+
+#include "gobject_deleter.h"
 
 namespace mcs {
-class MirSourceMediaManager : public GstSourceMediaManager {
-public:
-    explicit MirSourceMediaManager(const std::string &remote_address);
-    ~MirSourceMediaManager();
+// A ScopedGObject instance handles raw GObject instances
+// and automatically cleans them up on destruction.
+template<typename T>
+using ScopedGObject = std::unique_ptr<T, GObjectDeleter<T>>;
+}
 
-protected:
-    SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) override;
-
-private:
-    std::string remote_address_;
-};
-} // namespace mcs
-#endif
+#endif // SCOPED_GOBJECT_H_

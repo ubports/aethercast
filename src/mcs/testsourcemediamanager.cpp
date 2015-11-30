@@ -28,7 +28,7 @@ TestSourceMediaManager::TestSourceMediaManager(const std::string &remote_address
 TestSourceMediaManager::~TestSourceMediaManager() {
 }
 
-GstElement* TestSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
+SharedGObject<GstElement> TestSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
     auto config = Utils::Sprintf("videotestsrc ! videoconvert ! video/x-raw,format=I420 ! x264enc ! mpegtsmux ! rtpmp2tpay ! udpsink name=sink host=%s port=%d",
                                      remote_address_.c_str(), sink_port1_);
 
@@ -40,6 +40,6 @@ GstElement* TestSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat
         return nullptr;
     }
 
-    return pipeline;
+    return make_shared_gobject(pipeline);
 }
 } // namespace mcs
