@@ -45,19 +45,19 @@ protected:
     }
 };
 
-BaseSourceMediaManager* MediaManagerFactory::CreateSource(const std::string &remote_address) {
+std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const std::string &remote_address) {
     auto type = getenv("MIRACAST_SOURCE_TYPE");
 
     g_warning("Creating source media manager of type %s", type);
 
     if (!type)
-        return new NullSourceMediaManager();
+        return std::make_shared<NullSourceMediaManager>();
 
     if (g_strcmp0(type, "mir") == 0)
-        return new MirSourceMediaManager(remote_address);
+        return std::make_shared<MirSourceMediaManager>(remote_address);
     else if (g_strcmp0(type, "test") == 0)
-        return new TestSourceMediaManager(remote_address);
+        return TestSourceMediaManager::create(remote_address);
 
-    return new NullSourceMediaManager();
+    return std::make_shared<NullSourceMediaManager>();
 }
 } // namespace mcs

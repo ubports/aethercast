@@ -184,7 +184,7 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
         return sp;
     }
 
-    media_manager_.reset(MediaManagerFactory::CreateSource(peer_address));
+    media_manager_ = MediaManagerFactory::CreateSource(peer_address);
     source_.reset(wds::Source::Create(this, media_manager_.get()));
 
     source_->Start();

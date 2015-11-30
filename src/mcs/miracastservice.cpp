@@ -177,12 +177,12 @@ void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &peer) {
 }
 
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {
-    auto inst = static_cast<MiracastService*>(user_data);
+    auto inst = static_cast<KeepAlive<MiracastService>*>(user_data)->ShouldDie();
     inst->AdvanceState(kIdle);
 }
 
 void MiracastService::StartIdleTimer() {
-    g_timeout_add(STATE_IDLE_TIMEOUT, &MiracastService::OnIdleTimer, this);
+    g_timeout_add(STATE_IDLE_TIMEOUT, &MiracastService::OnIdleTimer, new KeepAlive<MiracastService>{shared_from_this()});
 }
 
 void MiracastService::FinishConnectAttempt(bool success, const std::string &error_text) {

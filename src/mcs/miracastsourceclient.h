@@ -76,7 +76,7 @@ private:
     std::string local_address_;
     std::vector<guint> timers_;
     std::unique_ptr<wds::Source> source_;
-    std::unique_ptr<wds::SourceMediaManager> media_manager_;
+    std::shared_ptr<wds::SourceMediaManager> media_manager_;
     guint watch_;
 
     friend class TimerCallbackData;
