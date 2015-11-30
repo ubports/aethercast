@@ -24,14 +24,25 @@
 #define STATE_IDLE_TIMEOUT                  1000
 
 namespace mcs {
+std::shared_ptr<MiracastService> MiracastService::create() {
+    auto sp = std::shared_ptr<MiracastService>{new MiracastService{}};
+    return sp->FinalizeConstruction();
+}
+
 MiracastService::MiracastService() :
     current_state_(kIdle),
-    source_(this),
+    source_(MiracastSource::create()),
     current_peer_(nullptr) {
     // FIXME this really needs to move somewhere else as it's something
     // specific for some devices and somehow goes together with the
     // network manager implementation
     LoadWiFiFirmware();
+}
+
+std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction() {
+    auto sp = shared_from_this();
+    source_->SetDelegate(sp);
+    return sp;
 }
 
 MiracastService::~MiracastService() {
@@ -111,7 +122,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
         if (manager_->Role() == kGroupOwner)
             address = manager_->LocalAddress();
 
-        source_.Setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
+        source_->Setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
 
         FinishConnectAttempt(true);
 
@@ -124,7 +135,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
 
     case kDisconnected:
         if (current_state_ == kConnected)
-            source_.Release();
+            source_->Release();
 
         StartIdleTimer();
         break;

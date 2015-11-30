@@ -31,8 +31,7 @@
 #include "utils.h"
 
 namespace mcs {
-MiracastSourceClient::MiracastSourceClient(Delegate *delegate, ScopedGObject<GSocket>&& socket) :
-    delegate_(delegate),
+MiracastSourceClient::MiracastSourceClient(ScopedGObject<GSocket>&& socket) :
     socket_(std::move(socket)),
     socket_source_(0) {
 
@@ -75,6 +74,14 @@ MiracastSourceClient::MiracastSourceClient(Delegate *delegate, ScopedGObject<GSo
 MiracastSourceClient::~MiracastSourceClient() {
     if (socket_source_ > 0)
         g_source_remove(socket_source_);
+}
+
+void MiracastSourceClient::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+    delegate_ = delegate;
+}
+
+void MiracastSourceClient::ResetDelegate() {
+    delegate_.reset();
 }
 
 void MiracastSourceClient::DumpRtsp(const std::string &prefix, const std::string &data) {

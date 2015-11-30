@@ -43,11 +43,11 @@ private:
 }
 
 namespace mcs {
-std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(MiracastService &service) {
+std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(const std::shared_ptr<MiracastService> &service) {
     return std::shared_ptr<MiracastServiceAdapter>(new MiracastServiceAdapter(service))->FinalizeConstruction();
 }
 
-MiracastServiceAdapter::MiracastServiceAdapter(MiracastService &service) :
+MiracastServiceAdapter::MiracastServiceAdapter(const std::shared_ptr<MiracastService> &service) :
     service_(service),
     manager_obj_(nullptr),
     bus_id_(0),
@@ -97,7 +97,7 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
     auto inst = static_cast<KeepAlive<MiracastServiceAdapter>*>(user_data)->ShouldDie();
     g_message("Scanning for remote devices");
 
-    inst->service_.Scan();
+    inst->service_->Scan();
 
     g_dbus_method_invocation_return_value(invocation, nullptr);
 }
@@ -105,7 +105,7 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
 void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skeleton,
                                         GDBusMethodInvocation *invocation, const gchar *address, gpointer user_data) {
     auto inst = static_cast<KeepAlive<MiracastServiceAdapter>*>(user_data)->ShouldDie();
-    inst->service_.ConnectSink(std::string(address), [=](bool success, const std::string &error_text) {
+    inst->service_->ConnectSink(std::string(address), [=](bool success, const std::string &error_text) {
         if (!success) {
             g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                   "%s", error_text.c_str());
@@ -128,7 +128,7 @@ std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruc
         g_warning("Failed to register bus name 'com.canonical.miracast'");
     }
 
-    service_.SetDelegate(sp);
+    service_->SetDelegate(sp);
     return sp;
 }
 } // namespace mcs

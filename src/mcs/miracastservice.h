@@ -30,7 +30,8 @@
 #include "networkdevice.h"
 
 namespace mcs {
-class MiracastService : public NetworkManager::Delegate,
+class MiracastService : public std::enable_shared_from_this<MiracastService>,
+                        public NetworkManager::Delegate,
                         public MiracastSource::Delegate
 {
 public:
@@ -44,7 +45,8 @@ public:
         Delegate() = default;
     };
 
-    MiracastService();
+    static std::shared_ptr<MiracastService> create();
+
     ~MiracastService();
 
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
@@ -68,6 +70,9 @@ private:
     static void OnWiFiFirmwareLoaded(GDBusConnection *conn, GAsyncResult *res, gpointer user_data);
 
 private:
+    MiracastService();
+    std::shared_ptr<MiracastService> FinalizeConstruction();
+
     void AdvanceState(NetworkDeviceState new_state);
     void FinishConnectAttempt(bool success, const std::string &error_text = "");
     void StartIdleTimer();
@@ -76,7 +81,7 @@ private:
 private:
     std::weak_ptr<Delegate> delegate_;
     NetworkManager *manager_;
-    MiracastSource source_;
+    std::shared_ptr<MiracastSource> source_;
     NetworkDeviceState current_state_;
     NetworkDevice::Ptr current_peer_;
     std::function<void(bool,std::string)> connect_callback_;
