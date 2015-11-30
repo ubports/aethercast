@@ -19,8 +19,11 @@
 #include "miracastsourceclient.h"
 
 namespace mcs {
-MiracastSource::MiracastSource(Delegate *delegate) :
-    delegate_(delegate),
+std::shared_ptr<MiracastSource> MiracastSource::create() {
+    return std::shared_ptr<MiracastSource>{new MiracastSource{}};
+}
+
+MiracastSource::MiracastSource() :
     active_sink_(nullptr),
     socket_(nullptr),
     socket_source_(0) {
@@ -28,6 +31,14 @@ MiracastSource::MiracastSource(Delegate *delegate) :
 
 MiracastSource::~MiracastSource() {
     Release();
+}
+
+void MiracastSource::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+    delegate_ = delegate;
+}
+
+void MiracastSource::ResetDelegate() {
+    delegate_.reset();
 }
 
 bool MiracastSource::Setup(const std::string &address, unsigned short port) {
@@ -113,13 +124,14 @@ gboolean MiracastSource::OnNewConnection(GSocket *socket, GIOCondition  cond, gp
         return FALSE;
     }
 
-    inst->active_sink_ = new MiracastSourceClient(inst, ScopedGObject<GSocket>{client_socket});
+    inst->active_sink_ = new MiracastSourceClient(ScopedGObject<GSocket>{client_socket});
+    inst->active_sink_->SetDelegate(inst->shared_from_this());
 
     return FALSE;
 }
 
 void MiracastSource::OnConnectionClosed() {
-    if (delegate_)
-        delegate_->OnClientDisconnected();
+    if (auto sp = delegate_.lock())
+        sp->OnClientDisconnected();
 }
 } // namespace mcs

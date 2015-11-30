@@ -43,8 +43,11 @@ public:
         virtual void OnConnectionClosed() = 0;
     };
 
-    MiracastSourceClient(Delegate *delegate, ScopedGObject<GSocket>&& socket);
+    MiracastSourceClient(ScopedGObject<GSocket>&& socket);
     ~MiracastSourceClient();
+
+    void SetDelegate(const std::weak_ptr<Delegate>& delegate);
+    void ResetDelegate();
 
 public:
     void SendRTSPData(const std::string &data) override;
@@ -62,7 +65,7 @@ private:
     void DumpRtsp(const std::string &prefix, const std::string &data);
 
 private:
-    Delegate *delegate_;
+    std::weak_ptr<Delegate> delegate_;
     ScopedGObject<GSocket> socket_;
     guint socket_source_;
     std::string local_address_;

@@ -18,6 +18,8 @@
 #ifndef MIRACASTSOURCE_H_
 #define MIRACASTSOURCE_H_
 
+#include <memory>
+
 #include <boost/core/noncopyable.hpp>
 
 #include <glib.h>
@@ -27,7 +29,8 @@
 #include "scoped_gobject.h"
 
 namespace mcs {
-class MiracastSource : public MiracastSourceClient::Delegate {
+class MiracastSource : public std::enable_shared_from_this<MiracastSource>,
+                       public MiracastSourceClient::Delegate {
 public:
     class Delegate : private boost::noncopyable {
     public:
@@ -37,8 +40,12 @@ public:
         Delegate() = default;
     };
 
-    MiracastSource(Delegate *delegate);
+    static std::shared_ptr<MiracastSource> create();
+
     ~MiracastSource();
+
+    void SetDelegate(const std::weak_ptr<Delegate> &delegate);
+    void ResetDelegate();
 
     bool Setup(const std::string &address, unsigned short port);
     void Release();
@@ -49,8 +56,10 @@ public:
 private:
     static gboolean OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data);
 
+    MiracastSource();
+
 private:
-    Delegate *delegate_;
+    std::weak_ptr<Delegate> delegate_;
     ScopedGObject<GSocket> socket_;
     guint socket_source_;
     MiracastSourceClient *active_sink_;

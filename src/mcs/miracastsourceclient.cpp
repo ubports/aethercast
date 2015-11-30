@@ -31,8 +31,7 @@
 #include "utils.h"
 
 namespace mcs {
-MiracastSourceClient::MiracastSourceClient(Delegate *delegate, ScopedGObject<GSocket>&& socket) :
-    delegate_(delegate),
+MiracastSourceClient::MiracastSourceClient(ScopedGObject<GSocket>&& socket) :
     socket_(std::move(socket)),
     socket_source_(0) {
 
@@ -75,6 +74,14 @@ MiracastSourceClient::MiracastSourceClient(Delegate *delegate, ScopedGObject<GSo
 MiracastSourceClient::~MiracastSourceClient() {
     if (socket_source_ > 0)
         g_source_remove(socket_source_);
+}
+
+void MiracastSourceClient::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+    delegate_ = delegate;
+}
+
+void MiracastSourceClient::ResetDelegate() {
+    delegate_.reset();
 }
 
 void MiracastSourceClient::DumpRtsp(const std::string &prefix, const std::string &data) {
@@ -151,7 +158,13 @@ void MiracastSourceClient::OnTimeoutRemove(gpointer user_data) {
 gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  cond, gpointer user_data) {
     auto inst = static_cast<MiracastSourceClient*>(user_data);
 
-    int fd = g_socket_get_fd(inst->socket_.get());
+    if (cond == G_IO_ERR || cond == G_IO_HUP) {
+        if (auto sp = inst->delegate_.lock())
+            sp->OnConnectionClosed();
+        return FALSE;
+    }
+
+    int fd = g_socket_get_fd(inst->socket_.get());        
     while (g_socket_get_available_bytes(inst->socket_.get()) > 0) {
         gchar buf[1024] = { };
         gssize nbytes = g_socket_receive(inst->socket_.get(), buf, 1024, NULL, NULL);

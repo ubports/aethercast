@@ -39,7 +39,7 @@ public:
     static constexpr const char *kManagerPath{"/"};
     static constexpr const char *kManagerIface{"com.canonical.miracast.Manager"};
 
-    static std::shared_ptr<MiracastServiceAdapter> create(MiracastService &service);
+    static std::shared_ptr<MiracastServiceAdapter> create(const std::shared_ptr<MiracastService> &service);
 
     ~MiracastServiceAdapter();
 
@@ -55,10 +55,10 @@ private:
     static void OnHandleConnectSink(MiracastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                                       const gchar *address, gpointer user_data);
 
-    MiracastServiceAdapter(MiracastService& service);
+    MiracastServiceAdapter(const std::shared_ptr<MiracastService> &service);
     std::shared_ptr<MiracastServiceAdapter> FinalizeConstruction();
 private:
-    MiracastService &service_;
+    std::shared_ptr<MiracastService> service_;
     ScopedGObject<MiracastInterfaceManager> manager_obj_;
     guint bus_id_;
     ScopedGObject<GDBusObjectManagerServer> object_manager_;
