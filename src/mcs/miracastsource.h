@@ -24,6 +24,7 @@
 #include <gio/gio.h>
 
 #include "miracastsourceclient.h"
+#include "scoped_gobject.h"
 
 namespace mcs {
 class MiracastSource : public MiracastSourceClient::Delegate {
@@ -50,7 +51,7 @@ private:
 
 private:
     Delegate *delegate_;
-    GSocket *socket_;
+    ScopedGObject<GSocket> socket_;
     guint socket_source_;
     MiracastSourceClient *active_sink_;
 };
