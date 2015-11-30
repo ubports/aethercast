@@ -21,6 +21,7 @@
 #include <boost/core/noncopyable.hpp>
 
 #include <functional>
+#include <memory>
 
 #include <glib.h>
 
@@ -46,7 +47,8 @@ public:
     MiracastService();
     ~MiracastService();
 
-    void SetDelegate(Delegate *delegate);
+    void SetDelegate(const std::weak_ptr<Delegate> &delegate);
+    void ResetDelegate();
 
     void ConnectSink(const std::string &address, std::function<void(bool,std::string)> callback);
     void Scan();
@@ -72,7 +74,7 @@ private:
     void LoadWiFiFirmware();
 
 private:
-    Delegate *delegate_;
+    std::weak_ptr<Delegate> delegate_;
     NetworkManager *manager_;
     MiracastSource source_;
     NetworkDeviceState current_state_;

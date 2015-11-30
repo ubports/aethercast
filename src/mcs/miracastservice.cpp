@@ -25,7 +25,6 @@
 
 namespace mcs {
 MiracastService::MiracastService() :
-    delegate_(nullptr),
     current_state_(kIdle),
     source_(this),
     current_peer_(nullptr) {
@@ -38,8 +37,12 @@ MiracastService::MiracastService() :
 MiracastService::~MiracastService() {
 }
 
-void MiracastService::SetDelegate(Delegate *delegate) {
+void MiracastService::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
     delegate_ = delegate;
+}
+
+void MiracastService::ResetDelegate() {
+    delegate_.reset();
 }
 
 NetworkDeviceState MiracastService::State() const {
@@ -134,8 +137,8 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     }
 
     current_state_ = new_state;
-    if (delegate_)
-        delegate_->OnStateChanged(current_state_);
+    if (auto sp = delegate_.lock())
+        sp->OnStateChanged(current_state_);
 }
 
 void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &peer) {
@@ -153,13 +156,13 @@ void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &peer) {
 }
 
 void MiracastService::OnDeviceFound(const NetworkDevice::Ptr &peer) {
-    if (delegate_)
-        delegate_->OnDeviceFound(peer);
+    if (auto sp = delegate_.lock())
+        sp->OnDeviceFound(peer);
 }
 
 void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &peer) {
-    if (delegate_)
-        delegate_->OnDeviceLost(peer);
+    if (auto sp = delegate_.lock())
+        sp->OnDeviceLost(peer);
 }
 
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {
