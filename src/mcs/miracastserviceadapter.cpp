@@ -19,28 +19,7 @@
 
 #include "miracastserviceadapter.h"
 
-namespace {
-// KeepAlive helps in delivering an object securely through a callback-based
-// system that takes context as a void* (e.g., the glib calls in this class).
-// A KeepAlive<T> instance simply wraps a managed ptr to an instance of T and keeps
-// it alive while an async operation is in progress. ShouldDie() is just a concise way of
-// unwrapping the instance and cleaning up the KeepAlive<T> instance itself.
-template<typename T>
-class KeepAlive {
-public:
-    KeepAlive(const std::shared_ptr<T>& inst) : inst_(inst) {
-    }
-
-    std::shared_ptr<T> ShouldDie() {
-        auto inst = inst_;
-        delete this;
-        return inst;
-    }
-
-private:
-    std::shared_ptr<T> inst_;
-};
-}
+#include "keep_alive.h"
 
 namespace mcs {
 std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(const std::shared_ptr<MiracastService> &service) {

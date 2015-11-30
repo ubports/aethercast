@@ -36,14 +36,16 @@
 namespace mcs {
 class TimerCallbackData;
 
-class MiracastSourceClient : public wds::Peer::Delegate {
+class MiracastSourceClient : public std::enable_shared_from_this<MiracastSourceClient>,
+                             public wds::Peer::Delegate {
 public:
     class Delegate : private boost::noncopyable {
     public:
         virtual void OnConnectionClosed() = 0;
     };
 
-    MiracastSourceClient(ScopedGObject<GSocket>&& socket);
+    static std::shared_ptr<MiracastSourceClient> create(ScopedGObject<GSocket>&& socket);
+
     ~MiracastSourceClient();
 
     void SetDelegate(const std::weak_ptr<Delegate>& delegate);
@@ -62,6 +64,9 @@ public:
                                      gpointer user_data);
 
 private:
+    MiracastSourceClient(ScopedGObject<GSocket>&& socket);
+    std::shared_ptr<MiracastSourceClient> FinalizeConstruction();
+
     void DumpRtsp(const std::string &prefix, const std::string &data);
 
 private:

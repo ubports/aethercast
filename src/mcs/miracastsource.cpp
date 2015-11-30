@@ -15,6 +15,7 @@
  *
  */
 
+#include "keep_alive.h"
 #include "miracastsource.h"
 #include "miracastsourceclient.h"
 
@@ -74,7 +75,7 @@ bool MiracastSource::Setup(const std::string &address, unsigned short port) {
         return false;
     }
 
-    g_source_set_callback(source, (GSourceFunc) &MiracastSource::OnNewConnection, this, nullptr);
+    g_source_set_callback(source, (GSourceFunc) &MiracastSource::OnNewConnection, new KeepAlive<MiracastSource>{shared_from_this()}, nullptr);
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
         g_warning("Failed to attach source to mainloop");
@@ -98,14 +99,11 @@ void MiracastSource::Release() {
         socket_source_ = 0;
     }
 
-    if (active_sink_) {
-        delete active_sink_;
-        active_sink_ = nullptr;
-    }
+    active_sink_.reset();
 }
 
 gboolean MiracastSource::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
-    auto inst = static_cast<MiracastSource*>(user_data);
+    auto inst = static_cast<KeepAlive<MiracastSource>*>(user_data)->ShouldDie();
 
     GError *error = nullptr;
     auto client_socket = g_socket_accept(inst->socket_.get(), NULL, &error);
@@ -124,8 +122,8 @@ gboolean MiracastSource::OnNewConnection(GSocket *socket, GIOCondition  cond, gp
         return FALSE;
     }
 
-    inst->active_sink_ = new MiracastSourceClient(ScopedGObject<GSocket>{client_socket});
-    inst->active_sink_->SetDelegate(inst->shared_from_this());
+    inst->active_sink_ = MiracastSourceClient::create(ScopedGObject<GSocket>{client_socket});
+    inst->active_sink_->SetDelegate(inst);
 
     return FALSE;
 }
