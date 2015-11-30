@@ -18,6 +18,8 @@
 #ifndef MIRACASTSOURCECLIENT_H_
 #define MIRACASTSOURCECLIENT_H_
 
+#include <boost/noncopyable.hpp>
+
 #include <string>
 #include <memory>
 #include <map>
@@ -34,9 +36,9 @@ class TimerCallbackData;
 
 class MiracastSourceClient : public wds::Peer::Delegate {
 public:
-    class Delegate {
+    class Delegate : private boost::noncopyable {
     public:
-        virtual void OnConnectionClosed() { }
+        virtual void OnConnectionClosed() = 0;
     };
 
     MiracastSourceClient(Delegate *delegate, GSocket *socket);

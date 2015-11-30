@@ -18,6 +18,8 @@
 #ifndef WPASUPPLICANTCOMMANDQUEUE_H_
 #define WPASUPPLICANTCOMMANDQUEUE_H_
 
+#include <boost/core/noncopyable.hpp>
+
 #include <string>
 #include <queue>
 
@@ -25,10 +27,13 @@
 
 class WpaSupplicantCommandQueue {
 public:
-    class Delegate {
+    class Delegate : private boost::noncopyable {
     public:
         virtual void OnUnsolicitedResponse(WpaSupplicantMessage message) = 0;
         virtual void OnWriteMessage(WpaSupplicantMessage message) = 0;
+
+    protected:
+        Delegate() = default;
     };
 
     WpaSupplicantCommandQueue(Delegate *delegate);

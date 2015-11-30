@@ -18,6 +18,8 @@
 #ifndef MIRACASTSOURCE_H_
 #define MIRACASTSOURCE_H_
 
+#include <boost/core/noncopyable.hpp>
+
 #include <glib.h>
 #include <gio/gio.h>
 
@@ -26,9 +28,12 @@
 namespace mcs {
 class MiracastSource : public MiracastSourceClient::Delegate {
 public:
-    class Delegate {
+    class Delegate : private boost::noncopyable {
     public:
-        virtual void OnClientDisconnected() { }
+        virtual void OnClientDisconnected() = 0;
+
+    protected:
+        Delegate() = default;
     };
 
     MiracastSource(Delegate *delegate);
