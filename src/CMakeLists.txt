@@ -71,6 +71,7 @@ target_link_libraries(miracast
   ${GST_LIBRARIES}
   ${WDS_LIBRARIES}
   -ldl
+  -lwds
 )
 
 target_link_libraries(miracast-service miracast)

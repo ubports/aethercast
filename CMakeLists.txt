@@ -22,7 +22,7 @@ pkg_check_modules(GLIB glib-2.0)
 pkg_check_modules(GIO gio-2.0)
 pkg_check_modules(GIO-UNIX gio-unix-2.0)
 pkg_check_modules(GST REQUIRED gstreamer-1.0)
-pkg_check_modules(WDS REQUIRED wds)
+# pkg_check_modules(WDS REQUIRED wds)
 
 # Build with system gmock and embedded gtest
 set (GMOCK_INCLUDE_DIR "/usr/include/gmock/include" CACHE PATH "gmock source include directory")

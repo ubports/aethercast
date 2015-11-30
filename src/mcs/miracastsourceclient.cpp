@@ -158,7 +158,13 @@ void MiracastSourceClient::OnTimeoutRemove(gpointer user_data) {
 gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  cond, gpointer user_data) {
     auto inst = static_cast<MiracastSourceClient*>(user_data);
 
-    int fd = g_socket_get_fd(inst->socket_.get());
+    if (cond == G_IO_ERR || cond == G_IO_HUP) {
+        if (auto sp = inst->delegate_.lock())
+            sp->OnConnectionClosed();
+        return FALSE;
+    }
+
+    int fd = g_socket_get_fd(inst->socket_.get());        
     while (g_socket_get_available_bytes(inst->socket_.get()) > 0) {
         gchar buf[1024] = { };
         gssize nbytes = g_socket_receive(inst->socket_.get(), buf, 1024, NULL, NULL);
