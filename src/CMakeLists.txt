@@ -6,8 +6,8 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
                         --c-namespace MiracastInterface
                         --c-generate-object-manager
                         --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface
-                        --interface-prefix com.canonical.miracast.
-                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/com.canonical.miracast.xml)
+                        --interface-prefix org.wds.
+                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/org.wds.xml)
 
 # Make sure that generated header files can be found
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
@@ -28,7 +28,7 @@ set(SOURCES
   mcs/networkmanager.cpp
   mcs/networkdevice.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface.c
-  
+
   wpa/gdhcp/common.c
   wpa/gdhcp/ipv4ll.c
   wpa/gdhcp/server.c
@@ -81,7 +81,6 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static
 )
-
 
 add_executable(test-wpasupplicantmessage
     mcs/utils.cpp
