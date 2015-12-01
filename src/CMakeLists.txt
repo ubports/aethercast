@@ -77,7 +77,7 @@ target_link_libraries(miracast-service miracast)
 
 install(
   TARGETS miracast-service
-  RUNTIME DESTINATION bin
+  RUNTIME DESTINATION sbin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static
 )
