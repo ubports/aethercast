@@ -1,0 +1,35 @@
+DBus API Overview
+=================
+
+The service implements a top level manager object at / which implements
+the following interfaces:
+
+ - org.wds.Manager
+ - org.freedesktop.DBus.ObjectManager
+ - org.freedesktop.DBus.Properties
+
+Through the ObjectManager interface all device objects are managed.
+
+The device objects itself will sit on a path formed by the following
+format:
+
+    /dev_*
+
+Where the suffix will be some kind of identifier for the device. The
+only valid way to find out which device objects are available is
+through the ObjectManager interface.
+
+Each device object will implement the following interfaces:
+
+ - org.wds.Device
+ - org.freedesktop.DBus.Properties
+
+API Versioning
+--------------
+
+After the API is considered stable we will gurantee it will not break.
+If breaking changes are introduced this will be reflected in the major
+version of the service being increased and the interface being appened
+with a increasing number. For example if the org.wds.Device interface
+is changed in a breaking way a new interface will be defined with the
+name org.wds.Device1 to reflect the API breakage.

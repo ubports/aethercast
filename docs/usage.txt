@@ -1,0 +1,54 @@
+Overview
+========
+
+This document describes the basic usage of the miracast management
+service through its DBus API.
+
+NOTE: The API is currently not fully implemented as described in
+the specification. There is only a very simple and rough API in
+place to manager the two use cases for scanning and connecting
+a found device.
+
+Scanning for available devices
+---------------------------------
+
+Scanning for available devices is performed through the manager
+interface.
+
+ $ gdbus call -y -d org.wds -o / -m org.wds.Manager.Scan
+
+The method call will return once the scan is finished (current
+timeout is 30 seconds).
+
+NOTE: As of right there is no way to list any available devices
+through the ObjectManager API.
+
+Connecting a remote device
+-----------------------------
+
+For connecting a remote device we have to know its MAC address
+for now until device management API is fully in place.
+
+ $ gdbus call -y -d org.wds -o / -m org.wds.Manager.ConnectSink \
+    'aa:bb:cc:dd:ee'
+
+The call either returns with an error or without any return value
+to indicate success.
+
+Selecting Media Manager
+-----------------------
+
+The service allows us to specify on startup which build in media
+manager implementation it should use by default. Currently available
+are: "mir", "test". The "mir" will use a GStreamer element which
+fetches the current Mir screen content and pushes this into the
+pipeline. The "test" manager will use the videotestsrc GStreamer
+element to generate a test video as input for the pipeline.
+
+To change the default media manager you have to modify the upstart
+job of the service in /etc/init/miracast-service.conf. Change the
+exec line to something like this:
+
+ exec MIRACAST_SOURCE_TYPE=test /usr/sbin/miracast-service
+
+By default the service will use the builtin mir media manager.
