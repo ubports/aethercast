@@ -13,9 +13,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Authored by: Thomas Voss <thomas.voss@canonical.com>
-
-message(${CMAKE_CURRENT_SOURCE_DIR})
-
 add_library(
   process-cpp
   

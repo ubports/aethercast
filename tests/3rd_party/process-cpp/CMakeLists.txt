@@ -19,10 +19,7 @@ cmake_minimum_required(VERSION 2.8)
 project(process-cpp)
 
 find_package(Boost COMPONENTS iostreams system REQUIRED)
-find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
-
-pkg_check_modules(PROPERTIES_CPP properties-cpp)
 
 include(GNUInstallDirs)
 
@@ -36,7 +33,6 @@ include_directories(
   include/
   src/
   ${Boost_INCLUDE_DIRS}
-  ${PROPERTIES_CPP_INCLUDE_DIRS}
 )
 
 option(PROCESS_CPP_BUILD_DOCS "controls generation of doxygen documentation" OFF)
