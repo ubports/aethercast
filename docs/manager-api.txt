@@ -1,0 +1,32 @@
+Manager hierarchy
+=================
+
+Service		org.wds
+Interface	org.wds.Manager
+Object path	/
+
+Methods		void Scan()
+
+			Trigger a scan for available display devices. The
+			method call will return when a scan has been
+			finished and results are available. So setting
+			a longer D-Bus timeout might be a really good
+			idea.
+
+Properties	string State [readonly]
+
+			The global connection state. Possible values are
+			"offline", "idle" and "connected".
+
+			If the underlaying transport technology is turned
+			off the state will be "offline" to reflect we
+			can't do any operation. All devices will be
+			disconnected in this state.
+
+			When the underlaying transport technology is
+			turned on and no device is connected the manager
+			will be in "idle" mode. This marks the manager
+			as being ready to connect with a remote device.
+
+			If atleast one device is connected the state
+			will be "connected".
