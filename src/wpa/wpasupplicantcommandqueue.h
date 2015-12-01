@@ -37,6 +37,7 @@ public:
     };
 
     WpaSupplicantCommandQueue(Delegate *delegate);
+    ~WpaSupplicantCommandQueue();
 
     void EnqueueCommand(const WpaSupplicantMessage &message, WpaSupplicantCommand::ResponseCallback callback = nullptr);
     void HandleMessage(WpaSupplicantMessage message);
@@ -53,6 +54,7 @@ private:
     Delegate *delegate_;
     WpaSupplicantCommand *current_;
     std::queue<WpaSupplicantCommand*> queue_;
+    unsigned int idle_source_;
 };
 
 #endif
