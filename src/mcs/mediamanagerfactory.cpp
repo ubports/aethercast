@@ -37,6 +37,7 @@ public:
 
     bool IsPaused() const override {
         g_warning("NullSourceMediaManager: Not implemented");
+        return true;
     }
 
 protected:

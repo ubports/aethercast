@@ -15,6 +15,8 @@
  *
  */
 
+#include <boost/core/ignore_unused.hpp>
+
 #include "gstsourcemediamanager.h"
 
 #include "scoped_gobject.h"
@@ -31,6 +33,7 @@ GstSourceMediaManager::~GstSourceMediaManager() {
 }
 
 gboolean GstSourceMediaManager::OnGstBusEvent(GstBus *bus, GstMessage *message, gpointer data) {
+    boost::ignore_unused(bus, data);
     GError *err = NULL;
     gchar *debug = NULL;
 

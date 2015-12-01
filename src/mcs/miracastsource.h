@@ -26,13 +26,14 @@
 #include <gio/gio.h>
 
 #include "miracastsourceclient.h"
+#include "non_copyable.h"
 #include "scoped_gobject.h"
 
 namespace mcs {
 class MiracastSource : public std::enable_shared_from_this<MiracastSource>,
                        public MiracastSourceClient::Delegate {
 public:
-    class Delegate : private boost::noncopyable {
+    class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnClientDisconnected() = 0;
 

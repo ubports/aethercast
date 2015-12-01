@@ -24,11 +24,12 @@
 #include <vector>
 
 #include "networkdevice.h"
+#include "non_copyable.h"
 
 namespace mcs {
-class NetworkManager : private boost::noncopyable {
+class NetworkManager : private mcs::NonCopyable {
 public:
-    class Delegate : private boost::noncopyable {
+    class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) = 0;
         virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) = 0;

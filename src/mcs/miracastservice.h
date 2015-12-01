@@ -28,6 +28,7 @@
 #include "miracastsource.h"
 #include "networkmanager.h"
 #include "networkdevice.h"
+#include "non_copyable.h"
 
 namespace mcs {
 class MiracastService : public std::enable_shared_from_this<MiracastService>,
@@ -35,7 +36,7 @@ class MiracastService : public std::enable_shared_from_this<MiracastService>,
                         public MiracastSource::Delegate
 {
 public:
-    class Delegate : private boost::noncopyable {
+    class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnStateChanged(NetworkDeviceState state) = 0;
         virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) = 0;

@@ -23,11 +23,13 @@
 #include <string>
 #include <queue>
 
+#include <mcs/non_copyable.h>
+
 #include "wpasupplicantcommand.h"
 
 class WpaSupplicantCommandQueue {
 public:
-    class Delegate : private boost::noncopyable {
+    class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnUnsolicitedResponse(WpaSupplicantMessage message) = 0;
         virtual void OnWriteMessage(WpaSupplicantMessage message) = 0;

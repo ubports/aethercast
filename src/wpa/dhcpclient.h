@@ -22,11 +22,13 @@
 
 #include <string>
 
-#include <gdhcp.h>
+#include <mcs/non_copyable.h>
+
+#include "gdhcp.h"
 
 class DhcpClient {
 public:
-    class Delegate : private boost::noncopyable {
+    class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnAddressAssigned(const std::string &address) = 0;
 

@@ -15,42 +15,18 @@
  *
  */
 
-#ifndef DHCPSERVER_H_
-#define DHCPSERVER_H_
+#ifndef NON_COPYABLE_H_
+#define NON_COPYABLE_H_
 
-#include <boost/core/noncopyable.hpp>
-
-#include <string>
-
-#include <mcs/non_copyable.h>
-
-#include "gdhcp.h"
-
-class DhcpServer {
-public:
-    class Delegate : private mcs::NonCopyable {
-    public:
-        virtual void OnLeaseAdded() = 0;
-
-    protected:
-        Delegate() = default;
-    };
-
-    DhcpServer(Delegate *delegate, const std::string &interface_name_h);
-    ~DhcpServer();
-
-    bool Start();
-    void Stop();
-
-    std::string LocalAddress() const;
-
-private:
-    static void OnDebug(const char *str, gpointer user_data);
-
-private:
-    std::string interface_name_;
-    int interface_index_;
-    GDHCPServer *server_;
+namespace mcs {
+// The alert reader might wonder why we don't use boost::noncopyable. The reason
+// is simple: We would like to have a convenient virtual d'tor available.
+struct NonCopyable {
+    NonCopyable() = default;
+    NonCopyable(const NonCopyable&) = delete;
+    virtual ~NonCopyable() = default;
+    NonCopyable& operator=(const NonCopyable&) = delete;
 };
+}
 
 #endif
