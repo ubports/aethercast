@@ -19,4 +19,4 @@ target_link_libraries(scoped_gobject_tests miracast gtest gtest_main)
 add_test(scoped_gobject_tests scoped_gobject_tests)
 
 add_subdirectory(wpa)
-
+add_subdirectory(mcs)

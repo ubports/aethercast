@@ -6,8 +6,8 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
                         --c-namespace MiracastInterface
                         --c-generate-object-manager
                         --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface
-                        --interface-prefix com.canonical.miracast.
-                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/com.canonical.miracast.xml)
+                        --interface-prefix org.wds.
+                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/org.wds.xml)
 
 # Make sure that generated header files can be found
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
@@ -77,7 +77,7 @@ target_link_libraries(miracast-service miracast)
 
 install(
   TARGETS miracast-service
-  RUNTIME DESTINATION bin
+  RUNTIME DESTINATION sbin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static
 )

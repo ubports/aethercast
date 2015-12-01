@@ -35,5 +35,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -fPIC")
 
 find_program(GDBUS_CODEGEN_EXECUTABLE NAMES gdbus-codegen)
 
+add_subdirectory(conf)
 add_subdirectory(src)
 add_subdirectory(tests)

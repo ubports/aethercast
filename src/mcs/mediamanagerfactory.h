@@ -21,8 +21,20 @@
 #include "basesourcemediamanager.h"
 
 namespace mcs {
-class MediaManagerFactory
-{
+
+// Only here to make unit testing easier for the factory class
+class NullSourceMediaManager : public BaseSourceMediaManager {
+public:
+    void Play() override;
+    void Pause() override;
+    void Teardown() override;
+    bool IsPaused() const override;
+
+protected:
+    void Configure() override;
+};
+
+class MediaManagerFactory {
 public:
     static BaseSourceMediaManager* CreateSource(const std::string &remote_address);
 };
