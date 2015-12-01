@@ -35,16 +35,4 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-option(PROCESS_CPP_BUILD_DOCS "controls generation of doxygen documentation" OFF)
-option(PROCESS_CPP_BUILD_TESTS "controls building and execution of the process-cpp test suite" OFF)
-
-if (PROCESS_CPP_BUILD_DOCS)
-  add_subdirectory(doc)
-endif()
-
-add_subdirectory(include)
 add_subdirectory(src)
-
-if (PROCESS_CPP_BUILD_TESTS)
-  add_subdirectory(tests)
-endif()
