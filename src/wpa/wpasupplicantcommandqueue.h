@@ -18,7 +18,7 @@
 #ifndef WPASUPPLICANTCOMMANDQUEUE_H_
 #define WPASUPPLICANTCOMMANDQUEUE_H_
 
-#include <boost/core/noncopyable.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <string>
 #include <queue>
