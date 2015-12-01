@@ -1,0 +1,36 @@
+Overview
+========
+
+This document describes the basic usage of the miracast management
+service through its DBus API.
+
+NOTE: The API is currently not fully implemented as described in
+the specification. There is only a very simple and rough API in
+place to manager the two use cases for scanning and connecting
+a found device.
+
+1. Scanning for available devices
+---------------------------------
+
+Scanning for available devices is performed through the manager
+interface.
+
+ $ gdbus call -y -d org.wds -o / -m org.wds.Manager.Scan
+
+The method call will return once the scan is finished (current
+timeout is 30 seconds).
+
+NOTE: As of right there is no way to list any available devices
+through the ObjectManager API.
+
+2. Connecting a remote device
+-----------------------------
+
+For connecting a remote device we have to know its MAC address
+for now until device management API is fully in place.
+
+ $ gdbus call -y -d org.wds -o / -m org.wds.Manager.ConnectSink \
+    'aa:bb:cc:dd:ee'
+
+The call either returns with an error or without any return value
+to indicate success.
