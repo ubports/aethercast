@@ -24,19 +24,14 @@
 
 #include <core/posix/fork.h>
 
+#include "did_exit_cleanly.h"
+
 namespace {
-::testing::AssertionResult DidFinishSuccessfully(const core::posix::wait::Result& result)
-{
-    if (result.status != core::posix::wait::Result::Status::exited)
-        return ::testing::AssertionFailure() << "Process did not exit, but: " << (int)result.status;
-    if (result.detail.if_exited.status != core::posix::exit::Status::success)
-        return ::testing::AssertionFailure() << "Process did exit with failure.";
-
-    return ::testing::AssertionSuccess();
-}
+class MiracastService : public ::testing::TestWithParam<core::posix::Signal> {
+};
 }
 
-TEST(MiracastService, ExitsCleanlyForSigIntAndSigTerm) {
+TEST_P(MiracastService, ExitsCleanlyForSigIntAndSigTerm) {
     auto service = core::posix::fork([]() {
         auto result = mcs::MiracastService::Main(mcs::MiracastService::MainOptions{false, false});
         return static_cast<core::posix::exit::Status>(result);
@@ -44,6 +39,10 @@ TEST(MiracastService, ExitsCleanlyForSigIntAndSigTerm) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
 
-    service.send_signal_or_throw(core::posix::Signal::sig_int);
-    EXPECT_TRUE(DidFinishSuccessfully(service.wait_for(core::posix::wait::Flags::untraced)));
+    service.send_signal_or_throw(GetParam());
+    EXPECT_TRUE(testing::DidExitCleanly(service));
 }
+
+INSTANTIATE_TEST_CASE_P(ShutdownBehavior,
+                        MiracastService,
+                        ::testing::Values(core::posix::Signal::sig_int, core::posix::Signal::sig_term));
