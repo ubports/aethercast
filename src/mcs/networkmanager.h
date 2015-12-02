@@ -39,16 +39,13 @@ public:
     };
 
     virtual bool Setup() = 0;
-
-    virtual void SetWfdSubElements(const std::list<std::string> &elements) = 0;
-
     virtual void Scan(unsigned int timeout = 30) = 0;
-
-    virtual std::vector<NetworkDevice::Ptr> Devices() const = 0;
-
     virtual int Connect(const std::string &address, bool persistent = true) = 0;
     virtual int DisconnectAll() = 0;
 
+    virtual void SetWfdSubElements(const std::list<std::string> &elements) = 0;
+
+    virtual std::vector<NetworkDevice::Ptr> Devices() const = 0;
     virtual std::string LocalAddress() const = 0;
     virtual bool Running() const = 0;
 
