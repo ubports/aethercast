@@ -51,6 +51,10 @@ std::string NetworkDevice::Address() const {
     return address_;
 }
 
+std::string NetworkDevice::IPv4Address() const {
+    return ipv4_address_;
+}
+
 std::string NetworkDevice::Name() const {
     return name_;
 }
@@ -77,6 +81,10 @@ NetworkDeviceRole NetworkDevice::Role() const {
 
 void NetworkDevice::SetAddress(const std::string &address) {
     address_ = address;
+}
+
+void NetworkDevice::SetIPv4Address(const std::string &address) {
+    ipv4_address_ = address;
 }
 
 void NetworkDevice::SetName(const std::string &name) {

@@ -56,6 +56,7 @@ bool MiracastSource::Setup(const std::string &address, unsigned short port) {
     }
 
     auto addr = g_inet_socket_address_new_from_string(address.c_str(), port);
+    g_warning("address %s port %d", address.c_str(), port);
     if (!g_socket_bind(socket.get(), addr, TRUE, &error)) {
         g_warning("Failed to setup socket for incoming source connections: %s", error->message);
         g_error_free(error);

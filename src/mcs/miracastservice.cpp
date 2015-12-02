@@ -118,7 +118,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     case kConnected:
         // We've have to pick the right address we need to tell our source to
         // push all streaming data to.
-        address = current_peer_->Address();
+        address = current_peer_->IPv4Address();
         if (manager_->Role() == kGroupOwner)
             address = manager_->LocalAddress();
 

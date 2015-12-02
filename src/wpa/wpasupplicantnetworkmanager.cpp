@@ -361,8 +361,13 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
                                            conf_path.c_str());
     auto argv = g_strsplit(cmdline.c_str(), " ", -1);
 
+    auto flags = G_SPAWN_DEFAULT | G_SPAWN_DO_NOT_REAP_CHILD;
+
+    if (!getenv("MIRACAST_SUPPLICANT_DEBUG"))
+        flags |= (G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL);
+
     GError *error = nullptr;
-    int err = g_spawn_async(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_DEFAULT | G_SPAWN_STDERR_TO_DEV_NULL | G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_DO_NOT_REAP_CHILD),
+    int err = g_spawn_async(NULL, argv, NULL, (GSpawnFlags) flags,
                             &WpaSupplicantNetworkManager::OnSupplicantProcessSetup, NULL, &supplicant_pid_, &error);
     if (err < 0) {
         g_warning("Failed to spawn wpa-supplicant process: %s", error->message);
@@ -523,6 +528,7 @@ void WpaSupplicantNetworkManager::OnAddressAssigned(const std::string &address) 
         dhcp_timeout_ = 0;
     }
 
+    current_peer_->SetIPv4Address(address);
     current_peer_->SetState(mcs::kConnected);
 
     if (delegate_)

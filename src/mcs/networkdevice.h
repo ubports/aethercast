@@ -49,6 +49,7 @@ public:
     ~NetworkDevice();
 
     std::string Address() const;
+    std::string IPv4Address() const;
     std::string Name() const;
     NetworkDeviceState State() const;
     std::string StateAsString() const;
@@ -56,16 +57,18 @@ public:
     int ConfigMethods() const;
     NetworkDeviceRole Role() const;
 
-    void SetAddress(const std::string &Address);
-    void SetName(const std::string &Name);
-    void SetState(NetworkDeviceState State);
-    void SetWfdDeviceInfo(const WfdDeviceInfo &DeviceInfo);
-    void SetConfigMethods(int ConfigMethods);
-    void SetRole(NetworkDeviceRole Role);
+    void SetAddress(const std::string &address);
+    void SetIPv4Address(const std::string &address);
+    void SetName(const std::string &name);
+    void SetState(NetworkDeviceState state);
+    void SetWfdDeviceInfo(const WfdDeviceInfo &deviceInfo);
+    void SetConfigMethods(int config_methods);
+    void SetRole(NetworkDeviceRole role);
 
 private:
     std::string name_;
     std::string address_;
+    std::string ipv4_address_;
     NetworkDeviceState state_;
     WfdDeviceInfo wfd_device_info_;
     int config_methods_;
