@@ -24,6 +24,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/prctl.h>
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -341,6 +342,12 @@ bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf
     return true;
 }
 
+void WpaSupplicantNetworkManager::OnSupplicantProcessSetup(gpointer user_data) {
+    // Die when our parent dies so we don't stay around any longer and can
+    // be restarted when the service restarts
+    prctl(PR_SET_PDEATHSIG, SIGHUP);
+}
+
 bool WpaSupplicantNetworkManager::StartSupplicant() {
     auto conf_path = mcs::Utils::Sprintf("/tmp/supplicant-%s.conf", interface_name_.c_str());
 
@@ -356,7 +363,7 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
 
     GError *error = nullptr;
     int err = g_spawn_async(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_DEFAULT | G_SPAWN_STDERR_TO_DEV_NULL | G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_DO_NOT_REAP_CHILD),
-                            NULL, NULL, &supplicant_pid_, &error);
+                            &WpaSupplicantNetworkManager::OnSupplicantProcessSetup, NULL, &supplicant_pid_, &error);
     if (err < 0) {
         g_warning("Failed to spawn wpa-supplicant process: %s", error->message);
         g_strfreev(argv);

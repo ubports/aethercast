@@ -81,6 +81,7 @@ private:
     static gboolean OnIncomingMessages(GIOChannel *source, GIOCondition condition,
                                          gpointer user_data);
     static gboolean OnSupplicantRespawn(gpointer user_data);
+    static void OnSupplicantProcessSetup(gpointer user_data);
 
 private:
     NetworkManager::Delegate *delegate_;
