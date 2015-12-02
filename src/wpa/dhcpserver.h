@@ -18,7 +18,7 @@
 #ifndef DHCPSERVER_H_
 #define DHCPSERVER_H_
 
-#include <boost/core/noncopyable.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <string>
 

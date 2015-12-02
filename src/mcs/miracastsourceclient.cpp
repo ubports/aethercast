@@ -135,7 +135,7 @@ gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  con
         return FALSE;
     }
 
-    int fd = g_socket_get_fd(inst->socket_.get());        
+    int fd = g_socket_get_fd(inst->socket_.get());
     while (g_socket_get_available_bytes(inst->socket_.get()) > 0) {
         gchar buf[1024] = { };
         gssize nbytes = g_socket_receive(inst->socket_.get(), buf, 1024, NULL, NULL);
