@@ -106,7 +106,7 @@ TEST(WpaSupplicantMessage, Sealing) {
     EXPECT_STREQ(m.Raw().c_str(), "P2P_CONNECT test1 test2");
 }
 
-void test_wpasupplicant_message_copy_ctor(void) {
+TEST(WpaSupplicantMessage, CopyCtor) {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
     EXPECT_TRUE(m.Append("ss", "test1", "test2"));
     EXPECT_TRUE(!m.Sealed());
@@ -123,7 +123,7 @@ void test_wpasupplicant_message_copy_ctor(void) {
     EXPECT_STREQ(m.Raw().c_str(), "P2P_CONNECT test1 test2");
 }
 
-void test_wpasupplicant_message_ok_fail(void) {
+TEST(WpaSupplicantMessage, OkFail) {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRaw("OK");
     EXPECT_TRUE(m.IsOk());
 

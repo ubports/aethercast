@@ -48,7 +48,7 @@ struct WpaSupplicantCommandQueueFixture : public ::testing::Test {
 };
 }
 
-TEST(WpaSupplicantCommandQueue, MessageIsWrittenOut) {
+TEST_F(WpaSupplicantCommandQueueFixture, MessageIsWrittenOut) {
     MockWpaSupplicantCommandQueueDelegate mock;
     EXPECT_CALL(mock, OnWriteMessage(_))
             .Times(AtLeast(1));
@@ -59,10 +59,7 @@ TEST(WpaSupplicantCommandQueue, MessageIsWrittenOut) {
         EXPECT_TRUE(msg.IsOk());
     });
 
-    RunMainLoopIteration();
-
-    m = WpaSupplicantMessage::CreateRaw("OK");
-    queue.HandleMessage(m);
+    CycleAndRespond(queue, "OK");
 }
 
 
