@@ -67,14 +67,14 @@ WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegat
     interface_name_(interface_name),
     ctrl_path_(mcs::Utils::Sprintf("/var/run/%s_supplicant", interface_name_.c_str())),
     command_queue_(new WpaSupplicantCommandQueue(this)),
-    current_role_(mcs::kUndecided),
     dhcp_client_(this, interface_name),
     dhcp_server_(nullptr, interface_name),
     channel_(nullptr),
     channel_watch_(0),
     dhcp_timeout_(0),
     respawn_limit_(SUPPLICANT_RESPAWN_LIMIT),
-    respawn_source_(0) {
+    respawn_source_(0),
+    group_owner_(false) {
 }
 
 WpaSupplicantNetworkManager::~WpaSupplicantNetworkManager() {
@@ -128,7 +128,6 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
 
         peer->SetAddress(address);
         peer->SetName(name);
-        peer->SetConfigMethods(mcs::Utils::ParseHex(config_methods_str));
 
         return;
     }
@@ -136,7 +135,6 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     mcs::NetworkDevice::Ptr peer(new mcs::NetworkDevice);
     peer->SetAddress(address);
     peer->SetName(name);
-    peer->SetConfigMethods(mcs::Utils::ParseHex(config_methods_str));
 
     available_devices_.insert(std::pair<std::string, mcs::NetworkDevice::Ptr>(std::string(address), mcs::NetworkDevice::Ptr(peer)));
 
@@ -176,7 +174,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &messag
 
     // If we're the GO the other side is the client and vice versa
     if (g_strcmp0(role, "GO") == 0) {
-        current_role_ = mcs::kGroupOwner;
+        group_owner_ = true;
 
         current_peer_->SetState(mcs::kConnected);
 
@@ -188,7 +186,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &messag
         if (delegate_)
             delegate_->OnDeviceStateChanged(current_peer_);
     } else {
-        current_role_ = mcs::kGroupClient;
+        group_owner_ = false;
 
         // We're a client of a formed group now and have to acquire
         // our IP address via DHCP so we have to wait until we're
@@ -231,14 +229,10 @@ void WpaSupplicantNetworkManager::OnWriteMessage(WpaSupplicantMessage message) {
         g_warning("Failed to send data to wpa-supplicant");
 }
 
-mcs::NetworkDeviceRole WpaSupplicantNetworkManager::Role() const {
-    return current_role_;
-}
-
 std::string WpaSupplicantNetworkManager::LocalAddress() const {
     std::string address;
 
-    if (current_role_ == mcs::kGroupOwner)
+    if (group_owner_)
         address = dhcp_server_.LocalAddress();
     else
         address = dhcp_client_.LocalAddress();
@@ -319,8 +313,7 @@ void WpaSupplicantNetworkManager::Reset() {
     }
 
     available_devices_.clear();
-    current_role_ = mcs::kUndecided;
-
+    group_owner_ = false;
 }
 
 bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf_path) {

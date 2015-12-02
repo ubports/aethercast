@@ -49,7 +49,6 @@ public:
     virtual int Connect(const std::string &address, bool persistent = true) = 0;
     virtual int DisconnectAll() = 0;
 
-    virtual NetworkDeviceRole Role() const = 0;
     virtual std::string LocalAddress() const = 0;
     virtual bool Running() const = 0;
 

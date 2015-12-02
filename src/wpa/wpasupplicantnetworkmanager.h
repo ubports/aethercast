@@ -50,7 +50,6 @@ public:
     int Connect(const std::string &address, bool persistent = true) override;
     int DisconnectAll() override;
 
-    mcs::NetworkDeviceRole Role() const override;
     std::string LocalAddress() const override;
     bool Running() const override;
 
@@ -91,7 +90,6 @@ private:
     std::map<std::string,mcs::NetworkDevice::Ptr> available_devices_;
     std::unique_ptr<WpaSupplicantCommandQueue> command_queue_;
     mcs::NetworkDevice::Ptr current_peer_;
-    mcs::NetworkDeviceRole current_role_;
     DhcpClient dhcp_client_;
     DhcpServer dhcp_server_;
     GPid supplicant_pid_;
@@ -100,6 +98,7 @@ private:
     guint dhcp_timeout_;
     guint respawn_limit_;
     guint respawn_source_;
+    bool group_owner_;
 };
 
 #endif

@@ -33,12 +33,6 @@ enum NetworkDeviceState {
     kDisconnected
 };
 
-enum NetworkDeviceRole {
-    kUndecided,
-    kGroupOwner,
-    kGroupClient
-};
-
 class NetworkDevice {
 public:
     typedef std::shared_ptr<NetworkDevice> Ptr;
@@ -53,26 +47,17 @@ public:
     std::string Name() const;
     NetworkDeviceState State() const;
     std::string StateAsString() const;
-    WfdDeviceInfo DeviceInfo() const;
-    int ConfigMethods() const;
-    NetworkDeviceRole Role() const;
 
     void SetAddress(const std::string &address);
     void SetIPv4Address(const std::string &address);
     void SetName(const std::string &name);
     void SetState(NetworkDeviceState state);
-    void SetWfdDeviceInfo(const WfdDeviceInfo &deviceInfo);
-    void SetConfigMethods(int config_methods);
-    void SetRole(NetworkDeviceRole role);
 
 private:
     std::string name_;
     std::string address_;
     std::string ipv4_address_;
     NetworkDeviceState state_;
-    WfdDeviceInfo wfd_device_info_;
-    int config_methods_;
-    NetworkDeviceRole role_;
 };
 } // namespace mcs
 #endif
