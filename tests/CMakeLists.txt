@@ -20,8 +20,4 @@ add_executable(scoped_gobject_tests scoped_gobject_tests.cpp)
 target_link_libraries(scoped_gobject_tests miracast gtest gtest_main)
 add_test(scoped_gobject_tests scoped_gobject_tests)
 
-add_executable(acceptance_tests acceptance_tests.cpp)
-target_link_libraries(acceptance_tests miracast gtest gtest_main process-cpp)
-add_test(acceptance_tests acceptance_tests)
-
 add_subdirectory(mcs)
