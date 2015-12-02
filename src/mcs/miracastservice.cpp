@@ -116,12 +116,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
         break;
 
     case kConnected:
-        // We've have to pick the right address we need to tell our source to
-        // push all streaming data to.
-        address = current_peer_->IPv4Address();
-        if (manager_->Role() == kGroupOwner)
-            address = manager_->LocalAddress();
-
+        address = manager_->LocalAddress();
         source_->Setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
 
         FinishConnectAttempt(true);

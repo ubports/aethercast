@@ -528,7 +528,7 @@ void WpaSupplicantNetworkManager::OnAddressAssigned(const std::string &address) 
         dhcp_timeout_ = 0;
     }
 
-    current_peer_->SetIPv4Address(address);
+
     current_peer_->SetState(mcs::kConnected);
 
     if (delegate_)
