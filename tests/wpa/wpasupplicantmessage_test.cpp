@@ -35,12 +35,12 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     char *freq = nullptr;
     char *go_dev_addr = nullptr;
 
-    EXPECT_TRUE(m.Name().compare("P2P-GROUP-STARTED") == 0);
+    EXPECT_STREQ(m.Name().c_str(), "P2P-GROUP-STARTED");
     EXPECT_TRUE(m.Read("sseee", &interface_name, &type, &ssid, &freq, &go_dev_addr));
-    EXPECT_TRUE(g_strcmp0(interface_name, "p2p0") == 0);
-    EXPECT_TRUE(g_strcmp0(ssid, "\"DIRECT-hB\"") == 0);
-    EXPECT_TRUE(g_strcmp0(freq, "2412") == 0);
-    EXPECT_TRUE(g_strcmp0(go_dev_addr, "4e:74:03:64:95:a7") == 0);
+    EXPECT_STREQ(interface_name, "p2p0");
+    EXPECT_STREQ(ssid, "\"DIRECT-hB\"");
+    EXPECT_STREQ(freq, "2412");
+    EXPECT_STREQ(go_dev_addr, "4e:74:03:64:95:a7");
 
     m = WpaSupplicantMessage::CreateRaw("<3>P2P-GROUP-STARTED p2p0 GO -12 ssid=\"DIRECT-hB\" 45623 freq=2412 11223344 -42");
 
@@ -50,16 +50,16 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     uint32_t u32 = 0;
     int32_t i32 = 0;
 
-    EXPECT_TRUE(m.Name().compare("P2P-GROUP-STARTED") == 0);
+    EXPECT_STREQ(m.Name().c_str(), "P2P-GROUP-STARTED");
     EXPECT_TRUE(m.Read("s", &interface_name));
-    EXPECT_TRUE(g_strcmp0(interface_name, "p2p0") == 0);
+    EXPECT_STREQ(interface_name, "p2p0");
     EXPECT_TRUE(m.Skip("sieu"));
     EXPECT_TRUE(m.Read("e", &freq));
-    EXPECT_TRUE(g_strcmp0(freq, "2412") == 0);
+    EXPECT_STREQ(freq, "2412");
     EXPECT_TRUE(m.Read("u", &u32));
-    EXPECT_TRUE(u32 == 11223344);
+    EXPECT_EQ(u32, 11223344);
     EXPECT_TRUE(m.Read("i", &i32));
-    EXPECT_TRUE(i32 == -42);
+    EXPECT_EQ(i32, -42);
 
     m.Rewind();
 
@@ -67,18 +67,18 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     i32 = 0;
 
     EXPECT_TRUE(m.Read("s", &interface_name));
-    EXPECT_TRUE(g_strcmp0(interface_name, "p2p0") == 0);
+    EXPECT_STREQ(interface_name, "p2p0");
     EXPECT_TRUE(m.Skip("s"));
     EXPECT_TRUE(m.Read("i", &i32));
-    EXPECT_TRUE(i32 == -12);
+    EXPECT_EQ(i32, -12);
 
     ssid = nullptr;
     i32 = 0;
 
     EXPECT_TRUE(m.ReadDictEntry("ssid", 's', &ssid));
-    EXPECT_TRUE(g_strcmp0(ssid, "\"DIRECT-hB\"") == 0);
+    EXPECT_STREQ(ssid, "\"DIRECT-hB\"");
     EXPECT_TRUE(m.ReadDictEntry("freq", 'i', &i32));
-    EXPECT_TRUE(i32 == 2412);
+    EXPECT_EQ(i32, 2412);
 }
 
 TEST(WpaSupplicantMessage, Append) {
@@ -86,13 +86,13 @@ TEST(WpaSupplicantMessage, Append) {
 
     EXPECT_TRUE(m.Append("siue", "string", -42, 1337, "key", "value"));
     auto raw = m.Dump();
-    EXPECT_TRUE(raw.compare("P2P_CONNECT string -42 1337 key=value") == 0);
+    EXPECT_STREQ(raw.c_str(), "P2P_CONNECT string -42 1337 key=value");
 
     m = WpaSupplicantMessage::CreateRequest("P2P_FIND");
     int timeout = 30;
     EXPECT_TRUE(m.Append("i", timeout));
     raw = m.Dump();
-    EXPECT_TRUE(raw.compare("P2P_FIND 30") == 0);
+    EXPECT_STREQ(raw.c_str(), "P2P_FIND 30");
 }
 
 TEST(WpaSupplicantMessage, Sealing) {
@@ -103,24 +103,24 @@ TEST(WpaSupplicantMessage, Sealing) {
     m.Seal();
     EXPECT_TRUE(m.Sealed());
     EXPECT_TRUE(!m.Append("s", "foo"));
-    EXPECT_TRUE(m.Raw().compare("P2P_CONNECT test1 test2") == 0);
+    EXPECT_STREQ(m.Raw().c_str(), "P2P_CONNECT test1 test2");
 }
 
 void test_wpasupplicant_message_copy_ctor(void) {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
     EXPECT_TRUE(m.Append("ss", "test1", "test2"));
     EXPECT_TRUE(!m.Sealed());
-    EXPECT_TRUE(m.Type() == kRequest);
-    EXPECT_TRUE(m.Name() == std::string("P2P_CONNECT"));
+    EXPECT_EQ(m.Type(), kRequest);
+    EXPECT_STREQ(m.Name().c_str(), "P2P_CONNECT");
     m.Seal();
     EXPECT_TRUE(m.Sealed());
-    EXPECT_TRUE(m.Raw().compare("P2P_CONNECT test1 test2") == 0);
+    EXPECT_STREQ(m.Raw().c_str(), "P2P_CONNECT test1 test2");
 
     WpaSupplicantMessage m2 = m;
     EXPECT_TRUE(m.Type() == kRequest);
-    EXPECT_TRUE(m.Name() == std::string("P2P_CONNECT"));
+    EXPECT_STREQ(m.Name().c_str(), "P2P_CONNECT");
     EXPECT_TRUE(m.Sealed());
-    EXPECT_TRUE(m.Raw().compare("P2P_CONNECT test1 test2") == 0);
+    EXPECT_STREQ(m.Raw().c_str(), "P2P_CONNECT test1 test2");
 }
 
 void test_wpasupplicant_message_ok_fail(void) {
