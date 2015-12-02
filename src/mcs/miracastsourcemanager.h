@@ -29,7 +29,7 @@
 #include "scoped_gobject.h"
 
 namespace mcs {
-class MiracastSource : public std::enable_shared_from_this<MiracastSource>,
+class MiracastSourceManager : public std::enable_shared_from_this<MiracastSourceManager>,
                        public MiracastSourceClient::Delegate {
 public:
     class Delegate : private boost::noncopyable {
@@ -40,9 +40,9 @@ public:
         Delegate() = default;
     };
 
-    static std::shared_ptr<MiracastSource> create();
+    static std::shared_ptr<MiracastSourceManager> create();
 
-    ~MiracastSource();
+    ~MiracastSourceManager();
 
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
@@ -56,7 +56,7 @@ public:
 private:
     static gboolean OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data);
 
-    MiracastSource();
+    MiracastSourceManager();
 
 private:
     std::weak_ptr<Delegate> delegate_;

@@ -15,33 +15,33 @@
  *
  */
 
-#include "miracastsource.h"
+#include "miracastsourcemanager.h"
 #include "miracastsourceclient.h"
 
 namespace mcs {
-std::shared_ptr<MiracastSource> MiracastSource::create() {
-    return std::shared_ptr<MiracastSource>{new MiracastSource{}};
+std::shared_ptr<MiracastSourceManager> MiracastSourceManager::create() {
+    return std::shared_ptr<MiracastSourceManager>{new MiracastSourceManager{}};
 }
 
-MiracastSource::MiracastSource() :
+MiracastSourceManager::MiracastSourceManager() :
     active_sink_(nullptr),
     socket_(nullptr),
     socket_source_(0) {
 }
 
-MiracastSource::~MiracastSource() {
+MiracastSourceManager::~MiracastSourceManager() {
     Release();
 }
 
-void MiracastSource::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+void MiracastSourceManager::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
     delegate_ = delegate;
 }
 
-void MiracastSource::ResetDelegate() {
+void MiracastSourceManager::ResetDelegate() {
     delegate_.reset();
 }
 
-bool MiracastSource::Setup(const std::string &address, unsigned short port) {
+bool MiracastSourceManager::Setup(const std::string &address, unsigned short port) {
     GError *error;
 
     if (socket_)
@@ -75,7 +75,7 @@ bool MiracastSource::Setup(const std::string &address, unsigned short port) {
         return false;
     }
 
-    g_source_set_callback(source, (GSourceFunc) &MiracastSource::OnNewConnection, this, nullptr);
+    g_source_set_callback(source, (GSourceFunc) &MiracastSourceManager::OnNewConnection, this, nullptr);
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
         g_warning("Failed to attach source to mainloop");
@@ -93,7 +93,7 @@ bool MiracastSource::Setup(const std::string &address, unsigned short port) {
     return true;
 }
 
-void MiracastSource::Release() {    
+void MiracastSourceManager::Release() {
     if (socket_source_ > 0) {
         g_source_remove(socket_source_);
         socket_source_ = 0;
@@ -105,8 +105,8 @@ void MiracastSource::Release() {
     }
 }
 
-gboolean MiracastSource::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
-    auto inst = static_cast<MiracastSource*>(user_data);
+gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
+    auto inst = static_cast<MiracastSourceManager*>(user_data);
 
     GError *error = nullptr;
     auto client_socket = g_socket_accept(inst->socket_.get(), NULL, &error);
@@ -131,7 +131,7 @@ gboolean MiracastSource::OnNewConnection(GSocket *socket, GIOCondition  cond, gp
     return FALSE;
 }
 
-void MiracastSource::OnConnectionClosed() {
+void MiracastSourceManager::OnConnectionClosed() {
     if (auto sp = delegate_.lock())
         sp->OnClientDisconnected();
 }

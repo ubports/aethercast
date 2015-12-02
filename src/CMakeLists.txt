@@ -23,7 +23,7 @@ set(SOURCES
   mcs/mirsourcemediamanager.cpp
   mcs/miracastservice.cpp
   mcs/miracastserviceadapter.cpp
-  mcs/miracastsource.cpp
+  mcs/miracastsourcemanager.cpp
   mcs/miracastsourceclient.cpp
   mcs/networkmanager.cpp
   mcs/networkdevice.cpp
