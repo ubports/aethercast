@@ -65,6 +65,7 @@ add_library(miracast ${SOURCES})
 add_executable(miracast-service mcs/main.cpp)
 
 target_link_libraries(miracast
+  ${Boost_LIBRARIES}
   ${GLIB_LIBRARIES}
   ${GIO_LIBRARIES}
   ${GIO-UNIX_LIBRARIES}

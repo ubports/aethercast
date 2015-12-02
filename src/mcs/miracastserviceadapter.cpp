@@ -105,7 +105,7 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
 void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skeleton,
                                         GDBusMethodInvocation *invocation, const gchar *address, gpointer user_data) {
     auto inst = static_cast<MiracastServiceAdapter*>(user_data);
-    inst->service_->ConnectSink(std::string(address), [=](bool success, const std::string &error_text) {
+    inst->service_->ConnectSink(mcs::IpV4Address::from_string(address), [=](bool success, const std::string &error_text) {
         if (!success) {
             g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                   "%s", error_text.c_str());

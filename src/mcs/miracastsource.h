@@ -25,6 +25,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+#include "ip_v4_address.h"
 #include "miracastsourceclient.h"
 #include "scoped_gobject.h"
 
@@ -47,7 +48,7 @@ public:
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
 
-    bool Setup(const std::string &address, unsigned short port);
+    bool Setup(const IpV4Address &address, unsigned short port);
     void Release();
 
 public:

@@ -117,15 +117,17 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
 
     g_warning("Found device with address %s name %s config_methods %s", address, name, config_methods_str);
 
+    auto ip = mcs::IpV4Address::from_string(address);
+
     // Check if we've that peer already in our list, if that is the
     // case we just update it.
     for (auto iter : available_devices_) {
         auto peer = iter.second;
 
-        if (peer->Address() != std::string(address))
+        if (peer->Address() != ip)
             continue;
 
-        peer->SetAddress(address);
+        peer->SetAddress(ip);
         peer->SetName(name);
         peer->SetConfigMethods(mcs::Utils::ParseHex(config_methods_str));
 
@@ -133,11 +135,11 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     }
 
     mcs::NetworkDevice::Ptr peer(new mcs::NetworkDevice);
-    peer->SetAddress(address);
+    peer->SetAddress(ip);
     peer->SetName(name);
     peer->SetConfigMethods(mcs::Utils::ParseHex(config_methods_str));
 
-    available_devices_.insert(std::pair<std::string, mcs::NetworkDevice::Ptr>(std::string(address), mcs::NetworkDevice::Ptr(peer)));
+    available_devices_[ip] = peer;
 
     if (delegate_)
         delegate_->OnDeviceFound(peer);
@@ -150,7 +152,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceLost(WpaSupplicantMessage &message)
 
     message.Read("e", &address);
 
-    auto peer = available_devices_[std::string(address)];
+    auto peer = available_devices_[mcs::IpV4Address::from_string(address)];
     if (!peer)
         return;
 
@@ -210,7 +212,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
 
     message.ReadDictEntry("reason", 's', &reason);
 
-    current_peer_->SetAddress("");
+    current_peer_->SetAddress(mcs::IpV4Address{});
     if (g_strcmp0(reason, "FORMATION_FAILED") == 0 ||
             g_strcmp0(reason, "PSK_FAILURE") == 0 ||
             g_strcmp0(reason, "FREQ_CONFLICT") == 0)
@@ -234,8 +236,8 @@ mcs::NetworkDeviceRole WpaSupplicantNetworkManager::Role() const {
     return current_role_;
 }
 
-std::string WpaSupplicantNetworkManager::LocalAddress() const {
-    std::string address;
+mcs::IpV4Address WpaSupplicantNetworkManager::LocalAddress() const {
+    mcs::IpV4Address address;
 
     if (current_role_ == mcs::kGroupOwner)
         address = dhcp_server_.LocalAddress();
@@ -507,7 +509,7 @@ void WpaSupplicantNetworkManager::RequestAsync(const WpaSupplicantMessage &messa
     command_queue_->EnqueueCommand(message, callback);
 }
 
-void WpaSupplicantNetworkManager::OnAddressAssigned(const std::string &address) {
+void WpaSupplicantNetworkManager::OnAddressAssigned(const mcs::IpV4Address &address) {
     if (!current_peer_)
         return;
 
@@ -566,13 +568,13 @@ std::vector<mcs::NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() cons
     std::vector<mcs::NetworkDevice::Ptr> values;
     std::transform(available_devices_.begin(), available_devices_.end(),
                    std::back_inserter(values),
-                   [=](const std::pair<std::string,mcs::NetworkDevice::Ptr> &value) {
+                   [=](const std::pair<mcs::IpV4Address,mcs::NetworkDevice::Ptr> &value) {
         return value.second;
     });
     return values;
 }
 
-int WpaSupplicantNetworkManager::Connect(const std::string &address, bool persistent) {
+int WpaSupplicantNetworkManager::Connect(const mcs::IpV4Address &address, bool persistent) {
     int ret = 0;
 
     if (available_devices_.find(address) == available_devices_.end())
@@ -584,12 +586,12 @@ int WpaSupplicantNetworkManager::Connect(const std::string &address, bool persis
     current_peer_ = available_devices_[address];
 
     auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
-    m.Append("sss", address.c_str(), "pbc", persistent ? "persistent" : "");
+    m.Append("sss", address.to_string().c_str(), "pbc", persistent ? "persistent" : "");
 
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
             ret = -EIO;
-            g_warning("Failed to connect with remote %s", address.c_str());
+            g_warning("Failed to connect with remote %s", address.to_string().c_str());
             return;
         }
     });

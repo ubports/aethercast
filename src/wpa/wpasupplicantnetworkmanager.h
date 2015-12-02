@@ -47,17 +47,17 @@ public:
     void Scan(unsigned int timeout = 30) override;
     std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
 
-    int Connect(const std::string &address, bool persistent = true) override;
+    int Connect(const mcs::IpV4Address &address, bool persistent = true) override;
     int DisconnectAll() override;
 
     mcs::NetworkDeviceRole Role() const override;
-    std::string LocalAddress() const override;
+    mcs::IpV4Address LocalAddress() const override;
     bool Running() const override;
 
     void OnUnsolicitedResponse(WpaSupplicantMessage message);
     void OnWriteMessage(WpaSupplicantMessage message);
 
-    void OnAddressAssigned(const std::string &address);
+    void OnAddressAssigned(const mcs::IpV4Address &address);
 
 private:
     bool StartSupplicant();
@@ -87,7 +87,7 @@ private:
     std::string interface_name_;
     std::string ctrl_path_;
     int sock_;
-    std::map<std::string,mcs::NetworkDevice::Ptr> available_devices_;
+    std::map<mcs::IpV4Address,mcs::NetworkDevice::Ptr> available_devices_;
     std::unique_ptr<WpaSupplicantCommandQueue> command_queue_;
     mcs::NetworkDevice::Ptr current_peer_;
     mcs::NetworkDeviceRole current_role_;

@@ -23,6 +23,7 @@
 #include <list>
 #include <vector>
 
+#include "ip_v4_address.h"
 #include "networkdevice.h"
 
 namespace mcs {
@@ -46,11 +47,11 @@ public:
 
     virtual std::vector<NetworkDevice::Ptr> Devices() const = 0;
 
-    virtual int Connect(const std::string &address, bool persistent = true) = 0;
+    virtual int Connect(const IpV4Address &address, bool persistent = true) = 0;
     virtual int DisconnectAll() = 0;
 
     virtual NetworkDeviceRole Role() const = 0;
-    virtual std::string LocalAddress() const = 0;
+    virtual IpV4Address LocalAddress() const = 0;
     virtual bool Running() const = 0;
 
 protected:

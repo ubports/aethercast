@@ -22,6 +22,8 @@
 
 #include <string>
 
+#include <mcs/ip_v4_address.h>
+
 #include "gdhcp.h"
 
 class DhcpServer {
@@ -40,7 +42,7 @@ public:
     bool Start();
     void Stop();
 
-    std::string LocalAddress() const;
+    mcs::IpV4Address LocalAddress() const;
 
 private:
     static void OnDebug(const char *str, gpointer user_data);
