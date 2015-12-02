@@ -21,7 +21,7 @@
 
 #include <memory>
 
-#include "wpa/wpasupplicantcommandqueue.h"
+#include <wpa/wpasupplicantcommandqueue.h>
 
 using ::testing::AtLeast;
 using ::testing::_;
@@ -37,6 +37,14 @@ class MockWpaSupplicantCommandQueueDelegate : public WpaSupplicantCommandQueue::
 public:
     MOCK_METHOD1(OnUnsolicitedResponse, void(WpaSupplicantMessage message));
     MOCK_METHOD1(OnWriteMessage, void(WpaSupplicantMessage message));
+};
+
+struct WpaSupplicantCommandQueueFixture : public ::testing::Test {
+    void CycleAndRespond(WpaSupplicantCommandQueue &queue, const std::string &data) {
+        RunMainLoopIteration();
+        auto m = WpaSupplicantMessage::CreateRaw(data);
+        queue.HandleMessage(m);
+    }
 };
 }
 
@@ -58,7 +66,7 @@ TEST(WpaSupplicantCommandQueue, MessageIsWrittenOut) {
 }
 
 
-TEST(WpaSupplicantCommandQueue, MultipeMessagesWrittenOut) {
+TEST_F(WpaSupplicantCommandQueueFixture, MultipeMessagesWrittenOut) {
     MockWpaSupplicantCommandQueueDelegate mock;
     EXPECT_CALL(mock, OnWriteMessage(_))
             .Times(AtLeast(2));
@@ -75,14 +83,9 @@ TEST(WpaSupplicantCommandQueue, MultipeMessagesWrittenOut) {
             EXPECT_TRUE(msg.IsFail());
     });
 
-    auto cycleAndRespond = [&](const std::string &data) {
-        RunMainLoopIteration();
-        auto m = WpaSupplicantMessage::CreateRaw(data);
-        queue.HandleMessage(m);
-    };
 
-    cycleAndRespond("OK");
-    cycleAndRespond("FAIL");
+    CycleAndRespond(queue, "OK");
+    CycleAndRespond(queue, "FAIL");
 }
 
 
