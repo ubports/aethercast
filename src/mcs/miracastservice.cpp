@@ -208,7 +208,7 @@ void MiracastService::ConnectSink(const std::string &address, std::function<void
         return;
     }
 
-    if (manager_->Connect(device->Address(), false) < 0) {
+    if (!manager_->Connect(device)) {
         callback(false, "Failed to connect with remote device");
         return;
     }

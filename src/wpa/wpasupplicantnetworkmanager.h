@@ -47,7 +47,7 @@ public:
     void Scan(unsigned int timeout = 30) override;
     std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
 
-    int Connect(const std::string &address, bool persistent = true) override;
+    int Connect(const mcs::NetworkDevice::Ptr &device) override;
     int DisconnectAll() override;
 
     std::string LocalAddress() const override;

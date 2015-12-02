@@ -578,24 +578,24 @@ std::vector<mcs::NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() cons
     return values;
 }
 
-int WpaSupplicantNetworkManager::Connect(const std::string &address, bool persistent) {
+int WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
     int ret = 0;
 
-    if (available_devices_.find(address) == available_devices_.end())
+    if (available_devices_.find(device->Address()) == available_devices_.end())
         return -EINVAL;
 
     if (current_peer_.get())
         return -EALREADY;
 
-    current_peer_ = available_devices_[address];
+    current_peer_ = available_devices_[device->Address()];
 
     auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
-    m.Append("sss", address.c_str(), "pbc", persistent ? "persistent" : "");
+    m.Append("ss", device->Address().c_str(), "pbc");
 
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
             ret = -EIO;
-            g_warning("Failed to connect with remote %s", address.c_str());
+            g_warning("Failed to connect with remote %s", device->Address().c_str());
             return;
         }
     });
