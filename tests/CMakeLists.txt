@@ -17,3 +17,5 @@ add_test(utilities_tests utilities_tests)
 add_executable(scoped_gobject_tests scoped_gobject_tests.cpp)
 target_link_libraries(scoped_gobject_tests miracast gtest gtest_main)
 add_test(scoped_gobject_tests scoped_gobject_tests)
+
+add_subdirectory(mcs)

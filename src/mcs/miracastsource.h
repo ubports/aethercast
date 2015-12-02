@@ -20,7 +20,7 @@
 
 #include <memory>
 
-#include <boost/core/noncopyable.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <glib.h>
 #include <gio/gio.h>

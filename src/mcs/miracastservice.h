@@ -18,7 +18,7 @@
 #ifndef MIRACAST_SERVICE_H_
 #define MIRACAST_SERVICE_H_
 
-#include <boost/core/noncopyable.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <functional>
 #include <memory>

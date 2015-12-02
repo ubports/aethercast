@@ -18,7 +18,7 @@
 #ifndef DHCPCLIENT_H_
 #define DHCPCLIENT_H_
 
-#include <boost/core/noncopyable.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <string>
 

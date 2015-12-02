@@ -18,7 +18,7 @@
 #ifndef NETWORKMANAGER_H_
 #define NETWORKMANAGER_H_
 
-#include <boost/core/noncopyable.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <list>
 #include <vector>

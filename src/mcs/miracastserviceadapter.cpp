@@ -100,7 +100,7 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
 void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
                                         GDBusMethodInvocation *invocation, gpointer user_data) {
     boost::ignore_unused(skeleton);
-    auto inst = static_cast<KeepAlive<MiracastServiceAdapter>*>(user_data)->ShouldDie();
+    auto inst = static_cast<MiracastServiceAdapter*>(user_data);
     g_message("Scanning for remote devices");
 
     inst->service_->Scan();
@@ -111,7 +111,7 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
 void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skeleton,
                                         GDBusMethodInvocation *invocation, const gchar *address, gpointer user_data) {
     boost::ignore_unused(skeleton);
-    auto inst = static_cast<KeepAlive<MiracastServiceAdapter>*>(user_data)->ShouldDie();
+    auto inst = static_cast<MiracastServiceAdapter*>(user_data);
     inst->service_->ConnectSink(std::string(address), [=](bool success, const std::string &error_text) {
         if (!success) {
             g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,

@@ -15,50 +15,44 @@
  *
  */
 
+#include <string.h>
+
 #include "mediamanagerfactory.h"
 #include "mirsourcemediamanager.h"
 #include "testsourcemediamanager.h"
 
 namespace mcs {
-class NullSourceMediaManager : public BaseSourceMediaManager
-{
-public:
-    void Play() override {
-        g_warning("NullSourceMediaManager: Not implemented");
-    }
 
-    void Pause() override {
-        g_warning("NullSourceMediaManager: Not implemented");
-    }
+void NullSourceMediaManager::Play() {
+    g_warning("NullSourceMediaManager: Not implemented");
+}
 
-    void Teardown() override {
-        g_warning("NullSourceMediaManager: Not implemented");
-    }
+void NullSourceMediaManager::Pause() {
+    g_warning("NullSourceMediaManager: Not implemented");
+}
 
-    bool IsPaused() const override {
-        g_warning("NullSourceMediaManager: Not implemented");
-        return true;
-    }
+void NullSourceMediaManager::Teardown() {
+    g_warning("NullSourceMediaManager: Not implemented");
+}
 
-protected:
-    void Configure() override {
-        g_warning("NullSourceMediaManager: Not implemented");
-    }
-};
+bool NullSourceMediaManager::IsPaused() const {
+    g_warning("NullSourceMediaManager: Not implemented");
+}
+
+void NullSourceMediaManager::Configure() {
+    g_warning("NullSourceMediaManager: Not implemented");
+}
 
 BaseSourceMediaManager* MediaManagerFactory::CreateSource(const std::string &remote_address) {
-    auto type = getenv("MIRACAST_SOURCE_TYPE");
+    std::string type = getenv("MIRACAST_SOURCE_TYPE");
 
-    g_warning("Creating source media manager of type %s", type);
+    g_warning("Creating source media manager of type %s", type.c_str());
 
-    if (!type)
-        return new NullSourceMediaManager();
-
-    if (g_strcmp0(type, "mir") == 0)
+    if (type.length() == 0 || type == "mir")
         return new MirSourceMediaManager(remote_address);
-    else if (g_strcmp0(type, "test") == 0)
+    else if (type == "test")
         return new TestSourceMediaManager(remote_address);
 
-    return new NullSourceMediaManager();
+    return new NullSourceMediaManager;
 }
 } // namespace mcs

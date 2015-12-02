@@ -1,0 +1,55 @@
+Device hierarchy
+================
+
+Service		org.wds
+Interface	org.wds.Device
+Object path	/dev_*
+
+Methods		void Connect()
+
+			This method will try to connect with the remote
+			display device.
+
+			Possible errors: org.wds.Error.NotReady
+					  org.wds.Error.Failed
+					  org.wds.Error.InProgress
+					  org.wds.Error.AlreadyConnected
+
+		void Disconnect()
+
+			This method will attempt to disconnect a
+			currently connected device.
+
+			It can also be used to cancel a preceding Connect
+			call before a reply to it has been received.
+
+			Possible errors: org.wds.Error.NotConnected
+
+
+Properties		string State
+
+			The current state of the device. Possible values
+			are "idle", "connecting", "connected" and "failure".
+
+			If a device is not currently connected or connecting
+			its state is either "idle" or "failure". It switches
+			to "failure" if a connection attempt failed.
+
+			If a device is being connected it will switch to
+			"connecting" and to "connected" or "failure" as
+			next state. If the connection attempt was successful
+			it will switch to "connected" and otherwise to
+			"failure".
+
+			If a device gets disconnected it will switch back
+			to "idle".
+
+		string Name
+
+			Name of the remote device
+
+		array{string} Capabilities
+
+			List of capabilities the remote device has. Possible
+			values are "sink" and "source".
+
