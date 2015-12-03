@@ -209,7 +209,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
 
     message.ReadDictEntry("reason", 's', &reason);
 
-    current_peer_->SetAddress(std::string(""));
+    current_peer_->SetAddress(mcs::MacAddress(""));
     if (g_strcmp0(reason, "FORMATION_FAILED") == 0 ||
             g_strcmp0(reason, "PSK_FAILURE") == 0 ||
             g_strcmp0(reason, "FREQ_CONFLICT") == 0)

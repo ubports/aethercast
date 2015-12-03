@@ -45,7 +45,7 @@ NetworkDevice::NetworkDevice() :
 NetworkDevice::~NetworkDevice() {
 }
 
-std::string NetworkDevice::Address() const {
+MacAddress NetworkDevice::Address() const {
     return address_;
 }
 
@@ -65,7 +65,7 @@ std::string NetworkDevice::StateAsString() const {
     return StateToStr(state_);
 }
 
-void NetworkDevice::SetAddress(const std::string &address) {
+void NetworkDevice::SetAddress(const MacAddress &address) {
     address_ = address;
 }
 

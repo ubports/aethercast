@@ -14,6 +14,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
 
 set(HEADERS
     mcs/ip_v4_address.h
+    mcs/mac_address.h
 )
 
 set(SOURCES
