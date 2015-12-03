@@ -21,7 +21,13 @@
 
 WpaSupplicantCommandQueue::WpaSupplicantCommandQueue(Delegate *delegate) :
     delegate_(delegate),
-    current_(nullptr) {
+    current_(nullptr),
+    idle_source_(0) {
+}
+
+WpaSupplicantCommandQueue::~WpaSupplicantCommandQueue() {
+    if (idle_source_ > 0)
+        g_source_remove(idle_source_);
 }
 
 void WpaSupplicantCommandQueue::EnqueueCommand(const WpaSupplicantMessage &message, WpaSupplicantCommand::ResponseCallback callback) {
@@ -30,16 +36,17 @@ void WpaSupplicantCommandQueue::EnqueueCommand(const WpaSupplicantMessage &messa
 }
 
 void WpaSupplicantCommandQueue::HandleMessage(WpaSupplicantMessage message) {
-    if (message.Type() == kInvalid) {
-        g_warning("Got invalid messsage");
+    if (message.Type() == kInvalid)
         return;
-    }
 
     if (message.Type() == kEvent) {
         if (delegate_)
             delegate_->OnUnsolicitedResponse(message);
         return;
     }
+
+    if (!current_)
+        return;
 
     if (current_->callback)
         current_->callback(message);
@@ -53,11 +60,16 @@ void WpaSupplicantCommandQueue::HandleMessage(WpaSupplicantMessage message) {
 
 gboolean WpaSupplicantCommandQueue::OnRestartQueue(gpointer user_data) {
     auto inst = static_cast<WpaSupplicantCommandQueue*>(user_data);
+    inst->idle_source_ = 0;
     inst->CheckRestartingQueue();
+    return FALSE;
 }
 
 void WpaSupplicantCommandQueue::RestartQueue() {
-    g_idle_add(&WpaSupplicantCommandQueue::OnRestartQueue, this);
+    if (idle_source_ > 0)
+        return;
+
+    idle_source_ = g_idle_add(&WpaSupplicantCommandQueue::OnRestartQueue, this);
 }
 
 void WpaSupplicantCommandQueue::CheckRestartingQueue() {
@@ -73,6 +85,9 @@ void WpaSupplicantCommandQueue::WriteNextCommand() {
     queue_.pop();
 
     if (!delegate_)
+        return;
+
+    if (!current_)
         return;
 
     current_->message.Seal();

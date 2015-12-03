@@ -20,6 +20,7 @@
 #include "mediamanagerfactory.h"
 #include "mirsourcemediamanager.h"
 #include "testsourcemediamanager.h"
+#include "utils.h"
 
 namespace mcs {
 
@@ -43,16 +44,16 @@ void NullSourceMediaManager::Configure() {
     g_warning("NullSourceMediaManager: Not implemented");
 }
 
-BaseSourceMediaManager* MediaManagerFactory::CreateSource(const std::string &remote_address) {
-    std::string type = getenv("MIRACAST_SOURCE_TYPE");
+std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const std::string &remote_address) {
+    std::string type = Utils::GetEnvValue("MIRACAST_SOURCE_TYPE");
 
     g_warning("Creating source media manager of type %s", type.c_str());
 
     if (type.length() == 0 || type == "mir")
-        return new MirSourceMediaManager(remote_address);
+        return std::make_shared<MirSourceMediaManager>(remote_address);
     else if (type == "test")
-        return new TestSourceMediaManager(remote_address);
+        return TestSourceMediaManager::create(remote_address);
 
-    return new NullSourceMediaManager;
+    return std::make_shared<NullSourceMediaManager>();
 }
 } // namespace mcs

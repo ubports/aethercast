@@ -15,23 +15,13 @@
  *
  */
 
-#ifndef TESTMEDIAMANAGER_H_
-#define TESTMEDIAMANAGER_H_
+#ifndef IP_V4_ADDRESS_H_
+#define IP_V4_ADDRESS_H_
 
-#include "gstsourcemediamanager.h"
+#include <boost/asio/ip/address_v4.hpp>
 
 namespace mcs {
-class TestSourceMediaManager : public GstSourceMediaManager {
-public:
-    static std::shared_ptr<TestSourceMediaManager> create(const std::string &remote_address);
-    ~TestSourceMediaManager();
+using IpV4Address = boost::asio::ip::address_v4;
+}
 
-protected:
-    SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) override;
-
-private:
-    explicit TestSourceMediaManager(const std::string &remote_address);
-    std::string remote_address_;
-};
-} // namespace mcs
 #endif

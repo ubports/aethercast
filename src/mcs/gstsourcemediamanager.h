@@ -25,10 +25,10 @@
 #include "shared_gobject.h"
 
 namespace mcs {
-class GstSourceMediaManager : public BaseSourceMediaManager
+class GstSourceMediaManager : public std::enable_shared_from_this<GstSourceMediaManager>,
+                              public BaseSourceMediaManager
 {
 public:
-    explicit GstSourceMediaManager();
     ~GstSourceMediaManager();
 
     void Play() override;
@@ -37,6 +37,7 @@ public:
     bool IsPaused() const override;
 
 protected:
+    GstSourceMediaManager();
     void Configure() override;
 
     virtual SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) = 0;

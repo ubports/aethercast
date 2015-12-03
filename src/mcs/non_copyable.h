@@ -15,23 +15,18 @@
  *
  */
 
-#ifndef TESTMEDIAMANAGER_H_
-#define TESTMEDIAMANAGER_H_
-
-#include "gstsourcemediamanager.h"
+#ifndef NON_COPYABLE_H_
+#define NON_COPYABLE_H_
 
 namespace mcs {
-class TestSourceMediaManager : public GstSourceMediaManager {
-public:
-    static std::shared_ptr<TestSourceMediaManager> create(const std::string &remote_address);
-    ~TestSourceMediaManager();
-
-protected:
-    SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) override;
-
-private:
-    explicit TestSourceMediaManager(const std::string &remote_address);
-    std::string remote_address_;
+// The alert reader might wonder why we don't use boost::noncopyable. The reason
+// is simple: We would like to have a convenient virtual d'tor available.
+struct NonCopyable {
+    NonCopyable() = default;
+    NonCopyable(const NonCopyable&) = delete;
+    virtual ~NonCopyable() = default;
+    NonCopyable& operator=(const NonCopyable&) = delete;
 };
-} // namespace mcs
+}
+
 #endif

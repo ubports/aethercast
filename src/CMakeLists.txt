@@ -12,6 +12,12 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
 # Make sure that generated header files can be found
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
 
+set(HEADERS
+    mcs/ip_v4_address.h
+    mcs/keep_alive.h
+    mcs/mac_address.h
+)
+
 set(SOURCES
   mcs/utils.cpp
   mcs/networkutils.cpp
@@ -23,7 +29,7 @@ set(SOURCES
   mcs/mirsourcemediamanager.cpp
   mcs/miracastservice.cpp
   mcs/miracastserviceadapter.cpp
-  mcs/miracastsource.cpp
+  mcs/miracastsourcemanager.cpp
   mcs/miracastsourceclient.cpp
   mcs/networkmanager.cpp
   mcs/networkdevice.cpp
@@ -35,6 +41,7 @@ set(SOURCES
   wpa/gdhcp/client.c
   wpa/dhcpclient.cpp
   wpa/dhcpserver.cpp
+  wpa/wififirmwareloader.cpp
   wpa/wpasupplicantmessage.cpp
   wpa/wpasupplicantcommand.cpp
   wpa/wpasupplicantcommandqueue.cpp
@@ -60,11 +67,12 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/src
 )
 
-add_library(miracast ${SOURCES})
+add_library(miracast ${SOURCES} ${HEADERS})
 
 add_executable(miracast-service mcs/main.cpp)
 
 target_link_libraries(miracast
+  ${Boost_LIBRARIES}
   ${GLIB_LIBRARIES}
   ${GIO_LIBRARIES}
   ${GIO-UNIX_LIBRARIES}
@@ -81,11 +89,3 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static
 )
-
-add_executable(test-wpasupplicantmessage
-    mcs/utils.cpp
-    wpa/wpasupplicantmessage.cpp
-    wpa/wpasupplicantmessage_test.cpp)
-target_link_libraries(test-wpasupplicantmessage ${GLIB_LIBRARIES})
-target_link_libraries (test-wpasupplicantmessage)
-add_test(WpaSupplicantMessage test-wpasupplicantmessage)

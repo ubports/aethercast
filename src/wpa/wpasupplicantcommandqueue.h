@@ -23,11 +23,13 @@
 #include <string>
 #include <queue>
 
+#include <mcs/non_copyable.h>
+
 #include "wpasupplicantcommand.h"
 
 class WpaSupplicantCommandQueue {
 public:
-    class Delegate : private boost::noncopyable {
+    class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnUnsolicitedResponse(WpaSupplicantMessage message) = 0;
         virtual void OnWriteMessage(WpaSupplicantMessage message) = 0;
@@ -37,8 +39,9 @@ public:
     };
 
     WpaSupplicantCommandQueue(Delegate *delegate);
+    ~WpaSupplicantCommandQueue();
 
-    void EnqueueCommand(const WpaSupplicantMessage &message, WpaSupplicantCommand::ResponseCallback callback);
+    void EnqueueCommand(const WpaSupplicantMessage &message, WpaSupplicantCommand::ResponseCallback callback = nullptr);
     void HandleMessage(WpaSupplicantMessage message);
 
 private:
@@ -53,6 +56,7 @@ private:
     Delegate *delegate_;
     WpaSupplicantCommand *current_;
     std::queue<WpaSupplicantCommand*> queue_;
+    unsigned int idle_source_;
 };
 
 #endif

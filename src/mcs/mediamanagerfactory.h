@@ -18,6 +18,8 @@
 #ifndef MEDIAMANAGERFACTORY_H_
 #define MEDIAMANAGERFACTORY_H_
 
+#include <memory>
+
 #include "basesourcemediamanager.h"
 
 namespace mcs {
@@ -36,7 +38,7 @@ protected:
 
 class MediaManagerFactory {
 public:
-    static BaseSourceMediaManager* CreateSource(const std::string &remote_address);
+    static std::shared_ptr<BaseSourceMediaManager> CreateSource(const std::string &remote_address);
 };
 } // namespace mcs
 #endif

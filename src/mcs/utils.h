@@ -38,6 +38,8 @@ struct Utils
     // Sprintf - much like what you would expect :)
     template<typename... Types>
     static std::string Sprintf(const std::string& fmt_str, Types&&... args);
+    // GetEnv - returns a variable value from the environment
+    static std::string GetEnvValue(const std::string &name);
 };
 
 namespace impl {
