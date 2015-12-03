@@ -47,17 +47,17 @@ public:
     void Scan(unsigned int timeout = 30) override;
     std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
 
-    int Connect(const std::string &address, bool persistent = true) override;
+    int Connect(const mcs::NetworkDevice::Ptr &device) override;
     int DisconnectAll() override;
 
-    mcs::NetworkDeviceRole Role() const override;
-    std::string LocalAddress() const override;
+    mcs::IpV4Address LocalAddress() const override;
+
     bool Running() const override;
 
     void OnUnsolicitedResponse(WpaSupplicantMessage message);
     void OnWriteMessage(WpaSupplicantMessage message);
 
-    void OnAddressAssigned(const std::string &address);
+    void OnAddressAssigned(const mcs::IpV4Address &address);
 
 private:
     bool StartSupplicant();
@@ -81,6 +81,7 @@ private:
     static gboolean OnIncomingMessages(GIOChannel *source, GIOCondition condition,
                                          gpointer user_data);
     static gboolean OnSupplicantRespawn(gpointer user_data);
+    static void OnSupplicantProcessSetup(gpointer user_data);
 
 private:
     NetworkManager::Delegate *delegate_;
@@ -90,7 +91,6 @@ private:
     std::map<std::string,mcs::NetworkDevice::Ptr> available_devices_;
     std::unique_ptr<WpaSupplicantCommandQueue> command_queue_;
     mcs::NetworkDevice::Ptr current_peer_;
-    mcs::NetworkDeviceRole current_role_;
     DhcpClient dhcp_client_;
     DhcpServer dhcp_server_;
     GPid supplicant_pid_;
@@ -99,6 +99,7 @@ private:
     guint dhcp_timeout_;
     guint respawn_limit_;
     guint respawn_source_;
+    bool is_group_owner_;
 };
 
 #endif

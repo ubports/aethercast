@@ -99,7 +99,7 @@ SharedGObject<GstElement> MirSourceMediaManager::ConstructPipeline(const wds::H2
     ss << "mpegtsmux ! rtpmp2tpay ! ";
     ss << Utils::Sprintf("udpsink name=sink host=%s port=%d", remote_address_.c_str(), sink_port1_);
 
-    GError *error;
+    GError *error = nullptr;
     GstElement *pipeline = gst_parse_launch(ss.str().c_str(), &error);
     if (error) {
         g_warning("Failed to setup GStreamer pipeline: %s", error->message);

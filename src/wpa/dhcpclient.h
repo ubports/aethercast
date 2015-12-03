@@ -22,13 +22,15 @@
 
 #include <string>
 
+#include <mcs/ip_v4_address.h>
+
 #include <gdhcp.h>
 
 class DhcpClient {
 public:
     class Delegate : private boost::noncopyable {
     public:
-        virtual void OnAddressAssigned(const std::string &address) = 0;
+        virtual void OnAddressAssigned(const mcs::IpV4Address &address) = 0;
 
     protected:
         Delegate() = default;
@@ -40,7 +42,7 @@ public:
     bool Start();
     void Stop();
 
-    std::string LocalAddress() const;
+    mcs::IpV4Address LocalAddress() const;
 
 private:
     static void OnClientDebug(const char *str, gpointer user_data);
@@ -51,7 +53,7 @@ private:
     std::string interface_name_;
     int interface_index_;
     GDHCPClient *client_;
-    std::string local_address_;
+    mcs::IpV4Address local_address_;
     std::string netmask_;
 };
 
