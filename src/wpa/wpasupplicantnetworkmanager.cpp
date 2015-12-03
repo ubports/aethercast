@@ -74,7 +74,7 @@ WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegat
     dhcp_timeout_(0),
     respawn_limit_(SUPPLICANT_RESPAWN_LIMIT),
     respawn_source_(0),
-    group_owner_(false) {
+    is_group_owner_(false) {
 }
 
 WpaSupplicantNetworkManager::~WpaSupplicantNetworkManager() {
@@ -174,7 +174,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &messag
 
     // If we're the GO the other side is the client and vice versa
     if (g_strcmp0(role, "GO") == 0) {
-        group_owner_ = true;
+        is_group_owner_ = true;
 
         current_peer_->SetState(mcs::kConnected);
 
@@ -186,7 +186,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &messag
         if (delegate_)
             delegate_->OnDeviceStateChanged(current_peer_);
     } else {
-        group_owner_ = false;
+        is_group_owner_ = false;
 
         // We're a client of a formed group now and have to acquire
         // our IP address via DHCP so we have to wait until we're
@@ -232,7 +232,7 @@ void WpaSupplicantNetworkManager::OnWriteMessage(WpaSupplicantMessage message) {
 mcs::IpV4Address WpaSupplicantNetworkManager::LocalAddress() const {
     mcs::IpV4Address address;
 
-    if (group_owner_)
+    if (is_group_owner_)
         address = dhcp_server_.LocalAddress();
     else
         address = dhcp_client_.LocalAddress();
@@ -313,7 +313,7 @@ void WpaSupplicantNetworkManager::Reset() {
     }
 
     available_devices_.clear();
-    group_owner_ = false;
+    is_group_owner_ = false;
 }
 
 bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf_path) {

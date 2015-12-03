@@ -99,7 +99,7 @@ private:
     guint dhcp_timeout_;
     guint respawn_limit_;
     guint respawn_source_;
-    bool group_owner_;
+    bool is_group_owner_;
 };
 
 #endif
