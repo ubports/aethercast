@@ -15,16 +15,102 @@
  *
  */
 
+#include <csignal>
+#include <cstdio>
+#include <cstdint>
+
+#include <glib.h>
+#include <glib-unix.h>
+#include <gst/gst.h>
+
+#include <chrono>
+
 #include "keep_alive.h"
 #include "miracastservice.h"
+#include "miracastserviceadapter.h"
 #include "wpasupplicantnetworkmanager.h"
 #include "wfddeviceinfo.h"
 
-#define MIRACAST_DEFAULT_RTSP_CTRL_PORT     7236
-
-#define STATE_IDLE_TIMEOUT                  1000
-
+namespace {
+// TODO(morphis, tvoss): Expose the port as a construction-time parameter.
+const std::uint16_t kMiracastDefaultRtspCtrlPort{7236};
+const std::chrono::milliseconds kStateIdleTimeout{1000};
+}
 namespace mcs {
+MiracastService::MainOptions MiracastService::MainOptions::FromCommandLine(int argc, char** argv) {
+    static gboolean option_debug{FALSE};
+    static gboolean option_version{FALSE};
+
+    static GOptionEntry options[] = {
+        { "debug", 'd', 0, G_OPTION_ARG_NONE, &option_debug, "Enable debugging mode", nullptr },
+        { "version", 'v', 0, G_OPTION_ARG_NONE, &option_version, "Show version information and exit", nullptr },
+        { NULL },
+    };
+
+    std::shared_ptr<GOptionContext> context{g_option_context_new(nullptr), [](GOptionContext *ctxt) { g_option_context_free(ctxt); }};
+    GError *error = nullptr;
+
+    g_option_context_add_main_entries(context.get(), options, NULL);
+
+    if (!g_option_context_parse(context.get(), &argc, &argv, &error)) {
+        if (error) {
+            g_printerr("%s\n", error->message);
+            g_error_free(error);
+        } else
+            g_printerr("An unknown error occurred\n");
+        exit(1);
+    }
+
+    return MainOptions{option_debug == TRUE, option_version == TRUE};
+}
+
+int MiracastService::Main(const MiracastService::MainOptions &options) {
+    if (options.print_version) {
+        std::printf("%d.%d\n", MiracastService::kVersionMajor, MiracastService::kVersionMinor);
+        return 0;
+    }
+
+    struct Runtime {
+        static int OnSignalRaised(gpointer user_data) {
+            auto thiz = static_cast<Runtime*>(user_data);
+            g_main_loop_quit(thiz->ml);
+
+            return 0;
+        }
+
+        Runtime() {
+            // We do not have to use a KeepAlive<Scope> here as
+            // a Runtime instance controls the lifetime of signal
+            // emissions.
+            g_unix_signal_add(SIGINT, OnSignalRaised, this);
+            g_unix_signal_add(SIGTERM, OnSignalRaised, this);
+
+            // Become a reaper of all our children
+            if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0)
+                g_warning("Failed to make us a subreaper of our children");
+        }
+
+        ~Runtime() {
+            g_main_loop_unref(ml);
+            gst_deinit();
+        }
+
+        void Run() {
+            g_main_loop_run(ml);
+        }
+
+        GMainLoop *ml = g_main_loop_new(nullptr, FALSE);
+        bool is_gst_initialized = gst_init_check(nullptr, nullptr, nullptr);
+    } rt;
+
+    auto service = mcs::MiracastService::create();
+    auto mcsa = mcs::MiracastServiceAdapter::create(service);
+
+    rt.Run();
+
+    return 0;
+}
+
 std::shared_ptr<MiracastService> MiracastService::create() {
     auto sp = std::shared_ptr<MiracastService>{new MiracastService{}};
     return sp->FinalizeConstruction();
@@ -75,7 +161,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
 
     case kConnected:
         address = network_manager_->LocalAddress();
-        source_->Setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
+        source_->Setup(address, kMiracastDefaultRtspCtrlPort);
 
         FinishConnectAttempt(true);
 
@@ -136,7 +222,7 @@ gboolean MiracastService::OnIdleTimer(gpointer user_data) {
 }
 
 void MiracastService::StartIdleTimer() {
-    g_timeout_add(STATE_IDLE_TIMEOUT, &MiracastService::OnIdleTimer, new SharedKeepAlive<MiracastService>{shared_from_this()});
+    g_timeout_add(kStateIdleTimeout.count(), &MiracastService::OnIdleTimer, new SharedKeepAlive<MiracastService>{shared_from_this()});
 }
 
 void MiracastService::FinishConnectAttempt(bool success, const std::string &error_text) {

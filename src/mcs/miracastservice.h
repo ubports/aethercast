@@ -36,6 +36,18 @@ class MiracastService : public std::enable_shared_from_this<MiracastService>,
                         public MiracastSourceManager::Delegate
 {
 public:
+    static constexpr const uint kVersionMajor = 0;
+    static constexpr const uint kVersionMinor = 1;
+
+    struct MainOptions {
+        static MainOptions FromCommandLine(int argc, char** argv);
+
+        bool debug;
+        bool print_version;
+    };
+
+    static int Main(const MainOptions &options);
+
     class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnStateChanged(NetworkDeviceState state) = 0;

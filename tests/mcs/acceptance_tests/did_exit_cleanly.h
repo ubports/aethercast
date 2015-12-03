@@ -15,8 +15,17 @@
  *
  */
 
-#include "miracastservice.h"
+#ifndef DID_EXIT_CLEANLY_H_
+#define DID_EXIT_CLEANLY_H_
 
-int main(int argc, char **argv) {
-    return mcs::MiracastService::Main(mcs::MiracastService::MainOptions::FromCommandLine(argc, argv));
+#include <gtest/gtest.h>
+
+#include <core/posix/child_process.h>
+#include <core/posix/wait.h>
+
+namespace testing {
+AssertionResult DidExitCleanly(core::posix::ChildProcess& child);
+AssertionResult DidExitCleanly(const core::posix::wait::Result& result);
 }
+
+#endif

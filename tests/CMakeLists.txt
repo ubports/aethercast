@@ -10,6 +10,8 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src
 )
 
+add_subdirectory(3rd_party/process-cpp-minimal)
+
 add_executable(utilities_tests utilities_tests.cpp)
 target_link_libraries(utilities_tests miracast gtest gtest_main)
 add_test(utilities_tests utilities_tests)

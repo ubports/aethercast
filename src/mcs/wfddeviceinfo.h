@@ -18,99 +18,45 @@
 #ifndef WFDDEVICEINFO_H_
 #define WFDDEVICEINFO_H_
 
+#include <iosfwd>
 #include <string>
 
-/*
- * WFD Device Type
- */
-
-#define WFD_DEVICE_TYPE_SOURCE                     0x0
-#define WFD_DEVICE_TYPE_PRIMARY_SINK               0x1
-#define WFD_DEVICE_TYPE_SECONDARY_SINK             0x2
-#define WFD_DEVICE_TYPE_SOURCE_OR_PRIMARY_SINK     0x3
-
-/*
- * WFD Device Information Bitmap
- */
-
-#define WFD_DEVICE_INFO_DEVICE_TYPE                         0x3
-#define WFD_DEVICE_INFO_COUPLED_SINK_SUPPORT_AT_SOURCE      0x4
-#define WFD_DEVICE_INFO_COUPLED_SINK_SUPPORT_AT_SINK        0x8
-#define WFD_DEVICE_INFO_SESSION_AVAILABLE                   0x30
-#define WFD_DEVICE_INFO_SESSION_AVAILABLE_BIT1              0x10
-#define WFD_DEVICE_INFO_SESSION_AVAILABLE_BIT2              0x20
-
-#define WPS_CONFIG_DISPLAY          0x0008
-#define WPS_CONFIG_PUSHBUTTON       0x0080
-#define WPS_CONFIG_KEYPAD           0x0100
-
 namespace mcs {
-class WfdDeviceInfo
+
+enum class WpsConfig {
+    kDisplay = 0x0008,
+    kPushbutton = 0x0080,
+    kKeypad = 0x0100
+};
+
+enum class WfdDeviceType {
+    unknown = -1,
+    kSource = 0x0,
+    kPrimarySink = 0x1,
+    kSecondarySink = 0x2,
+    kSourceOrPrimarySink = 0x3
+};
+
+std::ostream& operator<<(std::ostream &, WfdDeviceType);
+
+struct WfdDeviceInfo
 {
-public:
-    WfdDeviceInfo() :
-        dev_info_(0),
-        ctrl_port_(0),
-        max_tput_(0)
-    {
-    }
+    static WfdDeviceType TypeFromInfoFlags(uint flags);
 
-    WfdDeviceInfo(const WfdDeviceInfo &other) :
-        dev_info_(other.dev_info_),
-        ctrl_port_(other.ctrl_port_),
-        max_tput_(other.max_tput_)
-    {
-    }
+    enum Flag {
+        type = 0x3,
+        coupled_sink_support_at_source = 0x4,
+        coupled_sink_support_at_sink = 0x8,
+        session_available = 0x30,
+        session_available_bit1 = 0x10,
+        session_available_bit2 = 0x20
+    };
 
-    WfdDeviceInfo(int dev_info, int ctrl_port, int max_tput) :
-        dev_info_(dev_info),
-        ctrl_port_(ctrl_port),
-        max_tput_(max_tput)
-    {
-    }
+    bool IsSupportedSink() const;
 
-    int DeviceType()
-    {
-        return (dev_info_ & WFD_DEVICE_INFO_DEVICE_TYPE);
-    }
-
-    int ControlPort()
-    {
-        return ctrl_port_;
-    }
-
-    int MaxThroughput()
-    {
-        return max_tput_;
-    }
-
-    bool IsSupportedSink()
-    {
-        return DeviceType() == WFD_DEVICE_TYPE_PRIMARY_SINK ||
-               DeviceType() == WFD_DEVICE_TYPE_SOURCE_OR_PRIMARY_SINK;
-    }
-
-    std::string DeviceTypeAsString()
-    {
-        std::string str = "unknown";
-        auto devType = DeviceType();
-
-        if (devType == WFD_DEVICE_TYPE_SOURCE)
-            str = "source";
-        else if (devType == WFD_DEVICE_TYPE_PRIMARY_SINK)
-            str = "primary-sink";
-        else if (devType == WFD_DEVICE_TYPE_SECONDARY_SINK)
-            str = "secondary-sink";
-        else if (devType == WFD_DEVICE_TYPE_SOURCE_OR_PRIMARY_SINK)
-            str = "source-or-primary-sink";
-
-        return str;
-    }
-
-private:
-    int dev_info_;
-    int ctrl_port_;
-    int max_tput_;
+    WfdDeviceType device_type_ = WfdDeviceType::unknown;
+    ushort ctrl_port_ = 0;
+    uint max_tput_ = 0;
 };
 } // namespace mcs
 
