@@ -23,13 +23,14 @@
 namespace mcs {
 class TestSourceMediaManager : public GstSourceMediaManager {
 public:
-    explicit TestSourceMediaManager(const std::string &remote_address);
+    static std::shared_ptr<TestSourceMediaManager> create(const std::string &remote_address);
     ~TestSourceMediaManager();
 
 protected:
     SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) override;
 
 private:
+    explicit TestSourceMediaManager(const std::string &remote_address);
     std::string remote_address_;
 };
 } // namespace mcs
