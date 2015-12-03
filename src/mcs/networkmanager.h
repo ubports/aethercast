@@ -42,8 +42,8 @@ public:
 
     virtual bool Setup() = 0;
     virtual void Scan(unsigned int timeout = 30) = 0;
-    virtual int Connect(const NetworkDevice::Ptr &device) = 0;
-    virtual int DisconnectAll() = 0;
+    virtual bool Connect(const NetworkDevice::Ptr &device) = 0;
+    virtual bool DisconnectAll() = 0;
 
     virtual void SetWfdSubElements(const std::list<std::string> &elements) = 0;
 

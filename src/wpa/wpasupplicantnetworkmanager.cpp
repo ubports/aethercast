@@ -610,43 +610,43 @@ std::vector<mcs::NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() cons
     return values;
 }
 
-int WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
-    int ret = 0;
-
+bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
     if (available_devices_.find(device->Address()) == available_devices_.end())
-        return -EINVAL;
+        return false;
 
     if (current_peer_.get())
-        return -EALREADY;
+        return false;
 
     current_peer_ = available_devices_[device->Address()];
 
     auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
     m.Append("ss", device->Address().c_str(), "pbc");
 
+    bool ret = false;
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
-            ret = -EIO;
             g_warning("Failed to connect with remote %s", device->Address().c_str());
             return;
         }
+
+        ret = true;
     });
 
     return ret;
 }
 
-int WpaSupplicantNetworkManager::DisconnectAll() {
-    int ret = 0;
-
+bool WpaSupplicantNetworkManager::DisconnectAll() {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_GROUP_REMOVE");
     m.Append("s", interface_name_.c_str());
 
+    bool ret = false;
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
-            ret = -EIO;
             g_warning("Failed to disconnect all connected devices on interface %s", interface_name_.c_str());
             return;
         }
+
+        ret = true;
     });
 
     return ret;
