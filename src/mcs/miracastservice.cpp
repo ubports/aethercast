@@ -15,15 +15,20 @@
  *
  */
 
+#include <cstdint>
+
+#include <chrono>
+
 #include "keep_alive.h"
 #include "miracastservice.h"
 #include "wpasupplicantnetworkmanager.h"
 #include "wfddeviceinfo.h"
 
-#define MIRACAST_DEFAULT_RTSP_CTRL_PORT     7236
-
-#define STATE_IDLE_TIMEOUT                  1000
-
+namespace {
+// TODO(morphis, tvoss): Expose the port as a construction-time parameter.
+const std::uint16_t kMiracastDefaultRtspCtrlPort{7236};
+const std::chrono::milliseconds kStateIdleTimeout{1000};
+}
 namespace mcs {
 std::shared_ptr<MiracastService> MiracastService::create() {
     auto sp = std::shared_ptr<MiracastService>{new MiracastService{}};
@@ -75,7 +80,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
 
     case kConnected:
         address = network_manager_->LocalAddress();
-        source_->Setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
+        source_->Setup(address, kMiracastDefaultRtspCtrlPort);
 
         FinishConnectAttempt(true);
 
@@ -136,7 +141,7 @@ gboolean MiracastService::OnIdleTimer(gpointer user_data) {
 }
 
 void MiracastService::StartIdleTimer() {
-    g_timeout_add(STATE_IDLE_TIMEOUT, &MiracastService::OnIdleTimer, new SharedKeepAlive<MiracastService>{shared_from_this()});
+    g_timeout_add(kStateIdleTimeout.count(), &MiracastService::OnIdleTimer, new SharedKeepAlive<MiracastService>{shared_from_this()});
 }
 
 void MiracastService::FinishConnectAttempt(bool success, const std::string &error_text) {

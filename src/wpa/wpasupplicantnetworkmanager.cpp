@@ -34,6 +34,7 @@
 #include <glib/gstdio.h>
 
 #include <algorithm>
+#include <chrono>
 
 #include <boost/filesystem.hpp>
 
@@ -44,25 +45,20 @@
 #include "mcs/utils.h"
 #include "mcs/wfddeviceinfo.h"
 
-#define WPA_SUPPLICANT_BIN_PATH     "/sbin/wpa_supplicant"
+namespace {
+constexpr const char *kWpaSupplicantBinPath{"/sbin/wpa_supplicant"};
+constexpr const uint kReadBufferSize{1024};
+const std::chrono::milliseconds kDhcpIpAssignmentTimeout{5000};
+const std::chrono::milliseconds kPeerFailureTimeout{5000};
+const uint kSupplicantRespawnLimit{10};
+const std::chrono::milliseconds kSupplicantRespawnTimeout{2000};
 
-#define READ_BUFFER_SIZE            1024
-
-#define DHCP_IP_ASSIGNMENT_TIMEOUT  5000 /* 5 seconds */
-#define PEER_FAILURE_TIMEOUT        5000 /* 5 seconds */
-
-#define SUPPLICANT_RESPAWN_LIMIT    10
-#define SUPPLICANT_RESPAWN_TIMEOUT  2000 /* 2 seconds */
-
-/*
- * Supplicant message names
- */
-
-#define P2P_DEVICE_FOUND                         "P2P-DEVICE-FOUND"
-#define P2P_DEVICE_LOST                          "P2P-DEVICE-LOST"
-#define P2P_GROUP_FORMATION_SUCCESS              "P2P-GROUP-FORMATION-SUCCESS"
-#define P2P_GROUP_STARTED                        "P2P-GROUP-STARTED"
-#define P2P_GROUP_REMOVED                        "P2P-GROUP-REMOVED"
+constexpr const char *kP2pDeviceFound{"P2P-DEVICE-FOUND"};
+constexpr const char *kP2pDeviceLost{"P2P-DEVICE-LOST"};
+constexpr const char *kP2pGroupFormationSuccess{"P2P-GROUP-FORMATION-SUCCESS"};
+constexpr const char *kP2pGroupStarted{"P2P-GROUP-STARTED"};
+constexpr const char *kP2pGroupRemoved{"P2P-GROUP-REMOVED"};
+}
 
 WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate) :
     delegate_(delegate),
@@ -77,7 +73,7 @@ WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegat
     channel_(nullptr)   ,
     channel_watch_(0),
     dhcp_timeout_(0),
-    respawn_limit_(SUPPLICANT_RESPAWN_LIMIT),
+    respawn_limit_(kSupplicantRespawnLimit),
     respawn_source_(0),
     is_group_owner_(false) {
 }
@@ -118,13 +114,13 @@ void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage mes
         return;
     }
 
-    if (message.Name() == P2P_DEVICE_FOUND)
+    if (message.Name() == kP2pDeviceFound)
         OnP2pDeviceFound(message);
-    else if (message.Name() == P2P_DEVICE_LOST)
+    else if (message.Name() == kP2pDeviceLost)
         OnP2pDeviceLost(message);
-    else if (message.Name() == P2P_GROUP_STARTED)
+    else if (message.Name() == kP2pGroupStarted)
         OnP2pGroupStarted(message);
-    else if (message.Name() == P2P_GROUP_REMOVED)
+    else if (message.Name() == kP2pGroupRemoved)
         OnP2pGroupRemoved(message);
     else
         g_warning("unhandled supplicant event: %s", message.Raw().c_str());
@@ -223,7 +219,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &messag
         // To not wait forever we're starting a timeout here which
         // will bring everything down if we didn't received a IP
         // address once it happens.
-        dhcp_timeout_ = g_timeout_add(DHCP_IP_ASSIGNMENT_TIMEOUT, &WpaSupplicantNetworkManager::OnGroupClientDhcpTimeout, this);
+        dhcp_timeout_ = g_timeout_add(kDhcpIpAssignmentTimeout.count(), &WpaSupplicantNetworkManager::OnGroupClientDhcpTimeout, this);
     }
 }
 
@@ -304,7 +300,7 @@ void WpaSupplicantNetworkManager::HandleSupplicantFailed() {
         if (respawn_source_)
             g_source_remove(respawn_source_);
 
-        respawn_source_ = g_timeout_add(SUPPLICANT_RESPAWN_TIMEOUT, &WpaSupplicantNetworkManager::OnSupplicantRespawn, this);
+        respawn_source_ = g_timeout_add(kSupplicantRespawnTimeout.count(), &WpaSupplicantNetworkManager::OnSupplicantRespawn, this);
         respawn_limit_--;
     }
 
@@ -380,7 +376,7 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
         g_warning("Failed remove control directory for supplicant. Will cause problems.");
 
     auto cmdline = mcs::Utils::Sprintf("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s",
-                                           WPA_SUPPLICANT_BIN_PATH,
+                                           kWpaSupplicantBinPath,
                                            interface_name_.c_str(),
                                            ctrl_path_.c_str(),
                                            conf_path.c_str());
@@ -490,7 +486,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     wfd_sub_elements.push_back(std::string("000600101C440032"));
     SetWfdSubElements(wfd_sub_elements);
 
-    respawn_limit_ = SUPPLICANT_RESPAWN_LIMIT;
+    respawn_limit_ = kSupplicantRespawnLimit;
 
     return true;
 }
@@ -519,7 +515,7 @@ void WpaSupplicantNetworkManager::DisconnectSupplicant() {
 gboolean WpaSupplicantNetworkManager::OnIncomingMessages(GIOChannel *source, GIOCondition condition,
                                                        gpointer user_data) {
     auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
-    char buf[READ_BUFFER_SIZE];
+    char buf[kReadBufferSize];
 
     if (condition & G_IO_HUP) {
         g_warning("Got disconnected from supplicant");
@@ -576,7 +572,7 @@ gboolean WpaSupplicantNetworkManager::OnGroupClientDhcpTimeout(gpointer user_dat
     inst->current_peer_->SetState(mcs::kFailure);
 
     // Switch peer back into idle state after some time
-    g_timeout_add(PEER_FAILURE_TIMEOUT, &WpaSupplicantNetworkManager::OnDeviceFailureTimeout, inst);
+    g_timeout_add(kPeerFailureTimeout.count(), &WpaSupplicantNetworkManager::OnDeviceFailureTimeout, inst);
 
     if (inst->delegate_)
         inst->delegate_->OnDeviceStateChanged(inst->current_peer_);
