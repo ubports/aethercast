@@ -361,7 +361,7 @@ bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf
 void WpaSupplicantNetworkManager::OnSupplicantProcessSetup(gpointer user_data) {
     // Die when our parent dies so we don't stay around any longer and can
     // be restarted when the service restarts
-    if (prctl(PR_SET_PDEATHSIG, SIGHUP) < 0)
+    if (prctl(PR_SET_PDEATHSIG, SIGKILL) < 0)
         g_warning("Failed to track parents process status: %s", strerror(errno));
 }
 
@@ -379,7 +379,7 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
     if (err_code)
         g_warning("Failed remove control directory for supplicant. Will cause problems.");
 
-    auto cmdline = mcs::Utils::Sprintf("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s",
+    auto cmdline = mcs::Utils::Sprintf("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s -W",
                                            WPA_SUPPLICANT_BIN_PATH,
                                            interface_name_.c_str(),
                                            ctrl_path_.c_str(),

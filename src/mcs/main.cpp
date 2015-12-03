@@ -16,6 +16,7 @@
  */
 
 #include <sys/signalfd.h>
+#include <sys/prctl.h>
 
 #include <gst/gst.h>
 
@@ -61,6 +62,10 @@ int main(int argc, char **argv) {
         printf("%s\n", VERSION);
         return 0;
     }
+
+    // Become a reaper of all our children
+    if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0)
+        g_warning("Failed to make us a subreaper of our children");
 
     gst_init(nullptr, nullptr);
 
