@@ -338,7 +338,8 @@ bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf
 void WpaSupplicantNetworkManager::OnSupplicantProcessSetup(gpointer user_data) {
     // Die when our parent dies so we don't stay around any longer and can
     // be restarted when the service restarts
-    prctl(PR_SET_PDEATHSIG, SIGHUP);
+    if (prctl(PR_SET_PDEATHSIG, SIGHUP) < 0)
+        g_warning("Failed to track parents process status: %s", strerror(errno));
 }
 
 bool WpaSupplicantNetworkManager::StartSupplicant() {
