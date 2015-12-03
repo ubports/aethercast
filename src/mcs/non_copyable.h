@@ -15,30 +15,18 @@
  *
  */
 
-#ifndef MEDIAMANAGERFACTORY_H_
-#define MEDIAMANAGERFACTORY_H_
-
-#include <memory>
-
-#include "basesourcemediamanager.h"
+#ifndef NON_COPYABLE_H_
+#define NON_COPYABLE_H_
 
 namespace mcs {
-
-// Only here to make unit testing easier for the factory class
-class NullSourceMediaManager : public BaseSourceMediaManager {
-public:
-    void Play() override;
-    void Pause() override;
-    void Teardown() override;
-    bool IsPaused() const override;
-
-protected:
-    void Configure() override;
+// The alert reader might wonder why we don't use boost::noncopyable. The reason
+// is simple: We would like to have a convenient virtual d'tor available.
+struct NonCopyable {
+    NonCopyable() = default;
+    NonCopyable(const NonCopyable&) = delete;
+    virtual ~NonCopyable() = default;
+    NonCopyable& operator=(const NonCopyable&) = delete;
 };
+}
 
-class MediaManagerFactory {
-public:
-    static std::shared_ptr<BaseSourceMediaManager> CreateSource(const std::string &remote_address);
-};
-} // namespace mcs
 #endif

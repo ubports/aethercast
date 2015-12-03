@@ -127,7 +127,7 @@ void MiracastSourceClient::OnTimeoutRemove(gpointer user_data) {
 }
 
 gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  cond, gpointer user_data) {
-    auto inst = static_cast<KeepAlive<MiracastSourceClient>*>(user_data)->ShouldDie();
+    auto inst = static_cast<WeakKeepAlive<MiracastSourceClient>*>(user_data)->GetInstance().lock();
 
     if (cond == G_IO_ERR || cond == G_IO_HUP) {
         if (auto sp = inst->delegate_.lock())
@@ -135,7 +135,7 @@ gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  con
         return FALSE;
     }
 
-    int fd = g_socket_get_fd(inst->socket_.get());        
+    int fd = g_socket_get_fd(inst->socket_.get());
     while (g_socket_get_available_bytes(inst->socket_.get()) > 0) {
         gchar buf[1024] = { };
         gssize nbytes = g_socket_receive(inst->socket_.get(), buf, 1024, NULL, NULL);
@@ -176,7 +176,7 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
         return sp;
     }
 
-    g_source_set_callback(source, (GSourceFunc) &MiracastSourceClient::OnIncomingData, new KeepAlive<MiracastSourceClient>{sp}, nullptr);
+    g_source_set_callback(source, (GSourceFunc) &MiracastSourceClient::OnIncomingData, new SharedKeepAlive<MiracastSourceClient>{sp}, nullptr);
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
         g_warning("Failed to attach source to mainloop");

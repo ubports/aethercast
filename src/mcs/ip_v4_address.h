@@ -15,30 +15,13 @@
  *
  */
 
-#ifndef MEDIAMANAGERFACTORY_H_
-#define MEDIAMANAGERFACTORY_H_
+#ifndef IP_V4_ADDRESS_H_
+#define IP_V4_ADDRESS_H_
 
-#include <memory>
-
-#include "basesourcemediamanager.h"
+#include <boost/asio/ip/address_v4.hpp>
 
 namespace mcs {
+using IpV4Address = boost::asio::ip::address_v4;
+}
 
-// Only here to make unit testing easier for the factory class
-class NullSourceMediaManager : public BaseSourceMediaManager {
-public:
-    void Play() override;
-    void Pause() override;
-    void Teardown() override;
-    bool IsPaused() const override;
-
-protected:
-    void Configure() override;
-};
-
-class MediaManagerFactory {
-public:
-    static std::shared_ptr<BaseSourceMediaManager> CreateSource(const std::string &remote_address);
-};
-} // namespace mcs
 #endif

@@ -15,30 +15,13 @@
  *
  */
 
-#ifndef MEDIAMANAGERFACTORY_H_
-#define MEDIAMANAGERFACTORY_H_
+#ifndef MAC_ADDRESS_H_
+#define MAC_ADDRESS_H_
 
-#include <memory>
-
-#include "basesourcemediamanager.h"
+#include <string>
 
 namespace mcs {
+using MacAddress = std::string;
+}
 
-// Only here to make unit testing easier for the factory class
-class NullSourceMediaManager : public BaseSourceMediaManager {
-public:
-    void Play() override;
-    void Pause() override;
-    void Teardown() override;
-    bool IsPaused() const override;
-
-protected:
-    void Configure() override;
-};
-
-class MediaManagerFactory {
-public:
-    static std::shared_ptr<BaseSourceMediaManager> CreateSource(const std::string &remote_address);
-};
-} // namespace mcs
 #endif

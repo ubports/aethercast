@@ -15,43 +15,41 @@
  *
  */
 
-#ifndef DHCPSERVER_H_
-#define DHCPSERVER_H_
+#ifndef FIRMWARELOADER_H_
+#define FIRMWARELOADER_H_
 
-#include <boost/noncopyable.hpp>
+#include <glib.h>
+#include <gio/gio.h>
 
 #include <string>
+#include <boost/noncopyable.hpp>
 
-#include <mcs/ip_v4_address.h>
-#include <mcs/non_copyable.h>
+namespace wpa {
 
-#include "gdhcp.h"
-
-class DhcpServer {
+class WiFiFirmwareLoader {
 public:
-    class Delegate : private mcs::NonCopyable {
+    class Delegate : private boost::noncopyable {
     public:
-        virtual void OnLeaseAdded() = 0;
-
-    protected:
-        Delegate() = default;
+        virtual void OnFirmwareLoaded() = 0;
+        virtual void OnFirmwareUnloaded() = 0;
     };
 
-    DhcpServer(Delegate *delegate, const std::string &interface_name_h);
-    ~DhcpServer();
+    WiFiFirmwareLoader(const std::string &interface_name, Delegate *delegate);
+    ~WiFiFirmwareLoader();
 
-    bool Start();
-    void Stop();
-
-    mcs::IpV4Address LocalAddress() const;
+    bool IsNeeded();
+    bool TryLoad();
 
 private:
-    static void OnDebug(const char *str, gpointer user_data);
+    static gboolean OnRetryLoad(gpointer user_data);
+    static void OnInterfaceFirmwareSet(GDBusConnection *conn, GAsyncResult *res, gpointer user_data);
 
 private:
     std::string interface_name_;
-    int interface_index_;
-    GDHCPServer *server_;
+    Delegate *delegate_;
+    guint reload_timeout_source_;
 };
+
+} // namespace wpa
 
 #endif

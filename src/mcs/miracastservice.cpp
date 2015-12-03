@@ -36,13 +36,11 @@ std::shared_ptr<MiracastService> MiracastService::create() {
 }
 
 MiracastService::MiracastService() :
+    network_manager_(new WpaSupplicantNetworkManager(this)),
+    source_(MiracastSourceManager::create()),
     current_state_(kIdle),
-    source_(MiracastSource::create()),
     current_peer_(nullptr) {
-    // FIXME this really needs to move somewhere else as it's something
-    // specific for some devices and somehow goes together with the
-    // network manager implementation
-    LoadWiFiFirmware();
+    network_manager_->Setup();
 }
 
 std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction() {
@@ -71,48 +69,8 @@ void MiracastService::OnClientDisconnected() {
     current_peer_.reset();
 }
 
-gboolean MiracastService::OnRetryLoadFirmware(gpointer user_data) {
-    auto inst = static_cast<KeepAlive<MiracastService>*>(user_data)->ShouldDie();
-    inst->LoadWiFiFirmware();
-}
-
-void MiracastService::OnWiFiFirmwareLoaded(GDBusConnection *conn, GAsyncResult *res, gpointer user_data) {
-    guint timeout = 500;
-    GError *error = nullptr;
-
-    GVariant *result = g_dbus_connection_call_finish(conn, res, &error);
-    if (error) {
-        g_warning("Failed to load required WiFi firmware: %s", error->message);
-        timeout = 2000;
-    }
-
-    g_timeout_add(timeout, &MiracastService::OnRetryLoadFirmware, user_data);
-}
-
-void MiracastService::LoadWiFiFirmware() {
-    if (!g_file_test("/sys/class/net/p2p0/uevent", (GFileTest) (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
-
-        g_warning("Switching device WiFi chip firmware to get P2P support");
-
-        auto conn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, nullptr);
-
-        GVariant *params = g_variant_new("(os)", "/", "p2p");
-
-        g_dbus_connection_call(conn, "fi.w1.wpa_supplicant1", "/fi/w1/wpa_supplicant1",
-                               "fi.w1.wpa_supplicant1", "SetInterfaceFirmware", params,
-                               nullptr, (GDBusCallFlags) G_DBUS_CALL_FLAGS_NONE, -1, nullptr,
-                               (GAsyncReadyCallback) &MiracastService::OnWiFiFirmwareLoaded, new KeepAlive<MiracastService>{shared_from_this()});
-
-        return;
-    }
-
-    manager_ = new WpaSupplicantNetworkManager(this, "p2p0");
-    manager_->Setup();
-}
-
-
 void MiracastService::AdvanceState(NetworkDeviceState new_state) {
-    std::string address;
+    IpV4Address address;
 
     g_warning("AdvanceState newsstate %d current state %d", new_state, current_state_);
 
@@ -121,12 +79,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
         break;
 
     case kConnected:
-        // We've have to pick the right address we need to tell our source to
-        // push all streaming data to.
-        address = current_peer_->Address();
-        if (manager_->Role() == kGroupOwner)
-            address = manager_->LocalAddress();
-
+        address = network_manager_->LocalAddress();
         source_->Setup(address, kMiracastDefaultRtspCtrlPort);
 
         FinishConnectAttempt(true);
@@ -182,12 +135,13 @@ void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &peer) {
 }
 
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {
-    auto inst = static_cast<KeepAlive<MiracastService>*>(user_data)->ShouldDie();
+    auto inst = static_cast<SharedKeepAlive<MiracastService>*>(user_data)->ShouldDie();
     inst->AdvanceState(kIdle);
+    return TRUE;
 }
 
 void MiracastService::StartIdleTimer() {
-    g_timeout_add(kStateIdleTimeout.count(), &MiracastService::OnIdleTimer, new KeepAlive<MiracastService>{shared_from_this()});
+    g_timeout_add(kStateIdleTimeout.count(), &MiracastService::OnIdleTimer, new SharedKeepAlive<MiracastService>{shared_from_this()});
 }
 
 void MiracastService::FinishConnectAttempt(bool success, const std::string &error_text) {
@@ -197,7 +151,7 @@ void MiracastService::FinishConnectAttempt(bool success, const std::string &erro
     connect_callback_ = nullptr;
 }
 
-void MiracastService::ConnectSink(const std::string &address, std::function<void(bool,std::string)> callback) {
+void MiracastService::ConnectSink(const MacAddress &address, std::function<void(bool,std::string)> callback) {
     if (current_peer_.get()) {
         callback(false, "Already connected");
         return;
@@ -205,7 +159,7 @@ void MiracastService::ConnectSink(const std::string &address, std::function<void
 
     NetworkDevice::Ptr device;
 
-    for (auto peer : manager_->Devices()) {
+    for (auto peer : network_manager_->Devices()) {
         if (peer->Address() != address)
             continue;
 
@@ -218,7 +172,7 @@ void MiracastService::ConnectSink(const std::string &address, std::function<void
         return;
     }
 
-    if (manager_->Connect(device->Address(), false) < 0) {
+    if (!network_manager_->Connect(device)) {
         callback(false, "Failed to connect with remote device");
         return;
     }
@@ -228,6 +182,6 @@ void MiracastService::ConnectSink(const std::string &address, std::function<void
 }
 
 void MiracastService::Scan() {
-    manager_->Scan();
+    network_manager_->Scan();
 }
 } // namespace miracast

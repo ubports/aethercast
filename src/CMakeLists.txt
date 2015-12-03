@@ -6,11 +6,17 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
                         --c-namespace MiracastInterface
                         --c-generate-object-manager
                         --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface
-                        --interface-prefix com.canonical.miracast.
-                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/com.canonical.miracast.xml)
+                        --interface-prefix org.wds.
+                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/org.wds.xml)
 
 # Make sure that generated header files can be found
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
+
+set(HEADERS
+    mcs/ip_v4_address.h
+    mcs/keep_alive.h
+    mcs/mac_address.h
+)
 
 set(SOURCES
   mcs/utils.cpp
@@ -23,18 +29,19 @@ set(SOURCES
   mcs/mirsourcemediamanager.cpp
   mcs/miracastservice.cpp
   mcs/miracastserviceadapter.cpp
-  mcs/miracastsource.cpp
+  mcs/miracastsourcemanager.cpp
   mcs/miracastsourceclient.cpp
   mcs/networkmanager.cpp
   mcs/networkdevice.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface.c
-  
+
   wpa/gdhcp/common.c
   wpa/gdhcp/ipv4ll.c
   wpa/gdhcp/server.c
   wpa/gdhcp/client.c
   wpa/dhcpclient.cpp
   wpa/dhcpserver.cpp
+  wpa/wififirmwareloader.cpp
   wpa/wpasupplicantmessage.cpp
   wpa/wpasupplicantcommand.cpp
   wpa/wpasupplicantcommandqueue.cpp
@@ -60,11 +67,12 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/src
 )
 
-add_library(miracast ${SOURCES})
+add_library(miracast ${SOURCES} ${HEADERS})
 
 add_executable(miracast-service mcs/main.cpp)
 
 target_link_libraries(miracast
+  ${Boost_LIBRARIES}
   ${GLIB_LIBRARIES}
   ${GIO_LIBRARIES}
   ${GIO-UNIX_LIBRARIES}
@@ -77,16 +85,7 @@ target_link_libraries(miracast-service miracast)
 
 install(
   TARGETS miracast-service
-  RUNTIME DESTINATION bin
+  RUNTIME DESTINATION sbin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static
 )
-
-
-add_executable(test-wpasupplicantmessage
-    mcs/utils.cpp
-    wpa/wpasupplicantmessage.cpp
-    wpa/wpasupplicantmessage_test.cpp)
-target_link_libraries(test-wpasupplicantmessage ${GLIB_LIBRARIES})
-target_link_libraries (test-wpasupplicantmessage)
-add_test(WpaSupplicantMessage test-wpasupplicantmessage)

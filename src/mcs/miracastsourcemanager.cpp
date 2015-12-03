@@ -16,33 +16,33 @@
  */
 
 #include "keep_alive.h"
-#include "miracastsource.h"
+#include "miracastsourcemanager.h"
 #include "miracastsourceclient.h"
 
 namespace mcs {
-std::shared_ptr<MiracastSource> MiracastSource::create() {
-    return std::shared_ptr<MiracastSource>{new MiracastSource{}};
+std::shared_ptr<MiracastSourceManager> MiracastSourceManager::create() {
+    return std::shared_ptr<MiracastSourceManager>{new MiracastSourceManager{}};
 }
 
-MiracastSource::MiracastSource() :
+MiracastSourceManager::MiracastSourceManager() :
     active_sink_(nullptr),
     socket_(nullptr),
     socket_source_(0) {
 }
 
-MiracastSource::~MiracastSource() {
+MiracastSourceManager::~MiracastSourceManager() {
     Release();
 }
 
-void MiracastSource::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+void MiracastSourceManager::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
     delegate_ = delegate;
 }
 
-void MiracastSource::ResetDelegate() {
+void MiracastSourceManager::ResetDelegate() {
     delegate_.reset();
 }
 
-bool MiracastSource::Setup(const std::string &address, unsigned short port) {
+bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short port) {
     GError *error;
 
     if (socket_)
@@ -56,7 +56,7 @@ bool MiracastSource::Setup(const std::string &address, unsigned short port) {
         return false;
     }
 
-    auto addr = g_inet_socket_address_new_from_string(address.c_str(), port);
+    auto addr = g_inet_socket_address_new_from_string(address.to_string().c_str(), port);
     if (!g_socket_bind(socket.get(), addr, TRUE, &error)) {
         g_warning("Failed to setup socket for incoming source connections: %s", error->message);
         g_error_free(error);
@@ -75,7 +75,12 @@ bool MiracastSource::Setup(const std::string &address, unsigned short port) {
         return false;
     }
 
-    g_source_set_callback(source, (GSourceFunc) &MiracastSource::OnNewConnection, new KeepAlive<MiracastSource>{shared_from_this()}, nullptr);
+    g_source_set_callback(source, (GSourceFunc) &MiracastSourceManager::OnNewConnection,
+                          new WeakKeepAlive<MiracastSourceManager>(shared_from_this()),
+                          [](gpointer data) {
+                              delete static_cast<WeakKeepAlive<MiracastSourceManager>*>(data);
+                          });
+
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
         g_warning("Failed to attach source to mainloop");
@@ -86,14 +91,14 @@ bool MiracastSource::Setup(const std::string &address, unsigned short port) {
     g_source_unref(source);
 
     g_info("Successfully setup source on %s:%d and awaiting incoming connection requests",
-           address.c_str(), port);
+           address.to_string().c_str(), port);
 
     socket_.swap(socket);
 
     return true;
 }
 
-void MiracastSource::Release() {    
+void MiracastSourceManager::Release() {
     if (socket_source_ > 0) {
         g_source_remove(socket_source_);
         socket_source_ = 0;
@@ -102,8 +107,13 @@ void MiracastSource::Release() {
     active_sink_.reset();
 }
 
-gboolean MiracastSource::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
-    auto inst = static_cast<KeepAlive<MiracastSource>*>(user_data)->ShouldDie();
+gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
+    auto inst = static_cast<WeakKeepAlive<MiracastSourceManager>*>(user_data)->GetInstance().lock();
+
+    // The callback context was deleted while the wait for connection was active.
+    // Hardly anything we can do about it except for returning early.
+    if (not inst)
+        return FALSE;
 
     GError *error = nullptr;
     auto client_socket = g_socket_accept(inst->socket_.get(), NULL, &error);
@@ -123,12 +133,12 @@ gboolean MiracastSource::OnNewConnection(GSocket *socket, GIOCondition  cond, gp
     }
 
     inst->active_sink_ = MiracastSourceClient::create(ScopedGObject<GSocket>{client_socket});
-    inst->active_sink_->SetDelegate(inst);
+    inst->active_sink_->SetDelegate(inst->shared_from_this());
 
     return FALSE;
 }
 
-void MiracastSource::OnConnectionClosed() {
+void MiracastSourceManager::OnConnectionClosed() {
     if (auto sp = delegate_.lock())
         sp->OnClientDisconnected();
 }
