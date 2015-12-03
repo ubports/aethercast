@@ -31,12 +31,10 @@ std::shared_ptr<MiracastService> MiracastService::create() {
 }
 
 MiracastService::MiracastService() :
-    network_manager_(nullptr),
+    network_manager_(new WpaSupplicantNetworkManager(this)),
     source_(MiracastSourceManager::create()),
     current_state_(kIdle),
     current_peer_(nullptr) {
-    // FIXME need to use a factory here for network manager construction
-    network_manager_ = new WpaSupplicantNetworkManager(this);
     network_manager_->Setup();
 }
 

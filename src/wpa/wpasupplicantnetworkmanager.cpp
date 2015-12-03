@@ -74,7 +74,7 @@ WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegat
     command_queue_(new WpaSupplicantCommandQueue(this)),
     dhcp_client_(this, interface_name_),
     dhcp_server_(nullptr, interface_name_),
-    channel_(nullptr),
+    channel_(nullptr)   ,
     channel_watch_(0),
     dhcp_timeout_(0),
     respawn_limit_(SUPPLICANT_RESPAWN_LIMIT),
@@ -376,7 +376,7 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
     boost::system::error_code err_code;
     auto path = boost::filesystem::path(ctrl_path_);
     boost::filesystem::remove_all(path, err_code);
-    if (err_code != 0)
+    if (err_code)
         g_warning("Failed remove control directory for supplicant. Will cause problems.");
 
     auto cmdline = mcs::Utils::Sprintf("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s",

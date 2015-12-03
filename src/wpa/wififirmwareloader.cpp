@@ -15,6 +15,8 @@
  *
  */
 
+#include <chrono>
+
 #include <mcs/networkutils.h>
 #include <mcs/utils.h>
 
@@ -71,17 +73,17 @@ gboolean WiFiFirmwareLoader::OnRetryLoad(gpointer user_data) {
 
 void WiFiFirmwareLoader::OnInterfaceFirmwareSet(GDBusConnection *conn, GAsyncResult *res, gpointer user_data) {
     auto inst = static_cast<WiFiFirmwareLoader*>(user_data);
-    guint timeout = 1000;
+    auto timeout = std::chrono::milliseconds(1000);
     GError *error = nullptr;
 
     GVariant *result = g_dbus_connection_call_finish(conn, res, &error);
     if (!result) {
         g_warning("Failed to load required WiFi firmware: %s", error->message);
         g_error_free(error);
-        timeout = 2000;
+        timeout = std::chrono::milliseconds(2000);
     }
 
-    inst->reload_timeout_ = g_timeout_add(timeout, &WiFiFirmwareLoader::OnRetryLoad, inst);
+    inst->reload_timeout_ = g_timeout_add(timeout.count(), &WiFiFirmwareLoader::OnRetryLoad, inst);
 }
 
 
