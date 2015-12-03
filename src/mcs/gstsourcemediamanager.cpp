@@ -15,7 +15,7 @@
  *
  */
 
-#include <boost/core/ignore_unused.hpp>
+#include <boost/concept_check.hpp>
 
 #include "gstsourcemediamanager.h"
 
@@ -34,7 +34,8 @@ GstSourceMediaManager::~GstSourceMediaManager() {
 }
 
 gboolean GstSourceMediaManager::OnGstBusEvent(GstBus *bus, GstMessage *message, gpointer data) {
-    boost::ignore_unused(bus, data);
+    boost::ignore_unused_variable_warning(bus);
+    boost::ignore_unused_variable_warning(data);
     GError *err = NULL;
     gchar *debug = NULL;
 
