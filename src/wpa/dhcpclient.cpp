@@ -54,7 +54,7 @@ void DhcpClient::OnLeaseAvailable(GDHCPClient *client, gpointer user_data) {
         return;
     }
 
-    inst->local_address_.assign(address);
+    inst->local_address_ = mcs::IpV4Address::from_string(address);
 
     if (netmask)
         inst->netmask_.assign(netmask);
@@ -66,7 +66,7 @@ void DhcpClient::OnClientDebug(const char *str, gpointer user_data) {
     g_warning("DHCP: %s", str);
 }
 
-std::string DhcpClient::LocalAddress() const {
+mcs::IpV4Address DhcpClient::LocalAddress() const {
     return local_address_;
 }
 
@@ -92,7 +92,7 @@ void DhcpClient::Stop() {
     g_dhcp_client_stop(client_);
     g_dhcp_client_unref(client_);
 
-    local_address_ = "";
+    local_address_ = mcs::IpV4Address{};
     netmask_ = "";
 
     mcs::NetworkUtils::ResetInterface(interface_index_);

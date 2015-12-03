@@ -22,11 +22,14 @@
 
 #include <string>
 
+#include <mcs/ip_v4_address.h>
+#include <mcs/non_copyable.h>
+
 #include "gdhcp.h"
 
 class DhcpServer {
 public:
-    class Delegate : private boost::noncopyable {
+    class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnLeaseAdded() = 0;
 
@@ -40,7 +43,7 @@ public:
     bool Start();
     void Stop();
 
-    std::string LocalAddress() const;
+    mcs::IpV4Address LocalAddress() const;
 
 private:
     static void OnDebug(const char *str, gpointer user_data);

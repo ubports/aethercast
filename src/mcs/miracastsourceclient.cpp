@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "keep_alive.h"
 #include "miracastsourceclient.h"
 #include "mirsourcemediamanager.h"
 #include "testsourcemediamanager.h"
@@ -31,44 +32,14 @@
 #include "utils.h"
 
 namespace mcs {
+std::shared_ptr<MiracastSourceClient> MiracastSourceClient::create(ScopedGObject<GSocket>&& socket) {
+    std::shared_ptr<MiracastSourceClient> sp{new MiracastSourceClient{std::move(socket)}};
+    return sp->FinalizeConstruction();
+}
+
 MiracastSourceClient::MiracastSourceClient(ScopedGObject<GSocket>&& socket) :
     socket_(std::move(socket)),
     socket_source_(0) {
-
-    GError *error = nullptr;
-    auto address = g_socket_get_remote_address(socket_.get(), &error);
-    if (error) {
-        g_warning("Failed to receive address from socket: %s", error->message);
-        g_error_free(error);
-        return;
-    }
-
-    auto inet_address = g_inet_socket_address_get_address(G_INET_SOCKET_ADDRESS(address));
-    if (!inet_address) {
-        g_warning("Failed to determine client address");
-        return;
-    }
-
-    std::string peer_address = g_inet_address_to_string(G_INET_ADDRESS(inet_address));
-
-    auto source = g_socket_create_source(socket_.get(), (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR), nullptr);
-    if (!source) {
-        g_warning("Failed to setup event listener for source client");
-        return;
-    }
-
-    g_source_set_callback(source, (GSourceFunc) &MiracastSourceClient::OnIncomingData, this, nullptr);
-    socket_source_ = g_source_attach(source, nullptr);
-    if (socket_source_ == 0) {
-        g_warning("Failed to attach source to mainloop");
-        g_source_unref(source);
-        return;
-    }
-
-    media_manager_.reset(MediaManagerFactory::CreateSource(peer_address));
-    source_.reset(wds::Source::Create(this, media_manager_.get()));
-
-    source_->Start();
 }
 
 MiracastSourceClient::~MiracastSourceClient() {
@@ -156,7 +127,7 @@ void MiracastSourceClient::OnTimeoutRemove(gpointer user_data) {
 }
 
 gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  cond, gpointer user_data) {
-    auto inst = static_cast<MiracastSourceClient*>(user_data);
+    auto inst = static_cast<SharedKeepAlive<MiracastSourceClient>*>(user_data)->ShouldDie();
 
     if (cond == G_IO_ERR || cond == G_IO_HUP) {
         if (auto sp = inst->delegate_.lock())
@@ -179,4 +150,45 @@ gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  con
 
     return TRUE;
 }
+
+std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction() {
+    auto sp = shared_from_this();
+
+    GError *error = nullptr;
+    auto address = g_socket_get_remote_address(socket_.get(), &error);
+    if (error) {
+        g_warning("Failed to receive address from socket: %s", error->message);
+        g_error_free(error);
+        return sp;
+    }
+
+    auto inet_address = g_inet_socket_address_get_address(G_INET_SOCKET_ADDRESS(address));
+    if (!inet_address) {
+        g_warning("Failed to determine client address");
+        return sp;
+    }
+
+    std::string peer_address = g_inet_address_to_string(G_INET_ADDRESS(inet_address));
+
+    auto source = g_socket_create_source(socket_.get(), (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR), nullptr);
+    if (!source) {
+        g_warning("Failed to setup event listener for source client");
+        return sp;
+    }
+
+    g_source_set_callback(source, (GSourceFunc) &MiracastSourceClient::OnIncomingData, new SharedKeepAlive<MiracastSourceClient>{sp}, nullptr);
+    socket_source_ = g_source_attach(source, nullptr);
+    if (socket_source_ == 0) {
+        g_warning("Failed to attach source to mainloop");
+        g_source_unref(source);
+        return sp;
+    }
+
+    media_manager_ = MediaManagerFactory::CreateSource(peer_address);
+    source_.reset(wds::Source::Create(this, media_manager_.get()));
+
+    source_->Start();
+    return sp;
+}
+
 } // namespace mcs

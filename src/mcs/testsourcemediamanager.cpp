@@ -21,6 +21,10 @@
 #include "utils.h"
 
 namespace mcs {
+std::shared_ptr<TestSourceMediaManager> TestSourceMediaManager::create(const std::string &remote_address) {
+    return std::shared_ptr<TestSourceMediaManager>{new TestSourceMediaManager{remote_address}};
+}
+
 TestSourceMediaManager::TestSourceMediaManager(const std::string &remote_address) :
     remote_address_(remote_address) {
 }

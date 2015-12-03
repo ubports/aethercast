@@ -31,19 +31,22 @@
 #include <wds/source.h>
 #include <wds/media_manager.h>
 
+#include "non_copyable.h"
 #include "scoped_gobject.h"
 
 namespace mcs {
 class TimerCallbackData;
 
-class MiracastSourceClient : public wds::Peer::Delegate {
+class MiracastSourceClient : public std::enable_shared_from_this<MiracastSourceClient>,
+                             public wds::Peer::Delegate {
 public:
-    class Delegate : private boost::noncopyable {
+    class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnConnectionClosed() = 0;
     };
 
-    MiracastSourceClient(ScopedGObject<GSocket>&& socket);
+    static std::shared_ptr<MiracastSourceClient> create(ScopedGObject<GSocket>&& socket);
+
     ~MiracastSourceClient();
 
     void SetDelegate(const std::weak_ptr<Delegate>& delegate);
@@ -62,6 +65,9 @@ public:
                                      gpointer user_data);
 
 private:
+    MiracastSourceClient(ScopedGObject<GSocket>&& socket);
+    std::shared_ptr<MiracastSourceClient> FinalizeConstruction();
+
     void DumpRtsp(const std::string &prefix, const std::string &data);
 
 private:
@@ -71,7 +77,7 @@ private:
     std::string local_address_;
     std::vector<guint> timers_;
     std::unique_ptr<wds::Source> source_;
-    std::unique_ptr<wds::SourceMediaManager> media_manager_;
+    std::shared_ptr<wds::SourceMediaManager> media_manager_;
     guint watch_;
 
     friend class TimerCallbackData;
