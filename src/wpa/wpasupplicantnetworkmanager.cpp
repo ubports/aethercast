@@ -35,6 +35,8 @@
 
 #include <algorithm>
 
+#include <boost/filesystem.hpp>
+
 #include "wpasupplicantnetworkmanager.h"
 
 #include "mcs/networkdevice.h"
@@ -65,6 +67,7 @@
 WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate, const std::string &interface_name) :
     delegate_(delegate),
     interface_name_(interface_name),
+    firmware_loader_(interface_name, this),
     ctrl_path_(mcs::Utils::Sprintf("/var/run/%s_supplicant", interface_name_.c_str())),
     command_queue_(new WpaSupplicantCommandQueue(this)),
     dhcp_client_(this, interface_name),
@@ -83,6 +86,28 @@ WpaSupplicantNetworkManager::~WpaSupplicantNetworkManager() {
 
     if (respawn_source_)
         g_source_remove(respawn_source_);
+}
+
+
+bool WpaSupplicantNetworkManager::Setup() {
+    if (!firmware_loader_.IsNeeded())
+        return StartSupplicant();
+
+    return firmware_loader_.TryLoad();
+}
+
+void WpaSupplicantNetworkManager::OnFirmwareLoaded() {
+    StartSupplicant();
+}
+
+void WpaSupplicantNetworkManager::OnFirmwareUnloaded() {
+    StopSupplicant();
+
+    // FIXME what are we going to do now? This needs to be
+    // solved together with the other system components
+    // changing the firmware. Trying to reload the firmware
+    // is the best we can do for now.
+    firmware_loader_.TryLoad();
 }
 
 void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage message) {
@@ -244,10 +269,6 @@ bool WpaSupplicantNetworkManager::Running() const {
     return supplicant_pid_ > 0;
 }
 
-bool WpaSupplicantNetworkManager::Setup() {
-    return StartSupplicant();
-}
-
 gboolean WpaSupplicantNetworkManager::OnConnectSupplicant(gpointer user_data) {
     auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
     // If we're no able to connect to supplicant we try it again next time
@@ -347,6 +368,14 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
 
     if (!CreateSupplicantConfig(conf_path))
         return false;
+
+    // Drop any left over control socket to be able to setup
+    // a new one.
+    boost::system::error_code err_code;
+    auto path = boost::filesystem::path(ctrl_path_);
+    boost::filesystem::remove_all(path, err_code);
+    if (err_code != 0)
+        g_warning("Failed remove control directory for supplicant. Will cause problems.");
 
     auto cmdline = mcs::Utils::Sprintf("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s",
                                            WPA_SUPPLICANT_BIN_PATH,

@@ -40,6 +40,7 @@ set(SOURCES
   wpa/gdhcp/client.c
   wpa/dhcpclient.cpp
   wpa/dhcpserver.cpp
+  wpa/wififirmwareloader.cpp
   wpa/wpasupplicantmessage.cpp
   wpa/wpasupplicantcommand.cpp
   wpa/wpasupplicantcommandqueue.cpp
