@@ -67,8 +67,6 @@ public:
 
 private:
     static gboolean OnIdleTimer(gpointer user_data);
-    static gboolean OnRetryLoadFirmware(gpointer user_data);
-    static void OnWiFiFirmwareLoaded(GDBusConnection *conn, GAsyncResult *res, gpointer user_data);
 
 private:
     MiracastService();
@@ -81,7 +79,7 @@ private:
 
 private:
     std::weak_ptr<Delegate> delegate_;
-    NetworkManager *manager_;
+    std::shared_ptr<NetworkManager> network_manager_;
     std::shared_ptr<MiracastSourceManager> source_;
     NetworkDeviceState current_state_;
     NetworkDevice::Ptr current_peer_;

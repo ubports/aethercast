@@ -35,6 +35,8 @@
 
 #include <algorithm>
 
+#include <boost/filesystem.hpp>
+
 #include "wpasupplicantnetworkmanager.h"
 
 #include "mcs/networkdevice.h"
@@ -62,14 +64,17 @@
 #define P2P_GROUP_STARTED                        "P2P-GROUP-STARTED"
 #define P2P_GROUP_REMOVED                        "P2P-GROUP-REMOVED"
 
-WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate, const std::string &interface_name) :
+WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate) :
     delegate_(delegate),
-    interface_name_(interface_name),
+    // This network manager implementation is bound to the p2p0 network interface
+    // being available which is the case on most Android platforms.
+    interface_name_("p2p0"),
+    firmware_loader_(interface_name_, this),
     ctrl_path_(mcs::Utils::Sprintf("/var/run/%s_supplicant", interface_name_.c_str())),
     command_queue_(new WpaSupplicantCommandQueue(this)),
-    dhcp_client_(this, interface_name),
-    dhcp_server_(nullptr, interface_name),
-    channel_(nullptr),
+    dhcp_client_(this, interface_name_),
+    dhcp_server_(nullptr, interface_name_),
+    channel_(nullptr)   ,
     channel_watch_(0),
     dhcp_timeout_(0),
     respawn_limit_(SUPPLICANT_RESPAWN_LIMIT),
@@ -83,6 +88,28 @@ WpaSupplicantNetworkManager::~WpaSupplicantNetworkManager() {
 
     if (respawn_source_)
         g_source_remove(respawn_source_);
+}
+
+
+bool WpaSupplicantNetworkManager::Setup() {
+    if (!firmware_loader_.IsNeeded())
+        return StartSupplicant();
+
+    return firmware_loader_.TryLoad();
+}
+
+void WpaSupplicantNetworkManager::OnFirmwareLoaded() {
+    StartSupplicant();
+}
+
+void WpaSupplicantNetworkManager::OnFirmwareUnloaded() {
+    StopSupplicant();
+
+    // FIXME what are we going to do now? This needs to be
+    // solved together with the other system components
+    // changing the firmware. Trying to reload the firmware
+    // is the best we can do for now.
+    firmware_loader_.TryLoad();
 }
 
 void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage message) {
@@ -244,10 +271,6 @@ bool WpaSupplicantNetworkManager::Running() const {
     return supplicant_pid_ > 0;
 }
 
-bool WpaSupplicantNetworkManager::Setup() {
-    return StartSupplicant();
-}
-
 gboolean WpaSupplicantNetworkManager::OnConnectSupplicant(gpointer user_data) {
     auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
     // If we're no able to connect to supplicant we try it again next time
@@ -347,6 +370,14 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
 
     if (!CreateSupplicantConfig(conf_path))
         return false;
+
+    // Drop any left over control socket to be able to setup
+    // a new one.
+    boost::system::error_code err_code;
+    auto path = boost::filesystem::path(ctrl_path_);
+    boost::filesystem::remove_all(path, err_code);
+    if (err_code)
+        g_warning("Failed remove control directory for supplicant. Will cause problems.");
 
     auto cmdline = mcs::Utils::Sprintf("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s",
                                            WPA_SUPPLICANT_BIN_PATH,
@@ -579,43 +610,43 @@ std::vector<mcs::NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() cons
     return values;
 }
 
-int WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
-    int ret = 0;
-
+bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
     if (available_devices_.find(device->Address()) == available_devices_.end())
-        return -EINVAL;
+        return false;
 
     if (current_peer_.get())
-        return -EALREADY;
+        return false;
 
     current_peer_ = available_devices_[device->Address()];
 
     auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
     m.Append("ss", device->Address().c_str(), "pbc");
 
+    bool ret = false;
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
-            ret = -EIO;
             g_warning("Failed to connect with remote %s", device->Address().c_str());
             return;
         }
+
+        ret = true;
     });
 
     return ret;
 }
 
-int WpaSupplicantNetworkManager::DisconnectAll() {
-    int ret = 0;
-
+bool WpaSupplicantNetworkManager::DisconnectAll() {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_GROUP_REMOVE");
     m.Append("s", interface_name_.c_str());
 
+    bool ret = false;
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
-            ret = -EIO;
             g_warning("Failed to disconnect all connected devices on interface %s", interface_name_.c_str());
             return;
         }
+
+        ret = true;
     });
 
     return ret;

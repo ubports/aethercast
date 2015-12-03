@@ -32,12 +32,14 @@
 
 #include "wpasupplicantmessage.h"
 #include "wpasupplicantcommandqueue.h"
+#include "wififirmwareloader.h"
 
 class WpaSupplicantNetworkManager : public mcs::NetworkManager,
                                     public WpaSupplicantCommandQueue::Delegate,
-                                    public DhcpClient::Delegate {
+                                    public DhcpClient::Delegate,
+                                    public wpa::WiFiFirmwareLoader::Delegate {
 public:
-    WpaSupplicantNetworkManager(mcs::NetworkManager::Delegate *delegate_, const std::string &iface);
+    WpaSupplicantNetworkManager(mcs::NetworkManager::Delegate *delegate_);
     ~WpaSupplicantNetworkManager();
 
     bool Setup();
@@ -47,8 +49,8 @@ public:
     void Scan(unsigned int timeout = 30) override;
     std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
 
-    int Connect(const mcs::NetworkDevice::Ptr &device) override;
-    int DisconnectAll() override;
+    bool Connect(const mcs::NetworkDevice::Ptr &device) override;
+    bool DisconnectAll() override;
 
     mcs::IpV4Address LocalAddress() const override;
 
@@ -58,6 +60,9 @@ public:
     void OnWriteMessage(WpaSupplicantMessage message);
 
     void OnAddressAssigned(const mcs::IpV4Address &address);
+
+    void OnFirmwareLoaded();
+    void OnFirmwareUnloaded();
 
 private:
     bool StartSupplicant();
@@ -86,6 +91,7 @@ private:
 private:
     NetworkManager::Delegate *delegate_;
     std::string interface_name_;
+    wpa::WiFiFirmwareLoader firmware_loader_;
     std::string ctrl_path_;
     int sock_;
     std::map<std::string,mcs::NetworkDevice::Ptr> available_devices_;
