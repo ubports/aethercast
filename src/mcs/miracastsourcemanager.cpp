@@ -15,6 +15,7 @@
  *
  */
 
+#include "keep_alive.h"
 #include "miracastsourcemanager.h"
 #include "miracastsourceclient.h"
 
@@ -74,7 +75,12 @@ bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short por
         return false;
     }
 
-    g_source_set_callback(source, (GSourceFunc) &MiracastSourceManager::OnNewConnection, this, nullptr);
+    g_source_set_callback(source, (GSourceFunc) &MiracastSourceManager::OnNewConnection,
+                          new WeakKeepAlive<MiracastSourceManager>(shared_from_this()),
+                          [](gpointer data) {
+                              delete static_cast<WeakKeepAlive<MiracastSourceManager>*>(data);
+                          });
+
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
         g_warning("Failed to attach source to mainloop");
@@ -98,14 +104,16 @@ void MiracastSourceManager::Release() {
         socket_source_ = 0;
     }
 
-    if (active_sink_) {
-        delete active_sink_;
-        active_sink_ = nullptr;
-    }
+    active_sink_.reset();
 }
 
 gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
-    auto inst = static_cast<MiracastSourceManager*>(user_data);
+    auto inst = static_cast<WeakKeepAlive<MiracastSourceManager>*>(user_data)->GetInstance().lock();
+
+    // The callback context was deleted while the wait for connection was active.
+    // Hardly anything we can do about it except for returning early.
+    if (not inst)
+        return FALSE;
 
     GError *error = nullptr;
     auto client_socket = g_socket_accept(inst->socket_.get(), NULL, &error);
@@ -124,7 +132,7 @@ gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  c
         return FALSE;
     }
 
-    inst->active_sink_ = new MiracastSourceClient(ScopedGObject<GSocket>{client_socket});
+    inst->active_sink_ = MiracastSourceClient::create(ScopedGObject<GSocket>{client_socket});
     inst->active_sink_->SetDelegate(inst->shared_from_this());
 
     return FALSE;

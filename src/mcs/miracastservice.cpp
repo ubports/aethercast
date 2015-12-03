@@ -15,6 +15,7 @@
  *
  */
 
+#include "keep_alive.h"
 #include "miracastservice.h"
 #include "wpasupplicantnetworkmanager.h"
 #include "wfddeviceinfo.h"
@@ -66,12 +67,11 @@ void MiracastService::OnClientDisconnected() {
 }
 
 gboolean MiracastService::OnRetryLoadFirmware(gpointer user_data) {
-    auto inst = static_cast<MiracastService*>(user_data);
+    auto inst = static_cast<SharedKeepAlive<MiracastService>*>(user_data)->ShouldDie();
     inst->LoadWiFiFirmware();
 }
 
 void MiracastService::OnWiFiFirmwareLoaded(GDBusConnection *conn, GAsyncResult *res, gpointer user_data) {
-    auto inst = static_cast<MiracastService*>(user_data);
     guint timeout = 500;
     GError *error = nullptr;
 
@@ -81,7 +81,7 @@ void MiracastService::OnWiFiFirmwareLoaded(GDBusConnection *conn, GAsyncResult *
         timeout = 2000;
     }
 
-    g_timeout_add(timeout, &MiracastService::OnRetryLoadFirmware, inst);
+    g_timeout_add(timeout, &MiracastService::OnRetryLoadFirmware, user_data);
 }
 
 void MiracastService::LoadWiFiFirmware() {
@@ -95,8 +95,8 @@ void MiracastService::LoadWiFiFirmware() {
 
         g_dbus_connection_call(conn, "fi.w1.wpa_supplicant1", "/fi/w1/wpa_supplicant1",
                                "fi.w1.wpa_supplicant1", "SetInterfaceFirmware", params,
-                               nullptr, (GDBusCallFlags) G_DBUS_CALL_FLAGS_NONE, -1,
-                               nullptr, (GAsyncReadyCallback) &MiracastService::OnWiFiFirmwareLoaded, this);
+                               nullptr, (GDBusCallFlags) G_DBUS_CALL_FLAGS_NONE, -1, nullptr,
+                               (GAsyncReadyCallback) &MiracastService::OnWiFiFirmwareLoaded, new SharedKeepAlive<MiracastService>{shared_from_this()});
 
         return;
     }
@@ -172,12 +172,12 @@ void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &peer) {
 }
 
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {
-    auto inst = static_cast<MiracastService*>(user_data);
+    auto inst = static_cast<SharedKeepAlive<MiracastService>*>(user_data)->ShouldDie();
     inst->AdvanceState(kIdle);
 }
 
 void MiracastService::StartIdleTimer() {
-    g_timeout_add(STATE_IDLE_TIMEOUT, &MiracastService::OnIdleTimer, this);
+    g_timeout_add(STATE_IDLE_TIMEOUT, &MiracastService::OnIdleTimer, new SharedKeepAlive<MiracastService>{shared_from_this()});
 }
 
 void MiracastService::FinishConnectAttempt(bool success, const std::string &error_text) {

@@ -17,6 +17,7 @@
 
 #include "gstsourcemediamanager.h"
 
+#include "keep_alive.h"
 #include "scoped_gobject.h"
 
 namespace mcs {
@@ -65,7 +66,7 @@ void GstSourceMediaManager::Configure() {
     pipeline_ = ConstructPipeline(format_);
 
     ScopedGObject<GstBus> bus{gst_pipeline_get_bus (GST_PIPELINE(pipeline_.get()))};
-    bus_watch_id_ = gst_bus_add_watch(bus.get(), &GstSourceMediaManager::OnGstBusEvent, this);
+    bus_watch_id_ = gst_bus_add_watch(bus.get(), &GstSourceMediaManager::OnGstBusEvent, new SharedKeepAlive<GstSourceMediaManager>{shared_from_this()});
 
     // Prepare pipeline so we're ready to go as soon as needed
     gst_element_set_state(pipeline_.get(), GST_STATE_READY);

@@ -63,7 +63,7 @@ private:
     std::weak_ptr<Delegate> delegate_;
     ScopedGObject<GSocket> socket_;
     guint socket_source_;
-    MiracastSourceClient *active_sink_;
+    std::shared_ptr<MiracastSourceClient> active_sink_;
 };
 } // namespace mcs
 #endif
