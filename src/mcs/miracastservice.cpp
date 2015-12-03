@@ -187,7 +187,7 @@ void MiracastService::FinishConnectAttempt(bool success, const std::string &erro
     connect_callback_ = nullptr;
 }
 
-void MiracastService::ConnectSink(const IpV4Address &address, std::function<void(bool,std::string)> callback) {
+void MiracastService::ConnectSink(const MacAddress &address, std::function<void(bool,std::string)> callback) {
     if (current_peer_.get()) {
         callback(false, "Already connected");
         return;
@@ -196,7 +196,7 @@ void MiracastService::ConnectSink(const IpV4Address &address, std::function<void
     NetworkDevice::Ptr device;
 
     for (auto peer : manager_->Devices()) {
-        if (peer->IPv4Address() != address)
+        if (peer->Address() != address)
             continue;
 
         device = peer;

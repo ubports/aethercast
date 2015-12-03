@@ -52,7 +52,7 @@ public:
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
 
-    void ConnectSink(const IpV4Address &address, std::function<void(bool,std::string)> callback);
+    void ConnectSink(const MacAddress &address, std::function<void(bool,std::string)> callback);
     void Scan();
 
     NetworkDeviceState State() const;
