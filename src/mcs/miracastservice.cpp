@@ -31,8 +31,8 @@ std::shared_ptr<MiracastService> MiracastService::create() {
 }
 
 MiracastService::MiracastService() :
-    current_state_(kIdle),
     source_(MiracastSourceManager::create()),
+    current_state_(kIdle),    
     current_peer_(nullptr) {
     // FIXME this really needs to move somewhere else as it's something
     // specific for some devices and somehow goes together with the
@@ -69,13 +69,14 @@ void MiracastService::OnClientDisconnected() {
 gboolean MiracastService::OnRetryLoadFirmware(gpointer user_data) {
     auto inst = static_cast<SharedKeepAlive<MiracastService>*>(user_data)->ShouldDie();
     inst->LoadWiFiFirmware();
+    return TRUE;
 }
 
 void MiracastService::OnWiFiFirmwareLoaded(GDBusConnection *conn, GAsyncResult *res, gpointer user_data) {
     guint timeout = 500;
     GError *error = nullptr;
 
-    GVariant *result = g_dbus_connection_call_finish(conn, res, &error);
+    g_dbus_connection_call_finish(conn, res, &error);
     if (error) {
         g_warning("Failed to load required WiFi firmware: %s", error->message);
         timeout = 2000;
@@ -85,7 +86,7 @@ void MiracastService::OnWiFiFirmwareLoaded(GDBusConnection *conn, GAsyncResult *
 }
 
 void MiracastService::LoadWiFiFirmware() {
-    if (!g_file_test("/sys/class/net/p2p0/uevent", (GFileTest) (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
+    if (!g_file_test("/sys/class/net/p2p0/uevent", static_cast<GFileTest>(G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
 
         g_warning("Switching device WiFi chip firmware to get P2P support");
 
@@ -95,8 +96,8 @@ void MiracastService::LoadWiFiFirmware() {
 
         g_dbus_connection_call(conn, "fi.w1.wpa_supplicant1", "/fi/w1/wpa_supplicant1",
                                "fi.w1.wpa_supplicant1", "SetInterfaceFirmware", params,
-                               nullptr, (GDBusCallFlags) G_DBUS_CALL_FLAGS_NONE, -1, nullptr,
-                               (GAsyncReadyCallback) &MiracastService::OnWiFiFirmwareLoaded, new SharedKeepAlive<MiracastService>{shared_from_this()});
+                               nullptr, static_cast<GDBusCallFlags>(G_DBUS_CALL_FLAGS_NONE), -1,
+                               nullptr, reinterpret_cast<GAsyncReadyCallback>(&MiracastService::OnWiFiFirmwareLoaded), new SharedKeepAlive<MiracastService>{shared_from_this()});
 
         return;
     }
@@ -174,6 +175,7 @@ void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &peer) {
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {
     auto inst = static_cast<SharedKeepAlive<MiracastService>*>(user_data)->ShouldDie();
     inst->AdvanceState(kIdle);
+    return TRUE;
 }
 
 void MiracastService::StartIdleTimer() {

@@ -17,6 +17,8 @@
 
 #include <glib.h>
 
+#include <boost/core/ignore_unused.hpp>
+
 #include "miracastserviceadapter.h"
 
 #include "keep_alive.h"
@@ -44,12 +46,15 @@ MiracastServiceAdapter::~MiracastServiceAdapter() {
 }
 
 void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
+    boost::ignore_unused(state);
 }
 
 void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &peer) {
+    boost::ignore_unused(peer);
 }
 
 void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &peer) {
+    boost::ignore_unused(peer);
 }
 
 void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
@@ -75,6 +80,7 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
 
 void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
                                         GDBusMethodInvocation *invocation, gpointer user_data) {
+    boost::ignore_unused(skeleton);
     auto inst = static_cast<WeakKeepAlive<MiracastServiceAdapter>*>(user_data)->GetInstance().lock();
 
     if (not inst)
@@ -89,6 +95,7 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
 
 void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skeleton,
                                         GDBusMethodInvocation *invocation, const gchar *address, gpointer user_data) {
+    boost::ignore_unused(skeleton);
     auto inst = static_cast<WeakKeepAlive<MiracastServiceAdapter>*>(user_data)->GetInstance().lock();
 
     if (not inst)
