@@ -27,14 +27,14 @@ namespace wpa {
 WiFiFirmwareLoader::WiFiFirmwareLoader(const std::string &interface_name, Delegate *delegate) :
     interface_name_(interface_name),
     delegate_(delegate),
-    reload_timeout_(0) {
+    reload_timeout_source_(0) {
     // FIXME we need to add some change events to wpa to see when the firmware changes
     // so that we can react on this.
 }
 
 WiFiFirmwareLoader::~WiFiFirmwareLoader() {
-    if (reload_timeout_ > 0)
-        g_source_remove(reload_timeout_);
+    if (reload_timeout_source_ > 0)
+        g_source_remove(reload_timeout_source_);
 }
 
 bool WiFiFirmwareLoader::IsNeeded() {
@@ -83,7 +83,7 @@ void WiFiFirmwareLoader::OnInterfaceFirmwareSet(GDBusConnection *conn, GAsyncRes
         timeout = std::chrono::milliseconds(2000);
     }
 
-    inst->reload_timeout_ = g_timeout_add(timeout.count(), &WiFiFirmwareLoader::OnRetryLoad, inst);
+    inst->reload_timeout_source_ = g_timeout_add(timeout.count(), &WiFiFirmwareLoader::OnRetryLoad, inst);
 }
 
 

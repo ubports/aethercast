@@ -47,7 +47,7 @@ private:
 private:
     std::string interface_name_;
     Delegate *delegate_;
-    guint reload_timeout_;
+    guint reload_timeout_source_;
 };
 
 } // namespace wpa
