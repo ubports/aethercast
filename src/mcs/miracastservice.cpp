@@ -35,7 +35,7 @@ MiracastService::MiracastService() :
     source_(MiracastSourceManager::create()),
     current_peer_(nullptr) {
     // FIXME need to use a factory here for network manager construction
-    network_manager_ = new WpaSupplicantNetworkManager(this, "p2p0");
+    network_manager_ = new WpaSupplicantNetworkManager(this);
     network_manager_->Setup();
 }
 

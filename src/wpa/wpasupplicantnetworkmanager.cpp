@@ -64,14 +64,16 @@
 #define P2P_GROUP_STARTED                        "P2P-GROUP-STARTED"
 #define P2P_GROUP_REMOVED                        "P2P-GROUP-REMOVED"
 
-WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate, const std::string &interface_name) :
+WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate) :
     delegate_(delegate),
-    interface_name_(interface_name),
-    firmware_loader_(interface_name, this),
+    // This network manager implementation is bound to the p2p0 network interface
+    // being available which is the case on most Android platforms.
+    interface_name_("p2p0"),
+    firmware_loader_(interface_name_, this),
     ctrl_path_(mcs::Utils::Sprintf("/var/run/%s_supplicant", interface_name_.c_str())),
     command_queue_(new WpaSupplicantCommandQueue(this)),
-    dhcp_client_(this, interface_name),
-    dhcp_server_(nullptr, interface_name),
+    dhcp_client_(this, interface_name_),
+    dhcp_server_(nullptr, interface_name_),
     channel_(nullptr),
     channel_watch_(0),
     dhcp_timeout_(0),

@@ -39,7 +39,7 @@ class WpaSupplicantNetworkManager : public mcs::NetworkManager,
                                     public DhcpClient::Delegate,
                                     public wpa::WiFiFirmwareLoader::Delegate {
 public:
-    WpaSupplicantNetworkManager(mcs::NetworkManager::Delegate *delegate_, const std::string &iface);
+    WpaSupplicantNetworkManager(mcs::NetworkManager::Delegate *delegate_);
     ~WpaSupplicantNetworkManager();
 
     bool Setup();
