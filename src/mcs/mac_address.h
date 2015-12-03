@@ -15,42 +15,13 @@
  *
  */
 
-#ifndef DHCPSERVER_H_
-#define DHCPSERVER_H_
-
-#include <boost/noncopyable.hpp>
+#ifndef MAC_ADDRESS_H_
+#define MAC_ADDRESS_H_
 
 #include <string>
 
-#include <mcs/ip_v4_address.h>
-
-#include "gdhcp.h"
-
-class DhcpServer {
-public:
-    class Delegate : private boost::noncopyable {
-    public:
-        virtual void OnLeaseAdded() = 0;
-
-    protected:
-        Delegate() = default;
-    };
-
-    DhcpServer(Delegate *delegate, const std::string &interface_name_h);
-    ~DhcpServer();
-
-    bool Start();
-    void Stop();
-
-    mcs::IpV4Address LocalAddress() const;
-
-private:
-    static void OnDebug(const char *str, gpointer user_data);
-
-private:
-    std::string interface_name_;
-    int interface_index_;
-    GDHCPServer *server_;
-};
+namespace mcs {
+using MacAddress = std::string;
+}
 
 #endif

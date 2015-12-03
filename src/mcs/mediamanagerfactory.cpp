@@ -20,6 +20,7 @@
 #include "mediamanagerfactory.h"
 #include "mirsourcemediamanager.h"
 #include "testsourcemediamanager.h"
+#include "utils.h"
 
 namespace mcs {
 
@@ -44,7 +45,7 @@ void NullSourceMediaManager::Configure() {
 }
 
 std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const std::string &remote_address) {
-    std::string type = getenv("MIRACAST_SOURCE_TYPE");
+    std::string type = Utils::GetEnvValue("MIRACAST_SOURCE_TYPE");
 
     g_warning("Creating source media manager of type %s", type.c_str());
 
