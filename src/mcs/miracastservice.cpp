@@ -32,8 +32,8 @@ std::shared_ptr<MiracastService> MiracastService::create() {
 
 MiracastService::MiracastService() :
     network_manager_(nullptr),
-    current_state_(kIdle),
     source_(MiracastSourceManager::create()),
+    current_state_(kIdle),
     current_peer_(nullptr) {
     // FIXME need to use a factory here for network manager construction
     network_manager_ = new WpaSupplicantNetworkManager(this);
@@ -134,6 +134,7 @@ void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &peer) {
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {
     auto inst = static_cast<SharedKeepAlive<MiracastService>*>(user_data)->ShouldDie();
     inst->AdvanceState(kIdle);
+    return TRUE;
 }
 
 void MiracastService::StartIdleTimer() {
