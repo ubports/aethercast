@@ -30,9 +30,8 @@ std::shared_ptr<MiracastService> MiracastService::create() {
 }
 
 MiracastService::MiracastService() :
-    source_(MiracastSource::create()),
-    current_state_(kIdle),
     source_(MiracastSourceManager::create()),
+    current_state_(kIdle),    
     current_peer_(nullptr) {
     // FIXME this really needs to move somewhere else as it's something
     // specific for some devices and somehow goes together with the
