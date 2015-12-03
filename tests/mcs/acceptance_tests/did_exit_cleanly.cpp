@@ -15,8 +15,20 @@
  *
  */
 
-#include "miracastservice.h"
+#include "did_exit_cleanly.h"
 
-int main(int argc, char **argv) {
-    return mcs::MiracastService::Main(mcs::MiracastService::MainOptions::FromCommandLine(argc, argv));
+namespace testing {
+AssertionResult DidExitCleanly(core::posix::ChildProcess& child) {
+    return DidExitCleanly(child.wait_for(core::posix::wait::Flags::untraced));
+}
+
+AssertionResult DidExitCleanly(const core::posix::wait::Result& result)
+{
+    if (result.status != core::posix::wait::Result::Status::exited)
+        return AssertionFailure() << "Process did not exit, but: " << (int)result.status;
+    if (result.detail.if_exited.status != core::posix::exit::Status::success)
+        return AssertionFailure() << "Process did exit with failure.";
+
+    return AssertionSuccess();
+}
 }
