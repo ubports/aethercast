@@ -23,6 +23,7 @@
 #include <list>
 #include <vector>
 
+#include "ip_v4_address.h"
 #include "networkdevice.h"
 #include "non_copyable.h"
 
@@ -40,18 +41,14 @@ public:
     };
 
     virtual bool Setup() = 0;
+    virtual void Scan(unsigned int timeout = 30) = 0;
+    virtual int Connect(const NetworkDevice::Ptr &device) = 0;
+    virtual int DisconnectAll() = 0;
 
     virtual void SetWfdSubElements(const std::list<std::string> &elements) = 0;
 
-    virtual void Scan(unsigned int timeout = 30) = 0;
-
     virtual std::vector<NetworkDevice::Ptr> Devices() const = 0;
-
-    virtual int Connect(const std::string &address, bool persistent = true) = 0;
-    virtual int DisconnectAll() = 0;
-
-    virtual NetworkDeviceRole Role() const = 0;
-    virtual std::string LocalAddress() const = 0;
+    virtual IpV4Address LocalAddress() const = 0;
     virtual bool Running() const = 0;
 
 protected:

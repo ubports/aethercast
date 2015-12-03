@@ -26,14 +26,14 @@
 #include <gio/gio.h>
 
 #include "miracastsourceclient.h"
-#include "non_copyable.h"
 #include "scoped_gobject.h"
+#include "ip_v4_address.h"
 
 namespace mcs {
-class MiracastSource : public std::enable_shared_from_this<MiracastSource>,
+class MiracastSourceManager : public std::enable_shared_from_this<MiracastSourceManager>,
                        public MiracastSourceClient::Delegate {
 public:
-    class Delegate : private mcs::NonCopyable {
+    class Delegate : private boost::noncopyable {
     public:
         virtual void OnClientDisconnected() = 0;
 
@@ -41,14 +41,14 @@ public:
         Delegate() = default;
     };
 
-    static std::shared_ptr<MiracastSource> create();
+    static std::shared_ptr<MiracastSourceManager> create();
 
-    ~MiracastSource();
+    ~MiracastSourceManager();
 
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
 
-    bool Setup(const std::string &address, unsigned short port);
+    bool Setup(const IpV4Address &address, unsigned short port);
     void Release();
 
 public:
@@ -57,7 +57,7 @@ public:
 private:
     static gboolean OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data);
 
-    MiracastSource();
+    MiracastSourceManager();
 
 private:
     std::weak_ptr<Delegate> delegate_;

@@ -39,4 +39,11 @@ std::vector<std::string> Utils::StringSplit(const std::string &text, char sep) {
   std::vector<std::string> tokens;
   return boost::algorithm::split(tokens, text, boost::is_from_range(sep, sep), boost::algorithm::token_compress_on);
 }
+
+std::string Utils::GetEnvValue(const std::string &name) {
+    char *value = getenv(name.c_str());
+    if (!value)
+        return std::string("");
+    return std::string(value);
+}
 } // namespace mcs

@@ -39,16 +39,18 @@ std::string NetworkDevice::StateToStr(NetworkDeviceState state) {
 }
 
 NetworkDevice::NetworkDevice() :
-    state_(kIdle),
-    config_methods_(0),
-    role_(kUndecided) {
+    state_(kIdle) {
 }
 
 NetworkDevice::~NetworkDevice() {
 }
 
-std::string NetworkDevice::Address() const {
+MacAddress NetworkDevice::Address() const {
     return address_;
+}
+
+IpV4Address NetworkDevice::IPv4Address() const {
+    return ipv4_address_;
 }
 
 std::string NetworkDevice::Name() const {
@@ -63,20 +65,12 @@ std::string NetworkDevice::StateAsString() const {
     return StateToStr(state_);
 }
 
-WfdDeviceInfo NetworkDevice::DeviceInfo() const {
-    return wfd_device_info_;
-}
-
-int NetworkDevice::ConfigMethods() const {
-    return config_methods_;
-}
-
-NetworkDeviceRole NetworkDevice::Role() const {
-    return role_;
-}
-
-void NetworkDevice::SetAddress(const std::string &address) {
+void NetworkDevice::SetAddress(const MacAddress &address) {
     address_ = address;
+}
+
+void NetworkDevice::SetIPv4Address(const IpV4Address &address) {
+    ipv4_address_ = address;
 }
 
 void NetworkDevice::SetName(const std::string &name) {
@@ -87,15 +81,4 @@ void NetworkDevice::SetState(NetworkDeviceState state) {
     state_ = state;
 }
 
-void NetworkDevice::SetWfdDeviceInfo(const WfdDeviceInfo &wfd_device_info) {
-    wfd_device_info_ = wfd_device_info;
-}
-
-void NetworkDevice::SetConfigMethods(int config_methods) {
-    config_methods_ = config_methods;
-}
-
-void NetworkDevice::SetRole(NetworkDeviceRole role) {
-    role_ = role;
-}
 } // namespace mcs

@@ -32,6 +32,7 @@ std::shared_ptr<MiracastService> MiracastService::create() {
 MiracastService::MiracastService() :
     source_(MiracastSource::create()),
     current_state_(kIdle),
+    source_(MiracastSourceManager::create()),
     current_peer_(nullptr) {
     // FIXME this really needs to move somewhere else as it's something
     // specific for some devices and somehow goes together with the
@@ -108,7 +109,7 @@ void MiracastService::LoadWiFiFirmware() {
 
 
 void MiracastService::AdvanceState(NetworkDeviceState new_state) {
-    std::string address;
+    IpV4Address address;
 
     g_warning("AdvanceState newsstate %d current state %d", new_state, current_state_);
 
@@ -117,12 +118,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
         break;
 
     case kConnected:
-        // We've have to pick the right address we need to tell our source to
-        // push all streaming data to.
-        address = current_peer_->Address();
-        if (manager_->Role() == kGroupOwner)
-            address = manager_->LocalAddress();
-
+        address = manager_->LocalAddress();
         source_->Setup(address, MIRACAST_DEFAULT_RTSP_CTRL_PORT);
 
         FinishConnectAttempt(true);
@@ -194,7 +190,7 @@ void MiracastService::FinishConnectAttempt(bool success, const std::string &erro
     connect_callback_ = nullptr;
 }
 
-void MiracastService::ConnectSink(const std::string &address, std::function<void(bool,std::string)> callback) {
+void MiracastService::ConnectSink(const MacAddress &address, std::function<void(bool,std::string)> callback) {
     if (current_peer_.get()) {
         callback(false, "Already connected");
         return;
@@ -215,7 +211,7 @@ void MiracastService::ConnectSink(const std::string &address, std::function<void
         return;
     }
 
-    if (manager_->Connect(device->Address(), false) < 0) {
+    if (!manager_->Connect(device)) {
         callback(false, "Failed to connect with remote device");
         return;
     }
