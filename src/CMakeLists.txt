@@ -12,6 +12,10 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
 # Make sure that generated header files can be found
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
 
+set(HEADERS
+    mcs/ip_v4_address.h
+)
+
 set(SOURCES
   mcs/utils.cpp
   mcs/networkutils.cpp
@@ -60,7 +64,7 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/src
 )
 
-add_library(miracast ${SOURCES})
+add_library(miracast ${SOURCES} ${HEADERS})
 
 add_executable(miracast-service mcs/main.cpp)
 
