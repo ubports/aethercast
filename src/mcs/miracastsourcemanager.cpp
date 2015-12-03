@@ -41,7 +41,7 @@ void MiracastSourceManager::ResetDelegate() {
     delegate_.reset();
 }
 
-bool MiracastSourceManager::Setup(const std::string &address, unsigned short port) {
+bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short port) {
     GError *error;
 
     if (socket_)
@@ -55,8 +55,7 @@ bool MiracastSourceManager::Setup(const std::string &address, unsigned short por
         return false;
     }
 
-    auto addr = g_inet_socket_address_new_from_string(address.c_str(), port);
-    g_warning("address %s port %d", address.c_str(), port);
+    auto addr = g_inet_socket_address_new_from_string(address.to_string().c_str(), port);
     if (!g_socket_bind(socket.get(), addr, TRUE, &error)) {
         g_warning("Failed to setup socket for incoming source connections: %s", error->message);
         g_error_free(error);
@@ -86,7 +85,7 @@ bool MiracastSourceManager::Setup(const std::string &address, unsigned short por
     g_source_unref(source);
 
     g_info("Successfully setup source on %s:%d and awaiting incoming connection requests",
-           address.c_str(), port);
+           address.to_string().c_str(), port);
 
     socket_.swap(socket);
 

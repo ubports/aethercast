@@ -50,13 +50,14 @@ public:
     int Connect(const mcs::NetworkDevice::Ptr &device) override;
     int DisconnectAll() override;
 
-    std::string LocalAddress() const override;
+    mcs::IpV4Address LocalAddress() const override;
+
     bool Running() const override;
 
     void OnUnsolicitedResponse(WpaSupplicantMessage message);
     void OnWriteMessage(WpaSupplicantMessage message);
 
-    void OnAddressAssigned(const std::string &address);
+    void OnAddressAssigned(const mcs::IpV4Address &address);
 
 private:
     bool StartSupplicant();

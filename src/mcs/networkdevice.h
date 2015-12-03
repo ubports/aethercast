@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 
+#include "ip_v4_address.h"
 #include "wfddeviceinfo.h"
 
 namespace mcs {
@@ -43,20 +44,20 @@ public:
     ~NetworkDevice();
 
     std::string Address() const;
-    std::string IPv4Address() const;
+    IpV4Address IPv4Address() const;
     std::string Name() const;
     NetworkDeviceState State() const;
     std::string StateAsString() const;
 
     void SetAddress(const std::string &address);
-    void SetIPv4Address(const std::string &address);
+    void SetIPv4Address(const IpV4Address &Address);
     void SetName(const std::string &name);
     void SetState(NetworkDeviceState state);
 
 private:
     std::string name_;
     std::string address_;
-    std::string ipv4_address_;
+    IpV4Address ipv4_address_;
     NetworkDeviceState state_;
 };
 } // namespace mcs

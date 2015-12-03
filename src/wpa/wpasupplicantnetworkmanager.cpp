@@ -123,7 +123,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     for (auto iter : available_devices_) {
         auto peer = iter.second;
 
-        if (peer->Address() != std::string(address))
+        if (peer->Address() != address)
             continue;
 
         peer->SetAddress(address);
@@ -136,7 +136,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     peer->SetAddress(address);
     peer->SetName(name);
 
-    available_devices_.insert(std::pair<std::string, mcs::NetworkDevice::Ptr>(std::string(address), mcs::NetworkDevice::Ptr(peer)));
+    available_devices_[address] = peer;
 
     if (delegate_)
         delegate_->OnDeviceFound(peer);
@@ -149,7 +149,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceLost(WpaSupplicantMessage &message)
 
     message.Read("e", &address);
 
-    auto peer = available_devices_[std::string(address)];
+    auto peer = available_devices_[address];
     if (!peer)
         return;
 
@@ -209,7 +209,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
 
     message.ReadDictEntry("reason", 's', &reason);
 
-    current_peer_->SetAddress("");
+    current_peer_->SetAddress(std::string(""));
     if (g_strcmp0(reason, "FORMATION_FAILED") == 0 ||
             g_strcmp0(reason, "PSK_FAILURE") == 0 ||
             g_strcmp0(reason, "FREQ_CONFLICT") == 0)
@@ -229,8 +229,8 @@ void WpaSupplicantNetworkManager::OnWriteMessage(WpaSupplicantMessage message) {
         g_warning("Failed to send data to wpa-supplicant");
 }
 
-std::string WpaSupplicantNetworkManager::LocalAddress() const {
-    std::string address;
+mcs::IpV4Address WpaSupplicantNetworkManager::LocalAddress() const {
+    mcs::IpV4Address address;
 
     if (group_owner_)
         address = dhcp_server_.LocalAddress();
@@ -512,7 +512,7 @@ void WpaSupplicantNetworkManager::RequestAsync(const WpaSupplicantMessage &messa
     command_queue_->EnqueueCommand(message, callback);
 }
 
-void WpaSupplicantNetworkManager::OnAddressAssigned(const std::string &address) {
+void WpaSupplicantNetworkManager::OnAddressAssigned(const mcs::IpV4Address &address) {
     if (!current_peer_)
         return;
 

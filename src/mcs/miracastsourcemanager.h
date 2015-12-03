@@ -27,6 +27,7 @@
 
 #include "miracastsourceclient.h"
 #include "scoped_gobject.h"
+#include "ip_v4_address.h"
 
 namespace mcs {
 class MiracastSourceManager : public std::enable_shared_from_this<MiracastSourceManager>,
@@ -47,7 +48,7 @@ public:
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
 
-    bool Setup(const std::string &address, unsigned short port);
+    bool Setup(const IpV4Address &address, unsigned short port);
     void Release();
 
 public:

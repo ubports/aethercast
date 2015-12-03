@@ -49,7 +49,7 @@ std::string NetworkDevice::Address() const {
     return address_;
 }
 
-std::string NetworkDevice::IPv4Address() const {
+IpV4Address NetworkDevice::IPv4Address() const {
     return ipv4_address_;
 }
 
@@ -69,7 +69,7 @@ void NetworkDevice::SetAddress(const std::string &address) {
     address_ = address;
 }
 
-void NetworkDevice::SetIPv4Address(const std::string &address) {
+void NetworkDevice::SetIPv4Address(const IpV4Address &address) {
     ipv4_address_ = address;
 }
 

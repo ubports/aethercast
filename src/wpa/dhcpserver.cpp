@@ -37,10 +37,10 @@ DhcpServer::~DhcpServer()
         g_dhcp_server_unref(server_);
 }
 
-std::string DhcpServer::LocalAddress() const
+mcs::IpV4Address DhcpServer::LocalAddress() const
 {
     // FIXME this should be stored somewhere else
-    return std::string("192.168.7.1");
+    return mcs::IpV4Address::from_string("192.168.7.1");
 }
 
 void DhcpServer::OnDebug(const char *str, gpointer user_data)
@@ -74,7 +74,7 @@ bool DhcpServer::Start()
 
     g_dhcp_server_set_lease_time(server_, 3600);
     g_dhcp_server_set_option(server_, G_DHCP_SUBNET, subnet);
-    g_dhcp_server_set_option(server_, G_DHCP_ROUTER, LocalAddress().c_str());
+    g_dhcp_server_set_option(server_, G_DHCP_ROUTER, LocalAddress().to_string().c_str());
     g_dhcp_server_set_option(server_, G_DHCP_DNS_SERVER, NULL);
     g_dhcp_server_set_ip_range(server_, "192.168.7.5", "192.168.7.100");
 

@@ -23,6 +23,7 @@
 #include <list>
 #include <vector>
 
+#include "ip_v4_address.h"
 #include "networkdevice.h"
 
 namespace mcs {
@@ -46,7 +47,7 @@ public:
     virtual void SetWfdSubElements(const std::list<std::string> &elements) = 0;
 
     virtual std::vector<NetworkDevice::Ptr> Devices() const = 0;
-    virtual std::string LocalAddress() const = 0;
+    virtual IpV4Address LocalAddress() const = 0;
     virtual bool Running() const = 0;
 
 protected:
