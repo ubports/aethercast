@@ -645,7 +645,7 @@ bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device)
     return true;
 }
 
-bool WpaSupplicantNetworkManager::DisconnectAll() {
+bool WpaSupplicantNetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_GROUP_REMOVE");
     m.Append("s", interface_name_.c_str());
 

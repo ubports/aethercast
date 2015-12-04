@@ -64,6 +64,8 @@ std::string MiracastServiceAdapter::GenerateDevicePath(const NetworkDevice::Ptr 
 }
 
 void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &device) {
+    g_warning("Found device %s", device->Address().c_str());
+
     auto path = GenerateDevicePath(device);
     auto adapter = NetworkDeviceAdapter::Create(bus_connection_, path , device, service_);
     devices_.insert(std::pair<std::string,NetworkDeviceAdapter::Ptr>(device->Address(), adapter));
@@ -72,6 +74,7 @@ void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &device) {
 }
 
 void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &device) {
+    g_warning("Lost device %s", device->Address().c_str());
     auto iter = devices_.find(device->Address());
     if (iter == devices_.end())
         return;
@@ -79,6 +82,8 @@ void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &device) {
     g_dbus_object_manager_server_unexport(object_manager_.get(), iter->second->Path().c_str());
 
     devices_.erase(iter);
+
+    g_warning("Removed device");
 }
 
 void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
@@ -87,9 +92,6 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
 
     g_signal_connect_data(inst->manager_obj_.get(), "handle-scan",
                      G_CALLBACK(&MiracastServiceAdapter::OnHandleScan), new WeakKeepAlive<MiracastServiceAdapter>(inst),
-                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastServiceAdapter>*>(data); }, GConnectFlags(0));
-    g_signal_connect_data(inst->manager_obj_.get(), "handle-connect-sink",
-                     G_CALLBACK(&MiracastServiceAdapter::OnHandleConnectSink), new WeakKeepAlive<MiracastServiceAdapter>(inst),
                      [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastServiceAdapter>*>(data); }, GConnectFlags(0));
 
     miracast_interface_manager_set_state(inst->manager_obj_.get(),
@@ -116,25 +118,6 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
         if (error != kErrorNone) {
             g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                   "%s", ErrorToString(error).c_str());
-            return;
-        }
-
-        g_dbus_method_invocation_return_value(invocation, nullptr);
-    });
-}
-
-void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skeleton,
-                                        GDBusMethodInvocation *invocation, const gchar *address, gpointer user_data) {
-    boost::ignore_unused_variable_warning(skeleton);
-    auto inst = static_cast<WeakKeepAlive<MiracastServiceAdapter>*>(user_data)->GetInstance().lock();
-
-    if (not inst)
-        return;
-
-    inst->service_->ConnectSink(mcs::MacAddress(address), [=](bool success, const std::string &error_text) {
-        if (!success) {
-            g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                  "%s", error_text.c_str());
             return;
         }
 

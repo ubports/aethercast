@@ -25,7 +25,8 @@ namespace mcs {
 enum Error {
     kErrorNone = 0,
     kErrorFailed,
-    kErrorAlreadyInProgress,
+    kErrorAlready,
+    kErrorParamInvalid,
     kErrorUnknown
 };
 
@@ -34,6 +35,7 @@ static std::string ErrorToString(const Error &error) {
         "None",
         "Operation failed",
         "Operation already in progress",
+        "Invalid parameters",
         "Unknown error occured"
     };
     return error_strings[error];

@@ -54,8 +54,6 @@ private:
 
     static void OnHandleScan(MiracastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                               gpointer user_data);
-    static void OnHandleConnectSink(MiracastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
-                                      const gchar *address, gpointer user_data);
 
     MiracastServiceAdapter(const std::shared_ptr<MiracastService> &service);
     std::shared_ptr<MiracastServiceAdapter> FinalizeConstruction();

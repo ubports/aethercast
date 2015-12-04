@@ -9,9 +9,6 @@
             <arg name="path" type="o" direction="in"/>
         </method>
         <method name="Scan"/>
-        <method name="ConnectSink">
-            <arg name="address" type="s" direction="in"/>
-        </method>
         <property name="State" type="s" access="read"/>
     </interface>
     <interface name="org.wds.Device">

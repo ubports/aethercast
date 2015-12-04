@@ -16,10 +16,12 @@
  */
 
 #include <algorithm>
+#include <boost/concept_check.hpp>
 
 #include "miracastserviceadapter.h"
 #include "networkdeviceadapter.h"
 #include "utils.h"
+#include "keep_alive.h"
 
 namespace mcs {
 
@@ -73,13 +75,44 @@ std::string NetworkDeviceAdapter::Path() const {
 void NetworkDeviceAdapter::OnHandleConnect(MiracastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
                                            const gchar *role, gpointer user_data)
 {
-    g_dbus_method_invocation_return_value(invocation, nullptr);
+    boost::ignore_unused_variable_warning(skeleton);
+    boost::ignore_unused_variable_warning(role);
+
+    auto inst = static_cast<NetworkDeviceAdapter*>(user_data);
+
+    if (not inst)
+        return;
+
+    inst->service_->Connect(inst->device_, [&](mcs::Error error) {
+        if (error != kErrorNone) {
+            g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                  "%s", mcs::ErrorToString(error).c_str());
+            return;
+        }
+
+        g_dbus_method_invocation_return_value(invocation, nullptr);
+    });
 }
 
 void NetworkDeviceAdapter::OnHandleDisconnect(MiracastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
                                               gpointer user_data)
 {
-    g_dbus_method_invocation_return_value(invocation, nullptr);
+    boost::ignore_unused_variable_warning(skeleton);
+
+    auto inst = static_cast<NetworkDeviceAdapter*>(user_data);
+
+    if (not inst)
+        return;
+
+    inst->service_->Disconnect(inst->device_, [&](mcs::Error error) {
+        if (error != kErrorNone) {
+            g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                  "%s", mcs::ErrorToString(error).c_str());
+            return;
+        }
+
+        g_dbus_method_invocation_return_value(invocation, nullptr);
+    });
 }
 
 } // namespace mcs

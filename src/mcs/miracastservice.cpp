@@ -117,7 +117,7 @@ MiracastService::MiracastService() :
     network_manager_(new WpaSupplicantNetworkManager(this)),
     source_(MiracastSourceManager::create()),
     current_state_(kIdle),
-    current_peer_(nullptr),
+    current_device_(nullptr),
     scan_timeout_source_(0) {
     network_manager_->Setup();
 }
@@ -147,7 +147,7 @@ NetworkDeviceState MiracastService::State() const {
 
 void MiracastService::OnClientDisconnected() {
     AdvanceState(kFailure);
-    current_peer_.reset();
+    current_device_.reset();
 }
 
 void MiracastService::AdvanceState(NetworkDeviceState new_state) {
@@ -163,14 +163,14 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
         address = network_manager_->LocalAddress();
         source_->Setup(address, kMiracastDefaultRtspCtrlPort);
 
-        FinishConnectAttempt(true);
+        FinishConnectAttempt();
 
         break;
 
     case kFailure:
         if (current_state_ == kAssociation ||
                 current_state_ == kConfiguration)
-            FinishConnectAttempt(false, "Failed to connect remote device");
+            FinishConnectAttempt(kErrorFailed);
 
     case kDisconnected:
         if (current_state_ == kConnected)
@@ -196,12 +196,12 @@ void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &peer) {
         AdvanceState(kConnected);
     else if (peer->State() == kDisconnected) {
         AdvanceState(kDisconnected);
-        current_peer_.reset();
+        current_device_.reset();
     }
     else if (peer->State() == kFailure) {
         AdvanceState(kFailure);
-        current_peer_.reset();
-        FinishConnectAttempt(false, "Failed to connect device");
+        current_device_.reset();
+        FinishConnectAttempt(kErrorFailed);
     }
 }
 
@@ -225,41 +225,45 @@ void MiracastService::StartIdleTimer() {
     g_timeout_add(kStateIdleTimeout.count(), &MiracastService::OnIdleTimer, new SharedKeepAlive<MiracastService>{shared_from_this()});
 }
 
-void MiracastService::FinishConnectAttempt(bool success, const std::string &error_text) {
+void MiracastService::FinishConnectAttempt(mcs::Error error) {
     if (connect_callback_)
-        connect_callback_(success, error_text);
+        connect_callback_(error);
 
     connect_callback_ = nullptr;
 }
 
-void MiracastService::ConnectSink(const MacAddress &address, std::function<void(bool,std::string)> callback) {
-    if (current_peer_.get()) {
-        callback(false, "Already connected");
+void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback callback) {
+    if (current_device_) {
+        callback(kErrorAlready);
         return;
     }
 
-    NetworkDevice::Ptr device;
-
-    for (auto peer : network_manager_->Devices()) {
-        if (peer->Address() != address)
-            continue;
-
-        device = peer;
-        break;
-    }
-
     if (!device) {
-        callback(false, "Couldn't find device");
+        callback(kErrorParamInvalid);
         return;
     }
 
     if (!network_manager_->Connect(device)) {
-        callback(false, "Failed to connect with remote device");
+        callback(kErrorFailed);
         return;
     }
 
-    current_peer_ = device;
+    current_device_ = device;
     connect_callback_ = callback;
+}
+
+void MiracastService::Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback) {
+    if (!current_device_.get() || !device) {
+        callback(kErrorParamInvalid);
+        return;
+    }
+
+    if (!network_manager_->Disconnect(device)) {
+        callback(kErrorFailed);
+        return;
+    }
+
+    callback(kErrorNone);
 }
 
 gboolean MiracastService::OnScanTimeout(gpointer user_data) {
@@ -279,7 +283,7 @@ gboolean MiracastService::OnScanTimeout(gpointer user_data) {
 
 void MiracastService::Scan(ResultCallback callback, const std::chrono::seconds &timeout) {
     if (scan_timeout_source_ > 0 || network_manager_->Scanning()) {
-        callback(kErrorAlreadyInProgress);
+        callback(kErrorAlready);
         return;
     }
 

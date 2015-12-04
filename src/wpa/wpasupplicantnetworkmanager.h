@@ -50,7 +50,7 @@ public:
     void StopScan() override;
 
     bool Connect(const mcs::NetworkDevice::Ptr &device) override;
-    bool DisconnectAll() override;
+    bool Disconnect(const mcs::NetworkDevice::Ptr &device) override;
 
     mcs::IpV4Address LocalAddress() const override;
     bool Running() const override;

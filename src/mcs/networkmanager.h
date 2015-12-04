@@ -44,7 +44,7 @@ public:
     virtual void Scan() = 0;
     virtual void StopScan() = 0;
     virtual bool Connect(const NetworkDevice::Ptr &device) = 0;
-    virtual bool DisconnectAll() = 0;
+    virtual bool Disconnect(const NetworkDevice::Ptr &device) = 0;
 
     virtual void SetWfdSubElements(const std::list<std::string> &elements) = 0;
 

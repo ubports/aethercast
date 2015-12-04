@@ -69,7 +69,9 @@ public:
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
 
-    void ConnectSink(const MacAddress &address, std::function<void(bool,std::string)> callback);
+    void Connect(const NetworkDevice::Ptr &device, ResultCallback callback);
+    void Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback);
+
     void Scan(ResultCallback callback, const std::chrono::seconds &timeout = std::chrono::seconds{30});
 
     NetworkDeviceState State() const;
@@ -90,7 +92,7 @@ private:
     std::shared_ptr<MiracastService> FinalizeConstruction();
 
     void AdvanceState(NetworkDeviceState new_state);
-    void FinishConnectAttempt(bool success, const std::string &error_text = "");
+    void FinishConnectAttempt(mcs::Error error = kErrorNone);
     void StartIdleTimer();
     void LoadWiFiFirmware();
 
@@ -99,8 +101,8 @@ private:
     std::shared_ptr<NetworkManager> network_manager_;
     std::shared_ptr<MiracastSourceManager> source_;
     NetworkDeviceState current_state_;
-    NetworkDevice::Ptr current_peer_;
-    std::function<void(bool,std::string)> connect_callback_;
+    NetworkDevice::Ptr current_device_;
+    ResultCallback connect_callback_;
     guint scan_timeout_source_;
     ResultCallback current_scan_callback_;
 };
