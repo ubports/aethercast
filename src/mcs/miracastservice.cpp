@@ -19,6 +19,8 @@
 #include <cstdio>
 #include <cstdint>
 
+#include <sys/prctl.h>
+
 #include <glib.h>
 #include <glib-unix.h>
 #include <gst/gst.h>
