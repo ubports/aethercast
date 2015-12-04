@@ -79,6 +79,7 @@ private:
     void OnP2pDeviceLost(WpaSupplicantMessage &message);
     void OnP2pGroupStarted(WpaSupplicantMessage &message);
     void OnP2pGroupRemoved(WpaSupplicantMessage &message);
+    void OnP2pGoNegFailure(WpaSupplicantMessage &message);
 
     static gboolean OnConnectSupplicant(gpointer user_data);
     static void OnSupplicantWatch(GPid pid, gint status, gpointer user_data);

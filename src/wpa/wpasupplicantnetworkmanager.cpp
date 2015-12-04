@@ -58,6 +58,7 @@ constexpr const char *kP2pDeviceLost{"P2P-DEVICE-LOST"};
 constexpr const char *kP2pGroupFormationSuccess{"P2P-GROUP-FORMATION-SUCCESS"};
 constexpr const char *kP2pGroupStarted{"P2P-GROUP-STARTED"};
 constexpr const char *kP2pGroupRemoved{"P2P-GROUP-REMOVED"};
+constexpr const char *kP2pGoNegFailure{"P2P-GO-NEG-FAILURE"};
 }
 
 WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate) :
@@ -123,6 +124,8 @@ void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage mes
         OnP2pGroupStarted(message);
     else if (message.Name() == kP2pGroupRemoved)
         OnP2pGroupRemoved(message);
+    else if (message.Name() == kP2pGoNegFailure)
+        OnP2pGoNegFailure(message);
     else
         g_warning("unhandled supplicant event: %s", message.Raw().c_str());
 }
@@ -241,6 +244,17 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
     else
         current_peer_->SetState(mcs::kDisconnected);
 
+    if (delegate_)
+        delegate_->OnDeviceStateChanged(current_peer_);
+
+    current_peer_.reset();
+}
+
+void WpaSupplicantNetworkManager::OnP2pGoNegFailure(WpaSupplicantMessage &message) {
+    if (!current_peer_.get())
+        return;
+
+    current_peer_->SetState(mcs::kFailure);
     if (delegate_)
         delegate_->OnDeviceStateChanged(current_peer_);
 
@@ -631,32 +645,28 @@ bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device)
     auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
     m.Append("ss", device->Address().c_str(), "pbc");
 
-    bool ret = false;
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
-            g_warning("Failed to connect with remote %s", device->Address().c_str());
+            current_peer_->SetState(mcs::kFailure);
+            if (delegate_)
+                delegate_->OnDeviceStateChanged(current_peer_);
             return;
         }
-
-        ret = true;
     });
 
-    return ret;
+    return true;
 }
 
 bool WpaSupplicantNetworkManager::DisconnectAll() {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_GROUP_REMOVE");
     m.Append("s", interface_name_.c_str());
 
-    bool ret = false;
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
             g_warning("Failed to disconnect all connected devices on interface %s", interface_name_.c_str());
             return;
         }
-
-        ret = true;
     });
 
-    return ret;
+    return true;
 }
