@@ -18,6 +18,8 @@
  *
  */
 
+#include <functional>
+
 #include <glib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -90,7 +92,126 @@ static void cmd_scan(const char *arg) {
     miracast_interface_manager_call_scan(manager, nullptr, scan_done_cb, nullptr);
 }
 
+static void foreach_device(std::function<void(MiracastInterfaceDevice*)> callback, const char *address = nullptr) {
+    if (!callback)
+        return;
+
+    auto objects = g_dbus_object_manager_get_objects(object_manager);
+
+    for (auto obj = objects; obj != nullptr; obj = obj->next) {
+        auto device = MIRACAST_INTERFACE_OBJECT_PROXY(obj->data);
+        if (!device)
+            continue;
+
+        auto iface = g_dbus_object_get_interface(G_DBUS_OBJECT(device), "org.wds.Device");
+        if (!iface)
+            continue;
+
+        auto device_obj = MIRACAST_INTERFACE_DEVICE(iface);
+
+        if (address) {
+            auto device_address = miracast_interface_device_get_address(device_obj);
+            if (g_strcmp0(device_address, address) != 0)
+                continue;
+        }
+
+        callback(device_obj);
+    }
+}
+
 static void cmd_devices(const char *arg) {
+    foreach_device([=](MiracastInterfaceDevice *device) {
+        auto address = miracast_interface_device_get_address(device);
+        auto name = miracast_interface_device_get_name(device);
+        rl_printf("Device %s %s\n", address, name);
+    });
+}
+
+static void cmd_info(const char *arg) {
+    if (!arg) {
+        rl_printf("No device address supplied\n");
+        return;
+    }
+
+    bool found = false;
+
+    foreach_device([&](MiracastInterfaceDevice *device) {
+        auto address = miracast_interface_device_get_address(device);
+        rl_printf("\tAddress: %s\n", address);
+
+        auto name = miracast_interface_device_get_name(device);
+        rl_printf("\tName: %s\n", name);
+
+        auto state = miracast_interface_device_get_state(device);
+        rl_printf("\tState: %s\n", state);
+
+        found = true;
+    }, arg);
+
+    if (!found)
+        rl_printf("Unknown or invalid device address\n");
+}
+
+static void device_connect_cb(GObject *object, GAsyncResult *res, gpointer user_data) {
+    GError *error = nullptr;
+    if (!miracast_interface_device_call_connect_finish(MIRACAST_INTERFACE_DEVICE(object), res, &error)) {
+        rl_printf("Failed to connect with device: %s\n", error->message);
+        g_error_free(error);
+        return;
+    }
+
+    rl_printf("Successfully connected with device\n");
+}
+
+static void cmd_connect(const char *arg) {
+    if (!arg) {
+        rl_printf("No device address supplied\n");
+        return;
+    }
+
+    bool found = false;
+
+    foreach_device([&](MiracastInterfaceDevice *device) {
+
+        miracast_interface_device_call_connect(device, "sink", nullptr,
+                                               device_connect_cb, nullptr);
+
+        found = true;
+    }, arg);
+
+    if (!found)
+        rl_printf("Unknown or invalid device address\n");
+}
+
+static void device_disconnect_cb(GObject *object, GAsyncResult *res, gpointer user_data) {
+    GError *error = nullptr;
+    if (!miracast_interface_device_call_disconnect_finish(MIRACAST_INTERFACE_DEVICE(object), res, &error)) {
+        rl_printf("Failed to disconnect from device: %s\n", error->message);
+        g_error_free(error);
+        return;
+    }
+
+    rl_printf("Successfully disconnected from device\n");
+}
+
+static void cmd_disconnect(const char *arg) {
+    if (!arg) {
+        rl_printf("No device address supplied\n");
+        return;
+    }
+
+    bool found = false;
+
+    foreach_device([&](MiracastInterfaceDevice *device) {
+
+        miracast_interface_device_call_disconnect(device, nullptr,
+                                               device_disconnect_cb, nullptr);
+
+        found = true;
+    }, arg);
+
+    if (!found)
+        rl_printf("Unknown or invalid device address\n");
 }
 
 static const struct {
@@ -102,6 +223,9 @@ static const struct {
     { "show", NULL, cmd_show, "Show manager properties" },
     { "scan", NULL, cmd_scan, "Scan for devices" },
     { "devices", NULL, cmd_devices, "List available devices" },
+    { "info", "<address>", cmd_info, "Display detailed information about a device" },
+    { "connect", "<address>", cmd_connect, "Connect to a device" },
+    { "disconnect", "<address>", cmd_connect, "Disconnect from a device" },
     { NULL }
 };
 
@@ -194,7 +318,7 @@ void device_removed_cb(GDBusObjectManager *manager, GDBusObject *object, gpointe
 
 void object_manager_created_cb(GObject *object, GAsyncResult *res, gpointer user_data) {
     GError *error = nullptr;
-    object_manager = g_dbus_object_manager_client_new_finish(res, &error);
+    object_manager = miracast_interface_object_manager_client_new_finish(res, &error);
     if (!object_manager) {
         g_error_free(error);
         return;
@@ -231,13 +355,10 @@ void manager_connected_cb(GObject *object, GAsyncResult *res, gpointer user_data
     // method call which has an internal timeout of 30 seconds
     g_dbus_proxy_set_default_timeout(G_DBUS_PROXY(manager), 60 * 1000);
 
-    g_dbus_object_manager_client_new(bus_connection,
-                                     G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_NONE,
-                                     "org.wds",
-                                     "/org/wds",
-                                     nullptr, nullptr, nullptr,
-                                     nullptr,
-                                     object_manager_created_cb, nullptr);
+    miracast_interface_object_manager_client_new(bus_connection,
+                             G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_NONE,
+                             "org.wds", "/org/wds",
+                             nullptr, object_manager_created_cb, nullptr);
 
     setup_standard_input();
 }
