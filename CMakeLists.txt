@@ -52,6 +52,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 add_definitions(-DQT_NO_KEYWORDS=1)
 
+include(cmake/FindReadline.cmake)
+
 find_package(Boost COMPONENTS system filesystem)
 find_package(PkgConfig)
 pkg_check_modules(GLIB glib-2.0)
@@ -59,7 +61,7 @@ pkg_check_modules(GIO gio-2.0)
 pkg_check_modules(GIO-UNIX gio-unix-2.0)
 pkg_check_modules(GST REQUIRED gstreamer-1.0)
 pkg_check_modules(WDS REQUIRED wds)
-
+pkg_check_modules(READLINE readline)
 # Build with system gmock and embedded gtest
 set (GMOCK_INCLUDE_DIR "/usr/include/gmock/include" CACHE PATH "gmock source include directory")
 set (GMOCK_SOURCE_DIR "/usr/src/gmock" CACHE PATH "gmock source directory")

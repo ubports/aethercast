@@ -92,3 +92,5 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static
 )
+
+add_subdirectory(client)
