@@ -53,12 +53,16 @@ void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
 void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &device) {
     auto adapter = NetworkDeviceAdapter::Create(bus_connection_, device, service_);
     devices_.insert(std::pair<std::string,NetworkDeviceAdapter::Ptr>(device->Address(), adapter));
+
+    g_dbus_object_manager_server_export(object_manager_.get(), adapter->DBusObject());
 }
 
 void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &device) {
     auto iter = devices_.find(device->Address());
     if (iter == devices_.end())
         return;
+
+    g_dbus_object_manager_server_unexport(object_manager_.get(), iter->second->Path().c_str());
 
     devices_.erase(iter);
 }
@@ -76,7 +80,6 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
 
     g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(inst->manager_obj_.get()),
                                      connection, kManagerPath, nullptr);
-
 
     inst->object_manager_.reset(g_dbus_object_manager_server_new(kManagerPath));
     g_dbus_object_manager_server_set_connection(inst->object_manager_.get(), connection);

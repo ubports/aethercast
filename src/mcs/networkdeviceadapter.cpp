@@ -17,6 +17,7 @@
 
 #include <algorithm>
 
+#include "miracastserviceadapter.h"
 #include "networkdeviceadapter.h"
 #include "utils.h"
 
@@ -31,34 +32,43 @@ NetworkDeviceAdapter::NetworkDeviceAdapter(GDBusConnection *connection, const Ne
     device_(device),
     service_(service) {
 
-    device_obj_ = miracast_interface_device_skeleton_new();
+    device_iface_ = miracast_interface_device_skeleton_new();
     path_ = GeneratePath();
 
-    g_signal_connect(device_obj_, "handle-connect",
+    g_signal_connect(device_iface_, "handle-connect",
                      G_CALLBACK(&NetworkDeviceAdapter::OnHandleConnect), this);
-    g_signal_connect(device_obj_, "handle-disconnect",
+    g_signal_connect(device_iface_, "handle-disconnect",
                      G_CALLBACK(&NetworkDeviceAdapter::OnHandleDisconnect), this);
 
-    GError *error = nullptr;
-    if (!g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(device_obj_),
-                                     connection_, path_.c_str(), &error)) {
-        g_warning("Failed to export object for device: %s", error->message);
-        g_error_free(error);
+    object_ = miracast_interface_object_skeleton_new(path_.c_str());
+    if (!object_) {
+        g_warning("Failed to create object for device %s", device->Address().c_str());
         return;
     }
+
+    miracast_interface_object_skeleton_set_device(object_, device_iface_);
 }
 
 NetworkDeviceAdapter::~NetworkDeviceAdapter() {
-    if (device_obj_) {
-        g_dbus_interface_skeleton_unexport(G_DBUS_INTERFACE_SKELETON(device_obj_));
-        g_object_unref(device_obj_);
+    if (device_iface_) {
+        g_dbus_interface_skeleton_unexport(G_DBUS_INTERFACE_SKELETON(device_iface_));
+        g_object_unref(device_iface_);
     }
+}
+
+GDBusObjectSkeleton* NetworkDeviceAdapter::DBusObject() const {
+    return G_DBUS_OBJECT_SKELETON(object_);
+}
+
+std::string NetworkDeviceAdapter::Path() const {
+    return path_;
 }
 
 std::string NetworkDeviceAdapter::GeneratePath() const {
     std::string address = device_->Address();
     std::replace(address.begin(), address.end(), ':', '_');
-    return mcs::Utils::Sprintf("/dev_%s", address.c_str());
+    // FIXME take manager path into account here
+    return mcs::Utils::Sprintf("/org/wds/dev_%s", address.c_str());
 }
 
 void NetworkDeviceAdapter::OnHandleConnect(MiracastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,

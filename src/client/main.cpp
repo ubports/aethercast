@@ -32,6 +32,7 @@ GMainLoop *main_loop = nullptr;
 GDBusConnection *bus_connection = nullptr;
 MiracastInterfaceManager *manager = nullptr;
 guint input_source = 0;
+GDBusObjectManager *object_manager = nullptr;
 
 void rl_printf(const char *fmt, ...)
 {
@@ -69,7 +70,10 @@ void scan_done_cb(GObject *object, GAsyncResult *res, gpointer user_data) {
     if (!miracast_interface_manager_call_scan_finish(manager, res, &error)) {
         rl_printf("Failed to scan: %s\n", error->message);
         g_error_free(error);
+        return;
     }
+
+    rl_printf("Scan is done\n");
 }
 
 static void cmd_scan(const char *arg) {
@@ -172,6 +176,28 @@ static void setup_standard_input(void) {
 
 }
 
+void device_added_cb(GDBusObjectManager *manager, GDBusObject *object, gpointer user_data) {
+    rl_printf("Device added\n");
+}
+
+void device_removed_cb(GDBusObjectManager *manager, GDBusObject *object, gpointer user_data) {
+    rl_printf("Device removed\n");
+}
+
+void object_manager_created_cb(GObject *object, GAsyncResult *res, gpointer user_data) {
+    GError *error = nullptr;
+    object_manager = g_dbus_object_manager_client_new_finish(res, &error);
+    if (!object_manager) {
+        g_error_free(error);
+        return;
+    }
+
+    g_signal_connect(object_manager, "object-added", G_CALLBACK(device_added_cb), nullptr);
+    g_signal_connect(object_manager, "object-removed", G_CALLBACK(device_removed_cb), nullptr);
+
+    setup_standard_input();
+}
+
 void manager_connected_cb(GObject *object, GAsyncResult *res, gpointer user_data) {
     GError *error = nullptr;
     manager = miracast_interface_manager_proxy_new_finish(res, &error);
@@ -182,12 +208,20 @@ void manager_connected_cb(GObject *object, GAsyncResult *res, gpointer user_data
         return;
     }
 
+    g_dbus_object_manager_client_new(bus_connection,
+                                     G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_NONE,
+                                     "org.wds",
+                                     "/org/wds",
+                                     nullptr, nullptr, nullptr,
+                                     nullptr,
+                                     object_manager_created_cb, nullptr);
+
     setup_standard_input();
 }
 
 void service_found_cb(GDBusConnection *connection, const gchar *name, const gchar *name_owner, gpointer user_data) {
     miracast_interface_manager_proxy_new(bus_connection, G_DBUS_PROXY_FLAGS_NONE,
-                                         "org.wds", "/", nullptr, manager_connected_cb,
+                                         "org.wds", "/org/wds", nullptr, manager_connected_cb,
                                          nullptr);
 }
 
@@ -235,10 +269,11 @@ int main(int argc, char **argv) {
     if (manager)
         g_object_unref(manager);
 
-    if (input_source)
+    if (input_source > 0)
         g_source_remove(input_source);
 
-    g_source_remove(bus_watch);
+    if (bus_watch > 0)
+        g_source_remove(bus_watch);
 
     return 0;
 }

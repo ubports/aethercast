@@ -38,7 +38,7 @@ class MiracastServiceAdapter : public std::enable_shared_from_this<MiracastServi
                                public MiracastService::Delegate {
 public:
     static constexpr const char *kBusName{"org.wds"};
-    static constexpr const char *kManagerPath{"/"};
+    static constexpr const char *kManagerPath{"/org/wds"};
     static constexpr const char *kManagerIface{"org.wds.Manager"};
 
     static std::shared_ptr<MiracastServiceAdapter> create(const std::shared_ptr<MiracastService> &service);

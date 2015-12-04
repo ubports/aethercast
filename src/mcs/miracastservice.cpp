@@ -263,7 +263,7 @@ void MiracastService::ConnectSink(const MacAddress &address, std::function<void(
 }
 
 gboolean MiracastService::OnScanTimeout(gpointer user_data) {
-    auto inst = static_cast<SharedKeepAlive<MiracastService>*>(user_data)->ShouldDie();
+    auto inst = static_cast<MiracastService*>(user_data);
 
     inst->network_manager_->StopScan();
 
