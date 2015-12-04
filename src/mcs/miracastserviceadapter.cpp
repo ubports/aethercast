@@ -49,7 +49,11 @@ MiracastServiceAdapter::~MiracastServiceAdapter() {
 }
 
 void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
-    boost::ignore_unused_variable_warning(state);
+    if (!manager_obj_)
+        return;
+
+    miracast_interface_manager_set_state(manager_obj_.get(),
+                                         NetworkDevice::StateToStr(service_->State()).c_str());
 }
 
 std::string MiracastServiceAdapter::GenerateDevicePath(const NetworkDevice::Ptr &device) const {
@@ -87,6 +91,9 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
     g_signal_connect_data(inst->manager_obj_.get(), "handle-connect-sink",
                      G_CALLBACK(&MiracastServiceAdapter::OnHandleConnectSink), new WeakKeepAlive<MiracastServiceAdapter>(inst),
                      [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastServiceAdapter>*>(data); }, GConnectFlags(0));
+
+    miracast_interface_manager_set_state(inst->manager_obj_.get(),
+                                         NetworkDevice::StateToStr(inst->service_->State()).c_str());
 
     g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(inst->manager_obj_.get()),
                                      connection, kManagerPath, nullptr);

@@ -64,8 +64,15 @@ void rl_printf(const char *fmt, ...)
     }
 }
 
+static void cmd_show(const char *arg) {
+    if (!manager)
+        return;
 
-void scan_done_cb(GObject *object, GAsyncResult *res, gpointer user_data) {
+    auto state = miracast_interface_manager_get_state(manager);
+    rl_printf("\tState: %s\n", state);
+}
+
+static void scan_done_cb(GObject *object, GAsyncResult *res, gpointer user_data) {
     GError *error = nullptr;
     if (!miracast_interface_manager_call_scan_finish(manager, res, &error)) {
         rl_printf("Failed to scan: %s\n", error->message);
@@ -92,6 +99,7 @@ static const struct {
     void (*func) (const char *arg);
     const char *desc;
 } cmd_table[] = {
+    { "show", NULL, cmd_show, "Show manager properties" },
     { "scan", NULL, cmd_scan, "Scan for devices" },
     { "devices", NULL, cmd_devices, "List available devices" },
     { NULL }
@@ -198,6 +206,14 @@ void object_manager_created_cb(GObject *object, GAsyncResult *res, gpointer user
     setup_standard_input();
 }
 
+static void manager_state_changed_cb(GObject *gobject, GParamSpec *pspec, gpointer user_data) {
+    rl_printf("Manager state has changed\n");
+}
+
+static void manager_property_changed_cb(GObject *gobject, GParamSpec *pspec, gpointer user_data) {
+    rl_printf("Manager property has changed\n");
+}
+
 void manager_connected_cb(GObject *object, GAsyncResult *res, gpointer user_data) {
     GError *error = nullptr;
     manager = miracast_interface_manager_proxy_new_finish(res, &error);
@@ -207,6 +223,9 @@ void manager_connected_cb(GObject *object, GAsyncResult *res, gpointer user_data
         g_main_loop_quit(main_loop);
         return;
     }
+
+    g_signal_connect(G_OBJECT(manager), "notify::state", G_CALLBACK(manager_state_changed_cb), nullptr);
+    g_signal_connect(G_OBJECT(manager), "notify", G_CALLBACK(manager_property_changed_cb), nullptr);
 
     // Use a high enough timeout to make sure we get the end of the scan
     // method call which has an internal timeout of 30 seconds
