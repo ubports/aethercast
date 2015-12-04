@@ -74,7 +74,6 @@ void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &device) {
 }
 
 void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &device) {
-    g_warning("Lost device %s", device->Address().c_str());
     auto iter = devices_.find(device->Address());
     if (iter == devices_.end())
         return;
@@ -82,8 +81,14 @@ void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &device) {
     g_dbus_object_manager_server_unexport(object_manager_.get(), iter->second->Path().c_str());
 
     devices_.erase(iter);
+}
 
-    g_warning("Removed device");
+void MiracastServiceAdapter::OnDeviceChanged(const NetworkDevice::Ptr &peer) {
+    auto iter = devices_.find(peer->Address());
+    if (iter == devices_.end())
+        return;
+
+    iter->second->SyncProperties();
 }
 
 void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {

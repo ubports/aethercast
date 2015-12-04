@@ -205,6 +205,11 @@ void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &peer) {
     }
 }
 
+void MiracastService::OnDeviceChanged(const NetworkDevice::Ptr &peer) {
+    if (auto sp = delegate_.lock())
+        sp->OnDeviceChanged(peer);
+}
+
 void MiracastService::OnDeviceFound(const NetworkDevice::Ptr &peer) {
     if (auto sp = delegate_.lock())
         sp->OnDeviceFound(peer);

@@ -42,6 +42,8 @@ public:
     GDBusObjectSkeleton* DBusObject() const;
     std::string Path() const;
 
+    void SyncProperties();
+
 private:
     static void OnHandleConnect(MiracastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
                                 const gchar *role, gpointer user_data);
@@ -51,7 +53,6 @@ private:
 private:
     NetworkDeviceAdapter(GDBusConnection *connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service);
 
-    std::string GeneratePath() const;
 
 private:
     GDBusConnection *connection_;

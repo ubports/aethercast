@@ -57,6 +57,7 @@ public:
         virtual void OnStateChanged(NetworkDeviceState state) = 0;
         virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) = 0;
         virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) = 0;
+        virtual void OnDeviceChanged(const NetworkDevice::Ptr &peer) = 0;
 
     protected:
         Delegate() = default;
@@ -80,6 +81,7 @@ public:
 
 public:
     void OnDeviceStateChanged(const NetworkDevice::Ptr &peer) override;
+    void OnDeviceChanged(const NetworkDevice::Ptr &peer) override;
     void OnDeviceFound(const NetworkDevice::Ptr &peer) override;
     void OnDeviceLost(const NetworkDevice::Ptr &peer) override;
 
