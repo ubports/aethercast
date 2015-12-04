@@ -74,6 +74,7 @@ private:
     bool CreateSupplicantConfig(const std::string &conf_path);
     void HandleSupplicantFailed();
     void Reset();
+    void AdvanceDeviceState(const mcs::NetworkDevice::Ptr &device, mcs::NetworkDeviceState state);
 
     void OnP2pDeviceFound(WpaSupplicantMessage &message);
     void OnP2pDeviceLost(WpaSupplicantMessage &message);

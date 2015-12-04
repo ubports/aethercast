@@ -195,23 +195,18 @@ void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &messag
     message.Skip("s");
     message.Read("s", &role);
 
-    current_peer_->SetState(mcs::kConfiguration);
-    if (delegate_)
-        delegate_->OnDeviceStateChanged(current_peer_);
+    AdvanceDeviceState(current_peer_, mcs::kConfiguration);
 
     // If we're the GO the other side is the client and vice versa
     if (g_strcmp0(role, "GO") == 0) {
         is_group_owner_ = true;
-
-        current_peer_->SetState(mcs::kConnected);
 
         // As we're the owner we can now just startup the DHCP server
         // and report we're connected as there is not much more to do
         // from our side.
         dhcp_server_.Start();
 
-        if (delegate_)
-            delegate_->OnDeviceStateChanged(current_peer_);
+        AdvanceDeviceState(current_peer_, mcs::kConnected);
     } else {
         is_group_owner_ = false;
 
@@ -240,12 +235,9 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
     if (g_strcmp0(reason, "FORMATION_FAILED") == 0 ||
             g_strcmp0(reason, "PSK_FAILURE") == 0 ||
             g_strcmp0(reason, "FREQ_CONFLICT") == 0)
-        current_peer_->SetState(mcs::kFailure);
+        AdvanceDeviceState(current_peer_, mcs::kFailure);
     else
-        current_peer_->SetState(mcs::kDisconnected);
-
-    if (delegate_)
-        delegate_->OnDeviceStateChanged(current_peer_);
+        AdvanceDeviceState(current_peer_, mcs::kDisconnected);
 
     current_peer_.reset();
 }
@@ -254,9 +246,7 @@ void WpaSupplicantNetworkManager::OnP2pGoNegFailure(WpaSupplicantMessage &messag
     if (!current_peer_.get())
         return;
 
-    current_peer_->SetState(mcs::kFailure);
-    if (delegate_)
-        delegate_->OnDeviceStateChanged(current_peer_);
+    AdvanceDeviceState(current_peer_, mcs::kFailure);
 
     current_peer_.reset();
 }
@@ -330,9 +320,7 @@ void WpaSupplicantNetworkManager::HandleSupplicantFailed() {
 
 void WpaSupplicantNetworkManager::Reset() {
     if (current_peer_) {
-        current_peer_->SetState(mcs::kDisconnected);
-        if (delegate_)
-            delegate_->OnDeviceStateChanged(current_peer_);
+        AdvanceDeviceState(current_peer_, mcs::kDisconnected);
 
         current_peer_ = nullptr;
 
@@ -569,10 +557,7 @@ void WpaSupplicantNetworkManager::OnAddressAssigned(const mcs::IpV4Address &addr
     }
 
 
-    current_peer_->SetState(mcs::kConnected);
-
-    if (delegate_)
-        delegate_->OnDeviceStateChanged(current_peer_);
+    AdvanceDeviceState(current_peer_, mcs::kConnected);
 }
 
 gboolean WpaSupplicantNetworkManager::OnDeviceFailureTimeout(gpointer user_data) {
@@ -588,13 +573,10 @@ gboolean WpaSupplicantNetworkManager::OnGroupClientDhcpTimeout(gpointer user_dat
     if (!inst->current_peer_)
         return FALSE;
 
-    inst->current_peer_->SetState(mcs::kFailure);
-
     // Switch peer back into idle state after some time
     g_timeout_add(kPeerFailureTimeout.count(), &WpaSupplicantNetworkManager::OnDeviceFailureTimeout, inst);
 
-    if (inst->delegate_)
-        inst->delegate_->OnDeviceStateChanged(inst->current_peer_);
+    inst->AdvanceDeviceState(inst->current_peer_, mcs::kFailure);
 
     return FALSE;
 }
@@ -633,6 +615,12 @@ std::vector<mcs::NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() cons
     return values;
 }
 
+void WpaSupplicantNetworkManager::AdvanceDeviceState(const mcs::NetworkDevice::Ptr &device, mcs::NetworkDeviceState state) {
+    device->SetState(state);
+    if (delegate_)
+        delegate_->OnDeviceStateChanged(device);
+}
+
 bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
     if (available_devices_.find(device->Address()) == available_devices_.end())
         return false;
@@ -647,9 +635,7 @@ bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device)
 
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
-            current_peer_->SetState(mcs::kFailure);
-            if (delegate_)
-                delegate_->OnDeviceStateChanged(current_peer_);
+            AdvanceDeviceState(current_peer_, mcs::kFailure);
             return;
         }
     });
