@@ -206,12 +206,13 @@ void object_manager_created_cb(GObject *object, GAsyncResult *res, gpointer user
     setup_standard_input();
 }
 
-static void manager_state_changed_cb(GObject *gobject, GParamSpec *pspec, gpointer user_data) {
-    rl_printf("Manager state has changed\n");
-}
-
 static void manager_property_changed_cb(GObject *gobject, GParamSpec *pspec, gpointer user_data) {
-    rl_printf("Manager property has changed\n");
+    char *name = (char*) user_data;
+
+    if (g_strcmp0(name, "state") == 0) {
+        auto state = miracast_interface_manager_get_state(manager);
+        rl_printf("[CHG] Manger State: %s", state);
+    }
 }
 
 void manager_connected_cb(GObject *object, GAsyncResult *res, gpointer user_data) {
@@ -224,8 +225,7 @@ void manager_connected_cb(GObject *object, GAsyncResult *res, gpointer user_data
         return;
     }
 
-    g_signal_connect(G_OBJECT(manager), "notify::state", G_CALLBACK(manager_state_changed_cb), nullptr);
-    g_signal_connect(G_OBJECT(manager), "notify", G_CALLBACK(manager_property_changed_cb), nullptr);
+    g_signal_connect(G_OBJECT(manager), "notify::state", G_CALLBACK(manager_property_changed_cb), (gpointer) "state");
 
     // Use a high enough timeout to make sure we get the end of the scan
     // method call which has an internal timeout of 30 seconds
@@ -275,7 +275,7 @@ int main(int argc, char **argv) {
     rl_set_prompt(PROMPT_OFF);
     rl_redisplay();
 
-    guint bus_watch = g_bus_watch_name_on_connection(bus_connection, "org.wds",
+    g_bus_watch_name_on_connection(bus_connection, "org.wds",
                                    G_BUS_NAME_WATCHER_FLAGS_NONE,
                                    service_found_cb,
                                    service_lost_cb,
@@ -294,9 +294,6 @@ int main(int argc, char **argv) {
 
     if (input_source > 0)
         g_source_remove(input_source);
-
-    if (bus_watch > 0)
-        g_source_remove(bus_watch);
 
     return 0;
 }
