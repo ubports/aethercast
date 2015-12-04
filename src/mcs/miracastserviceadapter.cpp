@@ -86,11 +86,15 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
     if (not inst)
         return;
 
-    g_message("Scanning for remote devices");
+    inst->service_->Scan([=](const Error &error) {
+        if (error != kErrorNone) {
+            g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                  "%s", ErrorToString(error).c_str());
+            return;
+        }
 
-    inst->service_->Scan();
-
-    g_dbus_method_invocation_return_value(invocation, nullptr);
+        g_dbus_method_invocation_return_value(invocation, nullptr);
+    });
 }
 
 void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skeleton,
@@ -110,7 +114,6 @@ void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skele
 
         g_dbus_method_invocation_return_value(invocation, nullptr);
     });
-
 }
 
 std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruction() {

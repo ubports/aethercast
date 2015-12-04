@@ -41,7 +41,8 @@ public:
     };
 
     virtual bool Setup() = 0;
-    virtual void Scan(unsigned int timeout = 30) = 0;
+    virtual void Scan() = 0;
+    virtual void StopScan() = 0;
     virtual bool Connect(const NetworkDevice::Ptr &device) = 0;
     virtual bool DisconnectAll() = 0;
 
@@ -50,6 +51,7 @@ public:
     virtual std::vector<NetworkDevice::Ptr> Devices() const = 0;
     virtual IpV4Address LocalAddress() const = 0;
     virtual bool Running() const = 0;
+    virtual bool Scanning() const = 0;
 
 protected:
     NetworkManager() = default;

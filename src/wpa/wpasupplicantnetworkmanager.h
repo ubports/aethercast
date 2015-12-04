@@ -46,15 +46,16 @@ public:
 
     void SetWfdSubElements(const std::list<std::string> &elements) override;
 
-    void Scan(unsigned int timeout = 30) override;
-    std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
+    void Scan() override;
+    void StopScan() override;
 
     bool Connect(const mcs::NetworkDevice::Ptr &device) override;
     bool DisconnectAll() override;
 
     mcs::IpV4Address LocalAddress() const override;
-
     bool Running() const override;
+    bool Scanning() const override;
+    std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
 
     void OnUnsolicitedResponse(WpaSupplicantMessage message);
     void OnWriteMessage(WpaSupplicantMessage message);
@@ -106,6 +107,7 @@ private:
     guint respawn_limit_;
     guint respawn_source_;
     bool is_group_owner_;
+    bool scanning_;
 };
 
 #endif

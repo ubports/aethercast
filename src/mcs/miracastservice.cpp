@@ -30,6 +30,7 @@
 #include "miracastserviceadapter.h"
 #include "wpasupplicantnetworkmanager.h"
 #include "wfddeviceinfo.h"
+#include "types.h"
 
 namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.
@@ -116,7 +117,8 @@ MiracastService::MiracastService() :
     network_manager_(new WpaSupplicantNetworkManager(this)),
     source_(MiracastSourceManager::create()),
     current_state_(kIdle),
-    current_peer_(nullptr) {
+    current_peer_(nullptr),
+    scan_timeout_source_(0) {
     network_manager_->Setup();
 }
 
@@ -127,6 +129,8 @@ std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction() {
 }
 
 MiracastService::~MiracastService() {
+    if (scan_timeout_source_ > 0)
+        g_source_remove(scan_timeout_source_);
 }
 
 void MiracastService::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
@@ -258,7 +262,30 @@ void MiracastService::ConnectSink(const MacAddress &address, std::function<void(
     connect_callback_ = callback;
 }
 
-void MiracastService::Scan() {
+gboolean MiracastService::OnScanTimeout(gpointer user_data) {
+    auto inst = static_cast<SharedKeepAlive<MiracastService>*>(user_data)->ShouldDie();
+
+    inst->network_manager_->StopScan();
+
+    if (inst->current_scan_callback_) {
+        inst->current_scan_callback_(kErrorNone);
+        inst->current_scan_callback_ = nullptr;
+    }
+
+    inst->scan_timeout_source_ = 0;
+
+    return FALSE;
+}
+
+void MiracastService::Scan(ResultCallback callback, const std::chrono::seconds &timeout) {
+    if (scan_timeout_source_ > 0 || network_manager_->Scanning()) {
+        callback(kErrorAlreadyInProgress);
+        return;
+    }
+
+    scan_timeout_source_ = g_timeout_add_seconds(timeout.count(), &MiracastService::OnScanTimeout, this);
+    current_scan_callback_ = callback;
+
     network_manager_->Scan();
 }
 } // namespace miracast

@@ -75,7 +75,8 @@ WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegat
     dhcp_timeout_(0),
     respawn_limit_(kSupplicantRespawnLimit),
     respawn_source_(0),
-    is_group_owner_(false) {
+    is_group_owner_(false),
+    scanning_(false) {
 }
 
 WpaSupplicantNetworkManager::~WpaSupplicantNetworkManager() {
@@ -265,6 +266,10 @@ mcs::IpV4Address WpaSupplicantNetworkManager::LocalAddress() const {
 
 bool WpaSupplicantNetworkManager::Running() const {
     return supplicant_pid_ > 0;
+}
+
+bool WpaSupplicantNetworkManager::Scanning() const {
+    return scanning_;
 }
 
 gboolean WpaSupplicantNetworkManager::OnConnectSupplicant(gpointer user_data) {
@@ -590,10 +595,18 @@ void WpaSupplicantNetworkManager::SetWfdSubElements(const std::list<std::string>
     }
 }
 
-void WpaSupplicantNetworkManager::Scan(unsigned int timeout) {
+void WpaSupplicantNetworkManager::Scan() {
     auto m = WpaSupplicantMessage::CreateRequest("P2P_FIND");
-    m.Append("i", timeout);
-    RequestAsync(m, [=](const WpaSupplicantMessage &message) { });
+    RequestAsync(m, [=](const WpaSupplicantMessage &message) {
+        scanning_ = !message.IsFail();
+    });
+}
+
+void WpaSupplicantNetworkManager::StopScan() {
+    auto m = WpaSupplicantMessage::CreateRequest("P2P_STOP_FIND");
+    RequestAsync(m, [=](const WpaSupplicantMessage &message) {
+        scanning_ = message.IsFail();
+    });
 }
 
 std::vector<mcs::NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() const {

@@ -16,6 +16,7 @@ set(HEADERS
     mcs/ip_v4_address.h
     mcs/keep_alive.h
     mcs/mac_address.h
+    mcs/types.h
 )
 
 set(SOURCES

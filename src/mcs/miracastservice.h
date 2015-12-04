@@ -22,6 +22,7 @@
 
 #include <functional>
 #include <memory>
+#include <chrono>
 
 #include <glib.h>
 
@@ -29,6 +30,7 @@
 #include "networkmanager.h"
 #include "networkdevice.h"
 #include "non_copyable.h"
+#include "types.h"
 
 namespace mcs {
 class MiracastService : public std::enable_shared_from_this<MiracastService>,
@@ -66,7 +68,7 @@ public:
     void ResetDelegate();
 
     void ConnectSink(const MacAddress &address, std::function<void(bool,std::string)> callback);
-    void Scan();
+    void Scan(ResultCallback callback, const std::chrono::seconds &timeout = std::chrono::seconds{30});
 
     NetworkDeviceState State() const;
 
@@ -79,6 +81,7 @@ public:
 
 private:
     static gboolean OnIdleTimer(gpointer user_data);
+    static gboolean OnScanTimeout(gpointer user_data);
 
 private:
     MiracastService();
@@ -96,6 +99,8 @@ private:
     NetworkDeviceState current_state_;
     NetworkDevice::Ptr current_peer_;
     std::function<void(bool,std::string)> connect_callback_;
+    guint scan_timeout_source_;
+    ResultCallback current_scan_callback_;
 };
 } // namespace mcs
 #endif
