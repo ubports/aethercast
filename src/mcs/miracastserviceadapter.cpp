@@ -31,6 +31,7 @@ std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(const std
 MiracastServiceAdapter::MiracastServiceAdapter(const std::shared_ptr<MiracastService> &service) :
     service_(service),
     manager_obj_(nullptr),
+    bus_connection_(nullptr),
     bus_id_(0),
     object_manager_(nullptr) {
 }
@@ -49,12 +50,17 @@ void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
     boost::ignore_unused_variable_warning(state);
 }
 
-void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &peer) {
-    boost::ignore_unused_variable_warning(peer);
+void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &device) {
+    auto adapter = NetworkDeviceAdapter::Create(bus_connection_, device, service_);
+    devices_.insert(std::pair<std::string,NetworkDeviceAdapter::Ptr>(device->Address(), adapter));
 }
 
-void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &peer) {
-    boost::ignore_unused_variable_warning(peer);
+void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &device) {
+    auto iter = devices_.find(device->Address());
+    if (iter == devices_.end())
+        return;
+
+    devices_.erase(iter);
 }
 
 void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
@@ -121,10 +127,19 @@ std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruc
 
     g_message("Created miracast service adapter");
 
+    GError *error = nullptr;
+    bus_connection_ = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error);
+    if (!bus_connection_) {
+        g_warning("Failed to connect with system bus: %s", error->message);
+        g_error_free(error);
+        return sp;
+    }
+
     bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, kBusName, G_BUS_NAME_OWNER_FLAGS_NONE,
                    nullptr, &MiracastServiceAdapter::OnNameAcquired, nullptr, new SharedKeepAlive<MiracastServiceAdapter>{sp}, nullptr);
     if (bus_id_ == 0) {
-        g_warning("Failed to register bus name 'com.canonical.miracast'");
+        g_warning("Failed to register bus name '%s'", kBusName);
+        return sp;
     }
 
     service_->SetDelegate(sp);

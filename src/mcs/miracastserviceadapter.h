@@ -28,8 +28,10 @@ extern "C" {
 
 #include <memory>
 
-#include "miracastservice.h"
 #include "scoped_gobject.h"
+
+#include "miracastservice.h"
+#include "networkdeviceadapter.h"
 
 namespace mcs {
 class MiracastServiceAdapter : public std::enable_shared_from_this<MiracastServiceAdapter>,
@@ -44,8 +46,8 @@ public:
     ~MiracastServiceAdapter();
 
     void OnStateChanged(NetworkDeviceState state) override;
-    void OnDeviceFound(const NetworkDevice::Ptr &peer) override;
-    void OnDeviceLost(const NetworkDevice::Ptr &peer) override;
+    void OnDeviceFound(const NetworkDevice::Ptr &device) override;
+    void OnDeviceLost(const NetworkDevice::Ptr &device) override;
 
 private:
     static void OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data);
@@ -60,8 +62,10 @@ private:
 private:
     std::shared_ptr<MiracastService> service_;
     ScopedGObject<MiracastInterfaceManager> manager_obj_;
+    GDBusConnection *bus_connection_;
     guint bus_id_;
     ScopedGObject<GDBusObjectManagerServer> object_manager_;
+    std::map<std::string,NetworkDeviceAdapter::Ptr> devices_;
 };
 } // namespace mcs
 #endif

@@ -41,6 +41,8 @@ public:
     static constexpr const uint kVersionMajor = 0;
     static constexpr const uint kVersionMinor = 1;
 
+    typedef std::shared_ptr<MiracastService> Ptr;
+
     struct MainOptions {
         static MainOptions FromCommandLine(int argc, char** argv);
 

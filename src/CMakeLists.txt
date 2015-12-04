@@ -29,12 +29,14 @@ set(SOURCES
   mcs/testsourcemediamanager.cpp
   mcs/mirsourcemediamanager.cpp
   mcs/miracastservice.cpp
-  mcs/miracastserviceadapter.cpp
   mcs/miracastsourcemanager.cpp
   mcs/miracastsourceclient.cpp
   mcs/networkmanager.cpp
   mcs/networkdevice.cpp
+
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface.c
+  mcs/miracastserviceadapter.cpp
+  mcs/networkdeviceadapter.cpp
 
   wpa/gdhcp/common.c
   wpa/gdhcp/ipv4ll.c
