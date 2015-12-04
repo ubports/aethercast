@@ -17,11 +17,13 @@
 
 #include <glib.h>
 
+#include <algorithm>
+
 #include <boost/concept_check.hpp>
 
 #include "miracastserviceadapter.h"
-
 #include "keep_alive.h"
+#include "utils.h"
 
 namespace mcs {
 std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(const std::shared_ptr<MiracastService> &service) {
@@ -50,8 +52,16 @@ void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
     boost::ignore_unused_variable_warning(state);
 }
 
+std::string MiracastServiceAdapter::GenerateDevicePath(const NetworkDevice::Ptr &device) const {
+    std::string address = device->Address();
+    std::replace(address.begin(), address.end(), ':', '_');
+    // FIXME using kManagerPath doesn't seem to work. Fails at link time ...
+    return mcs::Utils::Sprintf("/org/wds/dev_%s", address.c_str());
+}
+
 void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &device) {
-    auto adapter = NetworkDeviceAdapter::Create(bus_connection_, device, service_);
+    auto path = GenerateDevicePath(device);
+    auto adapter = NetworkDeviceAdapter::Create(bus_connection_, path , device, service_);
     devices_.insert(std::pair<std::string,NetworkDeviceAdapter::Ptr>(device->Address(), adapter));
 
     g_dbus_object_manager_server_export(object_manager_.get(), adapter->DBusObject());

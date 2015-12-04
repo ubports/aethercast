@@ -208,6 +208,10 @@ void manager_connected_cb(GObject *object, GAsyncResult *res, gpointer user_data
         return;
     }
 
+    // Use a high enough timeout to make sure we get the end of the scan
+    // method call which has an internal timeout of 30 seconds
+    g_dbus_proxy_set_default_timeout(G_DBUS_PROXY(manager), 60 * 1000);
+
     g_dbus_object_manager_client_new(bus_connection,
                                      G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_NONE,
                                      "org.wds",

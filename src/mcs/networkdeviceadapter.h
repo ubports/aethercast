@@ -35,7 +35,7 @@ class NetworkDeviceAdapter {
 public:
     typedef std::shared_ptr<NetworkDeviceAdapter> Ptr;
 
-    static NetworkDeviceAdapter::Ptr Create(GDBusConnection *connection, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service);
+    static NetworkDeviceAdapter::Ptr Create(GDBusConnection *connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service);
 
     ~NetworkDeviceAdapter();
 
@@ -49,17 +49,17 @@ private:
                                    gpointer user_data);
 
 private:
-    NetworkDeviceAdapter(GDBusConnection *connection, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service);
+    NetworkDeviceAdapter(GDBusConnection *connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service);
 
     std::string GeneratePath() const;
 
 private:
     GDBusConnection *connection_;
     MiracastInterfaceObjectSkeleton *object_;
+    std::string path_;
     NetworkDevice::Ptr device_;
     MiracastService::Ptr service_;
     MiracastInterfaceDevice *device_iface_;
-    std::string path_;
 };
 
 } // namespace mcs
