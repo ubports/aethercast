@@ -225,7 +225,7 @@ static const struct {
     { "devices", NULL, cmd_devices, "List available devices" },
     { "info", "<address>", cmd_info, "Display detailed information about a device" },
     { "connect", "<address>", cmd_connect, "Connect to a device" },
-    { "disconnect", "<address>", cmd_connect, "Disconnect from a device" },
+    { "disconnect", "<address>", cmd_disconnect, "Disconnect from a device" },
     { NULL }
 };
 
