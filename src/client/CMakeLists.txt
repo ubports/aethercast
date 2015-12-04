@@ -27,3 +27,8 @@ target_link_libraries(miracastctl
   ${READLINE_LIBRARIES}
   -ldl
 )
+
+install(
+  TARGETS miracastctl
+  RUNTIME DESTINATION bin
+)
