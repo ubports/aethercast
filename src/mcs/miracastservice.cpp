@@ -218,7 +218,7 @@ void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &peer) {
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {
     auto inst = static_cast<SharedKeepAlive<MiracastService>*>(user_data)->ShouldDie();
     inst->AdvanceState(kIdle);
-    return TRUE;
+    return FALSE;
 }
 
 void MiracastService::StartIdleTimer() {
