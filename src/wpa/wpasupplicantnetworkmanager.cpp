@@ -176,12 +176,14 @@ void WpaSupplicantNetworkManager::OnP2pDeviceLost(WpaSupplicantMessage &message)
 
     message.Read("e", &address);
 
-    auto peer = available_devices_[address];
-    if (!peer)
+    auto iter = available_devices_.find(address);
+    if (iter == available_devices_.end())
         return;
 
     if (delegate_)
-        delegate_->OnDeviceLost(peer);
+        delegate_->OnDeviceLost(iter->second);
+
+    available_devices_.erase(iter);
 }
 
 void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &message) {
