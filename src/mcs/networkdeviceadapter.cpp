@@ -41,6 +41,10 @@ NetworkDeviceAdapter::NetworkDeviceAdapter(GDBusConnection *connection, const st
     g_signal_connect(device_iface_, "handle-disconnect",
                      G_CALLBACK(&NetworkDeviceAdapter::OnHandleDisconnect), this);
 
+    miracast_interface_device_set_address(device_iface_, device_->Address().c_str());
+    miracast_interface_device_set_name(device_iface_, device_->Name().c_str());
+    miracast_interface_device_set_state(device_iface_, NetworkDevice::StateToStr(device_->State()).c_str());
+
     object_ = miracast_interface_object_skeleton_new(path_.c_str());
     if (!object_) {
         g_warning("Failed to create object for device %s", device->Address().c_str());
