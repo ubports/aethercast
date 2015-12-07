@@ -19,6 +19,7 @@
 
 #include <mcs/networkutils.h>
 #include <mcs/utils.h>
+#include <mcs/logging.h>
 
 #include "wififirmwareloader.h"
 
@@ -78,7 +79,7 @@ void WiFiFirmwareLoader::OnInterfaceFirmwareSet(GDBusConnection *conn, GAsyncRes
 
     GVariant *result = g_dbus_connection_call_finish(conn, res, &error);
     if (!result) {
-        g_warning("Failed to load required WiFi firmware: %s", error->message);
+        mcs::Error("Failed to load required WiFi firmware: %s", error->message);
         g_error_free(error);
         timeout = std::chrono::milliseconds(2000);
     }

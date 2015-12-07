@@ -30,6 +30,7 @@
 
 #include "networkutils.h"
 #include "utils.h"
+#include "logging.h"
 
 namespace mcs {
 std::shared_ptr<MiracastSourceClient> MiracastSourceClient::Create(ScopedGObject<GSocket>&& socket) {
@@ -68,7 +69,7 @@ void MiracastSourceClient::DumpRtsp(const std::string &prefix, const std::string
 
     auto lines = Utils::StringSplit(data, '\n');
     for (auto current : lines)
-        g_warning("RTSP: %s: %s", prefix.c_str(), current.c_str());
+        mcs::Debug("%s: %s", prefix.c_str(), current.c_str());
 }
 
 void MiracastSourceClient::SendRTSPData(const std::string &data) {
@@ -76,7 +77,7 @@ void MiracastSourceClient::SendRTSPData(const std::string &data) {
     GError *error = nullptr;
     auto bytes_written = g_socket_send(socket_.get(), data.c_str(), data.length(), nullptr, &error);
     if (bytes_written < 0) {
-        g_warning("Failed to write data to RTSP client: %s", error->message);
+        mcs::Error("Failed to write data to RTSP client: %s", error->message);
         g_error_free(error);
         return;
     }
@@ -175,14 +176,14 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
     GError *error = nullptr;
     auto address = g_socket_get_remote_address(socket_.get(), &error);
     if (error) {
-        g_warning("Failed to receive address from socket: %s", error->message);
+        mcs::Error("Failed to receive address from socket: %s", error->message);
         g_error_free(error);
         return sp;
     }
 
     auto inet_address = g_inet_socket_address_get_address(G_INET_SOCKET_ADDRESS(address));
     if (!inet_address) {
-        g_warning("Failed to determine client address");
+        mcs::Error("Failed to determine client address");
         return sp;
     }
 
@@ -190,7 +191,7 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
 
     auto source = g_socket_create_source(socket_.get(), (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR), nullptr);
     if (!source) {
-        g_warning("Failed to setup event listener for source client");
+        mcs::Error("Failed to setup event listener for source client");
         return sp;
     }
 
@@ -198,7 +199,7 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
                           this, nullptr);
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
-        g_warning("Failed to attach source to mainloop");
+        mcs::Error("Failed to attach source to mainloop");
         g_source_unref(source);
         return sp;
     }

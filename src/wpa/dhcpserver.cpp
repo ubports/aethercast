@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 
 #include <mcs/networkutils.h>
+#include <mcs/logging.h>
 
 #include "dhcpserver.h"
 
@@ -28,7 +29,7 @@ DhcpServer::DhcpServer(Delegate *delegate, const std::string &interface_name) :
     interface_name_(interface_name) {
     interface_index_ = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
     if (interface_index_ < 0)
-        g_warning("Failed to determine index of network interface: %s", interface_name_.c_str());
+        mcs::Warning("Failed to determine index of network interface: %s", interface_name_.c_str());
 }
 
 DhcpServer::~DhcpServer()
@@ -45,12 +46,12 @@ mcs::IpV4Address DhcpServer::LocalAddress() const
 
 void DhcpServer::OnDebug(const char *str, gpointer user_data)
 {
-    g_warning("DHCP: %s", str);
+    mcs::Debug("%s", str);
 }
 
 bool DhcpServer::Start()
 {
-    g_warning("Starting up DHCP server");
+    mcs::Debug("Starting up DHCP server");
 
     // FIXME store those defaults somewhere else
     const char *address = "192.168.7.1";
@@ -61,14 +62,14 @@ bool DhcpServer::Start()
     if (mcs::NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, interface_index_,
                                     AF_INET, address,
                                     NULL, prefixlen, broadcast) < 0) {
-        g_warning("Failed to assign network address for %s", interface_name_.c_str());
+        mcs::Error("Failed to assign network address for %s", interface_name_.c_str());
         return false;
     }
 
     GDHCPServerError error;
     server_ = g_dhcp_server_new(G_DHCP_IPV4, interface_index_, &error);
     if (!server_) {
-        g_warning("Failed to setup DHCP server");
+        mcs::Error("Failed to setup DHCP server");
         return false;
     }
 
@@ -81,7 +82,7 @@ bool DhcpServer::Start()
     g_dhcp_server_set_debug(server_, &DhcpServer::OnDebug, this);
 
     if(g_dhcp_server_start(server_) < 0) {
-        g_warning("Failed to start DHCP server");
+        mcs::Error("Failed to start DHCP server");
         g_dhcp_server_unref(server_);
         return false;
     }

@@ -30,6 +30,7 @@
 #include <glib.h>
 
 #include "networkutils.h"
+#include "logging.h"
 
 #define NLMSG_TAIL(nmsg)				\
     ((struct rtattr *) (((uint8_t*) (nmsg)) +	\
@@ -74,12 +75,6 @@ int NetworkUtils::ModifyInterfaceAddress(int cmd, int flags,
     struct in6_addr ipv6_addr;
     struct in_addr ipv4_addr, ipv4_dest, ipv4_bcast;
     int sk, err;
-
-#if 0
-    DBG("cmd %#x flags %#x index %d family %d address %s peer %s "
-        "prefixlen %hhu broadcast %s", cmd, flags, index, family,
-        address, peer, prefixlen, broadcast);
-#endif
 
     if (!address)
         return -EINVAL;
@@ -226,7 +221,7 @@ int NetworkUtils::ResetInterface(int index)
     addr = (struct sockaddr_in *)&addr_ifr.ifr_addr;
     addr->sin_family = AF_INET;
     if (ioctl(sk, SIOCSIFADDR, &addr_ifr) < 0)
-        g_warning("Could not clear IPv4 address of interface with index %d", index);
+        mcs::Warning("Could not clear IPv4 address of interface with index %d", index);
 
 done:
     close(sk);
