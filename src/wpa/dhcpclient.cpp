@@ -20,6 +20,7 @@
 #include <linux/rtnetlink.h>
 #include <sys/socket.h>
 
+#include <mcs/logger.h>
 #include <mcs/networkutils.h>
 
 #include "dhcpclient.h"
@@ -30,7 +31,7 @@ DhcpClient::DhcpClient(Delegate *delegate, const std::string &interface_name) :
     interface_name_(interface_name) {
     interface_index_ = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
     if (interface_index_ < 0)
-        g_warning("Failed to determine index of network interface %s", interface_name_.c_str());
+        MCS_WARNING("Failed to determine index of network interface %s", interface_name_.c_str());
 }
 
 DhcpClient::~DhcpClient() {
@@ -43,14 +44,14 @@ void DhcpClient::OnLeaseAvailable(GDHCPClient *client, gpointer user_data) {
     char *netmask = g_dhcp_client_get_netmask(inst->client_);
 
     if (!address) {
-        g_warning("Received invalid IP configuration over DHCP");
+        MCS_WARNING("Received invalid IP configuration over DHCP");
         return;
     }
 
     if (mcs::NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, inst->interface_index_,
                                     AF_INET, address,
                                     NULL, 24, NULL) < 0) {
-        g_warning("Failed to assign network address for %s", inst->interface_name_.c_str());
+        MCS_WARNING("Failed to assign network address for %s", inst->interface_name_.c_str());
         return;
     }
 
@@ -63,7 +64,7 @@ void DhcpClient::OnLeaseAvailable(GDHCPClient *client, gpointer user_data) {
 }
 
 void DhcpClient::OnClientDebug(const char *str, gpointer user_data) {
-    g_warning("DHCP: %s", str);
+    MCS_WARNING("DHCP: %s", str);
 }
 
 mcs::IpV4Address DhcpClient::LocalAddress() const {
@@ -74,7 +75,7 @@ bool DhcpClient::Start() {
     GDHCPClientError error;
     client_ = g_dhcp_client_new(G_DHCP_IPV4, interface_index_, &error);
     if (!client_) {
-        g_warning("Failed to setup DHCP client");
+        MCS_WARNING("Failed to setup DHCP client");
         return false;
     }
 

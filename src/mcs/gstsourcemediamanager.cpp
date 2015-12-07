@@ -20,6 +20,7 @@
 #include "gstsourcemediamanager.h"
 
 #include "keep_alive.h"
+#include "logger.h"
 #include "scoped_gobject.h"
 
 namespace mcs {
@@ -42,19 +43,19 @@ gboolean GstSourceMediaManager::OnGstBusEvent(GstBus *bus, GstMessage *message, 
     switch (GST_MESSAGE_TYPE (message)) {
     case GST_MESSAGE_ERROR:
         gst_message_parse_error (message, &err, &debug);
-        g_warning("GST ERROR: %s", err->message);
+        WARNING("GST ERROR: %s", err->message);
         g_error_free (err);
         g_free (debug);
         break;
     case GST_MESSAGE_WARNING:
         gst_message_parse_warning (message, &err, &debug);
-        g_warning("GST WARNING: %s", err->message);
+        WARNING("GST WARNING: %s", err->message);
         g_error_free (err);
         g_free (debug);
         break;
     case GST_MESSAGE_INFO:
         gst_message_parse_info (message, &err, &debug);
-        g_warning("GST INFO: %s", err->message);
+        WARNING("GST INFO: %s", err->message);
         g_error_free (err);
         g_free (debug);
         break;

@@ -17,6 +17,7 @@
 
 #include <string.h>
 
+#include "logger.h"
 #include "mediamanagerfactory.h"
 #include "mirsourcemediamanager.h"
 #include "testsourcemediamanager.h"
@@ -25,29 +26,29 @@
 namespace mcs {
 
 void NullSourceMediaManager::Play() {
-    g_warning("NullSourceMediaManager: Not implemented");
+    WARNING("NullSourceMediaManager: Not implemented");
 }
 
 void NullSourceMediaManager::Pause() {
-    g_warning("NullSourceMediaManager: Not implemented");
+    WARNING("NullSourceMediaManager: Not implemented");
 }
 
 void NullSourceMediaManager::Teardown() {
-    g_warning("NullSourceMediaManager: Not implemented");
+    WARNING("NullSourceMediaManager: Not implemented");
 }
 
 bool NullSourceMediaManager::IsPaused() const {
-    g_warning("NullSourceMediaManager: Not implemented");
+    WARNING("NullSourceMediaManager: Not implemented");
 }
 
 void NullSourceMediaManager::Configure() {
-    g_warning("NullSourceMediaManager: Not implemented");
+    WARNING("NullSourceMediaManager: Not implemented");
 }
 
 std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const std::string &remote_address) {
     std::string type = Utils::GetEnvValue("MIRACAST_SOURCE_TYPE");
 
-    g_warning("Creating source media manager of type %s", type.c_str());
+    WARNING("Creating source media manager of type %s", type.c_str());
 
     if (type.length() == 0 || type == "mir")
         return std::make_shared<MirSourceMediaManager>(remote_address);

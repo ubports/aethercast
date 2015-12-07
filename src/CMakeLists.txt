@@ -26,6 +26,7 @@ set(SOURCES
   mcs/basesourcemediamanager.cpp
   mcs/gstsourcemediamanager.cpp
   mcs/testsourcemediamanager.cpp
+  mcs/logger.cpp
   mcs/mirsourcemediamanager.cpp
   mcs/miracastservice.cpp
   mcs/miracastserviceadapter.cpp
@@ -77,6 +78,7 @@ target_link_libraries(miracast
   ${GIO_LIBRARIES}
   ${GIO-UNIX_LIBRARIES}
   ${GST_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT}
   ${WDS_LIBRARIES}
   -ldl
 )

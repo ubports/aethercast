@@ -40,6 +40,7 @@
 
 #include "wpasupplicantnetworkmanager.h"
 
+#include "mcs/logger.h"
 #include "mcs/networkdevice.h"
 #include "mcs/networkutils.h"
 #include "mcs/utils.h"
@@ -110,7 +111,7 @@ void WpaSupplicantNetworkManager::OnFirmwareUnloaded() {
 
 void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage message) {
     if (message.Type() != kEvent) {
-        g_warning("unhandled supplicant message: %s", message.Raw().c_str());
+        MCS_WARNING("unhandled supplicant message: %s", message.Raw().c_str());
         return;
     }
 
@@ -123,7 +124,7 @@ void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage mes
     else if (message.Name() == kP2pGroupRemoved)
         OnP2pGroupRemoved(message);
     else
-        g_warning("unhandled supplicant event: %s", message.Raw().c_str());
+        MCS_WARNING("unhandled supplicant event: %s", message.Raw().c_str());
 }
 
 void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message) {
@@ -139,7 +140,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     message.ReadDictEntry("name", 's', &name);
     message.ReadDictEntry("config_methods", 's', &config_methods_str);
 
-    g_warning("Found device with address %s name %s config_methods %s", address, name, config_methods_str);
+    MCS_WARNING("Found device with address %s name %s config_methods %s", address, name, config_methods_str);
 
     // Check if we've that peer already in our list, if that is the
     // case we just update it.
@@ -249,7 +250,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
 void WpaSupplicantNetworkManager::OnWriteMessage(WpaSupplicantMessage message) {
     auto data = message.Raw();
     if (send(sock_, data.c_str(), data.length(), 0) < 0)
-        g_warning("Failed to send data to wpa-supplicant");
+        MCS_WARNING("Failed to send data to wpa-supplicant");
 }
 
 mcs::IpV4Address WpaSupplicantNetworkManager::LocalAddress() const {
@@ -276,7 +277,7 @@ gboolean WpaSupplicantNetworkManager::OnConnectSupplicant(gpointer user_data) {
 void WpaSupplicantNetworkManager::OnSupplicantWatch(GPid pid, gint status, gpointer user_data) {
     auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
 
-    g_warning("Supplicant process exited with status %d", status);
+    MCS_WARNING("Supplicant process exited with status %d", status);
 
     if (!g_spawn_check_exit_status(status, nullptr))
         inst->HandleSupplicantFailed();
@@ -345,7 +346,7 @@ bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf
 
     GError *error = nullptr;
     if (!g_file_set_contents(conf_path.c_str(), config.c_str(), config.length(), &error)) {
-        g_warning("Failed to create configuration file for supplicant: %s",
+        MCS_WARNING("Failed to create configuration file for supplicant: %s",
                   error->message);
         g_error_free(error);
         return false;
@@ -358,7 +359,7 @@ void WpaSupplicantNetworkManager::OnSupplicantProcessSetup(gpointer user_data) {
     // Die when our parent dies so we don't stay around any longer and can
     // be restarted when the service restarts
     if (prctl(PR_SET_PDEATHSIG, SIGKILL) < 0)
-        g_warning("Failed to track parents process status: %s", strerror(errno));
+        MCS_WARNING("Failed to track parents process status: %s", strerror(errno));
 }
 
 bool WpaSupplicantNetworkManager::StartSupplicant() {
@@ -373,7 +374,7 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
     auto path = boost::filesystem::path(ctrl_path_);
     boost::filesystem::remove_all(path, err_code);
     if (err_code)
-        g_warning("Failed remove control directory for supplicant. Will cause problems.");
+        MCS_WARNING("Failed remove control directory for supplicant. Will cause problems.");
 
     auto cmdline = mcs::Utils::Sprintf("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s -W",
                                            kWpaSupplicantBinPath,
@@ -391,7 +392,7 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
     int err = g_spawn_async(NULL, argv, NULL, (GSpawnFlags) flags,
                             &WpaSupplicantNetworkManager::OnSupplicantProcessSetup, NULL, &supplicant_pid_, &error);
     if (err < 0) {
-        g_warning("Failed to spawn wpa-supplicant process: %s", error->message);
+        MCS_WARNING("Failed to spawn wpa-supplicant process: %s", error->message);
         g_strfreev(argv);
         g_error_free(error);
         return false;
@@ -399,7 +400,7 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
 
     err = g_child_watch_add(supplicant_pid_, &WpaSupplicantNetworkManager::OnSupplicantWatch, this);
     if (err < 0) {
-        g_warning("Failed to setup watch for supplicant");
+        MCS_WARNING("Failed to setup watch for supplicant");
         StopSupplicant();
         return false;
     }
@@ -424,12 +425,12 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
                                                       ctrl_path_.c_str(),
                                                       interface_name_.c_str());
 
-    g_warning("Connecting supplicant on %s", socket_path.c_str());
+    MCS_WARNING("Connecting supplicant on %s", socket_path.c_str());
 
     struct sockaddr_un local;
     sock_ = ::socket(PF_UNIX, SOCK_DGRAM, 0);
     if (sock_ < 0) {
-        g_warning("Failed to create socket");
+        MCS_WARNING("Failed to create socket");
         return false;
     }
 
@@ -442,7 +443,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     strncpy(local.sun_path, local_path.c_str(), sizeof(local.sun_path));
 
     if (::bind(sock_, (struct sockaddr *) &local, sizeof(local)) < 0) {
-        g_warning("Failed to bind socket");
+        MCS_WARNING("Failed to bind socket");
         return false;
     }
 
@@ -451,7 +452,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     strncpy(dest.sun_path, socket_path.c_str(), sizeof(dest.sun_path));
 
     if (::connect(sock_, (struct sockaddr*) &dest, sizeof(dest)) < 0) {
-        g_warning("Failed to connect socket");
+        MCS_WARNING("Failed to connect socket");
         return false;
     }
 
@@ -463,7 +464,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     channel_watch_ = g_io_add_watch(channel_, (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR),
                        &WpaSupplicantNetworkManager::OnIncomingMessages, this);
     if (channel_watch_ == 0) {
-        g_warning("Failed to setup watch for incoming messages from wpa-supplicant");
+        MCS_WARNING("Failed to setup watch for incoming messages from wpa-supplicant");
         return false;
     }
 
@@ -471,7 +472,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     auto m = WpaSupplicantMessage::CreateRequest("ATTACH");
     RequestAsync(m, [=](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
-            g_warning("Failed to attach to wpa-supplicant for unsolicited events");
+            MCS_WARNING("Failed to attach to wpa-supplicant for unsolicited events");
             return;
         }
     });
@@ -518,7 +519,7 @@ gboolean WpaSupplicantNetworkManager::OnIncomingMessages(GIOChannel *source, GIO
     char buf[kReadBufferSize];
 
     if (condition & G_IO_HUP) {
-        g_warning("Got disconnected from supplicant");
+        MCS_WARNING("Got disconnected from supplicant");
         inst->StopSupplicant();
         return TRUE;
     }
@@ -621,7 +622,7 @@ bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device)
     bool ret = false;
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
-            g_warning("Failed to connect with remote %s", device->Address().c_str());
+            MCS_WARNING("Failed to connect with remote %s", device->Address().c_str());
             return;
         }
 
@@ -638,7 +639,7 @@ bool WpaSupplicantNetworkManager::DisconnectAll() {
     bool ret = false;
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
-            g_warning("Failed to disconnect all connected devices on interface %s", interface_name_.c_str());
+            MCS_WARNING("Failed to disconnect all connected devices on interface %s", interface_name_.c_str());
             return;
         }
 
