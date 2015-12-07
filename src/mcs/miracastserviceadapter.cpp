@@ -155,7 +155,7 @@ std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruc
     bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, kBusName, G_BUS_NAME_OWNER_FLAGS_NONE,
                    nullptr, &MiracastServiceAdapter::OnNameAcquired, nullptr, new SharedKeepAlive<MiracastServiceAdapter>{sp}, nullptr);
     if (bus_id_ == 0)
-        WARNING("Failed to register bus name '%s'", kBusName);
+        WARNING("Failed to register bus name");
 
     service_->SetDelegate(sp);
     return sp;
