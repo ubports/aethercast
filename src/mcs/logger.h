@@ -35,11 +35,6 @@ public:
         kFatal
     };
 
-    class Record : public mcs::NonCopyable {
-    public:
-
-    };
-
     virtual void Log(Severity severity, const std::string& file, int line, const std::string &message) = 0;
 
     virtual void Trace(const std::string& file, int line, const std::string& message);
