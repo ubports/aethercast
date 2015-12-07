@@ -11,6 +11,8 @@ Build-Depends: cmake,
                libboost-log-dev,
                libboost-iostreams-dev,
                libboost-system-dev,
+# boost log needs exactly one symbol from boost-thread for resolving
+# thread-specific storage locations.
                libboost-thread-dev,
                libglib2.0-dev,
                libgstreamer1.0-dev,
