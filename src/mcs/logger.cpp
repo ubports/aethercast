@@ -73,7 +73,8 @@ struct BoostLogLogger : public mcs::Logger {
                 << message;
 
             if (not file.empty() && line != -1) {
-                out << boost::log::add_value(attrs::File, boost::filesystem::path(file).filename().string())
+                auto fn = boost::filesystem::path(file).filename().string();
+                out << boost::log::add_value(attrs::File, fn)
                     << boost::log::add_value(attrs::Line, line);
             }
 
