@@ -29,8 +29,9 @@
 
 #include <glib.h>
 
+#include "logger.h"
 #include "networkutils.h"
-#include "logging.h"
+#include "logger.h"
 
 #define NLMSG_TAIL(nmsg)				\
     ((struct rtattr *) (((uint8_t*) (nmsg)) +	\
@@ -221,7 +222,7 @@ int NetworkUtils::ResetInterface(int index)
     addr = (struct sockaddr_in *)&addr_ifr.ifr_addr;
     addr->sin_family = AF_INET;
     if (ioctl(sk, SIOCSIFADDR, &addr_ifr) < 0)
-        mcs::Warning("Could not clear IPv4 address of interface with index %d", index);
+        WARNING("Could not clear IPv4 address of interface with index %d", index);
 
 done:
     close(sk);

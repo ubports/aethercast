@@ -27,7 +27,10 @@
 
 #include <chrono>
 
+#include <wds/logging.h>
+
 #include "keep_alive.h"
+#include "logger.h"
 #include "miracastservice.h"
 #include "miracastserviceadapter.h"
 #include "wpasupplicantnetworkmanager.h"
@@ -39,6 +42,20 @@ namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.
 const std::uint16_t kMiracastDefaultRtspCtrlPort{7236};
 const std::chrono::milliseconds kStateIdleTimeout{5000};
+
+// SafeLog serves as integration point to the wds::LogSystem world.
+template <mcs::Logger::Severity severity>
+void SafeLog (const char *format, ...)
+{
+    static constexpr const std::size_t kBufferSize{256};
+
+    char buffer[kBufferSize];
+    va_list args;
+    va_start(args, format);
+    std::vsnprintf(buffer, kBufferSize, format, args);
+    mcs::Log().Log(severity, std::string(), -1, buffer);
+    va_end (args);
+}
 }
 namespace mcs {
 MiracastService::MainOptions MiracastService::MainOptions::FromCommandLine(int argc, char** argv) {
@@ -74,11 +91,6 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
         return 0;
     }
 
-    if (options.debug) {
-        mcs::InitLogging(kDebug);
-        mcs::Info("Debugging enabled");
-    }
-
     struct Runtime {
         static int OnSignalRaised(gpointer user_data) {
             auto thiz = static_cast<Runtime*>(user_data);
@@ -93,6 +105,36 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
             // emissions.
             g_unix_signal_add(SIGINT, OnSignalRaised, this);
             g_unix_signal_add(SIGTERM, OnSignalRaised, this);
+
+            // Redirect all wds logging to our own.
+            wds::LogSystem::set_vlog_func(SafeLog<mcs::Logger::Severity::kTrace>);
+            wds::LogSystem::set_log_func(SafeLog<mcs::Logger::Severity::kInfo>);
+            wds::LogSystem::set_warning_func(SafeLog<mcs::Logger::Severity::kWarning>);
+            wds::LogSystem::set_error_func(SafeLog<mcs::Logger::Severity::kError>);
+
+            // Redirect all g* logging to our own.
+            g_log_set_default_handler([](const gchar *domain, GLogLevelFlags log_level, const gchar *msg, gpointer) {
+                switch (log_level & G_LOG_LEVEL_MASK) {
+                case G_LOG_LEVEL_DEBUG:
+                    Log().Debug(std::string(), -1, msg);
+                    break;
+                case G_LOG_LEVEL_INFO:
+                    Log().Info(std::string(), -1, msg);
+                    break;
+                case G_LOG_LEVEL_MESSAGE:
+                    Log().Info(std::string(), -1, msg);
+                    break;
+                case G_LOG_LEVEL_WARNING:
+                    Log().Warning(std::string(), -1, msg);
+                    break;
+                case G_LOG_LEVEL_CRITICAL:
+                    Log().Error(std::string(), -1, msg);
+                    break;
+                case G_LOG_LEVEL_ERROR:
+                    Log().Fatal(std::string(), -1, msg);
+                    break;
+                }
+            }, nullptr);
 
             // Become a reaper of all our children
             if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0)
@@ -169,9 +211,9 @@ void MiracastService::OnClientDisconnected() {
 void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     IpV4Address address;
 
-    mcs::Debug("new state %s current state %s",
-               mcs::NetworkDevice::StateToStr(new_state).c_str(),
-               mcs::NetworkDevice::StateToStr(current_state_).c_str());
+    DEBUG("new state %s current state %s",
+          mcs::NetworkDevice::StateToStr(new_state).c_str(),
+          mcs::NetworkDevice::StateToStr(current_state_).c_str());
 
     switch (new_state) {
     case kAssociation:
@@ -209,9 +251,9 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
 }
 
 void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &device) {
-    mcs::Debug("Device state changed: address %s new state %s",
-               device->Address().c_str(),
-               mcs::NetworkDevice::StateToStr(device->State()).c_str());
+    DEBUG("Device state changed: address %s new state %s",
+          device->Address().c_str(),
+          mcs::NetworkDevice::StateToStr(device->State()).c_str());
 
     if (device != current_device_)
         return;
@@ -220,7 +262,6 @@ void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &device) {
 }
 
 void MiracastService::OnDeviceChanged(const NetworkDevice::Ptr &device) {
-    mcs::Debug("device %s", device->Address().c_str());
     if (auto sp = delegate_.lock())
         sp->OnDeviceChanged(device);
 }

@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "keep_alive.h"
+#include "logger.h"
 #include "miracastsourceclient.h"
 #include "mirsourcemediamanager.h"
 #include "testsourcemediamanager.h"
@@ -51,8 +52,6 @@ MiracastSourceClient::~MiracastSourceClient() {
         g_source_remove(socket_source_);
 
     ReleaseTimers();
-
-    mcs::Debug("");
 }
 
 void MiracastSourceClient::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
@@ -71,7 +70,7 @@ void MiracastSourceClient::DumpRtsp(const std::string &prefix, const std::string
 
     auto lines = Utils::StringSplit(data, '\n');
     for (auto current : lines)
-        mcs::Debug("%s: %s", prefix.c_str(), current.c_str());
+        WARNING("RTSP: %s: %s", prefix.c_str(), current.c_str());
 }
 
 void MiracastSourceClient::SendRTSPData(const std::string &data) {
@@ -79,7 +78,7 @@ void MiracastSourceClient::SendRTSPData(const std::string &data) {
     GError *error = nullptr;
     auto bytes_written = g_socket_send(socket_.get(), data.c_str(), data.length(), nullptr, &error);
     if (bytes_written < 0) {
-        mcs::Error("Failed to write data to RTSP client: %s", error->message);
+        WARNING("Failed to write data to RTSP client: %s", error->message);
         g_error_free(error);
         return;
     }
@@ -150,7 +149,6 @@ gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  con
     auto inst = static_cast<MiracastSourceClient*>(user_data);
 
     if (cond == G_IO_ERR || cond == G_IO_HUP) {
-        mcs::Debug("ERR or HUP");
         if (auto sp = inst->delegate_.lock())
             sp->OnConnectionClosed();
         return TRUE;
@@ -178,14 +176,14 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
     GError *error = nullptr;
     auto address = g_socket_get_remote_address(socket_.get(), &error);
     if (error) {
-        mcs::Error("Failed to receive address from socket: %s", error->message);
+        WARNING("Failed to receive address from socket: %s", error->message);
         g_error_free(error);
         return sp;
     }
 
     auto inet_address = g_inet_socket_address_get_address(G_INET_SOCKET_ADDRESS(address));
     if (!inet_address) {
-        mcs::Error("Failed to determine client address");
+        WARNING("Failed to determine client address");
         return sp;
     }
 
@@ -193,7 +191,7 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
 
     auto source = g_socket_create_source(socket_.get(), (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR), nullptr);
     if (!source) {
-        mcs::Error("Failed to setup event listener for source client");
+        WARNING("Failed to setup event listener for source client");
         return sp;
     }
 
@@ -201,7 +199,7 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
                           this, nullptr);
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
-        mcs::Error("Failed to attach source to mainloop");
+        WARNING("Failed to attach source to mainloop");
         g_source_unref(source);
         return sp;
     }

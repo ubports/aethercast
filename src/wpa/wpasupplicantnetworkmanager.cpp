@@ -41,10 +41,11 @@
 #include <mcs/networkdevice.h>
 #include <mcs/networkutils.h>
 #include <mcs/utils.h>
-#include <mcs/logging.h>
+#include <mcs/logger.h>
 
 #include "wpasupplicantnetworkmanager.h"
 #include "wfddeviceinfo.h"
+
 
 namespace {
 constexpr const char *kWpaSupplicantBinPath{"/sbin/wpa_supplicant"};
@@ -125,8 +126,6 @@ void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage mes
         message.Name() == "CTRL-EVENT-DISCONNECTED")
         return;
 
-    // FIXME Keep track of scanning and adjust scanning_ accordingly
-
     if (message.Name() == kP2pDeviceFound)
         OnP2pDeviceFound(message);
     else if (message.Name() == kP2pDeviceLost)
@@ -144,7 +143,7 @@ void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage mes
     else if (message.Name() == kApStaDisconnected)
         OnApStaDisconnected(message);
     else
-        mcs::Warning("unhandled supplicant event: %s", message.Raw().c_str());
+        MCS_WARNING("unhandled supplicant event: %s", message.Raw().c_str());
 }
 
 void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message) {
@@ -162,13 +161,13 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     message.ReadDictEntry("config_methods", 's', &config_methods_str);
     message.ReadDictEntry("wfd_dev_info", 's', &wfd_dev_info);
 
-    mcs::Debug("address %s name %s config_methods %s wfd_dev_info %s",
-               address, name, config_methods_str, wfd_dev_info);
+    MCS_DEBUG("address %s name %s config_methods %s wfd_dev_info %s",
+          address, name, config_methods_str, wfd_dev_info);
 
     auto wfd_info = WfdDeviceInfo::Create(wfd_dev_info);
 
     if (!wfd_info.IsSupported()) {
-        mcs::Debug("Ignoring unsupported device %s", address);
+        MCS_DEBUG("Ignoring unsupported device %s", address);
         return;
     }
 
@@ -310,8 +309,8 @@ void WpaSupplicantNetworkManager::OnApStaDisconnected(WpaSupplicantMessage &mess
 
 void WpaSupplicantNetworkManager::OnWriteMessage(WpaSupplicantMessage message) {
     auto data = message.Raw();
-    if (send(sock_, data.c_str(), data.length(), 0) < 0)
-        mcs::Error("Failed to send data to wpa-supplicant");
+    if (::send(sock_, data.c_str(), data.length(), 0) < 0)
+        MCS_WARNING("Failed to send data to wpa-supplicant");
 }
 
 mcs::IpV4Address WpaSupplicantNetworkManager::LocalAddress() const {
@@ -342,7 +341,7 @@ gboolean WpaSupplicantNetworkManager::OnConnectSupplicant(gpointer user_data) {
 void WpaSupplicantNetworkManager::OnSupplicantWatch(GPid pid, gint status, gpointer user_data) {
     auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
 
-    mcs::Error("Supplicant process exited with status %d", status);
+    MCS_WARNING("Supplicant process exited with status %d", status);
 
     if (!g_spawn_check_exit_status(status, nullptr))
         inst->HandleSupplicantFailed();
@@ -409,8 +408,8 @@ bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf
 
     GError *error = nullptr;
     if (!g_file_set_contents(conf_path.c_str(), config.c_str(), config.length(), &error)) {
-        mcs::Error("Failed to create configuration file for supplicant: %s",
-                   error->message);
+        MCS_ERROR("Failed to create configuration file for supplicant: %s",
+                  error->message);
         g_error_free(error);
         return false;
     }
@@ -422,7 +421,7 @@ void WpaSupplicantNetworkManager::OnSupplicantProcessSetup(gpointer user_data) {
     // Die when our parent dies so we don't stay around any longer and can
     // be restarted when the service restarts
     if (prctl(PR_SET_PDEATHSIG, SIGKILL) < 0)
-        mcs::Error("Failed to track parents process status: %s", strerror(errno));
+        MCS_ERROR("Failed to track parents process status: %s", strerror(errno));
 }
 
 bool WpaSupplicantNetworkManager::StartSupplicant() {
@@ -437,7 +436,7 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
     auto path = boost::filesystem::path(ctrl_path_);
     boost::filesystem::remove_all(path, err_code);
     if (err_code)
-        mcs::Warning("Failed remove control directory for supplicant. Will cause problems.");
+        MCS_ERROR("Failed remove control directory for supplicant. Will cause problems.");
 
     auto cmdline = mcs::Utils::Sprintf("%s -Dnl80211 -i%s -C%s -ddd -t -K -c%s -W",
                                            kWpaSupplicantBinPath,
@@ -455,7 +454,7 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
     int err = g_spawn_async(NULL, argv, NULL, (GSpawnFlags) flags,
                             &WpaSupplicantNetworkManager::OnSupplicantProcessSetup, NULL, &supplicant_pid_, &error);
     if (err < 0) {
-        mcs::Error("Failed to spawn wpa-supplicant process: %s", error->message);
+        MCS_ERROR("Failed to spawn wpa-supplicant process: %s", error->message);
         g_strfreev(argv);
         g_error_free(error);
         return false;
@@ -463,7 +462,7 @@ bool WpaSupplicantNetworkManager::StartSupplicant() {
 
     err = g_child_watch_add(supplicant_pid_, &WpaSupplicantNetworkManager::OnSupplicantWatch, this);
     if (err < 0) {
-        mcs::Error("Failed to setup watch for supplicant");
+        MCS_ERROR("Failed to setup watch for supplicant");
         StopSupplicant();
         return false;
     }
@@ -488,12 +487,13 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
                                                       ctrl_path_.c_str(),
                                                       interface_name_.c_str());
 
-    mcs::Debug("socket path %s", socket_path.c_str());
+
+    MCS_DEBUG("Connecting supplicant on %s", socket_path.c_str());
 
     struct sockaddr_un local;
     sock_ = ::socket(PF_UNIX, SOCK_DGRAM, 0);
     if (sock_ < 0) {
-        mcs::Error("Failed to create socket");
+        MCS_ERROR("Failed to create socket");
         return false;
     }
 
@@ -506,7 +506,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     strncpy(local.sun_path, local_path.c_str(), sizeof(local.sun_path));
 
     if (::bind(sock_, (struct sockaddr *) &local, sizeof(local)) < 0) {
-        mcs::Error("Failed to bind socket");
+        MCS_ERROR("Failed to bind socket");
         return false;
     }
 
@@ -515,7 +515,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     strncpy(dest.sun_path, socket_path.c_str(), sizeof(dest.sun_path));
 
     if (::connect(sock_, (struct sockaddr*) &dest, sizeof(dest)) < 0) {
-        mcs::Error("Failed to connect socket");
+        MCS_ERROR("Failed to connect socket");
         return false;
     }
 
@@ -527,7 +527,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     channel_watch_ = g_io_add_watch(channel_, (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR),
                        &WpaSupplicantNetworkManager::OnIncomingMessages, this);
     if (channel_watch_ == 0) {
-        mcs::Error("Failed to setup watch for incoming messages from wpa-supplicant");
+        MCS_ERROR("Failed to setup watch for incoming messages from wpa-supplicant");
         return false;
     }
 
@@ -535,7 +535,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     auto m = WpaSupplicantMessage::CreateRequest("ATTACH");
     RequestAsync(m, [=](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
-            mcs::Error("Failed to attach to wpa-supplicant for unsolicited events");
+            MCS_ERROR("Failed to attach to wpa-supplicant for unsolicited events");
             return;
         }
     });
@@ -582,7 +582,6 @@ gboolean WpaSupplicantNetworkManager::OnIncomingMessages(GIOChannel *source, GIO
     char buf[kReadBufferSize];
 
     if (condition & G_IO_HUP) {
-        mcs::Warning("Got disconnected from supplicant");
         inst->StopSupplicant();
         return TRUE;
     }
@@ -677,7 +676,7 @@ std::vector<mcs::NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() cons
 }
 
 void WpaSupplicantNetworkManager::AdvanceDeviceState(const mcs::NetworkDevice::Ptr &device, mcs::NetworkDeviceState state) {
-    mcs::Debug("new state %s", mcs::NetworkDevice::StateToStr(state).c_str());
+    MCS_DEBUG("new state %s", mcs::NetworkDevice::StateToStr(state).c_str());
 
     device->SetState(state);
     if (delegate_) {
@@ -695,10 +694,10 @@ bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device)
 
     current_peer_ = available_devices_[device->Address()];
 
-    mcs::Debug("Attempting to connect with %s", device->Address().c_str());
+    MCS_DEBUG("Attempting to connect with %s", device->Address().c_str());
 
     if (scanning_) {
-        mcs::Debug("Currently scanning; stopping this first");
+        MCS_DEBUG("Currently scanning; stopping this first");
         RequestAsync(WpaSupplicantMessage::CreateRequest("P2P_STOP_FIND"));
     }
 
@@ -708,6 +707,7 @@ bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device)
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
             AdvanceDeviceState(current_peer_, mcs::kFailure);
+            MCS_ERROR("Failed to connect with remote %s", device->Address().c_str());
             return;
         }
     });
@@ -719,7 +719,7 @@ bool WpaSupplicantNetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &devi
     if (!current_peer_ || current_peer_ != device)
         return false;
 
-    mcs::Debug("device %s", device->Address().c_str());
+    MCS_DEBUG("device %s", device->Address().c_str());
 
     WpaSupplicantMessage m;
 
@@ -733,7 +733,7 @@ bool WpaSupplicantNetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &devi
 
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
-            mcs::Error("Failed to disconnect all connected devices on interface %s", interface_name_.c_str());
+            MCS_ERROR("Failed to disconnect all connected devices on interface %s", interface_name_.c_str());
             return;
         }
     });

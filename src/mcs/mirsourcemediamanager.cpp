@@ -19,16 +19,14 @@
 
 #include "mirsourcemediamanager.h"
 #include "utils.h"
-#include "logging.h"
+#include "logger.h"
 
 namespace mcs {
 MirSourceMediaManager::MirSourceMediaManager(const std::string &remote_address) :
     remote_address_(remote_address) {
-    mcs::Debug("");
 }
 
 MirSourceMediaManager::~MirSourceMediaManager() {
-    mcs::Debug("");
 }
 
 SharedGObject<GstElement> MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
@@ -105,7 +103,7 @@ SharedGObject<GstElement> MirSourceMediaManager::ConstructPipeline(const wds::H2
     GError *error = nullptr;
     GstElement *pipeline = gst_parse_launch(ss.str().c_str(), &error);
     if (error) {
-        mcs::Error("Failed to setup GStreamer pipeline: %s", error->message);
+        ERROR("Failed to setup GStreamer pipeline: %s", error->message);
         g_error_free(error);
         return nullptr;
     }

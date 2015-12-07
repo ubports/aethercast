@@ -21,12 +21,12 @@ set(HEADERS
 
 set(SOURCES
   mcs/utils.cpp
-  mcs/logging.cpp
   mcs/networkutils.cpp
   mcs/mediamanagerfactory.cpp
   mcs/basesourcemediamanager.cpp
   mcs/gstsourcemediamanager.cpp
   mcs/testsourcemediamanager.cpp
+  mcs/logger.cpp
   mcs/mirsourcemediamanager.cpp
   mcs/miracastservice.cpp
   mcs/miracastsourcemanager.cpp
@@ -82,6 +82,7 @@ target_link_libraries(miracast
   ${GIO_LIBRARIES}
   ${GIO-UNIX_LIBRARIES}
   ${GST_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT}
   ${WDS_LIBRARIES}
   -ldl
 )

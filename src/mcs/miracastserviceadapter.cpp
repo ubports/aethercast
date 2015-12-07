@@ -24,8 +24,8 @@
 #include "miracastserviceadapter.h"
 #include "keep_alive.h"
 #include "utils.h"
-#include "logging.h"
 #include "dbushelpers.h"
+#include "logger.h"
 
 namespace mcs {
 std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(const std::shared_ptr<MiracastService> &service) {
@@ -80,7 +80,7 @@ std::string MiracastServiceAdapter::GenerateDevicePath(const NetworkDevice::Ptr 
 }
 
 void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &device) {
-    mcs::Debug("device %s", device->Address().c_str());
+    DEBUG("device %s", device->Address().c_str());
 
     auto path = GenerateDevicePath(device);
     auto adapter = NetworkDeviceAdapter::Create(bus_connection_, path , device, service_);
@@ -123,7 +123,7 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
     inst->object_manager_.reset(g_dbus_object_manager_server_new(kManagerPath));
     g_dbus_object_manager_server_set_connection(inst->object_manager_.get(), connection);
 
-    mcs::Info("Registered bus name %s", name);
+    INFO("Registered bus name %s", name);
 }
 
 void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
@@ -134,7 +134,7 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
     if (not inst)
         return;
 
-    mcs::Debug("");
+    INFO("Scanning for remote devices");
 
     inst->service_->Scan();
 
@@ -144,12 +144,10 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
 std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruction() {
     auto sp = shared_from_this();
 
-    mcs::Debug("");
-
     GError *error = nullptr;
     bus_connection_ = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error);
     if (!bus_connection_) {
-        mcs::Error("Failed to connect with system bus: %s", error->message);
+        ERROR("Failed to connect with system bus: %s", error->message);
         g_error_free(error);
         return sp;
     }
@@ -157,7 +155,7 @@ std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruc
     bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, kBusName, G_BUS_NAME_OWNER_FLAGS_NONE,
                    nullptr, &MiracastServiceAdapter::OnNameAcquired, nullptr, new SharedKeepAlive<MiracastServiceAdapter>{sp}, nullptr);
     if (bus_id_ == 0)
-        mcs::Warning("Failed to register bus name '%s'", kBusName);
+        WARNING("Failed to register bus name '%s'", kBusName);
 
     service_->SetDelegate(sp);
     return sp;

@@ -22,7 +22,7 @@
 #include "networkdeviceadapter.h"
 #include "utils.h"
 #include "keep_alive.h"
-#include "logging.h"
+#include "logger.h"
 #include "dbushelpers.h"
 
 namespace mcs {
@@ -49,7 +49,7 @@ NetworkDeviceAdapter::NetworkDeviceAdapter(GDBusConnection *connection, const st
 
     object_ = miracast_interface_object_skeleton_new(path_.c_str());
     if (!object_) {
-        mcs::Error("Failed to create object for device %s", device->Address().c_str());
+        ERROR("Failed to create object for device %s", device->Address().c_str());
         return;
     }
 

@@ -20,12 +20,11 @@
 #include "gstsourcemediamanager.h"
 
 #include "keep_alive.h"
+#include "logger.h"
 #include "scoped_gobject.h"
-#include "logging.h"
 
 namespace mcs {
 GstSourceMediaManager::GstSourceMediaManager() {
-    mcs::Debug("");
 }
 
 GstSourceMediaManager::~GstSourceMediaManager() {
@@ -33,8 +32,6 @@ GstSourceMediaManager::~GstSourceMediaManager() {
         gst_element_set_state(pipeline_.get(), GST_STATE_NULL);
         g_source_remove(bus_watch_id_);
     }
-
-    mcs::Debug("");
 }
 
 gboolean GstSourceMediaManager::OnGstBusEvent(GstBus *bus, GstMessage *message, gpointer data) {
@@ -46,19 +43,19 @@ gboolean GstSourceMediaManager::OnGstBusEvent(GstBus *bus, GstMessage *message, 
     switch (GST_MESSAGE_TYPE (message)) {
     case GST_MESSAGE_ERROR:
         gst_message_parse_error (message, &err, &debug);
-        mcs::Error("GST ERROR: %s", err->message);
+        WARNING("GST ERROR: %s", err->message);
         g_error_free (err);
         g_free (debug);
         break;
     case GST_MESSAGE_WARNING:
         gst_message_parse_warning (message, &err, &debug);
-        mcs::Warning("GST WARNING: %s", err->message);
+        WARNING("GST WARNING: %s", err->message);
         g_error_free (err);
         g_free (debug);
         break;
     case GST_MESSAGE_INFO:
         gst_message_parse_info (message, &err, &debug);
-        mcs::Info("GST INFO: %s", err->message);
+        WARNING("GST INFO: %s", err->message);
         g_error_free (err);
         g_free (debug);
         break;
