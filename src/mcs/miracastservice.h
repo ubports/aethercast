@@ -54,16 +54,18 @@ public:
 
     class Delegate : private mcs::NonCopyable {
     public:
+        virtual ~Delegate() { }
+
         virtual void OnStateChanged(NetworkDeviceState state) = 0;
-        virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) = 0;
-        virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) = 0;
-        virtual void OnDeviceChanged(const NetworkDevice::Ptr &peer) = 0;
+        virtual void OnDeviceFound(const NetworkDevice::Ptr &device) = 0;
+        virtual void OnDeviceLost(const NetworkDevice::Ptr &device) = 0;
+        virtual void OnDeviceChanged(const NetworkDevice::Ptr &device) = 0;
 
     protected:
         Delegate() = default;
     };
 
-    static std::shared_ptr<MiracastService> create();
+    static std::shared_ptr<MiracastService> Create();
 
     ~MiracastService();
 
@@ -80,10 +82,10 @@ public:
     void OnClientDisconnected();
 
 public:
-    void OnDeviceStateChanged(const NetworkDevice::Ptr &peer) override;
-    void OnDeviceChanged(const NetworkDevice::Ptr &peer) override;
-    void OnDeviceFound(const NetworkDevice::Ptr &peer) override;
-    void OnDeviceLost(const NetworkDevice::Ptr &peer) override;
+    void OnDeviceStateChanged(const NetworkDevice::Ptr &device) override;
+    void OnDeviceChanged(const NetworkDevice::Ptr &device) override;
+    void OnDeviceFound(const NetworkDevice::Ptr &device) override;
+    void OnDeviceLost(const NetworkDevice::Ptr &device) override;
 
 private:
     static gboolean OnIdleTimer(gpointer user_data);

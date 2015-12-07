@@ -26,6 +26,7 @@ MirSourceMediaManager::MirSourceMediaManager(const std::string &remote_address) 
 }
 
 MirSourceMediaManager::~MirSourceMediaManager() {
+    g_warning("MirSourceMediaManager::~MirSourceMediaManager");
 }
 
 SharedGObject<GstElement> MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {

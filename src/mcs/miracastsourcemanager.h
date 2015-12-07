@@ -35,21 +35,20 @@ class MiracastSourceManager : public std::enable_shared_from_this<MiracastSource
 public:
     class Delegate : private boost::noncopyable {
     public:
+        virtual ~Delegate() { }
+
         virtual void OnClientDisconnected() = 0;
 
     protected:
         Delegate() = default;
     };
 
-    static std::shared_ptr<MiracastSourceManager> create();
+    static std::shared_ptr<MiracastSourceManager> Create(const IpV4Address &address, unsigned short port);
 
     ~MiracastSourceManager();
 
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
-
-    bool Setup(const IpV4Address &address, unsigned short port);
-    void Release();
 
 public:
     void OnConnectionClosed();
@@ -58,6 +57,8 @@ private:
     static gboolean OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data);
 
     MiracastSourceManager();
+
+    bool Setup(const IpV4Address &address, unsigned short port);
 
 private:
     std::weak_ptr<Delegate> delegate_;

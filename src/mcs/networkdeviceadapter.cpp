@@ -82,19 +82,25 @@ void NetworkDeviceAdapter::OnHandleConnect(MiracastInterfaceDevice *skeleton, GD
     boost::ignore_unused_variable_warning(skeleton);
     boost::ignore_unused_variable_warning(role);
 
+    g_warning("connect");
+
     auto inst = static_cast<NetworkDeviceAdapter*>(user_data);
 
     if (not inst)
         return;
 
-    inst->service_->Connect(inst->device_, [&](mcs::Error error) {
+    g_object_ref(invocation);
+
+    inst->service_->Connect(inst->device_, [invocation](mcs::Error error) {
         if (error != kErrorNone) {
             g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                   "%s", mcs::ErrorToString(error).c_str());
+            g_object_unref(invocation);
             return;
         }
 
         g_dbus_method_invocation_return_value(invocation, nullptr);
+        g_object_unref(invocation);
     });
 }
 
@@ -103,19 +109,25 @@ void NetworkDeviceAdapter::OnHandleDisconnect(MiracastInterfaceDevice *skeleton,
 {
     boost::ignore_unused_variable_warning(skeleton);
 
+    g_warning("disconnect");
+
     auto inst = static_cast<NetworkDeviceAdapter*>(user_data);
 
     if (not inst)
         return;
 
-    inst->service_->Disconnect(inst->device_, [&](mcs::Error error) {
+    g_object_ref(invocation);
+
+    inst->service_->Disconnect(inst->device_, [invocation](mcs::Error error) {
         if (error != kErrorNone) {
             g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                   "%s", mcs::ErrorToString(error).c_str());
+            g_object_unref(invocation);
             return;
         }
 
         g_dbus_method_invocation_return_value(invocation, nullptr);
+        g_object_unref(invocation);
     });
 }
 

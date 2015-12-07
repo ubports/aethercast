@@ -45,7 +45,7 @@ public:
         virtual void OnConnectionClosed() = 0;
     };
 
-    static std::shared_ptr<MiracastSourceClient> create(ScopedGObject<GSocket>&& socket);
+    static std::shared_ptr<MiracastSourceClient> Create(ScopedGObject<GSocket>&& socket);
 
     ~MiracastSourceClient();
 
@@ -69,6 +69,7 @@ private:
     std::shared_ptr<MiracastSourceClient> FinalizeConstruction();
 
     void DumpRtsp(const std::string &prefix, const std::string &data);
+    void ReleaseTimers();
 
 private:
     std::weak_ptr<Delegate> delegate_;

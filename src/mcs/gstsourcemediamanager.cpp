@@ -31,6 +31,8 @@ GstSourceMediaManager::~GstSourceMediaManager() {
         gst_element_set_state(pipeline_.get(), GST_STATE_NULL);
         g_source_remove(bus_watch_id_);
     }
+
+    g_warning("GstSourceMediaManager::~GstSourceMediaManager");
 }
 
 gboolean GstSourceMediaManager::OnGstBusEvent(GstBus *bus, GstMessage *message, gpointer data) {
