@@ -1,0 +1,72 @@
+Overview
+========
+
+A input manager is used to retrieve input events from another component
+in the system to stream them in a separate channel to the remove display
+device for latency reduction.
+
+Only one input manager can be registered with the management service at
+the same time.
+
+When a connection with a remote display device is established the
+NewConnection method of the input manager will be called handing over
+a file descriptor. This file descriptor can then be used to send
+input events to the display management service.
+
+All input events send to the display management service are using the
+following format:
+
+// Use the struct defined in /usr/include/linux/input.h in your
+// implementation rather than taking a copy of this.
+
+struct input_event {
+	struct timeval time;
+	uint16_t type;
+	uint16_t code;
+	int32_t value;
+};
+
+FIXME:
+- Note that compositor should stop compositing the cursor once
+  NewConnection is called
+- Cursor property needs to be updated whenever the cursor changes
+
+Input manager hierarchy
+=======================
+
+Service		unique name
+Interface	org.wds.InputManager
+Object path	freely definable
+
+Methods		void Release()
+
+			This method gets called when the input manager is
+			unregistered and can be used to perform cleanup tasks.
+
+		void NewConnection(object device, fd, dict options)
+
+			This methods gets called when a connection to a remote
+			display is established.
+
+			Possible errors: org.wds.Error.Rejected
+			                 org.wds.Error.Canceled
+
+		void RequestDisconnection(object device)
+
+			This methods gets called when a device gets disconnected.
+
+			The file descriptor is no longer owned by the service
+			daemon and the input manager implementation needs to
+			take care of cleaning up all connections.
+
+			Possible errors: org.wds.Error.Rejected
+			                 org.wds.Error.Canceled
+
+Properties		string Cursor
+
+			Path to the current active cursor. The cursor
+			needs to be in PNG format.
+
+			The display management service will listen for
+			property change events and will adjust the
+			cursor when it changes on the remote display.

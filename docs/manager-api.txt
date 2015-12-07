@@ -13,6 +13,18 @@ Methods		void Scan()
 			a longer D-Bus timeout might be a really good
 			idea.
 
+		void RegisterInputManager(object manager, dict options)
+
+			This registers a input manager implementation.
+
+			There are no options specified yet.
+
+		void UnregisterInputManager(object manager)
+
+			This unregisters a input manager which was
+			previously registered. The object path parameter
+			must match the same used on registration.
+
 Properties	string State [readonly]
 
 			The global connection state. Possible values are

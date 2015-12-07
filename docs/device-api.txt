@@ -48,6 +48,10 @@ Properties		string State
 
 			Name of the remote device
 
+		string Address
+
+			MAC address of the remote device
+
 		array{string} Capabilities
 
 			List of capabilities the remote device has. Possible
