@@ -31,16 +31,16 @@ void InitLogging(LogLevel level);
 void Log(LogLevel level, const char *format, ...);
 
 #define Debug(format, args...) \
-    Log(kDebug, "%s:%s() :" format, __FILE__, __FUNCTION__, ## args)
+    Log(mcs::kDebug, "%s:%s() :" format, __FILE__, __FUNCTION__, ## args)
 
 #define Info(format, args...) \
-    Log(kInfo, "%s:%s() " format, __FILE__, __FUNCTION__, ## args)
+    Log(mcs::kInfo, "%s:%s() " format, __FILE__, __FUNCTION__, ## args)
 
 #define Warning(format, args...) \
-    Log(kWarning, "%s:%s() " format, __FILE__, __FUNCTION__, ## args)
+    Log(mcs::kWarning, "%s:%s() " format, __FILE__, __FUNCTION__, ## args)
 
 #define Error(format, args...) \
-    Log(kError, "%s:%s() " format, __FILE__, __FUNCTION__, ## args)
+    Log(mcs::kError, "%s:%s() " format, __FILE__, __FUNCTION__, ## args)
 
 } // namespace mcs
 

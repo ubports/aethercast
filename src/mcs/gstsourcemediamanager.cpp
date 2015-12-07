@@ -21,6 +21,7 @@
 
 #include "keep_alive.h"
 #include "scoped_gobject.h"
+#include "logging.h"
 
 namespace mcs {
 GstSourceMediaManager::GstSourceMediaManager() {
@@ -42,19 +43,19 @@ gboolean GstSourceMediaManager::OnGstBusEvent(GstBus *bus, GstMessage *message, 
     switch (GST_MESSAGE_TYPE (message)) {
     case GST_MESSAGE_ERROR:
         gst_message_parse_error (message, &err, &debug);
-        g_warning("GST ERROR: %s", err->message);
+        mcs::Error("GST ERROR: %s", err->message);
         g_error_free (err);
         g_free (debug);
         break;
     case GST_MESSAGE_WARNING:
         gst_message_parse_warning (message, &err, &debug);
-        g_warning("GST WARNING: %s", err->message);
+        mcs::Warning("GST WARNING: %s", err->message);
         g_error_free (err);
         g_free (debug);
         break;
     case GST_MESSAGE_INFO:
         gst_message_parse_info (message, &err, &debug);
-        g_warning("GST INFO: %s", err->message);
+        mcs::Info("GST INFO: %s", err->message);
         g_error_free (err);
         g_free (debug);
         break;

@@ -20,8 +20,8 @@
 #include <boost/concept_check.hpp>
 
 #include "miracastserviceadapter.h"
-
 #include "keep_alive.h"
+#include "logging.h"
 
 namespace mcs {
 std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(const std::shared_ptr<MiracastService> &service) {
@@ -75,7 +75,7 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
     inst->object_manager_.reset(g_dbus_object_manager_server_new(kManagerPath));
     g_dbus_object_manager_server_set_connection(inst->object_manager_.get(), connection);
 
-    g_message("Registered bus name %s", name);
+    mcs::Info("Registered bus name %s", name);
 }
 
 void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
@@ -86,7 +86,7 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
     if (not inst)
         return;
 
-    g_message("Scanning for remote devices");
+    mcs::Debug("");
 
     inst->service_->Scan();
 
@@ -116,13 +116,12 @@ void MiracastServiceAdapter::OnHandleConnectSink(MiracastInterfaceManager *skele
 std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruction() {
     auto sp = shared_from_this();
 
-    g_message("Created miracast service adapter");
+    mcs::Debug("");
 
     bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, kBusName, G_BUS_NAME_OWNER_FLAGS_NONE,
                    nullptr, &MiracastServiceAdapter::OnNameAcquired, nullptr, new SharedKeepAlive<MiracastServiceAdapter>{sp}, nullptr);
-    if (bus_id_ == 0) {
-        g_warning("Failed to register bus name 'com.canonical.miracast'");
-    }
+    if (bus_id_ == 0)
+        mcs::Warning("Failed to register bus name '%s'", kBusName);
 
     service_->SetDelegate(sp);
     return sp;
