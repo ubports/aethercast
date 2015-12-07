@@ -51,7 +51,7 @@ void SafeLog (const char *format, ...)
     va_list args;
     va_start(args, format);
     std::vsnprintf(buffer, kBufferSize, format, args);
-    mcs::Log().Log(severity, std::string(), -1, buffer);
+    mcs::Log().Log(severity, std::string{buffer}, boost::optional<mcs::Logger::Location>{});
     va_end (args);
 }
 }
@@ -114,22 +114,22 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
             g_log_set_default_handler([](const gchar *domain, GLogLevelFlags log_level, const gchar *msg, gpointer) {
                 switch (log_level & G_LOG_LEVEL_MASK) {
                 case G_LOG_LEVEL_DEBUG:
-                    Log().Debug(std::string(), -1, msg);
+                    Log().Debug(msg);
                     break;
                 case G_LOG_LEVEL_INFO:
-                    Log().Info(std::string(), -1, msg);
+                    Log().Info(msg);
                     break;
                 case G_LOG_LEVEL_MESSAGE:
-                    Log().Info(std::string(), -1, msg);
+                    Log().Info(msg);
                     break;
                 case G_LOG_LEVEL_WARNING:
-                    Log().Warning(std::string(), -1, msg);
+                    Log().Warning(msg);
                     break;
                 case G_LOG_LEVEL_CRITICAL:
-                    Log().Error(std::string(), -1, msg);
+                    Log().Error(msg);
                     break;
                 case G_LOG_LEVEL_ERROR:
-                    Log().Fatal(std::string(), -1, msg);
+                    Log().Fatal(msg);
                     break;
                 }
             }, nullptr);

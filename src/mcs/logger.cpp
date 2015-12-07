@@ -29,34 +29,20 @@
 namespace {
 namespace attrs {
 BOOST_LOG_ATTRIBUTE_KEYWORD(Severity, "mcs::Severity", mcs::Logger::Severity)
-BOOST_LOG_ATTRIBUTE_KEYWORD(File, "File", std::string)
-BOOST_LOG_ATTRIBUTE_KEYWORD(Line, "Line", int)
+BOOST_LOG_ATTRIBUTE_KEYWORD(Location, "Location", mcs::Logger::Location)
 BOOST_LOG_ATTRIBUTE_KEYWORD(Timestamp, "Timestamp", boost::posix_time::ptime)
 }
 
 struct BoostLogLogger : public mcs::Logger {
-    static boost::log::trivial::severity_level to_boost_log_severity(mcs::Logger::Severity severity) {
-        switch (severity) {
-        case mcs::Logger::Severity::kTrace: return boost::log::trivial::severity_level::trace;
-        case mcs::Logger::Severity::kDebug: return boost::log::trivial::severity_level::debug;
-        case mcs::Logger::Severity::kInfo: return boost::log::trivial::severity_level::info;
-        case mcs::Logger::Severity::kWarning: return boost::log::trivial::severity_level::warning;
-        case mcs::Logger::Severity::kError: return boost::log::trivial::severity_level::error;
-        case mcs::Logger::Severity::kFatal: return boost::log::trivial::severity_level::fatal;
-        default:
-            return boost::log::trivial::severity_level::trace;
-        }
-    }
-
     BoostLogLogger() {
         boost::log::formatter formatter = boost::log::expressions::stream
             << "[" << attrs::Severity << " "
             << boost::log::expressions::format_date_time< boost::posix_time::ptime >("Timestamp", "%Y-%m-%d %H:%M:%S")
             << "] "
             << boost::log::expressions::smessage
-            << boost::log::expressions::if_(boost::log::expressions::has_attr(attrs::File) && boost::log::expressions::has_attr(attrs::Line))
+            << boost::log::expressions::if_(boost::log::expressions::has_attr(attrs::Location))
                [
-                   boost::log::expressions::stream << " [" << attrs::File << ":" << attrs::Line << "]"
+                   boost::log::expressions::stream << " [" << attrs::Location << "]"
                ];
 
         boost::log::core::get()->remove_all_sinks();
@@ -65,17 +51,15 @@ struct BoostLogLogger : public mcs::Logger {
         // logger->set_filter(attrs::Severity < mcs::Logger::Severity::kInfo);
     }
 
-    void Log(Severity severity, const std::string& file, int line, const std::string& message) {
+    void Log(Severity severity, const std::string& message, const boost::optional<Location> &loc) {
         if (auto rec = boost::log::trivial::logger::get().open_record()) {
             boost::log::record_ostream out{rec};
             out << boost::log::add_value(attrs::Severity, severity)
                 << boost::log::add_value(attrs::Timestamp, boost::posix_time::microsec_clock::universal_time())
                 << message;
 
-            if (not file.empty() && line != -1) {
-                auto fn = boost::filesystem::path(file).filename().string();
-                out << boost::log::add_value(attrs::File, fn)
-                    << boost::log::add_value(attrs::Line, line);
+            if (loc) {
+                out << boost::log::add_value(attrs::Location, *loc);
             }
 
             boost::log::trivial::logger::get().push_record(std::move(rec));
@@ -93,28 +77,28 @@ void SetInstance(const std::shared_ptr<mcs::Logger>& logger) {
 }
 }
 namespace mcs {
-void Logger::Trace(const std::string& file, int line, const std::string& message) {
-    Log(Severity::kTrace, file, line, message);
+void Logger::Trace(const std::string& message, const boost::optional<Location>& location) {
+    Log(Severity::kTrace, message, location);
 }
 
-void Logger::Debug(const std::string& file, int line, const std::string& message) {
-    Log(Severity::kDebug, file, line, message);
+void Logger::Debug(const std::string& message, const boost::optional<Location>& location) {
+    Log(Severity::kDebug, message, location);
 }
 
-void Logger::Info(const std::string& file, int line, const std::string& message) {
-    Log(Severity::kInfo, file, line, message);
+void Logger::Info(const std::string& message, const boost::optional<Location>& location) {
+    Log(Severity::kInfo, message, location);
 }
 
-void Logger::Warning(const std::string& file, int line, const std::string& message) {
-    Log(Severity::kWarning, file, line, message);
+void Logger::Warning(const std::string& message, const boost::optional<Location>& location) {
+    Log(Severity::kWarning, message, location);
 }
 
-void Logger::Error(const std::string& file, int line, const std::string& message) {
-    Log(Severity::kError, file, line, message);
+void Logger::Error(const std::string& message, const boost::optional<Location>& location) {
+    Log(Severity::kError, message, location);
 }
 
-void Logger::Fatal(const std::string& file, int line, const std::string& message) {
-    Log(Severity::kFatal, file, line, message);
+void Logger::Fatal(const std::string& message, const boost::optional<Location>& location) {
+    Log(Severity::kFatal, message, location);
 }
 
 std::ostream& operator<<(std::ostream& strm, mcs::Logger::Severity severity) {
@@ -127,6 +111,10 @@ std::ostream& operator<<(std::ostream& strm, mcs::Logger::Severity severity) {
     case mcs::Logger::Severity::kFatal: return strm << "FF";
     default: return strm << static_cast<uint>(severity);
     }
+}
+
+std::ostream& operator<<(std::ostream& out, const Logger::Location &location) {
+    return out << Utils::Sprintf("%s:%d@%s", boost::filesystem::path(location.file).filename().string(), location.line, location.function);
 }
 
 Logger& Log() {
