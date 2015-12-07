@@ -87,7 +87,7 @@ static void scan_done_cb(GObject *object, GAsyncResult *res, gpointer user_data)
         return;
     }
 
-    rl_printf("Scan is done\n");
+    rl_printf("Scan successfully triggered\n");
 }
 
 static void cmd_scan(const char *arg) {
