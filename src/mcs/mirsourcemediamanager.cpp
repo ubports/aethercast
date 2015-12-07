@@ -24,10 +24,11 @@
 namespace mcs {
 MirSourceMediaManager::MirSourceMediaManager(const std::string &remote_address) :
     remote_address_(remote_address) {
+    mcs::Debug("");
 }
 
 MirSourceMediaManager::~MirSourceMediaManager() {
-    g_warning("MirSourceMediaManager::~MirSourceMediaManager");
+    mcs::Debug("");
 }
 
 SharedGObject<GstElement> MirSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {

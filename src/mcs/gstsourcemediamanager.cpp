@@ -25,6 +25,7 @@
 
 namespace mcs {
 GstSourceMediaManager::GstSourceMediaManager() {
+    mcs::Debug("");
 }
 
 GstSourceMediaManager::~GstSourceMediaManager() {
@@ -33,7 +34,7 @@ GstSourceMediaManager::~GstSourceMediaManager() {
         g_source_remove(bus_watch_id_);
     }
 
-    g_warning("GstSourceMediaManager::~GstSourceMediaManager");
+    mcs::Debug("");
 }
 
 gboolean GstSourceMediaManager::OnGstBusEvent(GstBus *bus, GstMessage *message, gpointer data) {

@@ -655,7 +655,7 @@ std::vector<mcs::NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() cons
 }
 
 void WpaSupplicantNetworkManager::AdvanceDeviceState(const mcs::NetworkDevice::Ptr &device, mcs::NetworkDeviceState state) {
-    g_warning("AdvanceDeviceState: new state %s", mcs::NetworkDevice::StateToStr(state).c_str());
+    mcs::Debug("new state %s", mcs::NetworkDevice::StateToStr(state).c_str());
 
     device->SetState(state);
     if (delegate_) {

@@ -198,9 +198,9 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
 }
 
 void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &device) {
-    g_warning("Device state changed: address %s new state %s",
-              device->Address().c_str(),
-              mcs::NetworkDevice::StateToStr(device->State()).c_str());
+    mcs::Debug("Device state changed: address %s new state %s",
+               device->Address().c_str(),
+               mcs::NetworkDevice::StateToStr(device->State()).c_str());
 
     if (device != current_device_)
         return;
@@ -209,7 +209,7 @@ void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &device) {
 }
 
 void MiracastService::OnDeviceChanged(const NetworkDevice::Ptr &device) {
-    g_warning("MiracastService::OnDeviceChanged: device %s", device->Address().c_str());
+    mcs::Debug("device %s", device->Address().c_str());
     if (auto sp = delegate_.lock())
         sp->OnDeviceChanged(device);
 }

@@ -35,7 +35,6 @@
 namespace mcs {
 std::shared_ptr<MiracastSourceClient> MiracastSourceClient::Create(ScopedGObject<GSocket>&& socket) {
     std::shared_ptr<MiracastSourceClient> sp{new MiracastSourceClient{std::move(socket)}};
-    g_warning("MiracastSourceClient::Create: source ref count %d", sp.use_count());
     return sp->FinalizeConstruction();
 }
 
@@ -50,7 +49,7 @@ MiracastSourceClient::~MiracastSourceClient() {
 
     ReleaseTimers();
 
-    g_warning("MiracastSourceClient::~MiracastSourceClient");
+    mcs::Debug("");
 }
 
 void MiracastSourceClient::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
@@ -148,7 +147,7 @@ gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  con
     auto inst = static_cast<MiracastSourceClient*>(user_data);
 
     if (cond == G_IO_ERR || cond == G_IO_HUP) {
-        g_warning("MiracastSourceClient::OnIncomingData: ERR or HUP");
+        mcs::Debug("ERR or HUP");
         if (auto sp = inst->delegate_.lock())
             sp->OnConnectionClosed();
         return TRUE;

@@ -65,7 +65,7 @@ std::string MiracastServiceAdapter::GenerateDevicePath(const NetworkDevice::Ptr 
 }
 
 void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &device) {
-    g_warning("Found device %s", device->Address().c_str());
+    mcs::Debug("device %s", device->Address().c_str());
 
     auto path = GenerateDevicePath(device);
     auto adapter = NetworkDeviceAdapter::Create(bus_connection_, path , device, service_);
@@ -141,7 +141,7 @@ std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruc
     GError *error = nullptr;
     bus_connection_ = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error);
     if (!bus_connection_) {
-        g_warning("Failed to connect with system bus: %s", error->message);
+        mcs::Error("Failed to connect with system bus: %s", error->message);
         g_error_free(error);
         return sp;
     }

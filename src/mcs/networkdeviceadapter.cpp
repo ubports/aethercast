@@ -22,6 +22,7 @@
 #include "networkdeviceadapter.h"
 #include "utils.h"
 #include "keep_alive.h"
+#include "logging.h"
 
 namespace mcs {
 
@@ -47,7 +48,7 @@ NetworkDeviceAdapter::NetworkDeviceAdapter(GDBusConnection *connection, const st
 
     object_ = miracast_interface_object_skeleton_new(path_.c_str());
     if (!object_) {
-        g_warning("Failed to create object for device %s", device->Address().c_str());
+        mcs::Error("Failed to create object for device %s", device->Address().c_str());
         return;
     }
 
@@ -82,8 +83,6 @@ void NetworkDeviceAdapter::OnHandleConnect(MiracastInterfaceDevice *skeleton, GD
     boost::ignore_unused_variable_warning(skeleton);
     boost::ignore_unused_variable_warning(role);
 
-    g_warning("connect");
-
     auto inst = static_cast<NetworkDeviceAdapter*>(user_data);
 
     if (not inst)
@@ -108,8 +107,6 @@ void NetworkDeviceAdapter::OnHandleDisconnect(MiracastInterfaceDevice *skeleton,
                                               gpointer user_data)
 {
     boost::ignore_unused_variable_warning(skeleton);
-
-    g_warning("disconnect");
 
     auto inst = static_cast<NetworkDeviceAdapter*>(user_data);
 

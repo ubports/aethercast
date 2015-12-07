@@ -41,7 +41,7 @@ MiracastSourceManager::~MiracastSourceManager() {
 
     active_sink_.reset();
 
-    g_warning("MiracastSourceManager::~MiracastSourceManager");
+    mcs::Debug("");
 }
 
 void MiracastSourceManager::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
@@ -134,7 +134,6 @@ gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  c
     }
 
     inst->active_sink_ = MiracastSourceClient::Create(ScopedGObject<GSocket>{client_socket});
-    g_warning("MiracastSourceManager::OnNewConnection: active_sink ref count %d", inst->active_sink_.use_count());
     inst->active_sink_->SetDelegate(inst->shared_from_this());
 
     return TRUE;
