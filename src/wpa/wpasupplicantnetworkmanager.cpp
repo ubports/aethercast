@@ -41,10 +41,10 @@
 #include <mcs/networkdevice.h>
 #include <mcs/networkutils.h>
 #include <mcs/utils.h>
-#include <mcs/wfddeviceinfo.h>
 #include <mcs/logging.h>
 
 #include "wpasupplicantnetworkmanager.h"
+#include "wfddeviceinfo.h"
 
 namespace {
 constexpr const char *kWpaSupplicantBinPath{"/sbin/wpa_supplicant"};
@@ -155,35 +155,53 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     char *address = nullptr;
     char *name = nullptr;
     char *config_methods_str = nullptr;
+    char *wfd_dev_info = nullptr;
 
     message.ReadDictEntry("p2p_dev_addr", 's', &address);
     message.ReadDictEntry("name", 's', &name);
     message.ReadDictEntry("config_methods", 's', &config_methods_str);
+    message.ReadDictEntry("wfd_dev_info", 's', &wfd_dev_info);
 
-    mcs::Debug("address %s name %s config_methods %s", address, name, config_methods_str);
+    mcs::Debug("address %s name %s config_methods %s wfd_dev_info %s",
+               address, name, config_methods_str, wfd_dev_info);
+
+    auto wfd_info = WfdDeviceInfo::Create(wfd_dev_info);
+
+    if (!wfd_info.IsSupported()) {
+        mcs::Debug("Ignoring unsupported device %s", address);
+        return;
+    }
+
+    auto roles = std::vector<mcs::NetworkDeviceRole>();
+    if (wfd_info.IsSupportedSink())
+        roles.push_back(mcs::kSink);
+    if (wfd_info.IsSupportedSource())
+        roles.push_back(mcs::kSource);
 
     // Check if we've that peer already in our list, if that is the
     // case we just update it.
     for (auto iter : available_devices_) {
-        auto peer = iter.second;
+        auto device = iter.second;
 
-        if (peer->Address() != address)
+        if (device->Address() != address)
             continue;
 
-        peer->SetAddress(address);
-        peer->SetName(name);
+        device->SetAddress(address);
+        device->SetName(name);
+        device->SetSupportedRoles(roles);
 
         return;
     }
 
-    mcs::NetworkDevice::Ptr peer(new mcs::NetworkDevice);
-    peer->SetAddress(address);
-    peer->SetName(name);
+    mcs::NetworkDevice::Ptr device(new mcs::NetworkDevice);
+    device->SetAddress(address);
+    device->SetName(name);
+    device->SetSupportedRoles(roles);
 
-    available_devices_[address] = peer;
+    available_devices_[address] = device;
 
     if (delegate_)
-        delegate_->OnDeviceFound(peer);
+        delegate_->OnDeviceFound(device);
 }
 
 void WpaSupplicantNetworkManager::OnP2pDeviceLost(WpaSupplicantMessage &message) {
@@ -525,7 +543,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     // Enable WiFi display support
     m = WpaSupplicantMessage::CreateRequest("SET");
     g_assert(m.Append("si", "wifi_display", 1));
-    RequestAsync(m, [=](const WpaSupplicantMessage &message) { });
+    RequestAsync(m);
 
     std::list<std::string> wfd_sub_elements;
     // FIXME build this rather than specifying a static string here
@@ -625,7 +643,7 @@ void WpaSupplicantNetworkManager::SetWfdSubElements(const std::list<std::string>
     for (auto element : elements) {
         auto m = WpaSupplicantMessage::CreateRequest("WFD_SUBELEM_SET");
         m.Append("is", n, element.c_str());
-        RequestAsync(m, [=](const WpaSupplicantMessage &message) { });
+        RequestAsync(m);
         n++;
     }
 }

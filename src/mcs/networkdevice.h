@@ -20,10 +20,10 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "ip_v4_address.h"
 #include "mac_address.h"
-#include "wfddeviceinfo.h"
 
 namespace mcs {
 enum NetworkDeviceState {
@@ -35,11 +35,17 @@ enum NetworkDeviceState {
     kDisconnected
 };
 
+enum NetworkDeviceRole {
+    kSource,
+    kSink
+};
+
 class NetworkDevice {
 public:
     typedef std::shared_ptr<NetworkDevice> Ptr;
 
-    static std::string StateToStr(NetworkDeviceState State);
+    static std::string StateToStr(NetworkDeviceState state);
+    static std::string RoleToStr(NetworkDeviceRole role);
 
     NetworkDevice();
     ~NetworkDevice();
@@ -49,6 +55,7 @@ public:
     std::string Name() const;
     NetworkDeviceState State() const;
     std::string StateAsString() const;
+    std::vector<NetworkDeviceRole> SupportedRoles() const;
 
     bool IsConnecting() const;
 
@@ -56,12 +63,14 @@ public:
     void SetIPv4Address(const IpV4Address &Address);
     void SetName(const std::string &name);
     void SetState(NetworkDeviceState state);
+    void SetSupportedRoles(const std::vector<NetworkDeviceRole> roles);
 
 private:
     std::string name_;
     std::string address_;
     IpV4Address ipv4_address_;
     NetworkDeviceState state_;
+    std::vector<NetworkDeviceRole> supported_roles_;
 };
 } // namespace mcs
 #endif

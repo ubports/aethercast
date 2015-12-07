@@ -30,3 +30,9 @@ Properties	string State [readonly]
 
 			If atleast one device is connected the state
 			will be "connected".
+
+		array{string} Capabilities [readonly]
+
+			List of capabilities the local device supports.
+			Possible values are "sink" and "source".
+

@@ -23,7 +23,6 @@ set(SOURCES
   mcs/utils.cpp
   mcs/logging.cpp
   mcs/networkutils.cpp
-  mcs/wfddeviceinfo.cpp
   mcs/mediamanagerfactory.cpp
   mcs/basesourcemediamanager.cpp
   mcs/gstsourcemediamanager.cpp
@@ -36,6 +35,7 @@ set(SOURCES
   mcs/networkdevice.cpp
 
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface.c
+  mcs/dbushelpers.cpp
   mcs/miracastserviceadapter.cpp
   mcs/networkdeviceadapter.cpp
 
@@ -46,6 +46,7 @@ set(SOURCES
   wpa/dhcpclient.cpp
   wpa/dhcpserver.cpp
   wpa/wififirmwareloader.cpp
+  wpa/wfddeviceinfo.cpp
   wpa/wpasupplicantmessage.cpp
   wpa/wpasupplicantcommand.cpp
   wpa/wpasupplicantcommandqueue.cpp

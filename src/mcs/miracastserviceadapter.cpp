@@ -25,6 +25,7 @@
 #include "keep_alive.h"
 #include "utils.h"
 #include "logging.h"
+#include "dbushelpers.h"
 
 namespace mcs {
 std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(const std::shared_ptr<MiracastService> &service) {
@@ -47,6 +48,20 @@ MiracastServiceAdapter::~MiracastServiceAdapter() {
     //   - handle-scan
     //   - handle-connect-sink
     // as we own the object emitting those signals.
+}
+
+void MiracastServiceAdapter::SyncProperties() {
+    miracast_interface_manager_set_state(manager_obj_.get(),
+                                         NetworkDevice::StateToStr(service_->State()).c_str());
+
+    // Capabilities are a collection of different things our local adapter
+    // supports. The supported roles are just one part of this.
+    auto roles = service_->SupportedRoles();
+    auto capabilities = DBusHelpers::GenerateCapabilities(roles);
+
+    miracast_interface_manager_set_capabilities(manager_obj_.get(), capabilities);
+
+    g_strfreev(capabilities);
 }
 
 void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
@@ -100,8 +115,7 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
                      G_CALLBACK(&MiracastServiceAdapter::OnHandleScan), new WeakKeepAlive<MiracastServiceAdapter>(inst),
                      [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastServiceAdapter>*>(data); }, GConnectFlags(0));
 
-    miracast_interface_manager_set_state(inst->manager_obj_.get(),
-                                         NetworkDevice::StateToStr(inst->service_->State()).c_str());
+    inst->SyncProperties();
 
     g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(inst->manager_obj_.get()),
                                      connection, kManagerPath, nullptr);

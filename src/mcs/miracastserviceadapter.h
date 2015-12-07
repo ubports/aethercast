@@ -59,6 +59,8 @@ private:
     MiracastServiceAdapter(const std::shared_ptr<MiracastService> &service);
     std::shared_ptr<MiracastServiceAdapter> FinalizeConstruction();
 
+    void SyncProperties();
+
     std::string GenerateDevicePath(const NetworkDevice::Ptr &device) const;
 private:
     std::shared_ptr<MiracastService> service_;

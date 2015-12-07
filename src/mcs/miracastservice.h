@@ -78,6 +78,7 @@ public:
     void Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30});
 
     NetworkDeviceState State() const;
+    std::vector<NetworkDeviceRole> SupportedRoles() const;
 
     void OnClientDisconnected();
 
@@ -108,6 +109,7 @@ private:
     ResultCallback connect_callback_;
     guint scan_timeout_source_;
     ResultCallback current_scan_callback_;
+    std::vector<NetworkDeviceRole> supported_roles_;
 };
 } // namespace mcs
 #endif

@@ -130,7 +130,8 @@ MiracastService::MiracastService() :
     source_(nullptr),
     current_state_(kIdle),
     current_device_(nullptr),
-    scan_timeout_source_(0) {
+    scan_timeout_source_(0),
+    supported_roles_({kSource}) {
     network_manager_->Setup();
 }
 
@@ -153,6 +154,10 @@ void MiracastService::ResetDelegate() {
 
 NetworkDeviceState MiracastService::State() const {
     return current_state_;
+}
+
+std::vector<NetworkDeviceRole> MiracastService::SupportedRoles() const {
+    return supported_roles_;
 }
 
 void MiracastService::OnClientDisconnected() {

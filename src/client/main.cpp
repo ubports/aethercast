@@ -72,6 +72,11 @@ static void cmd_show(const char *arg) {
 
     auto state = miracast_interface_manager_get_state(manager);
     rl_printf("\tState: %s\n", state);
+
+    auto capabilities = miracast_interface_manager_get_capabilities(manager);
+    rl_printf("\tCapabilities:\n");
+    for (int n = 0; capabilities[n] != nullptr; n++)
+        rl_printf("\t\t%s\n", capabilities[n]);
 }
 
 static void scan_done_cb(GObject *object, GAsyncResult *res, gpointer user_data) {
@@ -144,6 +149,11 @@ static void cmd_info(const char *arg) {
 
         auto state = miracast_interface_device_get_state(device);
         rl_printf("\tState: %s\n", state);
+
+        auto capabilities = miracast_interface_device_get_capabilities(device);
+        rl_printf("\tCapabilities:\n");
+        for (int n = 0; capabilities[n] != nullptr; n++)
+            rl_printf("\t\t%s\n", capabilities[n]);
 
         found = true;
     }, arg);

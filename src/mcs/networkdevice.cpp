@@ -38,6 +38,19 @@ std::string NetworkDevice::StateToStr(NetworkDeviceState state) {
     return "unknown";
 }
 
+std::string NetworkDevice::RoleToStr(NetworkDeviceRole role) {
+    switch (role) {
+    case kSource:
+        return "source";
+    case kSink:
+        return "sink";
+    default:
+        break;
+    }
+
+    return "unknown";
+}
+
 NetworkDevice::NetworkDevice() :
     state_(kIdle) {
 }
@@ -70,6 +83,10 @@ std::string NetworkDevice::StateAsString() const {
     return StateToStr(state_);
 }
 
+std::vector<NetworkDeviceRole> NetworkDevice::SupportedRoles() const {
+    return supported_roles_;
+}
+
 void NetworkDevice::SetAddress(const MacAddress &address) {
     address_ = address;
 }
@@ -84,6 +101,10 @@ void NetworkDevice::SetName(const std::string &name) {
 
 void NetworkDevice::SetState(NetworkDeviceState state) {
     state_ = state;
+}
+
+void NetworkDevice::SetSupportedRoles(const std::vector<NetworkDeviceRole> roles) {
+    supported_roles_ = roles;
 }
 
 } // namespace mcs

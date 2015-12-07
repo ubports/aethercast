@@ -26,7 +26,7 @@ Methods		void Connect()
 			Possible errors: org.wds.Error.NotConnected
 
 
-Properties		string State
+Properties		string State [readonly]
 
 			The current state of the device. Possible values
 			are "idle", "connecting", "connected" and "failure".
@@ -44,15 +44,15 @@ Properties		string State
 			If a device gets disconnected it will switch back
 			to "idle".
 
-		string Name
+		string Name [readonly]
 
 			Name of the remote device
 
-		string Address
+		string Address [readonly]
 
 			MAC address of the remote device
 
-		array{string} Capabilities
+		array{string} Capabilities [readonly]
 
 			List of capabilities the remote device has. Possible
 			values are "sink" and "source".

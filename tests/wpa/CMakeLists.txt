@@ -18,3 +18,13 @@ target_link_libraries(wpasupplicantcommandqueue_tests
     gtest_main
     gmock)
 add_test(wpasupplicantcommandqueue_tests wpasupplicantcommandqueue_tests)
+
+add_executable(wfddeviceinfo_tests
+    wfddeviceinfo_test.cpp)
+target_link_libraries(wfddeviceinfo_tests
+    miracast
+    gtest
+    gtest_main
+    gmock)
+add_test(wfddeviceinfo_tests wfddeviceinfo_tests)
+

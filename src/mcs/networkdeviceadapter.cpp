@@ -23,6 +23,7 @@
 #include "utils.h"
 #include "keep_alive.h"
 #include "logging.h"
+#include "dbushelpers.h"
 
 namespace mcs {
 
@@ -67,6 +68,10 @@ void NetworkDeviceAdapter::SyncProperties() {
     miracast_interface_device_set_address(device_iface_, device_->Address().c_str());
     miracast_interface_device_set_name(device_iface_, device_->Name().c_str());
     miracast_interface_device_set_state(device_iface_, NetworkDevice::StateToStr(device_->State()).c_str());
+
+    auto capabilities = DBusHelpers::GenerateCapabilities(device_->SupportedRoles());
+    miracast_interface_device_set_capabilities(device_iface_, capabilities);
+    g_strfreev(capabilities);
 }
 
 GDBusObjectSkeleton* NetworkDeviceAdapter::DBusObject() const {
