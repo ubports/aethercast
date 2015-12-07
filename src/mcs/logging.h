@@ -31,7 +31,7 @@ void InitLogging(LogLevel level);
 void Log(LogLevel level, const char *format, ...);
 
 #define Debug(format, args...) \
-    Log(mcs::kDebug, "%s:%s() :" format, __FILE__, __FUNCTION__, ## args)
+    Log(mcs::kDebug, "%s:%s() " format, __FILE__, __FUNCTION__, ## args)
 
 #define Info(format, args...) \
     Log(mcs::kInfo, "%s:%s() " format, __FILE__, __FUNCTION__, ## args)
