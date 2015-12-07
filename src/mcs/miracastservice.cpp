@@ -30,6 +30,7 @@
 #include "miracastserviceadapter.h"
 #include "wpasupplicantnetworkmanager.h"
 #include "wfddeviceinfo.h"
+#include "logging.h"
 
 namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.
@@ -70,6 +71,11 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
         return 0;
     }
 
+    if (options.debug) {
+        mcs::InitLogging(kDebug);
+        mcs::Info("Debugging enabled");
+    }
+
     struct Runtime {
         static int OnSignalRaised(gpointer user_data) {
             auto thiz = static_cast<Runtime*>(user_data);
@@ -102,7 +108,7 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
     auto service = mcs::MiracastService::create();
     auto mcsa = mcs::MiracastServiceAdapter::create(service);
 
-    rt.Run();
+    // rt.Run();
 
     return 0;
 }
@@ -149,7 +155,7 @@ void MiracastService::OnClientDisconnected() {
 void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     IpV4Address address;
 
-    g_warning("AdvanceState newsstate %d current state %d", new_state, current_state_);
+    mcs::Debug("AdvanceState newsstate %d current state %d", new_state, current_state_);
 
     switch (new_state) {
     case kAssociation:

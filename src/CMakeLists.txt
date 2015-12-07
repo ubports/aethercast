@@ -20,6 +20,7 @@ set(HEADERS
 
 set(SOURCES
   mcs/utils.cpp
+  mcs/logging.cpp
   mcs/networkutils.cpp
   mcs/wfddeviceinfo.cpp
   mcs/mediamanagerfactory.cpp
