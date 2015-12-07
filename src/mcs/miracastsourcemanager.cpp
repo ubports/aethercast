@@ -16,6 +16,7 @@
  */
 
 #include "keep_alive.h"
+#include "logger.h"
 #include "miracastsourcemanager.h"
 #include "miracastsourceclient.h"
 
@@ -51,27 +52,27 @@ bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short por
     ScopedGObject<GSocket> socket{g_socket_new(G_SOCKET_FAMILY_IPV4, G_SOCKET_TYPE_STREAM, G_SOCKET_PROTOCOL_TCP, &error)};
 
     if (!socket) {
-        g_warning("Failed to setup socket for incoming source connections: %s", error->message);
+        WARNING("Failed to setup socket for incoming source connections: %s", error->message);
         g_error_free(error);
         return false;
     }
 
     auto addr = g_inet_socket_address_new_from_string(address.to_string().c_str(), port);
     if (!g_socket_bind(socket.get(), addr, TRUE, &error)) {
-        g_warning("Failed to setup socket for incoming source connections: %s", error->message);
+        WARNING("Failed to setup socket for incoming source connections: %s", error->message);
         g_error_free(error);
         return false;
     }
 
     if (!g_socket_listen(socket.get(), &error)) {
-        g_warning("Failed start listening for incoming connections: %s", error->message);
+        WARNING("Failed start listening for incoming connections: %s", error->message);
         g_error_free(error);
         return false;
     }
 
     auto source = g_socket_create_source(socket.get(), G_IO_IN, nullptr);
     if (!source) {
-        g_warning("Failed to setup listener for incoming connections");
+        WARNING("Failed to setup listener for incoming connections");
         return false;
     }
 
@@ -83,14 +84,14 @@ bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short por
 
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
-        g_warning("Failed to attach source to mainloop");
+        WARNING("Failed to attach source to mainloop");
         g_source_unref(source);
         return false;
     }
 
     g_source_unref(source);
 
-    g_info("Successfully setup source on %s:%d and awaiting incoming connection requests",
+    INFO("Successfully setup source on %s:%d and awaiting incoming connection requests",
            address.to_string().c_str(), port);
 
     socket_.swap(socket);
@@ -118,7 +119,7 @@ gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  c
     GError *error = nullptr;
     auto client_socket = g_socket_accept(inst->socket_.get(), NULL, &error);
     if (!client_socket) {
-        g_warning("Failed to accept incoming connection: %s", error->message);
+        WARNING("Failed to accept incoming connection: %s", error->message);
         g_error_free(error);
         g_object_unref(client_socket);
         return FALSE;
