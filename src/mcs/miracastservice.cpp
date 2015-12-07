@@ -19,6 +19,8 @@
 #include <cstdio>
 #include <cstdint>
 
+#include <sys/prctl.h>
+
 #include <glib.h>
 #include <glib-unix.h>
 #include <gst/gst.h>
@@ -91,6 +93,10 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
             // emissions.
             g_unix_signal_add(SIGINT, OnSignalRaised, this);
             g_unix_signal_add(SIGTERM, OnSignalRaised, this);
+
+            // Become a reaper of all our children
+            if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0)
+                g_warning("Failed to make us a subreaper of our children");
         }
 
         ~Runtime() {
