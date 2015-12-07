@@ -108,7 +108,7 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
     auto service = mcs::MiracastService::create();
     auto mcsa = mcs::MiracastServiceAdapter::create(service);
 
-    // rt.Run();
+    rt.Run();
 
     return 0;
 }
