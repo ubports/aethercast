@@ -46,8 +46,7 @@ public:
 
     void SetWfdSubElements(const std::list<std::string> &elements) override;
 
-    void Scan() override;
-    void StopScan() override;
+    void Scan(const std::chrono::seconds &timeout) override;
 
     bool Connect(const mcs::NetworkDevice::Ptr &device) override;
     bool Disconnect(const mcs::NetworkDevice::Ptr &device) override;
@@ -70,7 +69,7 @@ private:
     void StopSupplicant();
     bool ConnectSupplicant();
     void DisconnectSupplicant();
-    void RequestAsync(const WpaSupplicantMessage &message, std::function<void(WpaSupplicantMessage)> callback);
+    void RequestAsync(const WpaSupplicantMessage &message, std::function<void(WpaSupplicantMessage)> callback = nullptr);
     bool CreateSupplicantConfig(const std::string &conf_path);
     void HandleSupplicantFailed();
     void Reset();
@@ -81,6 +80,7 @@ private:
     void OnP2pGroupStarted(WpaSupplicantMessage &message);
     void OnP2pGroupRemoved(WpaSupplicantMessage &message);
     void OnP2pGoNegFailure(WpaSupplicantMessage &message);
+    void OnP2pFindStopped(WpaSupplicantMessage &message);
     void OnApStaConnected(WpaSupplicantMessage &message);
     void OnApStaDisconnected(WpaSupplicantMessage &message);
 

@@ -50,6 +50,8 @@ public:
     NetworkDeviceState State() const;
     std::string StateAsString() const;
 
+    bool IsConnecting() const;
+
     void SetAddress(const MacAddress &address);
     void SetIPv4Address(const IpV4Address &Address);
     void SetName(const std::string &name);

@@ -61,6 +61,11 @@ NetworkDeviceState NetworkDevice::State() const {
     return state_;
 }
 
+bool NetworkDevice::IsConnecting() const {
+    return state_ == kConfiguration ||
+            state_ == kAssociation;
+}
+
 std::string NetworkDevice::StateAsString() const {
     return StateToStr(state_);
 }

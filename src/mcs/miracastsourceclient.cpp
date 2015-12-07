@@ -44,6 +44,9 @@ MiracastSourceClient::MiracastSourceClient(ScopedGObject<GSocket>&& socket) :
 }
 
 MiracastSourceClient::~MiracastSourceClient() {
+    if (socket_)
+        g_socket_close(socket_.get(), nullptr);
+
     if (socket_source_ > 0)
         g_source_remove(socket_source_);
 

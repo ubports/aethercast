@@ -60,6 +60,7 @@ constexpr const char *kP2pGroupFormationSuccess{"P2P-GROUP-FORMATION-SUCCESS"};
 constexpr const char *kP2pGroupStarted{"P2P-GROUP-STARTED"};
 constexpr const char *kP2pGroupRemoved{"P2P-GROUP-REMOVED"};
 constexpr const char *kP2pGoNegFailure{"P2P-GO-NEG-FAILURE"};
+constexpr const char *kP2pFindStopped{"P2P-FIND-STOPPED"};
 constexpr const char *kApStaConnected{"AP-STA-CONNECTED"};
 constexpr const char *kApStaDisconnected{"AP-STA-DISCONNECTED"};
 }
@@ -136,6 +137,8 @@ void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage mes
         OnP2pGroupRemoved(message);
     else if (message.Name() == kP2pGoNegFailure)
         OnP2pGoNegFailure(message);
+    else if (message.Name() == kP2pFindStopped)
+        OnP2pFindStopped(message);
     else if (message.Name() == kApStaConnected)
         OnApStaConnected(message);
     else if (message.Name() == kApStaDisconnected)
@@ -272,6 +275,13 @@ void WpaSupplicantNetworkManager::OnP2pGoNegFailure(WpaSupplicantMessage &messag
     AdvanceDeviceState(current_peer_, mcs::kFailure);
 
     current_peer_.reset();
+}
+
+void WpaSupplicantNetworkManager::OnP2pFindStopped(WpaSupplicantMessage &message) {
+    if (!scanning_)
+        return;
+
+    scanning_ = false;
 }
 
 void WpaSupplicantNetworkManager::OnApStaConnected(WpaSupplicantMessage &message) {
@@ -620,27 +630,21 @@ void WpaSupplicantNetworkManager::SetWfdSubElements(const std::list<std::string>
     }
 }
 
-void WpaSupplicantNetworkManager::Scan() {
-    // FIXME we need to stop any connection process here to don't start scanning
-    // at all.
+void WpaSupplicantNetworkManager::Scan(const std::chrono::seconds &timeout) {
     if (scanning_)
         return;
 
     // This will scan forever but is exactly what we want as our user
     // has to take care about stopping this scan after some after.
     auto m = WpaSupplicantMessage::CreateRequest("P2P_FIND");
+
+    if (timeout.count() > 0) {
+        auto seconds = timeout.count();
+        m.Append("i", &seconds);
+    }
+
     RequestAsync(m, [=](const WpaSupplicantMessage &message) {
         scanning_ = !message.IsFail();
-    });
-}
-
-void WpaSupplicantNetworkManager::StopScan() {
-    if (!scanning_)
-        return;
-
-    auto m = WpaSupplicantMessage::CreateRequest("P2P_STOP_FIND");
-    RequestAsync(m, [=](const WpaSupplicantMessage &message) {
-        scanning_ = message.IsFail();
     });
 }
 
@@ -673,6 +677,13 @@ bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device)
 
     current_peer_ = available_devices_[device->Address()];
 
+    mcs::Debug("Attempting to connect with %s", device->Address().c_str());
+
+    if (scanning_) {
+        mcs::Debug("Currently scanning; stopping this first");
+        RequestAsync(WpaSupplicantMessage::CreateRequest("P2P_STOP_FIND"));
+    }
+
     auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
     m.Append("ss", device->Address().c_str(), "pbc");
 
@@ -687,8 +698,20 @@ bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device)
 }
 
 bool WpaSupplicantNetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {
-    WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_GROUP_REMOVE");
-    m.Append("s", interface_name_.c_str());
+    if (!current_peer_ || current_peer_ != device)
+        return false;
+
+    mcs::Debug("device %s", device->Address().c_str());
+
+    WpaSupplicantMessage m;
+
+    if (current_peer_->IsConnecting()) {
+        m = WpaSupplicantMessage::CreateRequest("P2P_CANCEL");
+    }
+    else {
+        m = WpaSupplicantMessage::CreateRequest("P2P_GROUP_REMOVE");
+        m.Append("s", interface_name_.c_str());
+    }
 
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {

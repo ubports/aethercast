@@ -38,7 +38,7 @@
 namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.
 const std::uint16_t kMiracastDefaultRtspCtrlPort{7236};
-const std::chrono::milliseconds kStateIdleTimeout{1000};
+const std::chrono::milliseconds kStateIdleTimeout{5000};
 }
 namespace mcs {
 MiracastService::MainOptions MiracastService::MainOptions::FromCommandLine(int argc, char** argv) {
@@ -164,7 +164,7 @@ void MiracastService::OnClientDisconnected() {
 void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     IpV4Address address;
 
-    mcs::Debug("new state %d current state %d",
+    mcs::Debug("new state %s current state %s",
                mcs::NetworkDevice::StateToStr(new_state).c_str(),
                mcs::NetworkDevice::StateToStr(current_state_).c_str());
 
@@ -281,30 +281,7 @@ void MiracastService::Disconnect(const NetworkDevice::Ptr &device, ResultCallbac
     callback(kErrorNone);
 }
 
-gboolean MiracastService::OnScanTimeout(gpointer user_data) {
-    auto inst = static_cast<MiracastService*>(user_data);
-
-    inst->network_manager_->StopScan();
-
-    if (inst->current_scan_callback_) {
-        inst->current_scan_callback_(kErrorNone);
-        inst->current_scan_callback_ = nullptr;
-    }
-
-    inst->scan_timeout_source_ = 0;
-
-    return FALSE;
-}
-
-void MiracastService::Scan(ResultCallback callback, const std::chrono::seconds &timeout) {
-    if (scan_timeout_source_ > 0 || network_manager_->Scanning()) {
-        callback(kErrorAlready);
-        return;
-    }
-
-    scan_timeout_source_ = g_timeout_add_seconds(timeout.count(), &MiracastService::OnScanTimeout, this);
-    current_scan_callback_ = callback;
-
-    network_manager_->Scan();
+void MiracastService::Scan(const std::chrono::seconds &timeout) {
+    network_manager_->Scan(timeout);
 }
 } // namespace miracast

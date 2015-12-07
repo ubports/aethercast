@@ -20,8 +20,9 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <list>
 #include <vector>
+#include <list>
+#include <chrono>
 
 #include "ip_v4_address.h"
 #include "networkdevice.h"
@@ -42,8 +43,7 @@ public:
     };
 
     virtual bool Setup() = 0;
-    virtual void Scan() = 0;
-    virtual void StopScan() = 0;
+    virtual void Scan(const std::chrono::seconds &timeout) = 0;
     virtual bool Connect(const NetworkDevice::Ptr &device) = 0;
     virtual bool Disconnect(const NetworkDevice::Ptr &device) = 0;
 

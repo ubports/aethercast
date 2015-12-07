@@ -75,7 +75,7 @@ public:
     void Connect(const NetworkDevice::Ptr &device, ResultCallback callback);
     void Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback);
 
-    void Scan(ResultCallback callback, const std::chrono::seconds &timeout = std::chrono::seconds{30});
+    void Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30});
 
     NetworkDeviceState State() const;
 
@@ -89,7 +89,6 @@ public:
 
 private:
     static gboolean OnIdleTimer(gpointer user_data);
-    static gboolean OnScanTimeout(gpointer user_data);
 
 private:
     MiracastService();
