@@ -37,7 +37,7 @@ TEST_P(MiracastService, ExitsCleanlyForSigIntAndSigTerm) {
         return static_cast<core::posix::exit::Status>(result);
     }, core::posix::StandardStream::empty);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds{250});
+    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
 
     service.send_signal_or_throw(GetParam());
     EXPECT_TRUE(testing::DidExitCleanly(service));
