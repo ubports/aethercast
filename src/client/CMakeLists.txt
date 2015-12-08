@@ -1,6 +1,7 @@
 set(SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/../mcs/miracastinterface.c
     main.cpp
+    application.cpp
 )
 
 link_directories(
