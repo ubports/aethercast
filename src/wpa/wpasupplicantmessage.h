@@ -22,9 +22,6 @@
 #include <string>
 #include <vector>
 
-#include <mcs/mac_address.h>
-#include <mcs/utils.h>
-
 #include <stdarg.h>
 
 class WpaSupplicantMessage {
