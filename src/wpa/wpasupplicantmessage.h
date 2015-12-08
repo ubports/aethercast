@@ -95,33 +95,33 @@ private:
     bool sealed_ = false;
 };
 
-template<typename K, typename V>
+template<typename V>
 struct Named {
     operator V() const {
         return value;
     }
 
-    K key;
+    std::string key;
     V value;
 };
 
-template<typename K, typename V>
-inline bool operator!=(const Named<K, V>& lhs, const V& rhs) {
+template<typename V>
+inline bool operator!=(const Named<V>& lhs, const V& rhs) {
     return lhs.value != rhs;
 }
 
-template<typename K, typename V>
-inline bool operator!=(const V& lhs, const Named<K, V>& rhs) {
+template<typename V>
+inline bool operator!=(const V& lhs, const Named<V>& rhs) {
     return rhs != lhs;
 }
 
-template<typename K, typename V>
-inline bool operator==(const Named<K, V>& lhs, const V& rhs) {
+template<typename V>
+inline bool operator==(const Named<V>& lhs, const V& rhs) {
     return lhs.value == rhs;
 }
 
-template<typename K, typename V>
-inline bool operator==(const V& lhs, const Named<K, V>& rhs) {
+template<typename V>
+inline bool operator==(const V& lhs, const Named<V>& rhs) {
     return rhs == lhs;
 }
 
@@ -135,18 +135,18 @@ inline T& skip() {
     return t;
 }
 
-template<typename K, typename V>
-inline std::ostream& operator<<(std::ostream& out, const Named<K, V>& entry) {
+template<typename V>
+inline std::ostream& operator<<(std::ostream& out, const Named<V>& entry) {
     return out << entry.key << "=" << entry.value;
 }
 
-template<typename K, typename V>
-inline std::istream& operator>>(std::istream& in, Named<K, V>& entry) {
+template<typename V>
+inline std::istream& operator>>(std::istream& in, Named<V>& entry) {
     std::string s; in >> s;
     auto pos = s.find("=");
 
     if (pos != std::string::npos) {
-        std::stringstream sk{s.substr(0, pos)}; sk >> entry.key;
+        entry.key = s.substr(0, pos);
         std::stringstream sv{s.substr(pos+1)}; sv >> entry.value;
     }
 

@@ -32,9 +32,9 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     struct P2PGroupStarted {
         std::string interface_name;
         std::string type;
-        Named<std::string, std::string> ssid;
-        Named<std::string, std::uint32_t> freq;
-        Named<std::string, std::string> go_dev_addr;
+        Named<std::string> ssid;
+        Named<std::uint32_t> freq;
+        Named<std::string> go_dev_addr;
     } ev;
 
     std::string key;
@@ -79,7 +79,7 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
 
 TEST(WpaSupplicantMessage, Append) {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT")
-            << "string" << -42 << 1337 << Named<std::string, std::string>{"key", "value"};
+            << "string" << -42 << 1337 << Named<std::string>{"key", "value"};
     auto raw = m.Dump();
     EXPECT_STREQ(raw.c_str(), "P2P_CONNECT string -42 1337 key=value");
 

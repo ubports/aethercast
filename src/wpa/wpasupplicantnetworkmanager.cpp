@@ -132,9 +132,9 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     // P2P-DEVICE-FOUND 4e:74:03:70:e2:c1 p2p_dev_addr=4e:74:03:70:e2:c1
     // pri_dev_type=8-0050F204-2 name='Aquaris M10' config_methods=0x188 dev_capab=0x5
     // group_capab=0x0 wfd_dev_info=0x00111c440032 new=1
-    Named<std::string, std::string> address;
-    Named<std::string, std::string> name;
-    Named<std::string, std::string> config_methods_str;
+    Named<std::string> address;
+    Named<std::string> name;
+    Named<std::string> config_methods_str;
 
     message.Read(skip<std::string>(), address, skip<std::string>(), name, config_methods_str);
 
@@ -167,7 +167,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
 void WpaSupplicantNetworkManager::OnP2pDeviceLost(WpaSupplicantMessage &message) {
     // P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1
 
-    Named<std::string, std::string> address;
+    Named<std::string> address;
     message.Read(address);
 
     auto peer = available_devices_[address];
@@ -224,7 +224,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
     if (current_peer_.get())
         return;
 
-    Named<std::string, std::string> reason;
+    Named<std::string> reason;
     message.Read(skip<std::string>(), skip<std::string>(), reason);
 
     static std::unordered_map<std::string, mcs::NetworkDeviceState> lut {
