@@ -202,6 +202,10 @@ std::vector<NetworkDeviceRole> MiracastService::SupportedRoles() const {
     return supported_roles_;
 }
 
+bool MiracastService::Scanning() const {
+    return network_manager_->Scanning();
+}
+
 void MiracastService::OnClientDisconnected() {
     AdvanceState(kFailure);
     source_.reset();
@@ -248,6 +252,11 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     current_state_ = new_state;
     if (auto sp = delegate_.lock())
         sp->OnStateChanged(current_state_);
+}
+
+void MiracastService::OnChanged() {
+   if (auto sp = delegate_.lock())
+       sp->OnChanged();
 }
 
 void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &device) {

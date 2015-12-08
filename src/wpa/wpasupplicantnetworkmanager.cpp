@@ -299,6 +299,9 @@ void WpaSupplicantNetworkManager::OnP2pFindStopped(WpaSupplicantMessage &message
         return;
 
     scanning_ = false;
+
+    if (delegate_)
+        delegate_->OnChanged();
 }
 
 void WpaSupplicantNetworkManager::OnApStaConnected(WpaSupplicantMessage &message) {
@@ -661,7 +664,15 @@ void WpaSupplicantNetworkManager::Scan(const std::chrono::seconds &timeout) {
     }
 
     RequestAsync(m, [=](const WpaSupplicantMessage &message) {
-        scanning_ = !message.IsFail();
+        auto scanning = !message.IsFail();
+
+        if (scanning == scanning_)
+            return;
+
+        scanning_ = scanning;
+
+        if (delegate_)
+            delegate_->OnChanged();
     });
 }
 

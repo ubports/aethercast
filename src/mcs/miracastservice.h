@@ -57,6 +57,7 @@ public:
         virtual ~Delegate() { }
 
         virtual void OnStateChanged(NetworkDeviceState state) = 0;
+        virtual void OnChanged() = 0;
         virtual void OnDeviceFound(const NetworkDevice::Ptr &device) = 0;
         virtual void OnDeviceLost(const NetworkDevice::Ptr &device) = 0;
         virtual void OnDeviceChanged(const NetworkDevice::Ptr &device) = 0;
@@ -79,6 +80,7 @@ public:
 
     NetworkDeviceState State() const;
     std::vector<NetworkDeviceRole> SupportedRoles() const;
+    bool Scanning() const;
 
     void OnClientDisconnected();
 
@@ -87,6 +89,7 @@ public:
     void OnDeviceChanged(const NetworkDevice::Ptr &device) override;
     void OnDeviceFound(const NetworkDevice::Ptr &device) override;
     void OnDeviceLost(const NetworkDevice::Ptr &device) override;
+    void OnChanged() override;
 
 private:
     static gboolean OnIdleTimer(gpointer user_data);

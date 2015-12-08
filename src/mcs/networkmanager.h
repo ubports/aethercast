@@ -37,6 +37,7 @@ public:
         virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) = 0;
         virtual void OnDeviceStateChanged(const NetworkDevice::Ptr &peer) = 0;
         virtual void OnDeviceChanged(const NetworkDevice::Ptr &peer) = 0;
+        virtual void OnChanged() = 0;
 
     protected:
         Delegate() = default;

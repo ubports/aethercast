@@ -62,6 +62,8 @@ void MiracastServiceAdapter::SyncProperties() {
     miracast_interface_manager_set_capabilities(manager_obj_.get(), capabilities);
 
     g_strfreev(capabilities);
+
+    miracast_interface_manager_set_scanning(manager_obj_.get(), service_->Scanning());
 }
 
 void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
@@ -105,6 +107,10 @@ void MiracastServiceAdapter::OnDeviceChanged(const NetworkDevice::Ptr &peer) {
         return;
 
     iter->second->SyncProperties();
+}
+
+void MiracastServiceAdapter::OnChanged() {
+    SyncProperties();
 }
 
 void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {

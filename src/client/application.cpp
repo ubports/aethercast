@@ -157,7 +157,10 @@ void Application::HandleShowCommand(const std::string &arguments) {
         return;
 
     auto state = miracast_interface_manager_get_state(manager_);
-    fprintf(stdout, "State: %s\n", state);
+    std::cout << "State: " << state << std::endl;
+
+    auto scanning = miracast_interface_manager_get_scanning(manager_);
+    std::cout << "Scanning: " << std::boolalpha << (bool) scanning << std::endl;
 
     auto capabilities = miracast_interface_manager_get_capabilities(manager_);
     std::cout << "Capabilities:" << std::endl;
@@ -457,7 +460,9 @@ void Application::OnManagerPropertiesChanged(GDBusConnection *connection, const 
         std::cout << "[CHG] Manager " << key << " changed: ";
 
         if (key == "State")
-            std::cout << g_variant_get_string(g_variant_get_variant(value_v), 0) << std::endl;
+            std::cout << g_variant_get_string(g_variant_get_variant(value_v), nullptr) << std::endl;
+        else if (key == "Scanning")
+            std::cout << std::boolalpha << (bool) g_variant_get_boolean(g_variant_get_variant(value_v)) << std::endl;
         else if (key == "Capabilities") {
             std::stringstream capabilities;
 

@@ -11,6 +11,7 @@
         <method name="Scan"/>
         <property name="State" type="s" access="read"/>
         <property name="Capabilities" type="as" access="read"/>
+        <property name="Scanning" type="b" access="read"/>
     </interface>
     <interface name="org.wds.Device">
         <method name="Connect">

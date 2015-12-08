@@ -49,6 +49,7 @@ public:
     void OnDeviceFound(const NetworkDevice::Ptr &device) override;
     void OnDeviceLost(const NetworkDevice::Ptr &device) override;
     void OnDeviceChanged(const NetworkDevice::Ptr &peer) override;
+    void OnChanged() override;
 
 private:
     static void OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data);
