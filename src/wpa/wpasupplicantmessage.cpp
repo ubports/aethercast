@@ -15,9 +15,6 @@
  *
  */
 
-#include <inttypes.h>
-#include <string.h>
-
 #include <glib.h>
 
 #include <mcs/utils.h>

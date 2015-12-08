@@ -22,8 +22,6 @@
 #include <string>
 #include <vector>
 
-#include <stdarg.h>
-
 class WpaSupplicantMessage {
 public:
     static WpaSupplicantMessage CreateRequest(const std::string &get_name);
