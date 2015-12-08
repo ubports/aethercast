@@ -36,10 +36,10 @@ void WpaSupplicantCommandQueue::EnqueueCommand(const WpaSupplicantMessage &messa
 }
 
 void WpaSupplicantCommandQueue::HandleMessage(WpaSupplicantMessage message) {
-    if (message.Type() == kInvalid)
+    if (message.get_type() == WpaSupplicantMessage::Type::kInvalid)
         return;
 
-    if (message.Type() == kEvent) {
+    if (message.get_type() == WpaSupplicantMessage::Type::kEvent) {
         if (delegate_)
             delegate_->OnUnsolicitedResponse(message);
         return;
