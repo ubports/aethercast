@@ -21,11 +21,17 @@
 #include "non_copyable.h"
 #include "utils.h"
 
+#include <boost/optional.hpp>
+
 #include <string>
 
 namespace mcs {
+// A Logger enables persisting of messages describing & explaining the
+// state of the system.
 class Logger : public mcs::NonCopyable {
 public:
+    // Severity enumerates all known severity levels
+    // applicable to log messages.
     enum class Severity {
         kTrace,
         kDebug,
@@ -35,32 +41,51 @@ public:
         kFatal
     };
 
-    virtual void Log(Severity severity, const std::string& file, int line, const std::string &message) = 0;
+    // A Location describes the origin of a log message.
+    struct Location {
+        std::string file; // The name of the file that contains the log message.
+        std::string function; // The function that contains the log message.
+        std::uint32_t line; // The line in file that resulted in the log message.
+    };
 
-    virtual void Trace(const std::string& file, int line, const std::string& message);
-    virtual void Debug(const std::string& file, int line, const std::string& message);
-    virtual void Info(const std::string& file, int line, const std::string& message);
-    virtual void Warning(const std::string& file, int line, const std::string& message);
-    virtual void Error(const std::string& file, int line, const std::string& message);
-    virtual void Fatal(const std::string& file, int line, const std::string& message);
+    virtual void Log(Severity severity, const std::string &message, const boost::optional<Location>& location) = 0;
 
-    template<typename... T>
-    void Tracef(const std::string& file, int line, const std::string& pattern, T&&...args) { Trace(file, line, Utils::Sprintf(pattern, std::forward<T>(args)...)); }
-
-    template<typename... T>
-    void Debugf(const std::string& file, int line, const std::string& pattern, T&&...args) { Debug(file, line, Utils::Sprintf(pattern, std::forward<T>(args)...)); }
-
-    template<typename... T>
-    void Infof(const std::string& file, int line, const std::string& pattern, T&&...args) { Info(file, line, Utils::Sprintf(pattern, std::forward<T>(args)...)); }
+    virtual void Trace(const std::string& message, const boost::optional<Location>& location = boost::optional<Location>{});
+    virtual void Debug(const std::string& message, const boost::optional<Location>& location = boost::optional<Location>{});
+    virtual void Info(const std::string& message, const boost::optional<Location>& location = boost::optional<Location>{});
+    virtual void Warning(const std::string& message, const boost::optional<Location>& location = boost::optional<Location>{});
+    virtual void Error(const std::string& message, const boost::optional<Location>& location = boost::optional<Location>{});
+    virtual void Fatal(const std::string& message, const boost::optional<Location>& location = boost::optional<Location>{});
 
     template<typename... T>
-    void Warningf(const std::string& file, int line, const std::string& pattern, T&&...args) { Warning(file, line, Utils::Sprintf(pattern, std::forward<T>(args)...)); }
+    void Tracef(const boost::optional<Location>& location, const std::string& pattern, T&&...args) {
+        Trace(Utils::Sprintf(pattern, std::forward<T>(args)...), location);
+    }
 
     template<typename... T>
-    void Errorf(const std::string& file, int line, const std::string& pattern, T&&...args) { Error(file, line, Utils::Sprintf(pattern, std::forward<T>(args)...)); }
+    void Debugf(const boost::optional<Location>& location, const std::string& pattern, T&&...args) {
+        Debug(Utils::Sprintf(pattern, std::forward<T>(args)...), location);
+    }
 
     template<typename... T>
-    void Fatalf(const std::string& file, int line, const std::string& pattern, T&&...args) { Fatal(file, line, Utils::Sprintf(pattern, std::forward<T>(args)...)); }
+    void Infof(const boost::optional<Location>& location, const std::string& pattern, T&&...args) {
+        Info(Utils::Sprintf(pattern, std::forward<T>(args)...), location);
+    }
+
+    template<typename... T>
+    void Warningf(const boost::optional<Location>& location, const std::string& pattern, T&&...args) {
+        Warning(Utils::Sprintf(pattern, std::forward<T>(args)...), location);
+    }
+
+    template<typename... T>
+    void Errorf(const boost::optional<Location>& location, const std::string& pattern, T&&...args) {
+        Error(Utils::Sprintf(pattern, std::forward<T>(args)...), location);
+    }
+
+    template<typename... T>
+    void Fatalf(const boost::optional<Location>& location, const std::string& pattern, T&&...args) {
+        Fatal(Utils::Sprintf(pattern, std::forward<T>(args)...), location);
+    }
 
 protected:
     Logger() = default;
@@ -69,25 +94,28 @@ protected:
 // operator<< inserts severity into out.
 std::ostream& operator<<(std::ostream& out, Logger::Severity severity);
 
+// operator<< inserts location into out.
+std::ostream& operator<<(std::ostream& out, const Logger::Location &location);
+
 // Log returns the mcs-wide configured logger instance.
 // Save to call before/after main.
 Logger& Log();
 // SetLog installs the given logger as mcs-wide default logger.
 void SetLogger(const std::shared_ptr<Logger>& logger);
 
-#define TRACE(...) Log().Tracef(__FILE__, __LINE__, __VA_ARGS__)
-#define DEBUG(...) Log().Debugf(__FILE__, __LINE__, __VA_ARGS__)
-#define INFO(...) Log().Infof(__FILE__, __LINE__, __VA_ARGS__)
-#define WARNING(...) Log().Warningf(__FILE__, __LINE__, __VA_ARGS__)
-#define ERROR(...) Log().Errorf(__FILE__, __LINE__, __VA_ARGS__)
-#define FATAL(...) Log().Fatalf(__FILE__, __LINE__, __VA_ARGS__)
+#define TRACE(...) Log().Tracef(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define DEBUG(...) Log().Debugf(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define INFO(...) Log().Infof(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define WARNING(...) Log().Warningf(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define ERROR(...) Log().Errorf(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define FATAL(...) Log().Fatalf(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
 }
 
-#define MCS_TRACE(...) mcs::Log().Tracef(__FILE__, __LINE__, __VA_ARGS__)
-#define MCS_DEBUG(...) mcs::Log().Debugf(__FILE__, __LINE__, __VA_ARGS__)
-#define MCS_INFO(...) mcs::Log().Infof(__FILE__, __LINE__, __VA_ARGS__)
-#define MCS_WARNING(...) mcs::Log().Warningf(__FILE__, __LINE__, __VA_ARGS__)
-#define MCS_ERROR(...) mcs::Log().Errorf(__FILE__, __LINE__, __VA_ARGS__)
-#define MCS_FATAL(...) mcs::Log().Fatalf(__FILE__, __LINE__, __VA_ARGS__)
+#define MCS_TRACE(...) mcs::Log().Tracef(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define MCS_DEBUG(...) mcs::Log().Debugf(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define MCS_INFO(...) mcs::Log().Infof(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define MCS_WARNING(...) mcs::Log().Warningf(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define MCS_ERROR(...) mcs::Log().Errorf(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define MCS_FATAL(...) mcs::Log().Fatalf(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
 
 #endif
