@@ -402,12 +402,10 @@ void WpaSupplicantNetworkManager::Reset() {
 }
 
 bool WpaSupplicantNetworkManager::CreateSupplicantConfig(const std::string &conf_path) {
-    auto config = mcs::Utils::Sprintf(
+    auto config = std::string(
                 "# GENERATED - DO NOT EDIT!\n"
                 "config_methods=pbc\n" // We're only supporting PBC for now
-                "ap_scan=1\n"
-                "device_name=%s",
-                "unknown");
+                "ap_scan=1\n");
 
     GError *error = nullptr;
     if (!g_file_set_contents(conf_path.c_str(), config.c_str(), config.length(), &error)) {
@@ -660,7 +658,7 @@ void WpaSupplicantNetworkManager::Scan(const std::chrono::seconds &timeout) {
 
     if (timeout.count() > 0) {
         auto seconds = timeout.count();
-        m.Append("i", &seconds);
+        m.Append("i", seconds);
     }
 
     RequestAsync(m, [=](const WpaSupplicantMessage &message) {
