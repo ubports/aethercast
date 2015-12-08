@@ -59,7 +59,10 @@ struct BoostLogLogger : public mcs::Logger {
                 << message;
 
             if (loc) {
-                out << boost::log::add_value(attrs::Location, *loc);
+                // We have to pass in a temporary as boost::log (<= 1.55) expects a
+                // mutable reference to be passed to boost::log::add_value(...).
+                auto tmp = *loc;
+                out << boost::log::add_value(attrs::Location, tmp);
             }
 
             boost::log::trivial::logger::get().push_record(std::move(rec));
