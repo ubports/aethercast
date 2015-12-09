@@ -13,15 +13,15 @@ Methods		void Scan()
 			a longer D-Bus timeout might be a really good
 			idea.
 
-		void RegisterInputManager(object manager, dict options)
+		void RegisterInputProvider(object provider, dict options)
 
-			This registers a input manager implementation.
+			This registers a input provider implementation.
 
 			There are no options specified yet.
 
-		void UnregisterInputManager(object manager)
+		void UnregisterInputProvider(object provider)
 
-			This unregisters a input manager which was
+			This unregisters a input provider which was
 			previously registered. The object path parameter
 			must match the same used on registration.
 

@@ -1,15 +1,15 @@
 Overview
 ========
 
-A input manager is used to retrieve input events from another component
+A input provider is used to retrieve input events from another component
 in the system to stream them in a separate channel to the remote display
 device for latency reduction.
 
-Only one input manager can be registered with the management service at
+Only one input provider can be registered with the management service at
 the same time.
 
 When a connection with a remote display device is established, the
-NewConnection method of the input manager will be called handing over
+NewConnection method of the input provider will be called handing over
 a file descriptor. This file descriptor can then be used to send
 input events to the display management service.
 
@@ -31,16 +31,16 @@ FIXME:
   NewConnection is called
 - Cursor property needs to be updated whenever the cursor changes
 
-Input manager hierarchy
+Input provider hierarchy
 =======================
 
 Service		unique name
-Interface	org.wds.InputManager
+Interface	org.wds.InputProvider
 Object path	freely definable
 
 Methods		void Release()
 
-			This method gets called when the input manager is
+			This method gets called when the input provider is
 			unregistered and can be used to perform cleanup tasks.
 
 		void NewConnection(object device, fd, dict options)
@@ -56,7 +56,7 @@ Methods		void Release()
 			This methods gets called when a device gets disconnected.
 
 			The file descriptor is no longer owned by the service
-			daemon and the input manager implementation needs to
+			daemon and the input provider implementation needs to
 			stop writing to it and close the connection.
 
 			Possible errors: org.wds.Error.Rejected
