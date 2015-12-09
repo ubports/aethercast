@@ -442,8 +442,6 @@ void Application::OnManagerConnected(GObject *object, GAsyncResult *res, gpointe
                              G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_NONE,
                              "org.wds", "/org/wds",
                              nullptr, &Application::OnObjectManagerCreated, inst);
-
-    inst->SetupStandardInput();
 }
 
 void Application::OnManagerPropertiesChanged(GDBusConnection *connection, const gchar *sender_name, const gchar *object_path,
