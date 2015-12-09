@@ -739,7 +739,7 @@ bool WpaSupplicantNetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &devi
 
     WpaSupplicantMessage m;
 
-    if (current_peer_->IsConnecting()) {
+    if (current_peer_->State() == mcs::kAssociation) {
         m = WpaSupplicantMessage::CreateRequest("P2P_CANCEL");
     }
     else {
