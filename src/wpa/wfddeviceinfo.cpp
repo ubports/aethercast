@@ -46,7 +46,7 @@ WfdDeviceType WfdDeviceInfo::TypeFromInfoFlags(uint flags) {
     return static_cast<WfdDeviceType>(flags & Flag::type);
 }
 
-WfdDeviceInfo WfdDeviceInfo::Create(const std::string &str) {
+WfdDeviceInfo WfdDeviceInfo::Parse(const std::string &str) {
     WfdDeviceInfo info;
 
     if (str.size() != kWfdDeviceInfoLength)

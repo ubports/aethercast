@@ -24,7 +24,9 @@
 namespace mcs {
 std::shared_ptr<MiracastSourceManager> MiracastSourceManager::Create(const IpV4Address &address, unsigned short port) {
     auto sp = std::shared_ptr<MiracastSourceManager>{new MiracastSourceManager{}};
+    DEBUG("Before setup");
     sp->Setup(address, port);
+    DEBUG("After setup");
     return sp;
 }
 
@@ -39,8 +41,6 @@ MiracastSourceManager::~MiracastSourceManager() {
         g_source_remove(socket_source_);
         socket_source_ = 0;
     }
-
-    active_sink_.reset();
 }
 
 void MiracastSourceManager::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
@@ -100,7 +100,7 @@ bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short por
     g_source_unref(source);
 
     DEBUG("Successfully setup source on %s:%d and awaiting incoming connection requests",
-          address.to_string().c_str(), port);
+          address.to_string(), port);
 
     socket_.swap(socket);
 

@@ -28,14 +28,15 @@ extern "C" {
 
 #include "networkdevice.h"
 #include "miracastservice.h"
+#include "shared_gobject.h"
 
 namespace mcs {
 
-class NetworkDeviceAdapter {
+class NetworkDeviceAdapter : public std::enable_shared_from_this<NetworkDeviceAdapter> {
 public:
     typedef std::shared_ptr<NetworkDeviceAdapter> Ptr;
 
-    static NetworkDeviceAdapter::Ptr Create(GDBusConnection *connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service);
+    static NetworkDeviceAdapter::Ptr Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service);
 
     ~NetworkDeviceAdapter();
 
@@ -51,11 +52,12 @@ private:
                                    gpointer user_data);
 
 private:
-    NetworkDeviceAdapter(GDBusConnection *connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service);
+    NetworkDeviceAdapter(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service);
 
+    std::shared_ptr<NetworkDeviceAdapter> FinalizeConstruction();
 
 private:
-    GDBusConnection *connection_;
+    SharedGObject<GDBusConnection> connection_;
     MiracastInterfaceObjectSkeleton *object_;
     std::string path_;
     NetworkDevice::Ptr device_;

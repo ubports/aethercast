@@ -15,39 +15,17 @@
  *
  */
 
-#ifndef TYPES_H_
-#define TYPES_H_
+#ifndef NETWORKMANAGERFACTORY_H_
+#define NETWORKMANAGERFACTORY_H_
 
-#include <string>
+#include "networkmanager.h"
 
 namespace mcs {
 
-enum class Error {
-    kNone,
-    kFailed,
-    kAlready,
-    kParamInvalid,
-    kUnknown
+class NetworkManagerFactory {
+public:
+    static NetworkManager::Ptr Create(const std::string &type = "");
 };
-
-static std::string ErrorToString(const Error &error) {
-    switch (error) {
-    case Error::kNone:
-        return "None";
-    case Error::kFailed:
-        return "Operation failed";
-    case Error::kAlready:
-        return "Operation already in progress";
-    case Error::kParamInvalid:
-        return "Invalid parameters";
-    case Error::kUnknown:
-    default:
-        break;
-    }
-    return "Unknown error occured";
-}
-
-typedef std::function<void(const Error &error)> ResultCallback;
 
 } // namespace mcs
 

@@ -27,33 +27,16 @@
 
 namespace mcs {
 
-NetworkDeviceAdapter::Ptr NetworkDeviceAdapter::Create(GDBusConnection *connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service) {
-    return std::shared_ptr<NetworkDeviceAdapter>(new NetworkDeviceAdapter(connection, path, device, service));
+NetworkDeviceAdapter::Ptr NetworkDeviceAdapter::Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service) {
+    return std::shared_ptr<NetworkDeviceAdapter>(new NetworkDeviceAdapter(connection, path, device, service))->FinalizeConstruction();
 }
 
-NetworkDeviceAdapter::NetworkDeviceAdapter(GDBusConnection *connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service) :
+NetworkDeviceAdapter::NetworkDeviceAdapter(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service) :
     connection_(connection),
     object_(nullptr),
     path_(path),
     device_(device),
     service_(service) {
-
-    device_iface_ = miracast_interface_device_skeleton_new();
-
-    g_signal_connect(device_iface_, "handle-connect",
-                     G_CALLBACK(&NetworkDeviceAdapter::OnHandleConnect), this);
-    g_signal_connect(device_iface_, "handle-disconnect",
-                     G_CALLBACK(&NetworkDeviceAdapter::OnHandleDisconnect), this);
-
-    SyncProperties();
-
-    object_ = miracast_interface_object_skeleton_new(path_.c_str());
-    if (!object_) {
-        ERROR("Failed to create object for device %s", device->Address().c_str());
-        return;
-    }
-
-    miracast_interface_object_skeleton_set_device(object_, device_iface_);
 }
 
 NetworkDeviceAdapter::~NetworkDeviceAdapter() {
@@ -62,6 +45,29 @@ NetworkDeviceAdapter::~NetworkDeviceAdapter() {
 
     if (object_)
         g_object_unref(object_);
+}
+
+std::shared_ptr<NetworkDeviceAdapter> NetworkDeviceAdapter::FinalizeConstruction() {
+    device_iface_ = miracast_interface_device_skeleton_new();
+
+    auto sp = shared_from_this();
+
+    g_signal_connect(device_iface_, "handle-connect",
+                     G_CALLBACK(&NetworkDeviceAdapter::OnHandleConnect),
+                     new WeakKeepAlive<NetworkDeviceAdapter>{sp});
+    g_signal_connect(device_iface_, "handle-disconnect",
+                     G_CALLBACK(&NetworkDeviceAdapter::OnHandleDisconnect),
+                     new WeakKeepAlive<NetworkDeviceAdapter>{sp});
+
+    SyncProperties();
+
+    object_ = miracast_interface_object_skeleton_new(path_.c_str());
+    if (!object_)
+        ERROR("Failed to create object for device %s", device_->Address());
+    else
+        miracast_interface_object_skeleton_set_device(object_, device_iface_);
+
+    return sp;
 }
 
 void NetworkDeviceAdapter::SyncProperties() {
@@ -88,23 +94,22 @@ void NetworkDeviceAdapter::OnHandleConnect(MiracastInterfaceDevice *skeleton, GD
     boost::ignore_unused_variable_warning(skeleton);
     boost::ignore_unused_variable_warning(role);
 
-    auto inst = static_cast<NetworkDeviceAdapter*>(user_data);
+    auto inst = static_cast<WeakKeepAlive<NetworkDeviceAdapter>*>(user_data)->GetInstance().lock();
 
     if (not inst)
         return;
 
     g_object_ref(invocation);
+    auto inv = make_shared_gobject(invocation);
 
-    inst->service_->Connect(inst->device_, [invocation](mcs::Error error) {
-        if (error != kErrorNone) {
-            g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+    inst->service_->Connect(inst->device_, [inv](mcs::Error error) {
+        if (error != Error::kNone) {
+            g_dbus_method_invocation_return_error(inv.get(), G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                   "%s", mcs::ErrorToString(error).c_str());
-            g_object_unref(invocation);
             return;
         }
 
-        g_dbus_method_invocation_return_value(invocation, nullptr);
-        g_object_unref(invocation);
+        g_dbus_method_invocation_return_value(inv.get(), nullptr);
     });
 }
 
@@ -113,23 +118,22 @@ void NetworkDeviceAdapter::OnHandleDisconnect(MiracastInterfaceDevice *skeleton,
 {
     boost::ignore_unused_variable_warning(skeleton);
 
-    auto inst = static_cast<NetworkDeviceAdapter*>(user_data);
+    auto inst = static_cast<WeakKeepAlive<NetworkDeviceAdapter>*>(user_data)->GetInstance().lock();
 
     if (not inst)
         return;
 
     g_object_ref(invocation);
+    auto inv = make_shared_gobject(invocation);
 
-    inst->service_->Disconnect(inst->device_, [invocation](mcs::Error error) {
-        if (error != kErrorNone) {
-            g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+    inst->service_->Disconnect(inst->device_, [inv](mcs::Error error) {
+        if (error != Error::kNone) {
+            g_dbus_method_invocation_return_error(inv.get(), G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                   "%s", mcs::ErrorToString(error).c_str());
-            g_object_unref(invocation);
             return;
         }
 
-        g_dbus_method_invocation_return_value(invocation, nullptr);
-        g_object_unref(invocation);
+        g_dbus_method_invocation_return_value(inv.get(), nullptr);
     });
 }
 

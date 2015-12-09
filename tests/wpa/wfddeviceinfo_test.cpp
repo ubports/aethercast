@@ -20,7 +20,7 @@
 #include "wpa/wfddeviceinfo.h"
 
 TEST(WfdDeviceInfo, FromStringWithValidInput) {
-    auto info = WfdDeviceInfo::Create("0x00111c440032");
+    auto info = WfdDeviceInfo::Parse("0x00111c440032");
     EXPECT_TRUE(info.IsSupported());
     EXPECT_TRUE(info.IsSupportedSink());
     EXPECT_EQ(info.ctrl_port_, 7236);
@@ -28,11 +28,11 @@ TEST(WfdDeviceInfo, FromStringWithValidInput) {
 }
 
 TEST(WfdDeviceInfo, FromStringWithInvalidInput) {
-    auto info = WfdDeviceInfo::Create("0xa1231sdas12312131232134235243rasasdsa");
+    auto info = WfdDeviceInfo::Parse("0xa1231sdas12312131232134235243rasasdsa");
     EXPECT_TRUE(!info.IsSupported());
     EXPECT_TRUE(!info.IsSupportedSink());
     EXPECT_EQ(info.ctrl_port_, 0);
     EXPECT_EQ(info.max_tput_, 0);
 
-    EXPECT_THROW(WfdDeviceInfo::Create("0xabcdefghijkl"), std::invalid_argument);
+    EXPECT_THROW(WfdDeviceInfo::Parse("0xabcdefghijkl"), std::invalid_argument);
 }

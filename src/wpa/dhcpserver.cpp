@@ -29,7 +29,7 @@ DhcpServer::DhcpServer(Delegate *delegate, const std::string &interface_name) :
     interface_name_(interface_name) {
     interface_index_ = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
     if (interface_index_ < 0)
-        MCS_ERROR("Failed to determine index of network interface: %s", interface_name_.c_str());
+        MCS_ERROR("Failed to determine index of network interface: %s", interface_name_);
 }
 
 DhcpServer::~DhcpServer() {
@@ -43,7 +43,7 @@ mcs::IpV4Address DhcpServer::LocalAddress() const {
 }
 
 void DhcpServer::OnDebug(const char *str, gpointer user_data) {
-    MCS_WARNING("DHCP: %s", str);
+    MCS_DEBUG("DHCP: %s", str);
 }
 
 bool DhcpServer::Start() {
@@ -58,14 +58,14 @@ bool DhcpServer::Start() {
     if (mcs::NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, interface_index_,
                                     AF_INET, address,
                                     NULL, prefixlen, broadcast) < 0) {
-        MCS_ERROR("Failed to assign network address for %s", interface_name_.c_str());
+        MCS_ERROR("Failed to assign network address for %s", interface_name_);
         return false;
     }
 
     GDHCPServerError error;
     server_ = g_dhcp_server_new(G_DHCP_IPV4, interface_index_, &error);
     if (!server_) {
-        MCS_ERROR("Failed to setup DHCP server");
+        MCS_ERROR("Failed to setup DHCP server: %s", g_dhcp_server_error_to_string(error));
         return false;
     }
 

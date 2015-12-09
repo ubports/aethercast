@@ -41,7 +41,7 @@ struct WfdDeviceInfo
 {
     static WfdDeviceType TypeFromInfoFlags(uint flags);
 
-    static WfdDeviceInfo Create(const std::string &str);
+    static WfdDeviceInfo Parse(const std::string &str);
 
     enum Flag {
         type = 0x3,

@@ -15,40 +15,19 @@
  *
  */
 
-#ifndef TYPES_H_
-#define TYPES_H_
+#include <boost/concept_check.hpp>
 
-#include <string>
+#include "networkmanagerfactory.h"
+#include "wpasupplicantnetworkmanager.h"
 
 namespace mcs {
 
-enum class Error {
-    kNone,
-    kFailed,
-    kAlready,
-    kParamInvalid,
-    kUnknown
-};
+NetworkManager::Ptr NetworkManagerFactory::Create(const std::string &type) {
+    boost::ignore_unused_variable_warning(type);
 
-static std::string ErrorToString(const Error &error) {
-    switch (error) {
-    case Error::kNone:
-        return "None";
-    case Error::kFailed:
-        return "Operation failed";
-    case Error::kAlready:
-        return "Operation already in progress";
-    case Error::kParamInvalid:
-        return "Invalid parameters";
-    case Error::kUnknown:
-    default:
-        break;
-    }
-    return "Unknown error occured";
+    // FIXME for now we only can create the wpa one but this will be extended
+    // with further types.
+    return std::make_shared<WpaSupplicantNetworkManager>();
 }
 
-typedef std::function<void(const Error &error)> ResultCallback;
-
 } // namespace mcs
-
-#endif

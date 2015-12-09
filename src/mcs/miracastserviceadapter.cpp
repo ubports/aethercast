@@ -16,6 +16,7 @@
  */
 
 #include <glib.h>
+#include <gio/gio.h>
 
 #include <algorithm>
 
@@ -151,7 +152,7 @@ std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruc
     auto sp = shared_from_this();
 
     GError *error = nullptr;
-    bus_connection_ = g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error);
+    bus_connection_ = make_shared_gobject(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
     if (!bus_connection_) {
         ERROR("Failed to connect with system bus: %s", error->message);
         g_error_free(error);

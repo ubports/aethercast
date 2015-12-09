@@ -64,10 +64,14 @@ constexpr const char *kP2pGoNegFailure{"P2P-GO-NEG-FAILURE"};
 constexpr const char *kP2pFindStopped{"P2P-FIND-STOPPED"};
 constexpr const char *kApStaConnected{"AP-STA-CONNECTED"};
 constexpr const char *kApStaDisconnected{"AP-STA-DISCONNECTED"};
+constexpr const char *kCtrlEventScanStarted{"CTRL-EVENT-SCAN-STARTED"};
+constexpr const char *kCtrlEventScanResults{"CTRL-EVENT-SCAN-RESULTS"};
+constexpr const char *kCtrlEventConnected{"CTRL-EVENT-CONNECTED"};
+constexpr const char *kCtrlEventDisconnected{"CTRL-EVENT-DISCONNECTED"};
 }
 
-WpaSupplicantNetworkManager::WpaSupplicantNetworkManager(NetworkManager::Delegate *delegate) :
-    delegate_(delegate),
+WpaSupplicantNetworkManager::WpaSupplicantNetworkManager() :
+    delegate_(nullptr),
     // This network manager implementation is bound to the p2p0 network interface
     // being available which is the case on most Android platforms.
     interface_name_("p2p0"),
@@ -93,6 +97,9 @@ WpaSupplicantNetworkManager::~WpaSupplicantNetworkManager() {
         g_source_remove(respawn_source_);
 }
 
+void WpaSupplicantNetworkManager::SetDelegate(mcs::NetworkManager::Delegate *delegate) {
+    delegate_ = delegate;
+}
 
 bool WpaSupplicantNetworkManager::Setup() {
     if (!firmware_loader_.IsNeeded())
@@ -120,10 +127,10 @@ void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage mes
         return;
 
     // Ignore events we are not interested in
-    if (message.Name() == "CTRL-EVENT-SCAN-STARTED" ||
-        message.Name() == "CTRL-EVENT-SCAN-RESULTS" ||
-        message.Name() == "CTRL-EVENT-CONNECTED" ||
-        message.Name() == "CTRL-EVENT-DISCONNECTED")
+    if (message.Name() == kCtrlEventScanStarted ||
+        message.Name() == kCtrlEventScanResults ||
+        message.Name() == kCtrlEventConnected ||
+        message.Name() == kCtrlEventDisconnected)
         return;
 
     if (message.Name() == kP2pDeviceFound)
@@ -164,7 +171,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     MCS_DEBUG("address %s name %s config_methods %s wfd_dev_info %s",
           address, name, config_methods_str, wfd_dev_info);
 
-    auto wfd_info = WfdDeviceInfo::Create(wfd_dev_info);
+    auto wfd_info = WfdDeviceInfo::Parse(wfd_dev_info);
 
     if (!wfd_info.IsSupported()) {
         MCS_DEBUG("Ignoring unsupported device %s", address);
@@ -653,7 +660,7 @@ void WpaSupplicantNetworkManager::Scan(const std::chrono::seconds &timeout) {
         return;
 
     // This will scan forever but is exactly what we want as our user
-    // has to take care about stopping this scan after some after.
+    // has to take care about stopping this scan after some time.
     auto m = WpaSupplicantMessage::CreateRequest("P2P_FIND");
 
     if (timeout.count() > 0) {

@@ -39,10 +39,12 @@ class WpaSupplicantNetworkManager : public mcs::NetworkManager,
                                     public DhcpClient::Delegate,
                                     public wpa::WiFiFirmwareLoader::Delegate {
 public:
-    WpaSupplicantNetworkManager(mcs::NetworkManager::Delegate *delegate_);
+    WpaSupplicantNetworkManager();
     ~WpaSupplicantNetworkManager();
 
-    bool Setup();
+    void SetDelegate(mcs::NetworkManager::Delegate *delegate) override;
+
+    bool Setup() override;
 
     void SetWfdSubElements(const std::list<std::string> &elements) override;
 

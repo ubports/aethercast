@@ -405,6 +405,11 @@ void Application::OnServiceLost(GDBusConnection *connection, const gchar *name, 
         g_object_unref(inst->manager_);
         inst->manager_ = nullptr;
     }
+
+    if (inst->object_manager_) {
+        g_object_unref(inst->object_manager_);
+        inst->object_manager_ = nullptr;
+    }
 }
 
 void Application::OnServiceFound(GDBusConnection *connection, const gchar *name, const gchar *name_owner, gpointer user_data) {

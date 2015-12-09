@@ -33,7 +33,7 @@
 #include "logger.h"
 #include "miracastservice.h"
 #include "miracastserviceadapter.h"
-#include "wpasupplicantnetworkmanager.h"
+#include "networkmanagerfactory.h"
 #include "wfddeviceinfo.h"
 #include "types.h"
 #include "logging.h"
@@ -154,7 +154,8 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
         bool is_gst_initialized = gst_init_check(nullptr, nullptr, nullptr);
     } rt;
 
-    auto service = mcs::MiracastService::Create();
+    auto network_manager = mcs::NetworkManagerFactory::Create();
+    auto service = mcs::MiracastService::Create(network_manager);
     auto mcsa = mcs::MiracastServiceAdapter::create(service);
 
     rt.Run();
@@ -162,22 +163,25 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
     return 0;
 }
 
-std::shared_ptr<MiracastService> MiracastService::Create() {
+std::shared_ptr<MiracastService> MiracastService::Create(const NetworkManager::Ptr &network_manager) {
     auto sp = std::shared_ptr<MiracastService>{new MiracastService{}};
-    return sp->FinalizeConstruction();
+    return sp->FinalizeConstruction(network_manager);
 }
 
 MiracastService::MiracastService() :
-    network_manager_(new WpaSupplicantNetworkManager(this)),
-    source_(nullptr),
     current_state_(kIdle),
-    current_device_(nullptr),
     scan_timeout_source_(0),
     supported_roles_({kSource}) {
-    network_manager_->Setup();
 }
 
-std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction() {
+std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction(const NetworkManager::Ptr &network_manager) {
+    network_manager_ = network_manager;
+
+    if (network_manager_) {
+        network_manager_->SetDelegate(this);
+        network_manager_->Setup();
+    }
+
     return shared_from_this();
 }
 
@@ -216,8 +220,8 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     IpV4Address address;
 
     DEBUG("new state %s current state %s",
-          mcs::NetworkDevice::StateToStr(new_state).c_str(),
-          mcs::NetworkDevice::StateToStr(current_state_).c_str());
+          mcs::NetworkDevice::StateToStr(new_state),
+          mcs::NetworkDevice::StateToStr(current_state_));
 
     switch (new_state) {
     case kAssociation:
@@ -233,7 +237,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
         break;
 
     case kFailure:
-        FinishConnectAttempt(kErrorFailed);
+        FinishConnectAttempt(Error::kFailed);
 
     case kDisconnected:
         source_.reset();
@@ -261,8 +265,8 @@ void MiracastService::OnChanged() {
 
 void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &device) {
     DEBUG("Device state changed: address %s new state %s",
-          device->Address().c_str(),
-          mcs::NetworkDevice::StateToStr(device->State()).c_str());
+          device->Address(),
+          mcs::NetworkDevice::StateToStr(device->State()));
 
     if (device != current_device_)
         return;
@@ -304,17 +308,17 @@ void MiracastService::FinishConnectAttempt(mcs::Error error) {
 
 void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback callback) {
     if (current_device_) {
-        callback(kErrorAlready);
+        callback(Error::kAlready);
         return;
     }
 
     if (!device) {
-        callback(kErrorParamInvalid);
+        callback(Error::kParamInvalid);
         return;
     }
 
     if (!network_manager_->Connect(device)) {
-        callback(kErrorFailed);
+        callback(Error::kFailed);
         return;
     }
 
@@ -324,16 +328,16 @@ void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback c
 
 void MiracastService::Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback) {
     if (!current_device_ || !device) {
-        callback(kErrorParamInvalid);
+        callback(Error::kParamInvalid);
         return;
     }
 
     if (!network_manager_->Disconnect(device)) {
-        callback(kErrorFailed);
+        callback(Error::kFailed);
         return;
     }
 
-    callback(kErrorNone);
+    callback(Error::kNone);
 }
 
 void MiracastService::Scan(const std::chrono::seconds &timeout) {

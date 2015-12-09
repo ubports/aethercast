@@ -66,7 +66,7 @@ public:
         Delegate() = default;
     };
 
-    static std::shared_ptr<MiracastService> Create();
+    static std::shared_ptr<MiracastService> Create(const NetworkManager::Ptr &network_manager);
 
     ~MiracastService();
 
@@ -96,10 +96,10 @@ private:
 
 private:
     MiracastService();
-    std::shared_ptr<MiracastService> FinalizeConstruction();
+    std::shared_ptr<MiracastService> FinalizeConstruction(const NetworkManager::Ptr &network_manager);
 
     void AdvanceState(NetworkDeviceState new_state);
-    void FinishConnectAttempt(mcs::Error error = kErrorNone);
+    void FinishConnectAttempt(mcs::Error error = mcs::Error::kNone);
     void StartIdleTimer();
     void LoadWiFiFirmware();
 

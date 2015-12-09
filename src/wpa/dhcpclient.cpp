@@ -75,7 +75,7 @@ bool DhcpClient::Start() {
     GDHCPClientError error;
     client_ = g_dhcp_client_new(G_DHCP_IPV4, interface_index_, &error);
     if (!client_) {
-        MCS_ERROR("Failed to setup DHCP client");
+        MCS_ERROR("Failed to setup DHCP client: %s", g_dhcp_client_error_to_string(error));
         return false;
     }
 

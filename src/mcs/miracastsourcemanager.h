@@ -33,10 +33,8 @@ namespace mcs {
 class MiracastSourceManager : public std::enable_shared_from_this<MiracastSourceManager>,
                        public MiracastSourceClient::Delegate {
 public:
-    class Delegate : private boost::noncopyable {
+    class Delegate : private mcs::NonCopyable {
     public:
-        virtual ~Delegate() { }
-
         virtual void OnClientDisconnected() = 0;
 
     protected:

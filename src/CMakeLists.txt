@@ -32,6 +32,7 @@ set(SOURCES
   mcs/miracastsourcemanager.cpp
   mcs/miracastsourceclient.cpp
   mcs/networkmanager.cpp
+  mcs/networkmanagerfactory.cpp
   mcs/networkdevice.cpp
 
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface.c

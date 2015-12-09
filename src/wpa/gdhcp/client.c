@@ -158,6 +158,29 @@ struct _GDHCPClient {
 	bool request_bcast;
 };
 
+const char *g_dhcp_client_error_to_string(GDHCPClientError error) {
+    switch (error) {
+    case G_DHCP_CLIENT_ERROR_NONE:
+        return "None";
+    case G_DHCP_CLIENT_ERROR_INTERFACE_UNAVAILABLE:
+        return "Interface unavailable";
+    case G_DHCP_CLIENT_ERROR_INTERFACE_IN_USE:
+        return "Interface in use";
+    case G_DHCP_CLIENT_ERROR_INTERFACE_DOWN:
+        return "Interface down";
+    case G_DHCP_CLIENT_ERROR_NOMEM:
+        return "No memory";
+    case G_DHCP_CLIENT_ERROR_INVALID_INDEX:
+        return "Invalid index";
+    case G_DHCP_CLIENT_ERROR_INVALID_OPTION:
+        return "Invalid option";
+    default:
+        break;
+    }
+
+    return "";
+}
+
 static inline void debug(GDHCPClient *client, const char *format, ...)
 {
 	char str[256];

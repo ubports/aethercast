@@ -31,6 +31,8 @@
 namespace mcs {
 class NetworkManager : private mcs::NonCopyable {
 public:
+    typedef std::shared_ptr<NetworkManager> Ptr;
+
     class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) = 0;
@@ -42,6 +44,8 @@ public:
     protected:
         Delegate() = default;
     };
+
+    virtual void SetDelegate(Delegate * delegate) = 0;
 
     virtual bool Setup() = 0;
     virtual void Scan(const std::chrono::seconds &timeout) = 0;

@@ -45,9 +45,6 @@ MiracastSourceClient::MiracastSourceClient(ScopedGObject<GSocket>&& socket) :
 }
 
 MiracastSourceClient::~MiracastSourceClient() {
-    if (socket_)
-        g_socket_close(socket_.get(), nullptr);
-
     if (socket_source_ > 0)
         g_source_remove(socket_source_);
 
@@ -146,7 +143,7 @@ void MiracastSourceClient::OnTimeoutRemove(gpointer user_data) {
 }
 
 gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  cond, gpointer user_data) {
-    auto inst = static_cast<MiracastSourceClient*>(user_data);
+    auto inst = static_cast<WeakKeepAlive<MiracastSourceClient>*>(user_data)->GetInstance().lock();
 
     if (cond == G_IO_ERR || cond == G_IO_HUP) {
         if (auto sp = inst->delegate_.lock())
@@ -189,14 +186,15 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
 
     std::string peer_address = g_inet_address_to_string(G_INET_ADDRESS(inet_address));
 
-    auto source = g_socket_create_source(socket_.get(), (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR), nullptr);
+    auto source = g_socket_create_source(socket_.get(), static_cast<GIOCondition>((G_IO_IN | G_IO_HUP | G_IO_ERR)), nullptr);
     if (!source) {
         WARNING("Failed to setup event listener for source client");
         return sp;
     }
 
     g_source_set_callback(source, (GSourceFunc) &MiracastSourceClient::OnIncomingData,
-                          this, nullptr);
+                          new WeakKeepAlive<MiracastSourceClient>{sp},
+                          [](gpointer data) { delete static_cast<WeakKeepAlive<MiracastSourceClient>*>(data); });
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
         WARNING("Failed to attach source to mainloop");

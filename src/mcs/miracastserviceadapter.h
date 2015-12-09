@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 #include <memory>
+#include <unordered_map>
 
 #include "scoped_gobject.h"
 
@@ -66,10 +67,10 @@ private:
 private:
     std::shared_ptr<MiracastService> service_;
     ScopedGObject<MiracastInterfaceManager> manager_obj_;
-    GDBusConnection *bus_connection_;
+    SharedGObject<GDBusConnection> bus_connection_;
     guint bus_id_;
     ScopedGObject<GDBusObjectManagerServer> object_manager_;
-    std::map<std::string,NetworkDeviceAdapter::Ptr> devices_;
+    std::unordered_map<std::string,NetworkDeviceAdapter::Ptr> devices_;
 };
 } // namespace mcs
 #endif
