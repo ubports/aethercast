@@ -16,12 +16,12 @@ set(HEADERS
     mcs/ip_v4_address.h
     mcs/keep_alive.h
     mcs/mac_address.h
+    mcs/types.h
 )
 
 set(SOURCES
   mcs/utils.cpp
   mcs/networkutils.cpp
-  mcs/wfddeviceinfo.cpp
   mcs/mediamanagerfactory.cpp
   mcs/basesourcemediamanager.cpp
   mcs/gstsourcemediamanager.cpp
@@ -29,12 +29,16 @@ set(SOURCES
   mcs/logger.cpp
   mcs/mirsourcemediamanager.cpp
   mcs/miracastservice.cpp
-  mcs/miracastserviceadapter.cpp
   mcs/miracastsourcemanager.cpp
   mcs/miracastsourceclient.cpp
   mcs/networkmanager.cpp
+  mcs/networkmanagerfactory.cpp
   mcs/networkdevice.cpp
+
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface.c
+  mcs/dbushelpers.cpp
+  mcs/miracastserviceadapter.cpp
+  mcs/networkdeviceadapter.cpp
 
   wpa/gdhcp/common.c
   wpa/gdhcp/ipv4ll.c
@@ -43,6 +47,7 @@ set(SOURCES
   wpa/dhcpclient.cpp
   wpa/dhcpserver.cpp
   wpa/wififirmwareloader.cpp
+  wpa/wfddeviceinfo.cpp
   wpa/wpasupplicantmessage.cpp
   wpa/wpasupplicantcommand.cpp
   wpa/wpasupplicantcommandqueue.cpp
@@ -91,3 +96,5 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static
 )
+
+add_subdirectory(client)

@@ -22,6 +22,7 @@
 #include "mirsourcemediamanager.h"
 #include "testsourcemediamanager.h"
 #include "utils.h"
+#include "logging.h"
 
 namespace mcs {
 

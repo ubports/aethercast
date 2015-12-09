@@ -27,16 +27,19 @@ extern "C" {
 #endif
 
 #include <memory>
+#include <unordered_map>
+
+#include "scoped_gobject.h"
 
 #include "miracastservice.h"
-#include "scoped_gobject.h"
+#include "networkdeviceadapter.h"
 
 namespace mcs {
 class MiracastServiceAdapter : public std::enable_shared_from_this<MiracastServiceAdapter>,
                                public MiracastService::Delegate {
 public:
     static constexpr const char *kBusName{"org.wds"};
-    static constexpr const char *kManagerPath{"/"};
+    static constexpr const char *kManagerPath{"/org/wds"};
     static constexpr const char *kManagerIface{"org.wds.Manager"};
 
     static std::shared_ptr<MiracastServiceAdapter> create(const std::shared_ptr<MiracastService> &service);
@@ -44,24 +47,30 @@ public:
     ~MiracastServiceAdapter();
 
     void OnStateChanged(NetworkDeviceState state) override;
-    void OnDeviceFound(const NetworkDevice::Ptr &peer) override;
-    void OnDeviceLost(const NetworkDevice::Ptr &peer) override;
+    void OnDeviceFound(const NetworkDevice::Ptr &device) override;
+    void OnDeviceLost(const NetworkDevice::Ptr &device) override;
+    void OnDeviceChanged(const NetworkDevice::Ptr &peer) override;
+    void OnChanged() override;
 
 private:
     static void OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data);
 
     static void OnHandleScan(MiracastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                               gpointer user_data);
-    static void OnHandleConnectSink(MiracastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
-                                      const gchar *address, gpointer user_data);
 
     MiracastServiceAdapter(const std::shared_ptr<MiracastService> &service);
     std::shared_ptr<MiracastServiceAdapter> FinalizeConstruction();
+
+    void SyncProperties();
+
+    std::string GenerateDevicePath(const NetworkDevice::Ptr &device) const;
 private:
     std::shared_ptr<MiracastService> service_;
     ScopedGObject<MiracastInterfaceManager> manager_obj_;
+    SharedGObject<GDBusConnection> bus_connection_;
     guint bus_id_;
     ScopedGObject<GDBusObjectManagerServer> object_manager_;
+    std::unordered_map<std::string,NetworkDeviceAdapter::Ptr> devices_;
 };
 } // namespace mcs
 #endif

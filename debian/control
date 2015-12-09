@@ -17,6 +17,8 @@ Build-Depends: cmake,
                libglib2.0-dev,
                libgstreamer1.0-dev,
                libgtest-dev,
+               libreadline-dev,
+               libreadline6-dev,
                libwds-dev
 Standards-Version: 3.9.4
 Homepage: http://launchpad.net/miracast-service

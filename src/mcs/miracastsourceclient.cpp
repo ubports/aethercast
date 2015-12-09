@@ -31,9 +31,10 @@
 
 #include "networkutils.h"
 #include "utils.h"
+#include "logging.h"
 
 namespace mcs {
-std::shared_ptr<MiracastSourceClient> MiracastSourceClient::create(ScopedGObject<GSocket>&& socket) {
+std::shared_ptr<MiracastSourceClient> MiracastSourceClient::Create(ScopedGObject<GSocket>&& socket) {
     std::shared_ptr<MiracastSourceClient> sp{new MiracastSourceClient{std::move(socket)}};
     return sp->FinalizeConstruction();
 }
@@ -46,6 +47,8 @@ MiracastSourceClient::MiracastSourceClient(ScopedGObject<GSocket>&& socket) :
 MiracastSourceClient::~MiracastSourceClient() {
     if (socket_source_ > 0)
         g_source_remove(socket_source_);
+
+    ReleaseTimers();
 }
 
 void MiracastSourceClient::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
@@ -57,6 +60,11 @@ void MiracastSourceClient::ResetDelegate() {
 }
 
 void MiracastSourceClient::DumpRtsp(const std::string &prefix, const std::string &data) {
+    static bool enabled = getenv("MIRACAST_RTSP_DEBUG") != nullptr;
+
+    if (!enabled)
+        return;
+
     auto lines = Utils::StringSplit(data, '\n');
     for (auto current : lines)
         WARNING("RTSP: %s: %s", prefix.c_str(), current.c_str());
@@ -65,8 +73,8 @@ void MiracastSourceClient::DumpRtsp(const std::string &prefix, const std::string
 void MiracastSourceClient::SendRTSPData(const std::string &data) {
     DumpRtsp("OUT", data);
     GError *error = nullptr;
-    g_socket_send(socket_.get(), data.c_str(), data.length(), nullptr, &error);
-    if (error) {
+    auto bytes_written = g_socket_send(socket_.get(), data.c_str(), data.length(), nullptr, &error);
+    if (bytes_written < 0) {
         WARNING("Failed to write data to RTSP client: %s", error->message);
         g_error_free(error);
         return;
@@ -112,6 +120,13 @@ void MiracastSourceClient::ReleaseTimer(uint timer_id) {
         g_source_remove(*it);
 }
 
+void MiracastSourceClient::ReleaseTimers() {
+    for (auto timer : timers_)
+        g_source_remove(timer);
+
+    timers_.clear();
+}
+
 gboolean MiracastSourceClient::OnTimeout(gpointer user_data) {
     auto data = static_cast<TimerCallbackData*>(user_data);
     data->delegate_->source_->OnTimerEvent(data->id_);
@@ -133,7 +148,7 @@ gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  con
     if (cond == G_IO_ERR || cond == G_IO_HUP) {
         if (auto sp = inst->delegate_.lock())
             sp->OnConnectionClosed();
-        return FALSE;
+        return TRUE;
     }
 
     int fd = g_socket_get_fd(inst->socket_.get());
@@ -171,13 +186,15 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
 
     std::string peer_address = g_inet_address_to_string(G_INET_ADDRESS(inet_address));
 
-    auto source = g_socket_create_source(socket_.get(), (GIOCondition) (G_IO_IN | G_IO_HUP | G_IO_ERR), nullptr);
+    auto source = g_socket_create_source(socket_.get(), static_cast<GIOCondition>((G_IO_IN | G_IO_HUP | G_IO_ERR)), nullptr);
     if (!source) {
         WARNING("Failed to setup event listener for source client");
         return sp;
     }
 
-    g_source_set_callback(source, (GSourceFunc) &MiracastSourceClient::OnIncomingData, new SharedKeepAlive<MiracastSourceClient>{sp}, nullptr);
+    g_source_set_callback(source, (GSourceFunc) &MiracastSourceClient::OnIncomingData,
+                          new WeakKeepAlive<MiracastSourceClient>{sp},
+                          [](gpointer data) { delete static_cast<WeakKeepAlive<MiracastSourceClient>*>(data); });
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
         WARNING("Failed to attach source to mainloop");

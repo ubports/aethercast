@@ -415,6 +415,30 @@ error:
 	return NULL;
 }
 
+const char *g_dhcp_server_error_to_string(GDHCPServerError error) {
+    switch (error) {
+    case G_DHCP_SERVER_ERROR_NONE:
+        return "None";
+    case G_DHCP_SERVER_ERROR_INTERFACE_UNAVAILABLE:
+        return "Interface unavailable";
+    case G_DHCP_SERVER_ERROR_INTERFACE_IN_USE:
+        return "Interface in use";
+    case G_DHCP_SERVER_ERROR_INTERFACE_DOWN:
+        return "Interface down";
+    case G_DHCP_SERVER_ERROR_NOMEM:
+        return "No memory";
+    case G_DHCP_SERVER_ERROR_INVALID_INDEX:
+        return "Invalid index";
+    case G_DHCP_SERVER_ERROR_INVALID_OPTION:
+        return "Invalid option";
+    case G_DHCP_SERVER_ERROR_IP_ADDRESS_INVALID:
+        return "IP address invalid";
+    default:
+        break;
+    }
+
+    return "";
+}
 
 static uint8_t check_packet_type(struct dhcp_packet *packet)
 {

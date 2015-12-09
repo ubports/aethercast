@@ -22,6 +22,7 @@
 
 #include <functional>
 #include <memory>
+#include <chrono>
 
 #include <glib.h>
 
@@ -29,6 +30,7 @@
 #include "networkmanager.h"
 #include "networkdevice.h"
 #include "non_copyable.h"
+#include "types.h"
 
 namespace mcs {
 class MiracastService : public std::enable_shared_from_this<MiracastService>,
@@ -38,6 +40,8 @@ class MiracastService : public std::enable_shared_from_this<MiracastService>,
 public:
     static constexpr const uint kVersionMajor = 0;
     static constexpr const uint kVersionMinor = 1;
+
+    typedef std::shared_ptr<MiracastService> Ptr;
 
     struct MainOptions {
         static MainOptions FromCommandLine(int argc, char** argv);
@@ -50,42 +54,52 @@ public:
 
     class Delegate : private mcs::NonCopyable {
     public:
+        virtual ~Delegate() { }
+
         virtual void OnStateChanged(NetworkDeviceState state) = 0;
-        virtual void OnDeviceFound(const NetworkDevice::Ptr &peer) = 0;
-        virtual void OnDeviceLost(const NetworkDevice::Ptr &peer) = 0;
+        virtual void OnChanged() = 0;
+        virtual void OnDeviceFound(const NetworkDevice::Ptr &device) = 0;
+        virtual void OnDeviceLost(const NetworkDevice::Ptr &device) = 0;
+        virtual void OnDeviceChanged(const NetworkDevice::Ptr &device) = 0;
 
     protected:
         Delegate() = default;
     };
 
-    static std::shared_ptr<MiracastService> create();
+    static std::shared_ptr<MiracastService> Create(const NetworkManager::Ptr &network_manager);
 
     ~MiracastService();
 
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
 
-    void ConnectSink(const MacAddress &address, std::function<void(bool,std::string)> callback);
-    void Scan();
+    void Connect(const NetworkDevice::Ptr &device, ResultCallback callback);
+    void Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback);
+
+    void Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30});
 
     NetworkDeviceState State() const;
+    std::vector<NetworkDeviceRole> SupportedRoles() const;
+    bool Scanning() const;
 
     void OnClientDisconnected();
 
 public:
-    void OnDeviceStateChanged(const NetworkDevice::Ptr &peer) override;
-    void OnDeviceFound(const NetworkDevice::Ptr &peer) override;
-    void OnDeviceLost(const NetworkDevice::Ptr &peer) override;
+    void OnDeviceStateChanged(const NetworkDevice::Ptr &device) override;
+    void OnDeviceChanged(const NetworkDevice::Ptr &device) override;
+    void OnDeviceFound(const NetworkDevice::Ptr &device) override;
+    void OnDeviceLost(const NetworkDevice::Ptr &device) override;
+    void OnChanged() override;
 
 private:
     static gboolean OnIdleTimer(gpointer user_data);
 
 private:
     MiracastService();
-    std::shared_ptr<MiracastService> FinalizeConstruction();
+    std::shared_ptr<MiracastService> FinalizeConstruction(const NetworkManager::Ptr &network_manager);
 
     void AdvanceState(NetworkDeviceState new_state);
-    void FinishConnectAttempt(bool success, const std::string &error_text = "");
+    void FinishConnectAttempt(mcs::Error error = mcs::Error::kNone);
     void StartIdleTimer();
     void LoadWiFiFirmware();
 
@@ -94,8 +108,11 @@ private:
     std::shared_ptr<NetworkManager> network_manager_;
     std::shared_ptr<MiracastSourceManager> source_;
     NetworkDeviceState current_state_;
-    NetworkDevice::Ptr current_peer_;
-    std::function<void(bool,std::string)> connect_callback_;
+    NetworkDevice::Ptr current_device_;
+    ResultCallback connect_callback_;
+    guint scan_timeout_source_;
+    ResultCallback current_scan_callback_;
+    std::vector<NetworkDeviceRole> supported_roles_;
 };
 } // namespace mcs
 #endif

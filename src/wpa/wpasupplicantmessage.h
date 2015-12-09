@@ -42,6 +42,7 @@ public:
     static WpaSupplicantMessage CreateRequest(const std::string &Name);
     static WpaSupplicantMessage CreateRaw(const std::string &payload);
 
+    WpaSupplicantMessage();
     WpaSupplicantMessage(const WpaSupplicantMessage &other);
     ~WpaSupplicantMessage();
 
@@ -62,8 +63,6 @@ public:
     std::string Raw() const;
 
 private:
-    WpaSupplicantMessage();
-
     void Parse(const std::string &payload);
 
     bool Appendv(const char *types, va_list *args);

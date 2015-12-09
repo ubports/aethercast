@@ -127,6 +127,8 @@ typedef void (*GDHCPClientEventFunc) (GDHCPClient *client, gpointer user_data);
 
 typedef void (*GDHCPDebugFunc)(const char *str, gpointer user_data);
 
+const char *g_dhcp_client_error_to_string(GDHCPClientError error);
+
 GDHCPClient *g_dhcp_client_new(GDHCPType type, int index,
 						GDHCPClientError *error);
 
@@ -199,6 +201,8 @@ typedef enum {
 	G_DHCP_SERVER_ERROR_INVALID_OPTION,
 	G_DHCP_SERVER_ERROR_IP_ADDRESS_INVALID
 } GDHCPServerError;
+
+const char *g_dhcp_server_error_to_string(GDHCPServerError error);
 
 typedef void (*GDHCPSaveLeaseFunc) (unsigned char *mac,
 			unsigned int nip, unsigned int expire);

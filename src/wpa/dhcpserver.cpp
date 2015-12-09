@@ -29,29 +29,25 @@ DhcpServer::DhcpServer(Delegate *delegate, const std::string &interface_name) :
     interface_name_(interface_name) {
     interface_index_ = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
     if (interface_index_ < 0)
-        MCS_WARNING("Failed to determine index of network interface: %s", interface_name_.c_str());
+        MCS_ERROR("Failed to determine index of network interface: %s", interface_name_);
 }
 
-DhcpServer::~DhcpServer()
-{
+DhcpServer::~DhcpServer() {
     if (server_)
         g_dhcp_server_unref(server_);
 }
 
-mcs::IpV4Address DhcpServer::LocalAddress() const
-{
+mcs::IpV4Address DhcpServer::LocalAddress() const {
     // FIXME this should be stored somewhere else
     return mcs::IpV4Address::from_string("192.168.7.1");
 }
 
-void DhcpServer::OnDebug(const char *str, gpointer user_data)
-{
-    MCS_WARNING("DHCP: %s", str);
+void DhcpServer::OnDebug(const char *str, gpointer user_data) {
+    MCS_DEBUG("DHCP: %s", str);
 }
 
-bool DhcpServer::Start()
-{
-    MCS_WARNING("Starting up DHCP server");
+bool DhcpServer::Start() {
+    MCS_DEBUG("Starting up DHCP server");
 
     // FIXME store those defaults somewhere else
     const char *address = "192.168.7.1";
@@ -62,14 +58,14 @@ bool DhcpServer::Start()
     if (mcs::NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, interface_index_,
                                     AF_INET, address,
                                     NULL, prefixlen, broadcast) < 0) {
-        MCS_WARNING("Failed to assign network address for %s", interface_name_.c_str());
+        MCS_ERROR("Failed to assign network address for %s", interface_name_);
         return false;
     }
 
     GDHCPServerError error;
     server_ = g_dhcp_server_new(G_DHCP_IPV4, interface_index_, &error);
     if (!server_) {
-        MCS_WARNING("Failed to setup DHCP server");
+        MCS_ERROR("Failed to setup DHCP server: %s", g_dhcp_server_error_to_string(error));
         return false;
     }
 
@@ -82,7 +78,7 @@ bool DhcpServer::Start()
     g_dhcp_server_set_debug(server_, &DhcpServer::OnDebug, this);
 
     if(g_dhcp_server_start(server_) < 0) {
-        MCS_WARNING("Failed to start DHCP server");
+        MCS_ERROR("Failed to start DHCP server");
         g_dhcp_server_unref(server_);
         return false;
     }
@@ -90,8 +86,7 @@ bool DhcpServer::Start()
     return true;
 }
 
-void DhcpServer::Stop()
-{
+void DhcpServer::Stop() {
     if (!server_)
         return;
 
