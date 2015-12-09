@@ -41,7 +41,7 @@ struct BoostLogLogger : public mcs::Logger {
             << "] "
             << boost::log::expressions::if_(boost::log::expressions::has_attr(attrs::Location))
                [
-                   boost::log::expressions::stream << " [" << attrs::Location << "] "
+                   boost::log::expressions::stream << "[" << attrs::Location << "] "
                ]
             << boost::log::expressions::smessage;
 
