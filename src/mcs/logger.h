@@ -103,19 +103,19 @@ Logger& Log();
 // SetLog installs the given logger as mcs-wide default logger.
 void SetLogger(const std::shared_ptr<Logger>& logger);
 
-#define TRACE(...) Log().Tracef(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
-#define DEBUG(...) Log().Debugf(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
-#define INFO(...) Log().Infof(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
-#define WARNING(...) Log().Warningf(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
-#define ERROR(...) Log().Errorf(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
-#define FATAL(...) Log().Fatalf(Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define TRACE(...) Log().Tracef(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
+#define DEBUG(...) Log().Debugf(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
+#define INFO(...) Log().Infof(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
+#define WARNING(...) Log().Warningf(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
+#define ERROR(...) Log().Errorf(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
+#define FATAL(...) Log().Fatalf(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
 }
 
-#define MCS_TRACE(...) mcs::Log().Tracef(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
-#define MCS_DEBUG(...) mcs::Log().Debugf(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
-#define MCS_INFO(...) mcs::Log().Infof(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
-#define MCS_WARNING(...) mcs::Log().Warningf(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
-#define MCS_ERROR(...) mcs::Log().Errorf(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
-#define MCS_FATAL(...) mcs::Log().Fatalf(mcs::Logger::Location{__FILE__, __PRETTY_FUNCTION__, __LINE__}, __VA_ARGS__)
+#define MCS_TRACE(...) mcs::Log().Tracef(mcs::Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
+#define MCS_DEBUG(...) mcs::Log().Debugf(mcs::Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
+#define MCS_INFO(...) mcs::Log().Infof(mcs::Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
+#define MCS_WARNING(...) mcs::Log().Warningf(mcs::Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
+#define MCS_ERROR(...) mcs::Log().Errorf(mcs::Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
+#define MCS_FATAL(...) mcs::Log().Fatalf(mcs::Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
 
 #endif
