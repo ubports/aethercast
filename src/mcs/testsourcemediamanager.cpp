@@ -17,6 +17,7 @@
 
 #include <gst/gst.h>
 
+#include "logger.h"
 #include "testsourcemediamanager.h"
 #include "utils.h"
 
@@ -39,7 +40,7 @@ SharedGObject<GstElement> TestSourceMediaManager::ConstructPipeline(const wds::H
     GError *error = nullptr;
     GstElement *pipeline = gst_parse_launch(config.c_str(), &error);
     if (error) {
-        g_warning("Failed to setup GStreamer pipeline: %s", error->message);
+        WARNING("Failed to setup GStreamer pipeline: %s", error->message);
         g_error_free(error);
         return nullptr;
     }

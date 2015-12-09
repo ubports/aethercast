@@ -18,6 +18,7 @@
 #include <glib.h>
 
 #include "basesourcemediamanager.h"
+#include "logger.h"
 
 namespace mcs {
 wds::SessionType BaseSourceMediaManager::GetSessionType() const {
@@ -67,11 +68,11 @@ bool BaseSourceMediaManager::InitOptimalVideoFormat(const wds::NativeVideoFormat
                                          GetH264VideoCodecs(),
                                          sink_supported_codecs);
 
-    g_warning("Found optimal video format");
-    g_warning("  profile: %d", format_.profile);
-    g_warning("  level: %d", format_.level);
-    g_warning("  res type %d", format_.type);
-    g_warning("  rate & resolution %d", format_.rate_resolution);
+    INFO("Found optimal video format");
+    INFO("  profile: %d", format_.profile);
+    INFO("  level: %d", format_.level);
+    INFO("  res type %d", format_.type);
+    INFO("  rate & resolution %d", format_.rate_resolution);
 
     Configure();
 
@@ -99,6 +100,6 @@ wds::AudioCodec BaseSourceMediaManager::GetOptimalAudioFormat() const {
 }
 
 void BaseSourceMediaManager::SendIDRPicture() {
-    g_warning("Unimplemented IDR picture request");
+    WARNING("Unimplemented IDR picture request");
 }
 } // namespace mcs

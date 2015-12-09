@@ -27,7 +27,10 @@
 
 #include <chrono>
 
+#include <wds/logging.h>
+
 #include "keep_alive.h"
+#include "logger.h"
 #include "miracastservice.h"
 #include "miracastserviceadapter.h"
 #include "wpasupplicantnetworkmanager.h"
@@ -37,6 +40,20 @@ namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.
 const std::uint16_t kMiracastDefaultRtspCtrlPort{7236};
 const std::chrono::milliseconds kStateIdleTimeout{1000};
+
+// SafeLog serves as integration point to the wds::LogSystem world.
+template <mcs::Logger::Severity severity>
+void SafeLog (const char *format, ...)
+{
+    static constexpr const std::size_t kBufferSize{256};
+
+    char buffer[kBufferSize];
+    va_list args;
+    va_start(args, format);
+    std::vsnprintf(buffer, kBufferSize, format, args);
+    mcs::Log().Log(severity, std::string{buffer}, boost::optional<mcs::Logger::Location>{});
+    va_end (args);
+}
 }
 namespace mcs {
 MiracastService::MainOptions MiracastService::MainOptions::FromCommandLine(int argc, char** argv) {
@@ -86,6 +103,36 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
             // emissions.
             g_unix_signal_add(SIGINT, OnSignalRaised, this);
             g_unix_signal_add(SIGTERM, OnSignalRaised, this);
+
+            // Redirect all wds logging to our own.
+            wds::LogSystem::set_vlog_func(SafeLog<mcs::Logger::Severity::kTrace>);
+            wds::LogSystem::set_log_func(SafeLog<mcs::Logger::Severity::kInfo>);
+            wds::LogSystem::set_warning_func(SafeLog<mcs::Logger::Severity::kWarning>);
+            wds::LogSystem::set_error_func(SafeLog<mcs::Logger::Severity::kError>);
+
+            // Redirect all g* logging to our own.
+            g_log_set_default_handler([](const gchar *domain, GLogLevelFlags log_level, const gchar *msg, gpointer) {
+                switch (log_level & G_LOG_LEVEL_MASK) {
+                case G_LOG_LEVEL_DEBUG:
+                    Log().Debug(msg);
+                    break;
+                case G_LOG_LEVEL_INFO:
+                    Log().Info(msg);
+                    break;
+                case G_LOG_LEVEL_MESSAGE:
+                    Log().Info(msg);
+                    break;
+                case G_LOG_LEVEL_WARNING:
+                    Log().Warning(msg);
+                    break;
+                case G_LOG_LEVEL_CRITICAL:
+                    Log().Error(msg);
+                    break;
+                case G_LOG_LEVEL_ERROR:
+                    Log().Fatal(msg);
+                    break;
+                }
+            }, nullptr);
 
             // Become a reaper of all our children
             if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0)
@@ -155,7 +202,7 @@ void MiracastService::OnClientDisconnected() {
 void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     IpV4Address address;
 
-    g_warning("AdvanceState newsstate %d current state %d", new_state, current_state_);
+    DEBUG("AdvanceState newsstate %d current state %d", new_state, current_state_);
 
     switch (new_state) {
     case kAssociation:

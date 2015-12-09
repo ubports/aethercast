@@ -52,8 +52,10 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 add_definitions(-DQT_NO_KEYWORDS=1)
 
-find_package(Boost COMPONENTS system filesystem)
+find_package(Boost COMPONENTS filesystem log system thread)
 find_package(PkgConfig)
+find_package(Threads)
+
 pkg_check_modules(GLIB glib-2.0)
 pkg_check_modules(GIO gio-2.0)
 pkg_check_modules(GIO-UNIX gio-unix-2.0)
