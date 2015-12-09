@@ -2,18 +2,18 @@ Overview
 ========
 
 A input manager is used to retrieve input events from another component
-in the system to stream them in a separate channel to the remove display
+in the system to stream them in a separate channel to the remote display
 device for latency reduction.
 
 Only one input manager can be registered with the management service at
 the same time.
 
-When a connection with a remote display device is established the
+When a connection with a remote display device is established, the
 NewConnection method of the input manager will be called handing over
 a file descriptor. This file descriptor can then be used to send
 input events to the display management service.
 
-All input events send to the display management service are using the
+All input events sent to the display management service are using the
 following format:
 
 // Use the struct defined in /usr/include/linux/input.h in your
@@ -57,7 +57,7 @@ Methods		void Release()
 
 			The file descriptor is no longer owned by the service
 			daemon and the input manager implementation needs to
-			take care of cleaning up all connections.
+			stop writing to it and close the connection.
 
 			Possible errors: org.wds.Error.Rejected
 			                 org.wds.Error.Canceled
