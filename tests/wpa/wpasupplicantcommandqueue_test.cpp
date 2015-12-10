@@ -42,7 +42,7 @@ public:
 struct WpaSupplicantCommandQueueFixture : public ::testing::Test {
     void CycleAndRespond(WpaSupplicantCommandQueue &queue, const std::string &data) {
         RunMainLoopIteration();
-        auto m = WpaSupplicantMessage::CreateRaw(data);
+        auto m = WpaSupplicantMessage::Parse(data);
         queue.HandleMessage(m);
     }
 };
@@ -93,7 +93,7 @@ TEST(WpaSupplicantCommandQueue, UnsolicitedResponseIsNotified) {
 
     WpaSupplicantCommandQueue queue(&mock);
 
-    auto m = WpaSupplicantMessage::CreateRaw("<3> P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1");
+    auto m = WpaSupplicantMessage::Parse("<3> P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1");
     queue.HandleMessage(m);
 }
 
@@ -103,6 +103,6 @@ TEST(WpaSupplicantCommandQueue, InvalidMessageNotHandled) {
             .Times(AtLeast(0));
 
     WpaSupplicantCommandQueue queue(&mock);
-    auto m = WpaSupplicantMessage::CreateRaw("foobar");
+    auto m = WpaSupplicantMessage::Parse("foobar");
     queue.HandleMessage(m);
 }

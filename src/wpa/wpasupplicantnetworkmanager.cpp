@@ -35,6 +35,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <unordered_map>
 
 #include <boost/filesystem.hpp>
 
@@ -123,9 +124,11 @@ void WpaSupplicantNetworkManager::OnFirmwareUnloaded() {
 }
 
 void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage message) {
-    if (message.Type() != kEvent)
+    if (message.ItsType() != WpaSupplicantMessage::Type::kEvent) {
+        MCS_WARNING("unhandled supplicant message: %s", message.Raw().c_str());
         return;
-
+    }
+    
     // Ignore events we are not interested in
     if (message.Name() == kCtrlEventScanStarted ||
         message.Name() == kCtrlEventScanResults ||
@@ -157,19 +160,14 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     // P2P-DEVICE-FOUND 4e:74:03:70:e2:c1 p2p_dev_addr=4e:74:03:70:e2:c1
     // pri_dev_type=8-0050F204-2 name='Aquaris M10' config_methods=0x188 dev_capab=0x5
     // group_capab=0x0 wfd_dev_info=0x00111c440032 new=1
+    Named<std::string> address;
+    Named<std::string> name;
+    Named<std::string> config_methods_str;
+    Named<std::string> wfd_dev_info;
+    message.Read(skip<std::string>(), address, skip<std::string>(), name, config_methods_str,
+                 skip<std::string>(), skip<std::string>(), wfd_dev_info);
 
-    char *address = nullptr;
-    char *name = nullptr;
-    char *config_methods_str = nullptr;
-    char *wfd_dev_info = nullptr;
-
-    message.ReadDictEntry("p2p_dev_addr", 's', &address);
-    message.ReadDictEntry("name", 's', &name);
-    message.ReadDictEntry("config_methods", 's', &config_methods_str);
-    message.ReadDictEntry("wfd_dev_info", 's', &wfd_dev_info);
-
-    MCS_DEBUG("address %s name %s config_methods %s wfd_dev_info %s",
-          address, name, config_methods_str, wfd_dev_info);
+    MCS_DEBUG("address %s name %s config_methods %s wfd_dev_info %s", address, name, config_methods_str, wfd_dev_info);
 
     auto wfd_info = WfdDeviceInfo::Parse(wfd_dev_info);
 
@@ -213,9 +211,8 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
 void WpaSupplicantNetworkManager::OnP2pDeviceLost(WpaSupplicantMessage &message) {
     // P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1
 
-    const char *address = nullptr;
-
-    message.Read("e", &address);
+    Named<std::string> address;
+    message.Read(address);
 
     auto iter = available_devices_.find(address);
     if (iter == available_devices_.end())
@@ -233,15 +230,13 @@ void WpaSupplicantNetworkManager::OnP2pGroupStarted(WpaSupplicantMessage &messag
     if (!current_peer_)
         return;
 
-    const char *role = nullptr;
-
-    message.Skip("s");
-    message.Read("s", &role);
+    std::string role;
+    message.Read(skip<std::string>()).Read(role);
 
     AdvanceDeviceState(current_peer_, mcs::kConfiguration);
 
     // If we're the GO the other side is the client and vice versa
-    if (g_strcmp0(role, "GO") == 0) {
+    if (role == "GO") {
         is_group_owner_ = true;
 
         // As we're the owner we can now just startup the DHCP server
@@ -270,10 +265,6 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
     if (!current_peer_)
         return;
 
-    const char *reason = nullptr;
-
-    message.ReadDictEntry("reason", 's', &reason);
-
     // FIXME this can be made easier once we have the same interface for
     // both client and server to that we only do an dhcp_.Stop() without
     // carrying if its a server or a client.
@@ -281,14 +272,17 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
         dhcp_server_.Stop();
     else
         dhcp_client_.Stop();
+    
+    Named<std::string> reason;
+    message.Read(skip<std::string>(), skip<std::string>(), reason);
 
-    if (g_strcmp0(reason, "FORMATION_FAILED") == 0 ||
-            g_strcmp0(reason, "PSK_FAILURE") == 0 ||
-            g_strcmp0(reason, "FREQ_CONFLICT") == 0)
-        AdvanceDeviceState(current_peer_, mcs::kFailure);
-    else
-        AdvanceDeviceState(current_peer_, mcs::kDisconnected);
+    static std::unordered_map<std::string, mcs::NetworkDeviceState> lut {
+        {"FORMATION_FAILED", mcs::kFailure},
+        {"PSK_FAILURE", mcs::kFailure},
+        {"FREQ_CONFLICT", mcs::kFailure},
+    };
 
+    AdvanceDeviceState(current_peer_, lut.count(reason) > 0 ? lut.at(reason) : mcs::kDisconnected);
     current_peer_.reset();
 }
 
@@ -549,9 +543,7 @@ bool WpaSupplicantNetworkManager::ConnectSupplicant() {
     });
 
     // Enable WiFi display support
-    m = WpaSupplicantMessage::CreateRequest("SET");
-    g_assert(m.Append("si", "wifi_display", 1));
-    RequestAsync(m);
+    RequestAsync(WpaSupplicantMessage::CreateRequest("SET") << "wifi_display" << std::int32_t{1});
 
     std::list<std::string> wfd_sub_elements;
     // FIXME build this rather than specifying a static string here
@@ -601,7 +593,7 @@ gboolean WpaSupplicantNetworkManager::OnIncomingMessages(GIOChannel *source, GIO
 
         buf[ret] = '\0';
 
-        inst->command_queue_->HandleMessage(WpaSupplicantMessage::CreateRaw(buf));
+        inst->command_queue_->HandleMessage(WpaSupplicantMessage::Parse(buf));
     }
 
     return TRUE;
@@ -648,9 +640,8 @@ gboolean WpaSupplicantNetworkManager::OnGroupClientDhcpTimeout(gpointer user_dat
 void WpaSupplicantNetworkManager::SetWfdSubElements(const std::list<std::string> &elements) {
     int n = 0;
     for (auto element : elements) {
-        auto m = WpaSupplicantMessage::CreateRequest("WFD_SUBELEM_SET");
-        m.Append("is", n, element.c_str());
-        RequestAsync(m);
+        auto m = WpaSupplicantMessage::CreateRequest("WFD_SUBELEM_SET") << n << element;
+        RequestAsync(WpaSupplicantMessage::CreateRequest("WFD_SUBELEM_SET") << n << element);
         n++;
     }
 }
@@ -664,8 +655,7 @@ void WpaSupplicantNetworkManager::Scan(const std::chrono::seconds &timeout) {
     auto m = WpaSupplicantMessage::CreateRequest("P2P_FIND");
 
     if (timeout.count() > 0) {
-        auto seconds = timeout.count();
-        m.Append("i", seconds);
+        m << timeout.count();
     }
 
     RequestAsync(m, [=](const WpaSupplicantMessage &message) {
@@ -710,16 +700,15 @@ bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device)
 
     current_peer_ = available_devices_[device->Address()];
 
-    MCS_DEBUG("Attempting to connect with %s", device->Address().c_str());
+    MCS_DEBUG("Attempting to connect with %s", device->Address());
 
     if (scanning_) {
         MCS_DEBUG("Currently scanning; stopping this first");
         RequestAsync(WpaSupplicantMessage::CreateRequest("P2P_STOP_FIND"));
     }
 
-    auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
-    m.Append("ss", device->Address().c_str(), "pbc");
-
+    auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT") << device->Address() << "pbc";
+    
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
             AdvanceDeviceState(current_peer_, mcs::kFailure);
@@ -735,24 +724,18 @@ bool WpaSupplicantNetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &devi
     if (!current_peer_ || current_peer_ != device)
         return false;
 
-    MCS_DEBUG("device %s", device->Address().c_str());
+    MCS_DEBUG("device %s", device->Address());
 
-    WpaSupplicantMessage m;
-
-    if (current_peer_->State() == mcs::kAssociation) {
-        m = WpaSupplicantMessage::CreateRequest("P2P_CANCEL");
-    }
-    else {
-        m = WpaSupplicantMessage::CreateRequest("P2P_GROUP_REMOVE");
-        m.Append("s", interface_name_.c_str());
-    }
-
-    RequestAsync(m, [&](const WpaSupplicantMessage &message) {
-        if (message.IsFail()) {
-            MCS_ERROR("Failed to disconnect all connected devices on interface %s", interface_name_.c_str());
-            return;
-        }
-    });
+    RequestAsync(
+        current_peer_->State() == mcs::kAssociation ?
+            WpaSupplicantMessage::CreateRequest("P2P_CANCEL") :
+            WpaSupplicantMessage::CreateRequest("P2P_GROUP_REMOVE") << interface_name_,
+        [&](const WpaSupplicantMessage &message) {
+            if (message.IsFail()) {
+                MCS_ERROR("Failed to disconnect all connected devices on interface %s", interface_name_.c_str());
+                return;
+            }
+        });
 
     return true;
 }

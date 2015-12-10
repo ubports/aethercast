@@ -18,66 +18,160 @@
 #ifndef WPASUPPLICANTMESSAGE_H_
 #define WPASUPPLICANTMESSAGE_H_
 
+#include <sstream>
 #include <string>
 #include <vector>
-
-#include <stdarg.h>
-
-enum WpaSupplicantMessageType {
-    kInvalid = 0,
-    kEvent,
-    kRequest,
-    kReply
-};
-
-enum WpaSupplicantMessageValueType {
-    kString = 's',
-    kInt32 = 'i',
-    kUInt32 = 'u',
-    kDict = 'e'
-};
 
 class WpaSupplicantMessage {
 public:
     static WpaSupplicantMessage CreateRequest(const std::string &Name);
-    static WpaSupplicantMessage CreateRaw(const std::string &payload);
+    static WpaSupplicantMessage Parse(const std::string &payload);
 
-    WpaSupplicantMessage();
-    WpaSupplicantMessage(const WpaSupplicantMessage &other);
-    ~WpaSupplicantMessage();
+    enum class Type {
+        kInvalid = 0,
+        kEvent,
+        kRequest,
+        kReply
+    };
 
-    bool Append(const char *types, ...);
-    bool Read(const char *types, ...);
-    bool ReadDictEntry(const std::string &name, char type, void *out);
-    bool Skip(const char *types);
     void Rewind();
     void Seal();
     std::string Dump() const;
 
     bool IsOk() const;
-    bool IsFail() const;
+    bool IsFail() const;    
 
-    std::string Name() const;
-    WpaSupplicantMessageType Type() const;
+    const WpaSupplicantMessage& Read() const {
+        return *this;
+    }
+
+    template<typename Head, typename... Tail>
+    const WpaSupplicantMessage& Read(Head& head, Tail&&... tail) const {
+        ThrowIfAtEnd();
+        std::stringstream ss{*iter_}; ss >> head;
+        ++iter_;
+        return Read(std::forward<Tail>(tail)...);
+    }
+
+    WpaSupplicantMessage& Write() {
+        return *this;
+    }
+
+    template<typename Head, typename... Tail>
+    WpaSupplicantMessage& Write(const Head& head, Tail&&... tail) {
+        ThrowIfSealed();
+        std::stringstream ss; ss << head;
+        argv_.push_back(ss.str());
+        return Write(std::forward<Tail>(tail)...);
+    }
+
+    WpaSupplicantMessage Write() const {
+        return *this;
+    }
+
+    template<typename Head, typename... Tail>
+    WpaSupplicantMessage Write(const Head& head, Tail&&... tail) const {
+        WpaSupplicantMessage that{*this};
+        return that.Write(head, std::forward<Tail>(tail)...);
+    }
+
+    const std::string& Name() const;
+    Type ItsType() const;
     bool Sealed() const;
-    std::string Raw() const;
+    const std::string& Raw() const;
 
 private:
-    void Parse(const std::string &payload);
+    WpaSupplicantMessage() = default;
 
-    bool Appendv(const char *types, va_list *args);
-    bool AppendvBasic(char Type, va_list *args);
-    bool AppendBasic(char Type, ...);
-    bool ReadBasic(char Type, void *out);
-    bool SkipBasic(char Type);
+    void ThrowIfAtEnd() const;
+    void ThrowIfSealed() const;
 
 private:
     std::string raw_;
     std::string name_;
-    WpaSupplicantMessageType type_;
+    Type type_ = Type::kInvalid;
     std::vector<std::string> argv_;
-    unsigned int iter_;
-    bool sealed_;
+    mutable std::vector<std::string>::iterator iter_ = argv_.begin();
+    bool sealed_ = false;
 };
+
+template<typename V>
+struct Named {
+    operator V() const {
+        return value;
+    }
+
+    std::string key;
+    V value;
+};
+
+template<typename V>
+inline bool operator!=(const Named<V>& lhs, const V& rhs) {
+    return lhs.value != rhs;
+}
+
+template<typename V>
+inline bool operator!=(const V& lhs, const Named<V>& rhs) {
+    return rhs != lhs;
+}
+
+template<typename V>
+inline bool operator==(const Named<V>& lhs, const V& rhs) {
+    return lhs.value == rhs;
+}
+
+template<typename V>
+inline bool operator==(const V& lhs, const Named<V>& rhs) {
+    return rhs == lhs;
+}
+
+template<typename T>
+struct Skip {
+};
+
+template<typename T>
+inline T& skip() {
+    static T t;
+    return t;
+}
+
+template<typename V>
+inline std::ostream& operator<<(std::ostream& out, const Named<V>& entry) {
+    return out << entry.key << "=" << entry.value;
+}
+
+template<typename V>
+inline std::istream& operator>>(std::istream& in, Named<V>& entry) {
+    std::string s; in >> s;
+    auto pos = s.find("=");
+
+    if (pos != std::string::npos) {
+        entry.key = s.substr(0, pos);
+        std::stringstream sv{s.substr(pos+1)}; sv >> entry.value;
+    }
+
+    return in;
+}
+
+template<typename T>
+inline std::ostream& operator<<(std::ostream& out, Skip<T>) {
+    return out;
+}
+
+template<typename T>
+inline std::istream& operator>>(std::istream& in, Skip<T>) {
+    T t;
+    return in >> t;
+}
+
+template<typename T>
+inline WpaSupplicantMessage& operator<<(WpaSupplicantMessage &msg, const T& field) {
+    return msg.Write(field);
+}
+
+template<typename T>
+inline WpaSupplicantMessage operator<<(const WpaSupplicantMessage &msg, const T& field) {
+    return msg.Write(field);
+}
 
 #endif
