@@ -11,6 +11,18 @@ Methods		void Scan()
 			method will return directly and not wait until the
 			scan operation has finished.
 
+		void RegisterInputProvider(object provider, dict options)
+
+			This registers a input provider implementation.
+
+			There are no options specified yet.
+
+		void UnregisterInputProvider(object provider)
+
+			This unregisters a input provider which was
+			previously registered. The object path parameter
+			must match the same used on registration.
+
 Properties	string State [readonly]
 
 			The global connection state. Possible values are
