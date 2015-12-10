@@ -5,7 +5,7 @@ include_directories(
 add_executable(wpasupplicantmessage_tests
     wpasupplicantmessage_test.cpp)
 target_link_libraries(wpasupplicantmessage_tests
-    miracast
+    aethercast-core
     gtest
     gtest_main)
 add_test(wpasupplicantmessage_tests wpasupplicantmessage_tests)
@@ -13,7 +13,7 @@ add_test(wpasupplicantmessage_tests wpasupplicantmessage_tests)
 add_executable(wpasupplicantcommandqueue_tests
     wpasupplicantcommandqueue_test.cpp)
 target_link_libraries(wpasupplicantcommandqueue_tests
-    miracast
+    aethercast-core
     gtest
     gtest_main
     gmock)
@@ -22,7 +22,7 @@ add_test(wpasupplicantcommandqueue_tests wpasupplicantcommandqueue_tests)
 add_executable(wfddeviceinfo_tests
     wfddeviceinfo_test.cpp)
 target_link_libraries(wfddeviceinfo_tests
-    miracast
+    aethercast-core
     gtest
     gtest_main
     gmock)

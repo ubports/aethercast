@@ -19,8 +19,8 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/src
 )
 
-add_executable(miracastctl ${SOURCES})
-target_link_libraries(miracastctl
+add_executable(aethercastctl ${SOURCES})
+target_link_libraries(aethercastctl
   ${Boost_LIBRARIES}
   ${GLIB_LIBRARIES}
   ${GIO_LIBRARIES}
@@ -30,6 +30,6 @@ target_link_libraries(miracastctl
 )
 
 install(
-  TARGETS miracastctl
+  TARGETS aethercastctl
   RUNTIME DESTINATION bin
 )

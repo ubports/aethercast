@@ -1,4 +1,4 @@
-Source: miracast-service
+Source: aethercast
 Section: utils
 Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
@@ -21,17 +21,18 @@ Build-Depends: cmake,
                libreadline6-dev,
                libwds-dev
 Standards-Version: 3.9.4
-Homepage: http://launchpad.net/miracast-service
+Homepage: http://launchpad.net/aethercast
 # If you aren't a member of ~phablet-team but need to upload packaging changes,
 # just go ahead.  ~phablet-team will notice and sync up the code again.
-Vcs-Bzr: https://code.launchpad.net/miracast-service/trunk
-Vcs-Browser: http://bazaar.launchpad.net/miracast-service/trunk/files
+Vcs-Bzr: https://code.launchpad.net/aethercast/trunk
+Vcs-Browser: http://bazaar.launchpad.net/aethercast/trunk/files
 
-Package: miracast-service
+Package: aethercast
 Architecture: any
 Depends: ${misc:Depends},
          ${shlibs:Depends},
          wpasupplicant
-Description: Miracast screen sharing service
- Implements a service which allows screen sharing of one device to
- another over the Miracast / WiFi Display protocol.
+Description: Display casting service
+ A management service for remote displays which it can stream the
+ current screen content to. It will support multiple approaches
+ for this like Miracast.

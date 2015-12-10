@@ -11,7 +11,7 @@ include_directories(
 )
 
 add_executable(mediamanagerfactory_tests mediamanagerfactory_tests.cpp)
-target_link_libraries(mediamanagerfactory_tests miracast gtest gtest_main)
+target_link_libraries(mediamanagerfactory_tests aethercast-core gtest gtest_main)
 add_test(mediamanagerfactory_tests mediamanagerfactory_tests)
 
 add_subdirectory(acceptance_tests)

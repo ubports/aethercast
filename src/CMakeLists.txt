@@ -73,11 +73,11 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/src
 )
 
-add_library(miracast ${SOURCES} ${HEADERS})
+add_library(aethercast-core ${SOURCES} ${HEADERS})
 
-add_executable(miracast-service mcs/main.cpp)
+add_executable(aethercast mcs/main.cpp)
 
-target_link_libraries(miracast
+target_link_libraries(aethercast-core
   ${Boost_LIBRARIES}
   ${GLIB_LIBRARIES}
   ${GIO_LIBRARIES}
@@ -88,10 +88,10 @@ target_link_libraries(miracast
   -ldl
 )
 
-target_link_libraries(miracast-service miracast)
+target_link_libraries(aethercast aethercast-core)
 
 install(
-  TARGETS miracast-service
+  TARGETS aethercast
   RUNTIME DESTINATION sbin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static

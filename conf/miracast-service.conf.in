@@ -1,8 +1,0 @@
-description "Miracast Management Service"
-
-start on started dbus
-stop on stopping dbus
-
-respawn
-
-exec /usr/sbin/miracast-service

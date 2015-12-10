@@ -1,0 +1,8 @@
+description "Display cast service"
+
+start on started dbus
+stop on stopping dbus
+
+respawn
+
+exec /usr/sbin/aethercast
