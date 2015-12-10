@@ -22,8 +22,8 @@
 
 TEST(WpaSupplicantMessage, Ctor) {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
-    EXPECT_TRUE(m.get_type() == WpaSupplicantMessage::Type::kRequest);
-    EXPECT_TRUE(m.get_name() == std::string("P2P_CONNECT"));
+    EXPECT_TRUE(m.ItsType() == WpaSupplicantMessage::Type::kRequest);
+    EXPECT_TRUE(m.Name() == std::string("P2P_CONNECT"));
 }
 
 TEST(WpaSupplicantMessage, ReadAndSkip) {
@@ -39,7 +39,7 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
 
     std::string key;
 
-    EXPECT_STREQ(m.get_name().c_str(), "P2P-GROUP-STARTED");
+    EXPECT_STREQ(m.Name().c_str(), "P2P-GROUP-STARTED");
     EXPECT_NO_THROW(m.Read(ev.interface_name, ev.type, ev.ssid, ev.freq, ev.go_dev_addr));
     EXPECT_EQ(ev.interface_name, "p2p0");
     EXPECT_EQ(ev.ssid.value, "\"DIRECT-hB\"");
@@ -53,7 +53,7 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     uint32_t u32 = 0;
     int32_t i32 = 0;
 
-    EXPECT_STREQ(m.get_name().c_str(), "P2P-GROUP-STARTED");
+    EXPECT_STREQ(m.Name().c_str(), "P2P-GROUP-STARTED");
     EXPECT_NO_THROW(m.Read(ev.interface_name, skip<std::string>(), skip<std::string>(), skip<std::string>(), skip<std::string>(), ev.freq, u32, i32));
     EXPECT_EQ(ev.interface_name, "p2p0");
     EXPECT_EQ(ev.freq.value, 2412);
@@ -93,28 +93,28 @@ TEST(WpaSupplicantMessage, Append) {
 TEST(WpaSupplicantMessage, Sealing) {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
 
-    EXPECT_TRUE(!m.is_sealed());
+    EXPECT_TRUE(!m.Sealed());
     m << "test1" << "test2";
     m.Seal();
-    EXPECT_TRUE(m.is_sealed());
+    EXPECT_TRUE(m.Sealed());
     EXPECT_THROW(m << "foo", std::logic_error);
-    EXPECT_STREQ(m.get_raw().c_str(), "P2P_CONNECT test1 test2");
+    EXPECT_STREQ(m.Raw().c_str(), "P2P_CONNECT test1 test2");
 }
 
 TEST(WpaSupplicantMessage, CopyCtor) {
     WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT") << "test1" << "test2";
-    EXPECT_TRUE(!m.is_sealed());
-    EXPECT_EQ(m.get_type(), WpaSupplicantMessage::Type::kRequest);
-    EXPECT_STREQ(m.get_name().c_str(), "P2P_CONNECT");
+    EXPECT_TRUE(!m.Sealed());
+    EXPECT_EQ(m.ItsType(), WpaSupplicantMessage::Type::kRequest);
+    EXPECT_STREQ(m.Name().c_str(), "P2P_CONNECT");
     m.Seal();
-    EXPECT_TRUE(m.is_sealed());
-    EXPECT_STREQ(m.get_raw().c_str(), "P2P_CONNECT test1 test2");
+    EXPECT_TRUE(m.Sealed());
+    EXPECT_STREQ(m.Raw().c_str(), "P2P_CONNECT test1 test2");
 
     WpaSupplicantMessage m2 = m;
-    EXPECT_TRUE(m.get_type() == WpaSupplicantMessage::Type::kRequest);
-    EXPECT_STREQ(m.get_name().c_str(), "P2P_CONNECT");
-    EXPECT_TRUE(m.is_sealed());
-    EXPECT_STREQ(m.get_raw().c_str(), "P2P_CONNECT test1 test2");
+    EXPECT_TRUE(m.ItsType() == WpaSupplicantMessage::Type::kRequest);
+    EXPECT_STREQ(m.Name().c_str(), "P2P_CONNECT");
+    EXPECT_TRUE(m.Sealed());
+    EXPECT_STREQ(m.Raw().c_str(), "P2P_CONNECT test1 test2");
 }
 
 TEST(WpaSupplicantMessage, OkFail) {

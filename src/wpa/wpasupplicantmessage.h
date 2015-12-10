@@ -24,7 +24,7 @@
 
 class WpaSupplicantMessage {
 public:
-    static WpaSupplicantMessage CreateRequest(const std::string &get_name);
+    static WpaSupplicantMessage CreateRequest(const std::string &Name);
     static WpaSupplicantMessage Parse(const std::string &payload);
 
     enum class Type {
@@ -75,10 +75,10 @@ public:
         return that.Write(head, std::forward<Tail>(tail)...);
     }
 
-    const std::string& get_name() const;
-    Type get_type() const;
-    bool is_sealed() const;
-    const std::string& get_raw() const;
+    const std::string& Name() const;
+    Type ItsType() const;
+    bool Sealed() const;
+    const std::string& Raw() const;
 
 private:
     WpaSupplicantMessage() = default;

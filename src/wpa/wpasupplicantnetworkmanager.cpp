@@ -111,21 +111,21 @@ void WpaSupplicantNetworkManager::OnFirmwareUnloaded() {
 }
 
 void WpaSupplicantNetworkManager::OnUnsolicitedResponse(WpaSupplicantMessage message) {
-    if (message.get_type() != WpaSupplicantMessage::Type::kEvent) {
-        MCS_WARNING("unhandled supplicant message: %s", message.get_raw().c_str());
+    if (message.ItsType() != WpaSupplicantMessage::Type::kEvent) {
+        MCS_WARNING("unhandled supplicant message: %s", message.Raw().c_str());
         return;
     }
 
-    if (message.get_name() == kP2pDeviceFound)
+    if (message.Name() == kP2pDeviceFound)
         OnP2pDeviceFound(message);
-    else if (message.get_name() == kP2pDeviceLost)
+    else if (message.Name() == kP2pDeviceLost)
         OnP2pDeviceLost(message);
-    else if (message.get_name() == kP2pGroupStarted)
+    else if (message.Name() == kP2pGroupStarted)
         OnP2pGroupStarted(message);
-    else if (message.get_name() == kP2pGroupRemoved)
+    else if (message.Name() == kP2pGroupRemoved)
         OnP2pGroupRemoved(message);
     else
-        MCS_WARNING("unhandled supplicant event: %s", message.get_raw().c_str());
+        MCS_WARNING("unhandled supplicant event: %s", message.Raw().c_str());
 }
 
 void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message) {
@@ -242,7 +242,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
 }
 
 void WpaSupplicantNetworkManager::OnWriteMessage(WpaSupplicantMessage message) {
-    auto data = message.get_raw();
+    auto data = message.Raw();
     if (send(sock_, data.c_str(), data.length(), 0) < 0)
         MCS_WARNING("Failed to send data to wpa-supplicant");
 }

@@ -61,15 +61,15 @@ WpaSupplicantMessage WpaSupplicantMessage::Parse(const std::string &payload) {
     return m;
 }
 
-const std::string& WpaSupplicantMessage::get_name() const {
+const std::string& WpaSupplicantMessage::Name() const {
     return name_;
 }
 
-WpaSupplicantMessage::Type WpaSupplicantMessage::get_type() const {
+WpaSupplicantMessage::Type WpaSupplicantMessage::ItsType() const {
     return type_;
 }
 
-bool WpaSupplicantMessage::is_sealed() const {
+bool WpaSupplicantMessage::Sealed() const {
     return sealed_;
 }
 
@@ -90,7 +90,7 @@ void WpaSupplicantMessage::Seal() {
     sealed_ = true;
 }
 
-const std::string& WpaSupplicantMessage::get_raw() const {
+const std::string& WpaSupplicantMessage::Raw() const {
     return raw_;
 }
 
