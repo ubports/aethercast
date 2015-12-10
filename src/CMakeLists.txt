@@ -3,11 +3,11 @@
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mcs)
 
 execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
-                        --c-namespace MiracastInterface
+                        --c-namespace AethercastInterface
                         --c-generate-object-manager
-                        --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface
-                        --interface-prefix org.wds.
-                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/org.wds.xml)
+                        --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/mcs/aethercastinterface
+                        --interface-prefix org.aethercast.
+                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/org.aethercast.xml)
 
 # Make sure that generated header files can be found
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
@@ -35,7 +35,7 @@ set(SOURCES
   mcs/networkmanagerfactory.cpp
   mcs/networkdevice.cpp
 
-  ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface.c
+  ${CMAKE_CURRENT_BINARY_DIR}/mcs/aethercastinterface.c
   mcs/dbushelpers.cpp
   mcs/miracastserviceadapter.cpp
   mcs/networkdeviceadapter.cpp

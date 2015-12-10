@@ -21,7 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "miracastinterface.h"
+#include "aethercastinterface.h"
 #ifdef __cplusplus
 }
 #endif
@@ -46,9 +46,9 @@ public:
     void SyncProperties();
 
 private:
-    static void OnHandleConnect(MiracastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
+    static void OnHandleConnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
                                 const gchar *role, gpointer user_data);
-    static void OnHandleDisconnect(MiracastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
+    static void OnHandleDisconnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
                                    gpointer user_data);
 
 private:
@@ -58,11 +58,11 @@ private:
 
 private:
     SharedGObject<GDBusConnection> connection_;
-    MiracastInterfaceObjectSkeleton *object_;
+    AethercastInterfaceObjectSkeleton *object_;
     std::string path_;
     NetworkDevice::Ptr device_;
     MiracastService::Ptr service_;
-    MiracastInterfaceDevice *device_iface_;
+    AethercastInterfaceDevice *device_iface_;
 };
 
 } // namespace mcs

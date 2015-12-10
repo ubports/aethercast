@@ -26,7 +26,7 @@
 #include <glib.h>
 
 extern "C" {
-#include "miracastinterface.h"
+#include "aethercastinterface.h"
 }
 
 namespace mcs {
@@ -85,11 +85,11 @@ private:
     static void OnDeviceDisconnected(GObject *object, GAsyncResult *res, gpointer user_data);
 private:
     void SetupStandardInput();
-    void ForeachDevice(std::function<void(MiracastInterfaceDevice*)> callback, const std::string &address_filter = "");
+    void ForeachDevice(std::function<void(AethercastInterfaceDevice*)> callback, const std::string &address_filter = "");
 
 private:
     GDBusConnection *bus_connection_;
-    MiracastInterfaceManager *manager_;
+    AethercastInterfaceManager *manager_;
     guint input_source_;
     GDBusObjectManager *object_manager_;
 
