@@ -1,4 +1,4 @@
-project(miracast-service C CXX)
+project(aethercast C CXX)
 cmake_minimum_required(VERSION 2.8.9)
 
 include(CTest)

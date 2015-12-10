@@ -13,11 +13,11 @@ include_directories(
 add_subdirectory(3rd_party/process-cpp-minimal)
 
 add_executable(utilities_tests utilities_tests.cpp)
-target_link_libraries(utilities_tests miracast gtest gtest_main)
+target_link_libraries(utilities_tests aethercast-core gtest gtest_main)
 add_test(utilities_tests utilities_tests)
 
 add_executable(scoped_gobject_tests scoped_gobject_tests.cpp)
-target_link_libraries(scoped_gobject_tests miracast gtest gtest_main)
+target_link_libraries(scoped_gobject_tests aethercast-core gtest gtest_main)
 add_test(scoped_gobject_tests scoped_gobject_tests)
 
 add_subdirectory(wpa)
