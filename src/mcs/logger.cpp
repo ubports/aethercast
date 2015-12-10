@@ -39,11 +39,11 @@ struct BoostLogLogger : public mcs::Logger {
             << "[" << attrs::Severity << " "
             << boost::log::expressions::format_date_time< boost::posix_time::ptime >("Timestamp", "%Y-%m-%d %H:%M:%S")
             << "] "
-            << boost::log::expressions::smessage
             << boost::log::expressions::if_(boost::log::expressions::has_attr(attrs::Location))
                [
-                   boost::log::expressions::stream << " [" << attrs::Location << "]"
-               ];
+                   boost::log::expressions::stream << "[" << attrs::Location << "] "
+               ]
+            << boost::log::expressions::smessage;
 
         boost::log::core::get()->remove_all_sinks();
         auto logger = boost::log::add_console_log(std::cout);

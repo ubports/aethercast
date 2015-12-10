@@ -20,6 +20,7 @@
 #include "logger.h"
 #include "testsourcemediamanager.h"
 #include "utils.h"
+#include "logging.h"
 
 namespace mcs {
 std::shared_ptr<TestSourceMediaManager> TestSourceMediaManager::create(const std::string &remote_address) {

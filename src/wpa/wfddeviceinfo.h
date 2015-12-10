@@ -21,8 +21,6 @@
 #include <iosfwd>
 #include <string>
 
-namespace mcs {
-
 enum class WpsConfig {
     kDisplay = 0x0008,
     kPushbutton = 0x0080,
@@ -43,6 +41,8 @@ struct WfdDeviceInfo
 {
     static WfdDeviceType TypeFromInfoFlags(uint flags);
 
+    static WfdDeviceInfo Parse(const std::string &str);
+
     enum Flag {
         type = 0x3,
         coupled_sink_support_at_source = 0x4,
@@ -52,12 +52,13 @@ struct WfdDeviceInfo
         session_available_bit2 = 0x20
     };
 
+    bool IsSupported() const;
     bool IsSupportedSink() const;
+    bool IsSupportedSource() const;
 
     WfdDeviceType device_type_ = WfdDeviceType::unknown;
     ushort ctrl_port_ = 0;
     uint max_tput_ = 0;
 };
-} // namespace mcs
 
 #endif

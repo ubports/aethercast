@@ -31,6 +31,7 @@
 
 #include "logger.h"
 #include "networkutils.h"
+#include "logger.h"
 
 #define NLMSG_TAIL(nmsg)				\
     ((struct rtattr *) (((uint8_t*) (nmsg)) +	\
@@ -75,12 +76,6 @@ int NetworkUtils::ModifyInterfaceAddress(int cmd, int flags,
     struct in6_addr ipv6_addr;
     struct in_addr ipv4_addr, ipv4_dest, ipv4_bcast;
     int sk, err;
-
-#if 0
-    DBG("cmd %#x flags %#x index %d family %d address %s peer %s "
-        "prefixlen %hhu broadcast %s", cmd, flags, index, family,
-        address, peer, prefixlen, broadcast);
-#endif
 
     if (!address)
         return -EINVAL;

@@ -31,7 +31,7 @@ class MiracastService : public ::testing::TestWithParam<core::posix::Signal> {
 };
 }
 
-TEST_P(MiracastService, ExitsCleanlyForSigIntAndSigTerm) {
+TEST_P(MiracastService, DISABLED_ExitsCleanlyForSigIntAndSigTerm) {
     auto service = core::posix::fork([]() {
         auto result = mcs::MiracastService::Main(mcs::MiracastService::MainOptions{false, false});
         return static_cast<core::posix::exit::Status>(result);
