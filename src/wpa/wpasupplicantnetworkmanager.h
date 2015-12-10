@@ -39,22 +39,24 @@ class WpaSupplicantNetworkManager : public mcs::NetworkManager,
                                     public DhcpClient::Delegate,
                                     public wpa::WiFiFirmwareLoader::Delegate {
 public:
-    WpaSupplicantNetworkManager(mcs::NetworkManager::Delegate *delegate_);
+    WpaSupplicantNetworkManager();
     ~WpaSupplicantNetworkManager();
 
-    bool Setup();
+    void SetDelegate(mcs::NetworkManager::Delegate *delegate) override;
+
+    bool Setup() override;
 
     void SetWfdSubElements(const std::list<std::string> &elements) override;
 
-    void Scan(unsigned int timeout = 30) override;
-    std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
+    void Scan(const std::chrono::seconds &timeout) override;
 
     bool Connect(const mcs::NetworkDevice::Ptr &device) override;
-    bool DisconnectAll() override;
+    bool Disconnect(const mcs::NetworkDevice::Ptr &device) override;
 
     mcs::IpV4Address LocalAddress() const override;
-
     bool Running() const override;
+    bool Scanning() const override;
+    std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
 
     void OnUnsolicitedResponse(WpaSupplicantMessage message);
     void OnWriteMessage(WpaSupplicantMessage message);
@@ -69,15 +71,20 @@ private:
     void StopSupplicant();
     bool ConnectSupplicant();
     void DisconnectSupplicant();
-    void RequestAsync(const WpaSupplicantMessage &message, std::function<void(WpaSupplicantMessage)> callback);
+    void RequestAsync(const WpaSupplicantMessage &message, std::function<void(WpaSupplicantMessage)> callback = nullptr);
     bool CreateSupplicantConfig(const std::string &conf_path);
     void HandleSupplicantFailed();
     void Reset();
+    void AdvanceDeviceState(const mcs::NetworkDevice::Ptr &device, mcs::NetworkDeviceState state);
 
     void OnP2pDeviceFound(WpaSupplicantMessage &message);
     void OnP2pDeviceLost(WpaSupplicantMessage &message);
     void OnP2pGroupStarted(WpaSupplicantMessage &message);
     void OnP2pGroupRemoved(WpaSupplicantMessage &message);
+    void OnP2pGoNegFailure(WpaSupplicantMessage &message);
+    void OnP2pFindStopped(WpaSupplicantMessage &message);
+    void OnApStaConnected(WpaSupplicantMessage &message);
+    void OnApStaDisconnected(WpaSupplicantMessage &message);
 
     static gboolean OnConnectSupplicant(gpointer user_data);
     static void OnSupplicantWatch(GPid pid, gint status, gpointer user_data);
@@ -106,6 +113,7 @@ private:
     guint respawn_limit_;
     guint respawn_source_;
     bool is_group_owner_;
+    bool scanning_;
 };
 
 #endif

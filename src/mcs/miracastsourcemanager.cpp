@@ -19,10 +19,15 @@
 #include "logger.h"
 #include "miracastsourcemanager.h"
 #include "miracastsourceclient.h"
+#include "logging.h"
 
 namespace mcs {
-std::shared_ptr<MiracastSourceManager> MiracastSourceManager::create() {
-    return std::shared_ptr<MiracastSourceManager>{new MiracastSourceManager{}};
+std::shared_ptr<MiracastSourceManager> MiracastSourceManager::Create(const IpV4Address &address, unsigned short port) {
+    auto sp = std::shared_ptr<MiracastSourceManager>{new MiracastSourceManager{}};
+    DEBUG("Before setup");
+    sp->Setup(address, port);
+    DEBUG("After setup");
+    return sp;
 }
 
 MiracastSourceManager::MiracastSourceManager() :
@@ -32,7 +37,10 @@ MiracastSourceManager::MiracastSourceManager() :
 }
 
 MiracastSourceManager::~MiracastSourceManager() {
-    Release();
+    if (socket_source_ > 0) {
+        g_source_remove(socket_source_);
+        socket_source_ = 0;
+    }
 }
 
 void MiracastSourceManager::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
@@ -91,21 +99,12 @@ bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short por
 
     g_source_unref(source);
 
-    INFO("Successfully setup source on %s:%d and awaiting incoming connection requests",
-           address.to_string().c_str(), port);
+    DEBUG("Successfully setup source on %s:%d and awaiting incoming connection requests",
+          address.to_string(), port);
 
     socket_.swap(socket);
 
     return true;
-}
-
-void MiracastSourceManager::Release() {
-    if (socket_source_ > 0) {
-        g_source_remove(socket_source_);
-        socket_source_ = 0;
-    }
-
-    active_sink_.reset();
 }
 
 gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
@@ -122,7 +121,7 @@ gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  c
         WARNING("Failed to accept incoming connection: %s", error->message);
         g_error_free(error);
         g_object_unref(client_socket);
-        return FALSE;
+        return TRUE;
     }
 
     // If we add support for a coupled sink some day we can allow
@@ -130,13 +129,13 @@ gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  c
     if (inst->active_sink_) {
         g_socket_close(client_socket, nullptr);
         g_object_unref(client_socket);
-        return FALSE;
+        return TRUE;
     }
 
-    inst->active_sink_ = MiracastSourceClient::create(ScopedGObject<GSocket>{client_socket});
+    inst->active_sink_ = MiracastSourceClient::Create(ScopedGObject<GSocket>{client_socket});
     inst->active_sink_->SetDelegate(inst->shared_from_this());
 
-    return FALSE;
+    return TRUE;
 }
 
 void MiracastSourceManager::OnConnectionClosed() {

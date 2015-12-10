@@ -15,11 +15,16 @@
  *
  */
 
-#include "wfddeviceinfo.h"
-
 #include <iostream>
 
-namespace mcs {
+#include <mcs/utils.h>
+
+#include "wfddeviceinfo.h"
+
+namespace {
+constexpr const unsigned int kWfdDeviceInfoLength = 14;
+}
+
 std::ostream& operator<<(std::ostream &out, WfdDeviceType type) {
     switch (type) {
     case WfdDeviceType::kSource:
@@ -30,6 +35,8 @@ std::ostream& operator<<(std::ostream &out, WfdDeviceType type) {
         return out << "secondary-sink";
     case WfdDeviceType::kSourceOrPrimarySink:
         return out << "source-or-primary-sink";
+    default:
+        break;
     }
 
     return out << "default";
@@ -39,7 +46,27 @@ WfdDeviceType WfdDeviceInfo::TypeFromInfoFlags(uint flags) {
     return static_cast<WfdDeviceType>(flags & Flag::type);
 }
 
+WfdDeviceInfo WfdDeviceInfo::Parse(const std::string &str) {
+    WfdDeviceInfo info;
+
+    if (str.size() != kWfdDeviceInfoLength)
+        return info;
+
+    info.device_type_ = TypeFromInfoFlags(mcs::Utils::ParseHex(str.substr(2, 4)));
+    info.ctrl_port_ = mcs::Utils::ParseHex(str.substr(6, 4));
+    info.max_tput_ = mcs::Utils::ParseHex(str.substr(10, 4));
+
+    return info;
+}
+
+bool WfdDeviceInfo::IsSupported() const {
+    return IsSupportedSink() || IsSupportedSource();
+}
+
 bool WfdDeviceInfo::IsSupportedSink() const {
     return device_type_ == WfdDeviceType::kPrimarySink || device_type_ == WfdDeviceType::kSourceOrPrimarySink;
 }
+
+bool WfdDeviceInfo::IsSupportedSource() const {
+    return device_type_ == WfdDeviceType::kSource || device_type_ == WfdDeviceType::kSourceOrPrimarySink;
 }

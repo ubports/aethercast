@@ -33,13 +33,15 @@
 #include "logger.h"
 #include "miracastservice.h"
 #include "miracastserviceadapter.h"
-#include "wpasupplicantnetworkmanager.h"
+#include "networkmanagerfactory.h"
 #include "wfddeviceinfo.h"
+#include "types.h"
+#include "logging.h"
 
 namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.
 const std::uint16_t kMiracastDefaultRtspCtrlPort{7236};
-const std::chrono::milliseconds kStateIdleTimeout{1000};
+const std::chrono::milliseconds kStateIdleTimeout{5000};
 
 // SafeLog serves as integration point to the wds::LogSystem world.
 template <mcs::Logger::Severity severity>
@@ -152,7 +154,8 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
         bool is_gst_initialized = gst_init_check(nullptr, nullptr, nullptr);
     } rt;
 
-    auto service = mcs::MiracastService::create();
+    auto network_manager = mcs::NetworkManagerFactory::Create();
+    auto service = mcs::MiracastService::Create(network_manager);
     auto mcsa = mcs::MiracastServiceAdapter::create(service);
 
     rt.Run();
@@ -160,26 +163,31 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
     return 0;
 }
 
-std::shared_ptr<MiracastService> MiracastService::create() {
+std::shared_ptr<MiracastService> MiracastService::Create(const NetworkManager::Ptr &network_manager) {
     auto sp = std::shared_ptr<MiracastService>{new MiracastService{}};
-    return sp->FinalizeConstruction();
+    return sp->FinalizeConstruction(network_manager);
 }
 
 MiracastService::MiracastService() :
-    network_manager_(new WpaSupplicantNetworkManager(this)),
-    source_(MiracastSourceManager::create()),
     current_state_(kIdle),
-    current_peer_(nullptr) {
-    network_manager_->Setup();
+    scan_timeout_source_(0),
+    supported_roles_({kSource}) {
 }
 
-std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction() {
-    auto sp = shared_from_this();
-    source_->SetDelegate(sp);
-    return sp;
+std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction(const NetworkManager::Ptr &network_manager) {
+    network_manager_ = network_manager;
+
+    if (network_manager_) {
+        network_manager_->SetDelegate(this);
+        network_manager_->Setup();
+    }
+
+    return shared_from_this();
 }
 
 MiracastService::~MiracastService() {
+    if (scan_timeout_source_ > 0)
+        g_source_remove(scan_timeout_source_);
 }
 
 void MiracastService::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
@@ -194,15 +202,26 @@ NetworkDeviceState MiracastService::State() const {
     return current_state_;
 }
 
+std::vector<NetworkDeviceRole> MiracastService::SupportedRoles() const {
+    return supported_roles_;
+}
+
+bool MiracastService::Scanning() const {
+    return network_manager_->Scanning();
+}
+
 void MiracastService::OnClientDisconnected() {
     AdvanceState(kFailure);
-    current_peer_.reset();
+    source_.reset();
+    current_device_.reset();
 }
 
 void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     IpV4Address address;
 
-    DEBUG("AdvanceState newsstate %d current state %d", new_state, current_state_);
+    DEBUG("new state %s current state %s",
+          mcs::NetworkDevice::StateToStr(new_state),
+          mcs::NetworkDevice::StateToStr(current_state_));
 
     switch (new_state) {
     case kAssociation:
@@ -210,20 +229,19 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
 
     case kConnected:
         address = network_manager_->LocalAddress();
-        source_->Setup(address, kMiracastDefaultRtspCtrlPort);
 
-        FinishConnectAttempt(true);
+        source_ = MiracastSourceManager::Create(address, kMiracastDefaultRtspCtrlPort);
+
+        FinishConnectAttempt();
 
         break;
 
     case kFailure:
-        if (current_state_ == kAssociation ||
-                current_state_ == kConfiguration)
-            FinishConnectAttempt(false, "Failed to connect remote device");
+        FinishConnectAttempt(Error::kFailed);
 
     case kDisconnected:
-        if (current_state_ == kConnected)
-            source_->Release();
+        source_.reset();
+        current_device_.reset();
 
         StartIdleTimer();
         break;
@@ -240,78 +258,89 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
         sp->OnStateChanged(current_state_);
 }
 
-void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &peer) {
-    if (peer->State() == kConnected)
-        AdvanceState(kConnected);
-    else if (peer->State() == kDisconnected) {
-        AdvanceState(kDisconnected);
-        current_peer_.reset();
-    }
-    else if (peer->State() == kFailure) {
-        AdvanceState(kFailure);
-        current_peer_.reset();
-        FinishConnectAttempt(false, "Failed to connect device");
-    }
+void MiracastService::OnChanged() {
+   if (auto sp = delegate_.lock())
+       sp->OnChanged();
 }
 
-void MiracastService::OnDeviceFound(const NetworkDevice::Ptr &peer) {
-    if (auto sp = delegate_.lock())
-        sp->OnDeviceFound(peer);
+void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &device) {
+    DEBUG("Device state changed: address %s new state %s",
+          device->Address(),
+          mcs::NetworkDevice::StateToStr(device->State()));
+
+    if (device != current_device_)
+        return;
+
+    AdvanceState(device->State());
 }
 
-void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &peer) {
+void MiracastService::OnDeviceChanged(const NetworkDevice::Ptr &device) {
     if (auto sp = delegate_.lock())
-        sp->OnDeviceLost(peer);
+        sp->OnDeviceChanged(device);
+}
+
+void MiracastService::OnDeviceFound(const NetworkDevice::Ptr &device) {
+    if (auto sp = delegate_.lock())
+        sp->OnDeviceFound(device);
+}
+
+void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &device) {
+    if (auto sp = delegate_.lock())
+        sp->OnDeviceLost(device);
 }
 
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {
     auto inst = static_cast<SharedKeepAlive<MiracastService>*>(user_data)->ShouldDie();
     inst->AdvanceState(kIdle);
-    return TRUE;
+    return FALSE;
 }
 
 void MiracastService::StartIdleTimer() {
     g_timeout_add(kStateIdleTimeout.count(), &MiracastService::OnIdleTimer, new SharedKeepAlive<MiracastService>{shared_from_this()});
 }
 
-void MiracastService::FinishConnectAttempt(bool success, const std::string &error_text) {
+void MiracastService::FinishConnectAttempt(mcs::Error error) {
     if (connect_callback_)
-        connect_callback_(success, error_text);
+        connect_callback_(error);
 
     connect_callback_ = nullptr;
 }
 
-void MiracastService::ConnectSink(const MacAddress &address, std::function<void(bool,std::string)> callback) {
-    if (current_peer_.get()) {
-        callback(false, "Already connected");
+void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback callback) {
+    if (current_device_) {
+        callback(Error::kAlready);
         return;
     }
 
-    NetworkDevice::Ptr device;
-
-    for (auto peer : network_manager_->Devices()) {
-        if (peer->Address() != address)
-            continue;
-
-        device = peer;
-        break;
-    }
-
     if (!device) {
-        callback(false, "Couldn't find device");
+        callback(Error::kParamInvalid);
         return;
     }
 
     if (!network_manager_->Connect(device)) {
-        callback(false, "Failed to connect with remote device");
+        callback(Error::kFailed);
         return;
     }
 
-    current_peer_ = device;
+    current_device_ = device;
     connect_callback_ = callback;
 }
 
-void MiracastService::Scan() {
-    network_manager_->Scan();
+void MiracastService::Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback) {
+    if (!current_device_ || !device) {
+        callback(Error::kParamInvalid);
+        return;
+    }
+
+    if (!network_manager_->Disconnect(device)) {
+        callback(Error::kFailed);
+        return;
+    }
+
+    callback(Error::kNone);
+}
+
+void MiracastService::Scan(const std::chrono::seconds &timeout) {
+    network_manager_->Scan(timeout);
 }
 } // namespace miracast

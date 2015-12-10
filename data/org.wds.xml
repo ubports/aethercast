@@ -9,16 +9,19 @@
             <arg name="path" type="o" direction="in"/>
         </method>
         <method name="Scan"/>
-        <method name="ConnectSink">
-            <arg name="address" type="s" direction="in"/>
-        </method>
         <property name="State" type="s" access="read"/>
+        <property name="Capabilities" type="as" access="read"/>
+        <property name="Scanning" type="b" access="read"/>
     </interface>
     <interface name="org.wds.Device">
         <method name="Connect">
             <arg name="role" type="s" direction="in"/>
         </method>
         <method name="Disconnect"/>
+        <property name="State" type="s" access="read"/>
+        <property name="Address" type="s" access="read"/>
+        <property name="Name" type="s" access="read"/>
+        <property name="Capabilities" type="as" access="read"/>
     </interface>
     <interface name="org.wds.MediaManager">
         <method name="Configure">

@@ -64,7 +64,7 @@ void DhcpClient::OnLeaseAvailable(GDHCPClient *client, gpointer user_data) {
 }
 
 void DhcpClient::OnClientDebug(const char *str, gpointer user_data) {
-    MCS_WARNING("DHCP: %s", str);
+    MCS_DEBUG("DHCP: %s", str);
 }
 
 mcs::IpV4Address DhcpClient::LocalAddress() const {
@@ -75,7 +75,7 @@ bool DhcpClient::Start() {
     GDHCPClientError error;
     client_ = g_dhcp_client_new(G_DHCP_IPV4, interface_index_, &error);
     if (!client_) {
-        MCS_WARNING("Failed to setup DHCP client");
+        MCS_ERROR("Failed to setup DHCP client: %s", g_dhcp_client_error_to_string(error));
         return false;
     }
 
