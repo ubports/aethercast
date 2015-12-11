@@ -156,7 +156,7 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
 
     auto network_manager = mcs::NetworkManagerFactory::Create();
     auto service = mcs::MiracastService::Create(network_manager);
-    auto mcsa = mcs::MiracastServiceAdapter::create(service);
+    auto mcsa = mcs::MiracastControllerSkeleton::create(service);
 
     rt.Run();
 

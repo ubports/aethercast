@@ -29,11 +29,11 @@
 #include "logger.h"
 
 namespace mcs {
-std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(const std::shared_ptr<MiracastController> &controller) {
-    return std::shared_ptr<MiracastServiceAdapter>(new MiracastServiceAdapter(controller))->FinalizeConstruction();
+std::shared_ptr<MiracastControllerSkeleton> MiracastControllerSkeleton::create(const std::shared_ptr<MiracastController> &controller) {
+    return std::shared_ptr<MiracastControllerSkeleton>(new MiracastControllerSkeleton(controller))->FinalizeConstruction();
 }
 
-MiracastServiceAdapter::MiracastServiceAdapter(const std::shared_ptr<MiracastController> &controller) :
+MiracastControllerSkeleton::MiracastControllerSkeleton(const std::shared_ptr<MiracastController> &controller) :
     controller_(controller),
     manager_obj_(nullptr),
     bus_connection_(nullptr),
@@ -41,7 +41,7 @@ MiracastServiceAdapter::MiracastServiceAdapter(const std::shared_ptr<MiracastCon
     object_manager_(nullptr) {
 }
 
-MiracastServiceAdapter::~MiracastServiceAdapter() {
+MiracastControllerSkeleton::~MiracastControllerSkeleton() {
     if (bus_id_ > 0)
         g_bus_unown_name(bus_id_);
 
@@ -51,7 +51,7 @@ MiracastServiceAdapter::~MiracastServiceAdapter() {
     // as we own the object emitting those signals.
 }
 
-void MiracastServiceAdapter::SyncProperties() {
+void MiracastControllerSkeleton::SyncProperties() {
     miracast_interface_manager_set_state(manager_obj_.get(),
                                          NetworkDevice::StateToStr(controller_->State()).c_str());
 
@@ -67,7 +67,7 @@ void MiracastServiceAdapter::SyncProperties() {
     miracast_interface_manager_set_scanning(manager_obj_.get(), controller_->Scanning());
 }
 
-void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
+void MiracastControllerSkeleton::OnStateChanged(NetworkDeviceState state) {
     if (!manager_obj_)
         return;
 
@@ -75,14 +75,14 @@ void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
                                          NetworkDevice::StateToStr(controller_->State()).c_str());
 }
 
-std::string MiracastServiceAdapter::GenerateDevicePath(const NetworkDevice::Ptr &device) const {
+std::string MiracastControllerSkeleton::GenerateDevicePath(const NetworkDevice::Ptr &device) const {
     std::string address = device->Address();
     std::replace(address.begin(), address.end(), ':', '_');
     // FIXME using kManagerPath doesn't seem to work. Fails at link time ...
     return mcs::Utils::Sprintf("/org/wds/dev_%s", address.c_str());
 }
 
-void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &device) {
+void MiracastControllerSkeleton::OnDeviceFound(const NetworkDevice::Ptr &device) {
     DEBUG("device %s", device->Address().c_str());
 
     auto path = GenerateDevicePath(device);
@@ -92,7 +92,7 @@ void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &device) {
     g_dbus_object_manager_server_export(object_manager_.get(), adapter->DBusObject());
 }
 
-void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &device) {
+void MiracastControllerSkeleton::OnDeviceLost(const NetworkDevice::Ptr &device) {
     auto iter = devices_.find(device->Address());
     if (iter == devices_.end())
         return;
@@ -102,7 +102,7 @@ void MiracastServiceAdapter::OnDeviceLost(const NetworkDevice::Ptr &device) {
     devices_.erase(iter);
 }
 
-void MiracastServiceAdapter::OnDeviceChanged(const NetworkDevice::Ptr &peer) {
+void MiracastControllerSkeleton::OnDeviceChanged(const NetworkDevice::Ptr &peer) {
     auto iter = devices_.find(peer->Address());
     if (iter == devices_.end())
         return;
@@ -110,17 +110,17 @@ void MiracastServiceAdapter::OnDeviceChanged(const NetworkDevice::Ptr &peer) {
     iter->second->SyncProperties();
 }
 
-void MiracastServiceAdapter::OnChanged() {
+void MiracastControllerSkeleton::OnChanged() {
     SyncProperties();
 }
 
-void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
-    auto inst = static_cast<SharedKeepAlive<MiracastServiceAdapter>*>(user_data)->ShouldDie();
+void MiracastControllerSkeleton::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
+    auto inst = static_cast<SharedKeepAlive<MiracastControllerSkeleton>*>(user_data)->ShouldDie();
     inst->manager_obj_.reset(miracast_interface_manager_skeleton_new());
 
     g_signal_connect_data(inst->manager_obj_.get(), "handle-scan",
-                     G_CALLBACK(&MiracastServiceAdapter::OnHandleScan), new WeakKeepAlive<MiracastServiceAdapter>(inst),
-                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastServiceAdapter>*>(data); }, GConnectFlags(0));
+                     G_CALLBACK(&MiracastControllerSkeleton::OnHandleScan), new WeakKeepAlive<MiracastControllerSkeleton>(inst),
+                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(data); }, GConnectFlags(0));
 
     inst->SyncProperties();
 
@@ -133,10 +133,10 @@ void MiracastServiceAdapter::OnNameAcquired(GDBusConnection *connection, const g
     INFO("Registered bus name %s", name);
 }
 
-void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
+void MiracastControllerSkeleton::OnHandleScan(MiracastInterfaceManager *skeleton,
                                         GDBusMethodInvocation *invocation, gpointer user_data) {
     boost::ignore_unused_variable_warning(skeleton);
-    auto inst = static_cast<WeakKeepAlive<MiracastServiceAdapter>*>(user_data)->GetInstance().lock();
+    auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
 
     if (not inst)
         return;
@@ -148,7 +148,7 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
     g_dbus_method_invocation_return_value(invocation, nullptr);
 }
 
-std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruction() {
+std::shared_ptr<MiracastControllerSkeleton> MiracastControllerSkeleton::FinalizeConstruction() {
     auto sp = shared_from_this();
 
     GError *error = nullptr;
@@ -160,7 +160,7 @@ std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruc
     }
 
     bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, kBusName, G_BUS_NAME_OWNER_FLAGS_NONE,
-                   nullptr, &MiracastServiceAdapter::OnNameAcquired, nullptr, new SharedKeepAlive<MiracastServiceAdapter>{sp}, nullptr);
+                   nullptr, &MiracastControllerSkeleton::OnNameAcquired, nullptr, new SharedKeepAlive<MiracastControllerSkeleton>{sp}, nullptr);
     if (bus_id_ == 0)
         WARNING("Failed to register bus name");
 

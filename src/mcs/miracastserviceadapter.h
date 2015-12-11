@@ -35,16 +35,16 @@ extern "C" {
 #include "networkdeviceadapter.h"
 
 namespace mcs {
-class MiracastServiceAdapter : public std::enable_shared_from_this<MiracastServiceAdapter>,
+class MiracastControllerSkeleton : public std::enable_shared_from_this<MiracastControllerSkeleton>,
                                public MiracastController::Delegate {
 public:
     static constexpr const char *kBusName{"org.wds"};
     static constexpr const char *kManagerPath{"/org/wds"};
     static constexpr const char *kManagerIface{"org.wds.Manager"};
 
-    static std::shared_ptr<MiracastServiceAdapter> create(const std::shared_ptr<MiracastController> &controller);
+    static std::shared_ptr<MiracastControllerSkeleton> create(const std::shared_ptr<MiracastController> &controller);
 
-    ~MiracastServiceAdapter();
+    ~MiracastControllerSkeleton();
 
     void OnStateChanged(NetworkDeviceState state) override;
     void OnDeviceFound(const NetworkDevice::Ptr &device) override;
@@ -58,8 +58,8 @@ private:
     static void OnHandleScan(MiracastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                               gpointer user_data);
 
-    MiracastServiceAdapter(const std::shared_ptr<MiracastController> &controller);
-    std::shared_ptr<MiracastServiceAdapter> FinalizeConstruction();
+    MiracastControllerSkeleton(const std::shared_ptr<MiracastController> &controller);
+    std::shared_ptr<MiracastControllerSkeleton> FinalizeConstruction();
 
     void SyncProperties();
 
