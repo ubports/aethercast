@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <boost/concept_check.hpp>
 
-#include "miracastserviceadapter.h"
 #include "networkdeviceadapter.h"
 #include "utils.h"
 #include "keep_alive.h"
@@ -27,16 +26,16 @@
 
 namespace mcs {
 
-NetworkDeviceAdapter::Ptr NetworkDeviceAdapter::Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service) {
-    return std::shared_ptr<NetworkDeviceAdapter>(new NetworkDeviceAdapter(connection, path, device, service))->FinalizeConstruction();
+NetworkDeviceAdapter::Ptr NetworkDeviceAdapter::Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &controller) {
+    return std::shared_ptr<NetworkDeviceAdapter>(new NetworkDeviceAdapter(connection, path, device, controller))->FinalizeConstruction();
 }
 
-NetworkDeviceAdapter::NetworkDeviceAdapter(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service) :
+NetworkDeviceAdapter::NetworkDeviceAdapter(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &controller) :
     connection_(connection),
     object_(nullptr),
     path_(path),
     device_(device),
-    service_(service) {
+    controller_(controller) {
 }
 
 NetworkDeviceAdapter::~NetworkDeviceAdapter() {
@@ -102,7 +101,7 @@ void NetworkDeviceAdapter::OnHandleConnect(MiracastInterfaceDevice *skeleton, GD
     g_object_ref(invocation);
     auto inv = make_shared_gobject(invocation);
 
-    inst->service_->Connect(inst->device_, [inv](mcs::Error error) {
+    inst->controller_->Connect(inst->device_, [inv](mcs::Error error) {
         if (error != Error::kNone) {
             g_dbus_method_invocation_return_error(inv.get(), G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                   "%s", mcs::ErrorToString(error).c_str());
@@ -126,7 +125,7 @@ void NetworkDeviceAdapter::OnHandleDisconnect(MiracastInterfaceDevice *skeleton,
     g_object_ref(invocation);
     auto inv = make_shared_gobject(invocation);
 
-    inst->service_->Disconnect(inst->device_, [inv](mcs::Error error) {
+    inst->controller_->Disconnect(inst->device_, [inv](mcs::Error error) {
         if (error != Error::kNone) {
             g_dbus_method_invocation_return_error(inv.get(), G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                   "%s", mcs::ErrorToString(error).c_str());

@@ -31,18 +31,18 @@ extern "C" {
 
 #include "scoped_gobject.h"
 
-#include "miracastservice.h"
+#include "miracastcontroller.h"
 #include "networkdeviceadapter.h"
 
 namespace mcs {
 class MiracastServiceAdapter : public std::enable_shared_from_this<MiracastServiceAdapter>,
-                               public MiracastService::Delegate {
+                               public MiracastController::Delegate {
 public:
     static constexpr const char *kBusName{"org.wds"};
     static constexpr const char *kManagerPath{"/org/wds"};
     static constexpr const char *kManagerIface{"org.wds.Manager"};
 
-    static std::shared_ptr<MiracastServiceAdapter> create(const std::shared_ptr<MiracastService> &service);
+    static std::shared_ptr<MiracastServiceAdapter> create(const std::shared_ptr<MiracastController> &controller);
 
     ~MiracastServiceAdapter();
 
@@ -58,14 +58,14 @@ private:
     static void OnHandleScan(MiracastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                               gpointer user_data);
 
-    MiracastServiceAdapter(const std::shared_ptr<MiracastService> &service);
+    MiracastServiceAdapter(const std::shared_ptr<MiracastController> &controller);
     std::shared_ptr<MiracastServiceAdapter> FinalizeConstruction();
 
     void SyncProperties();
 
     std::string GenerateDevicePath(const NetworkDevice::Ptr &device) const;
 private:
-    std::shared_ptr<MiracastService> service_;
+    std::shared_ptr<MiracastController> controller_;
     ScopedGObject<MiracastInterfaceManager> manager_obj_;
     SharedGObject<GDBusConnection> bus_connection_;
     guint bus_id_;

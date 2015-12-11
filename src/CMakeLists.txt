@@ -28,6 +28,7 @@ set(SOURCES
   mcs/testsourcemediamanager.cpp
   mcs/logger.cpp
   mcs/mirsourcemediamanager.cpp
+  mcs/miracastcontroller.cpp
   mcs/miracastservice.cpp
   mcs/miracastsourcemanager.cpp
   mcs/miracastsourceclient.cpp

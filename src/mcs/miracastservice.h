@@ -26,6 +26,7 @@
 
 #include <glib.h>
 
+#include "miracastcontroller.h"
 #include "miracastsourcemanager.h"
 #include "networkmanager.h"
 #include "networkdevice.h"
@@ -33,7 +34,8 @@
 #include "types.h"
 
 namespace mcs {
-class MiracastService : public std::enable_shared_from_this<MiracastService>,
+class MiracastService : public MiracastController,
+                        public std::enable_shared_from_this<MiracastService>,
                         public NetworkManager::Delegate,
                         public MiracastSourceManager::Delegate
 {
@@ -52,25 +54,11 @@ public:
 
     static int Main(const MainOptions &options);
 
-    class Delegate : private mcs::NonCopyable {
-    public:
-        virtual ~Delegate() { }
-
-        virtual void OnStateChanged(NetworkDeviceState state) = 0;
-        virtual void OnChanged() = 0;
-        virtual void OnDeviceFound(const NetworkDevice::Ptr &device) = 0;
-        virtual void OnDeviceLost(const NetworkDevice::Ptr &device) = 0;
-        virtual void OnDeviceChanged(const NetworkDevice::Ptr &device) = 0;
-
-    protected:
-        Delegate() = default;
-    };
-
     static std::shared_ptr<MiracastService> Create(const NetworkManager::Ptr &network_manager);
 
     ~MiracastService();
 
-    void SetDelegate(const std::weak_ptr<Delegate> &delegate);
+    void SetDelegate(const std::weak_ptr<MiracastController::Delegate> &delegate);
     void ResetDelegate();
 
     void Connect(const NetworkDevice::Ptr &device, ResultCallback callback);
@@ -104,7 +92,7 @@ private:
     void LoadWiFiFirmware();
 
 private:
-    std::weak_ptr<Delegate> delegate_;
+    std::weak_ptr<MiracastController::Delegate> delegate_;
     std::shared_ptr<NetworkManager> network_manager_;
     std::shared_ptr<MiracastSourceManager> source_;
     NetworkDeviceState current_state_;

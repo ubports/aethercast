@@ -29,12 +29,12 @@
 #include "logger.h"
 
 namespace mcs {
-std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(const std::shared_ptr<MiracastService> &service) {
-    return std::shared_ptr<MiracastServiceAdapter>(new MiracastServiceAdapter(service))->FinalizeConstruction();
+std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::create(const std::shared_ptr<MiracastController> &controller) {
+    return std::shared_ptr<MiracastServiceAdapter>(new MiracastServiceAdapter(controller))->FinalizeConstruction();
 }
 
-MiracastServiceAdapter::MiracastServiceAdapter(const std::shared_ptr<MiracastService> &service) :
-    service_(service),
+MiracastServiceAdapter::MiracastServiceAdapter(const std::shared_ptr<MiracastController> &controller) :
+    controller_(controller),
     manager_obj_(nullptr),
     bus_connection_(nullptr),
     bus_id_(0),
@@ -53,18 +53,18 @@ MiracastServiceAdapter::~MiracastServiceAdapter() {
 
 void MiracastServiceAdapter::SyncProperties() {
     miracast_interface_manager_set_state(manager_obj_.get(),
-                                         NetworkDevice::StateToStr(service_->State()).c_str());
+                                         NetworkDevice::StateToStr(controller_->State()).c_str());
 
     // Capabilities are a collection of different things our local adapter
     // supports. The supported roles are just one part of this.
-    auto roles = service_->SupportedRoles();
+    auto roles = controller_->SupportedRoles();
     auto capabilities = DBusHelpers::GenerateCapabilities(roles);
 
     miracast_interface_manager_set_capabilities(manager_obj_.get(), capabilities);
 
     g_strfreev(capabilities);
 
-    miracast_interface_manager_set_scanning(manager_obj_.get(), service_->Scanning());
+    miracast_interface_manager_set_scanning(manager_obj_.get(), controller_->Scanning());
 }
 
 void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
@@ -72,7 +72,7 @@ void MiracastServiceAdapter::OnStateChanged(NetworkDeviceState state) {
         return;
 
     miracast_interface_manager_set_state(manager_obj_.get(),
-                                         NetworkDevice::StateToStr(service_->State()).c_str());
+                                         NetworkDevice::StateToStr(controller_->State()).c_str());
 }
 
 std::string MiracastServiceAdapter::GenerateDevicePath(const NetworkDevice::Ptr &device) const {
@@ -86,7 +86,7 @@ void MiracastServiceAdapter::OnDeviceFound(const NetworkDevice::Ptr &device) {
     DEBUG("device %s", device->Address().c_str());
 
     auto path = GenerateDevicePath(device);
-    auto adapter = NetworkDeviceAdapter::Create(bus_connection_, path , device, service_);
+    auto adapter = NetworkDeviceAdapter::Create(bus_connection_, path , device, controller_);
     devices_.insert(std::pair<std::string,NetworkDeviceAdapter::Ptr>(device->Address(), adapter));
 
     g_dbus_object_manager_server_export(object_manager_.get(), adapter->DBusObject());
@@ -143,7 +143,7 @@ void MiracastServiceAdapter::OnHandleScan(MiracastInterfaceManager *skeleton,
 
     INFO("Scanning for remote devices");
 
-    inst->service_->Scan();
+    inst->controller_->Scan();
 
     g_dbus_method_invocation_return_value(invocation, nullptr);
 }
@@ -164,7 +164,7 @@ std::shared_ptr<MiracastServiceAdapter> MiracastServiceAdapter::FinalizeConstruc
     if (bus_id_ == 0)
         WARNING("Failed to register bus name");
 
-    service_->SetDelegate(sp);
+    controller_->SetDelegate(sp);
     return sp;
 }
 } // namespace mcs

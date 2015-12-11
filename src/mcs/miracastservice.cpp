@@ -190,7 +190,7 @@ MiracastService::~MiracastService() {
         g_source_remove(scan_timeout_source_);
 }
 
-void MiracastService::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+void MiracastService::SetDelegate(const std::weak_ptr<MiracastController::Delegate> &delegate) {
     delegate_ = delegate;
 }
 
