@@ -28,7 +28,9 @@ set(SOURCES
   mcs/testsourcemediamanager.cpp
   mcs/logger.cpp
   mcs/mirsourcemediamanager.cpp
+  mcs/forwardingmiracastcontroller.cpp
   mcs/miracastcontroller.cpp
+  mcs/miracastcontrollerskeleton.cpp
   mcs/miracastservice.cpp
   mcs/miracastsourcemanager.cpp
   mcs/miracastsourceclient.cpp
@@ -37,8 +39,7 @@ set(SOURCES
   mcs/networkdevice.cpp
 
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/miracastinterface.c
-  mcs/dbushelpers.cpp
-  mcs/miracastserviceadapter.cpp
+  mcs/dbushelpers.cpp  
   mcs/networkdeviceadapter.cpp
 
   wpa/gdhcp/common.c

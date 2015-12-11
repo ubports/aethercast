@@ -31,12 +31,13 @@ extern "C" {
 
 #include "scoped_gobject.h"
 
-#include "miracastcontroller.h"
+#include "forwardingmiracastcontroller.h"
 #include "networkdeviceadapter.h"
 
 namespace mcs {
 class MiracastControllerSkeleton : public std::enable_shared_from_this<MiracastControllerSkeleton>,
-                               public MiracastController::Delegate {
+                                   public ForwardingMiracastController,
+                                   public MiracastController::Delegate {
 public:
     static constexpr const char *kBusName{"org.wds"};
     static constexpr const char *kManagerPath{"/org/wds"};
@@ -64,8 +65,8 @@ private:
     void SyncProperties();
 
     std::string GenerateDevicePath(const NetworkDevice::Ptr &device) const;
+
 private:
-    std::shared_ptr<MiracastController> controller_;
     ScopedGObject<MiracastInterfaceManager> manager_obj_;
     SharedGObject<GDBusConnection> bus_connection_;
     guint bus_id_;

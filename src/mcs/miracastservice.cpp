@@ -32,7 +32,7 @@
 #include "keep_alive.h"
 #include "logger.h"
 #include "miracastservice.h"
-#include "miracastserviceadapter.h"
+#include "miracastcontrollerskeleton.h"
 #include "networkmanagerfactory.h"
 #include "wfddeviceinfo.h"
 #include "types.h"
