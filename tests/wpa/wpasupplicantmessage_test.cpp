@@ -32,9 +32,9 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     struct P2PGroupStarted {
         std::string interface_name;
         std::string type;
-        Named<std::string> ssid;
-        Named<std::uint32_t> freq;
-        Named<std::string> go_dev_addr;
+        Named<std::string> ssid{"ssid"};
+        Named<std::uint32_t> freq{"freq"};
+        Named<std::string> go_dev_addr{"go_dev_addr"};
     } ev;
 
     std::string key;
@@ -42,9 +42,9 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     EXPECT_STREQ(m.Name().c_str(), "P2P-GROUP-STARTED");
     EXPECT_NO_THROW(m.Read(ev.interface_name, ev.type, ev.ssid, ev.freq, ev.go_dev_addr));
     EXPECT_EQ(ev.interface_name, "p2p0");
-    EXPECT_EQ(ev.ssid.value, "\"DIRECT-hB\"");
-    EXPECT_EQ(ev.freq.value, 2412);
-    EXPECT_EQ(ev.go_dev_addr.value, "4e:74:03:64:95:a7");
+    EXPECT_EQ(ev.ssid.Value(), "\"DIRECT-hB\"");
+    EXPECT_EQ(ev.freq.Value(), 2412);
+    EXPECT_EQ(ev.go_dev_addr.Value(), "4e:74:03:64:95:a7");
 
     m = WpaSupplicantMessage::Parse("<3>P2P-GROUP-STARTED p2p0 GO -12 ssid=\"DIRECT-hB\" 45623 freq=2412 11223344 -42");
 
@@ -54,9 +54,9 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     int32_t i32 = 0;
 
     EXPECT_STREQ(m.Name().c_str(), "P2P-GROUP-STARTED");
-    EXPECT_NO_THROW(m.Read(ev.interface_name, skip<std::string>(), skip<std::string>(), skip<std::string>(), skip<std::string>(), ev.freq, u32, i32));
+    EXPECT_NO_THROW(m.Read(ev.interface_name, skip<std::string>(), skip<std::string>(), skip<std::string>(), ev.freq, u32, i32));
     EXPECT_EQ(ev.interface_name, "p2p0");
-    EXPECT_EQ(ev.freq.value, 2412);
+    EXPECT_EQ(ev.freq.Value(), 2412);
     EXPECT_EQ(u32, 11223344);
     EXPECT_EQ(i32, -42);
 
@@ -73,8 +73,8 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     i32 = 0;
 
     EXPECT_NO_THROW(m.Read(skip<std::string>(), skip<std::string>(), skip<std::int32_t>(), ev.ssid, skip<std::int32_t>(), ev.freq));
-    EXPECT_EQ(ev.ssid.value, "\"DIRECT-hB\"");
-    EXPECT_EQ(ev.freq.value, 2412);
+    EXPECT_EQ(ev.ssid.Value(), "\"DIRECT-hB\"");
+    EXPECT_EQ(ev.freq.Value(), 2412);
 }
 
 TEST(WpaSupplicantMessage, Append) {

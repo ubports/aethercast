@@ -160,12 +160,11 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     // P2P-DEVICE-FOUND 4e:74:03:70:e2:c1 p2p_dev_addr=4e:74:03:70:e2:c1
     // pri_dev_type=8-0050F204-2 name='Aquaris M10' config_methods=0x188 dev_capab=0x5
     // group_capab=0x0 wfd_dev_info=0x00111c440032 new=1
-    Named<std::string> address;
-    Named<std::string> name;
-    Named<std::string> config_methods_str;
-    Named<std::string> wfd_dev_info;
-    message.Read(skip<std::string>(), address, skip<std::string>(), name, config_methods_str,
-                 skip<std::string>(), skip<std::string>(), wfd_dev_info);
+    Named<std::string> address{"address"};
+    Named<std::string> name{"name"};
+    Named<std::string> config_methods_str{"config_methods"};
+    Named<std::string> wfd_dev_info{"wfd_dev_info"};
+    message.Read(address, name, config_methods_str, wfd_dev_info);
 
     MCS_DEBUG("address %s name %s config_methods %s wfd_dev_info %s", address, name, config_methods_str, wfd_dev_info);
 
@@ -211,7 +210,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
 void WpaSupplicantNetworkManager::OnP2pDeviceLost(WpaSupplicantMessage &message) {
     // P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1
 
-    Named<std::string> address;
+    Named<std::string> address{"p2p_dev_address"};
     message.Read(address);
 
     auto iter = available_devices_.find(address);
@@ -273,7 +272,7 @@ void WpaSupplicantNetworkManager::OnP2pGroupRemoved(WpaSupplicantMessage &messag
     else
         dhcp_client_.Stop();
     
-    Named<std::string> reason;
+    Named<std::string> reason{"reason"};
     message.Read(skip<std::string>(), skip<std::string>(), reason);
 
     static std::unordered_map<std::string, mcs::NetworkDeviceState> lut {

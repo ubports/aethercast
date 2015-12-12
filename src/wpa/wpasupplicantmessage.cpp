@@ -53,10 +53,18 @@ WpaSupplicantMessage WpaSupplicantMessage::Parse(const std::string &payload) {
 
     m.raw_ = payload;
     m.name_ = (parts[0]);
-    m.argv_.insert(m.argv_.end(), parts.begin() + 1, parts.end());
+
+    for (auto it = parts.begin() + 1; it != parts.end(); ++it) {
+        auto pos = it->find("=");
+        if (pos != std::string::npos) {
+            m.optional_args_[it->substr(0, pos)] = it->substr(pos+1);
+        } else {
+            m.positional_args_.push_back(*it);
+        }
+    }
 
     m.sealed_ = true;
-    m.iter_ = m.argv_.begin();
+    m.iter_ = m.positional_args_.begin();
 
     return m;
 }
@@ -82,7 +90,7 @@ bool WpaSupplicantMessage::IsFail() const {
 }
 
 void WpaSupplicantMessage::Rewind() {
-    iter_ = argv_.begin();
+    iter_ = positional_args_.begin();
 }
 
 void WpaSupplicantMessage::Seal() {
@@ -96,14 +104,17 @@ const std::string& WpaSupplicantMessage::Raw() const {
 
 std::string WpaSupplicantMessage::Dump() const {
     std::stringstream ss; ss << name_;
-    for (const auto& arg : argv_) {
+    for (const auto& arg : positional_args_) {
         ss << " " << arg;
+    }
+    for (const auto& pair : optional_args_) {
+        ss << " " << pair.first << "=" << pair.second;
     }
     return ss.str();
 }
 
 void WpaSupplicantMessage::ThrowIfAtEnd() const {
-    if (iter_ == argv_.end()) {
+    if (iter_ == positional_args_.end()) {
         throw std::out_of_range{"WpaSupplicantMessage: No more argument to extract"};
     }
 }
