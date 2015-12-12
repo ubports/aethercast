@@ -52,34 +52,34 @@ MiracastControllerSkeleton::~MiracastControllerSkeleton() {
 }
 
 void MiracastControllerSkeleton::SyncProperties() {
-    miracast_interface_manager_set_state(manager_obj_.get(),
-                                         NetworkDevice::StateToStr(State()).c_str());
+    aethercast_interface_manager_set_state(manager_obj_.get(),
+                                           NetworkDevice::StateToStr(State()).c_str());
 
     // Capabilities are a collection of different things our local adapter
     // supports. The supported roles are just one part of this.
     auto roles = SupportedRoles();
     auto capabilities = DBusHelpers::GenerateCapabilities(roles);
 
-    miracast_interface_manager_set_capabilities(manager_obj_.get(), capabilities);
+    aethercast_interface_manager_set_capabilities(manager_obj_.get(), capabilities);
 
     g_strfreev(capabilities);
 
-    miracast_interface_manager_set_scanning(manager_obj_.get(), Scanning());
+    aethercast_interface_manager_set_scanning(manager_obj_.get(), Scanning());
 }
 
 void MiracastControllerSkeleton::OnStateChanged(NetworkDeviceState state) {
     if (!manager_obj_)
         return;
 
-    miracast_interface_manager_set_state(manager_obj_.get(),
-                                         NetworkDevice::StateToStr(State()).c_str());
+    aethercast_interface_manager_set_state(manager_obj_.get(),
+                                           NetworkDevice::StateToStr(State()).c_str());
 }
 
 std::string MiracastControllerSkeleton::GenerateDevicePath(const NetworkDevice::Ptr &device) const {
     std::string address = device->Address();
     std::replace(address.begin(), address.end(), ':', '_');
     // FIXME using kManagerPath doesn't seem to work. Fails at link time ...
-    return mcs::Utils::Sprintf("/org/wds/dev_%s", address.c_str());
+    return mcs::Utils::Sprintf("/org/aethercast/dev_%s", address.c_str());
 }
 
 void MiracastControllerSkeleton::OnDeviceFound(const NetworkDevice::Ptr &device) {
@@ -116,7 +116,7 @@ void MiracastControllerSkeleton::OnChanged() {
 
 void MiracastControllerSkeleton::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
     auto inst = static_cast<SharedKeepAlive<MiracastControllerSkeleton>*>(user_data)->ShouldDie();
-    inst->manager_obj_.reset(miracast_interface_manager_skeleton_new());
+    inst->manager_obj_.reset(aethercast_interface_manager_skeleton_new());
 
     g_signal_connect_data(inst->manager_obj_.get(), "handle-scan",
                      G_CALLBACK(&MiracastControllerSkeleton::OnHandleScan), new WeakKeepAlive<MiracastControllerSkeleton>(inst),
@@ -133,8 +133,8 @@ void MiracastControllerSkeleton::OnNameAcquired(GDBusConnection *connection, con
     INFO("Registered bus name %s", name);
 }
 
-void MiracastControllerSkeleton::OnHandleScan(MiracastInterfaceManager *skeleton,
-                                        GDBusMethodInvocation *invocation, gpointer user_data) {
+void MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *skeleton,
+                                              GDBusMethodInvocation *invocation, gpointer user_data) {
     boost::ignore_unused_variable_warning(skeleton);
     auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
 

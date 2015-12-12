@@ -21,7 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "miracastinterface.h"
+#include "aethercastinterface.h"
 #ifdef __cplusplus
 }
 #endif
@@ -39,9 +39,9 @@ class MiracastControllerSkeleton : public std::enable_shared_from_this<MiracastC
                                    public ForwardingMiracastController,
                                    public MiracastController::Delegate {
 public:
-    static constexpr const char *kBusName{"org.wds"};
-    static constexpr const char *kManagerPath{"/org/wds"};
-    static constexpr const char *kManagerIface{"org.wds.Manager"};
+    static constexpr const char *kBusName{"org.aethercast"};
+    static constexpr const char *kManagerPath{"/org/aethercast"};
+    static constexpr const char *kManagerIface{"org.aethercast.Manager"};
 
     static std::shared_ptr<MiracastControllerSkeleton> create(const std::shared_ptr<MiracastController> &controller);
 
@@ -56,7 +56,7 @@ public:
 private:
     static void OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data);
 
-    static void OnHandleScan(MiracastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
+    static void OnHandleScan(AethercastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                               gpointer user_data);
 
     MiracastControllerSkeleton(const std::shared_ptr<MiracastController> &controller);
@@ -67,7 +67,7 @@ private:
     std::string GenerateDevicePath(const NetworkDevice::Ptr &device) const;
 
 private:
-    ScopedGObject<MiracastInterfaceManager> manager_obj_;
+    ScopedGObject<AethercastInterfaceManager> manager_obj_;
     SharedGObject<GDBusConnection> bus_connection_;
     guint bus_id_;
     ScopedGObject<GDBusObjectManagerServer> object_manager_;

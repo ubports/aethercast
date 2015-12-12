@@ -100,7 +100,7 @@ Application::Application() :
     input_source_(0),
     object_manager_(nullptr) {
 
-    rl_callback_handler_install("miracastctl> ", &Application::OnReadlineMessage);
+    rl_callback_handler_install("aethercastctl> ", &Application::OnReadlineMessage);
 
     main_loop_ = g_main_loop_new(nullptr, FALSE);
 
@@ -156,13 +156,13 @@ void Application::HandleShowCommand(const std::string &arguments) {
     if (!manager_)
         return;
 
-    auto state = miracast_interface_manager_get_state(manager_);
+    auto state = aethercast_interface_manager_get_state(manager_);
     std::cout << "State: " << state << std::endl;
 
-    auto scanning = miracast_interface_manager_get_scanning(manager_);
+    auto scanning = aethercast_interface_manager_get_scanning(manager_);
     std::cout << "Scanning: " << std::boolalpha << (bool) scanning << std::endl;
 
-    auto capabilities = miracast_interface_manager_get_capabilities(manager_);
+    auto capabilities = aethercast_interface_manager_get_capabilities(manager_);
     std::cout << "Capabilities:" << std::endl;
     for (int n = 0; capabilities[n] != nullptr; n++)
         std::cout << "  " << capabilities[n] << std::endl;
@@ -172,7 +172,7 @@ void Application::OnScanDone(GObject *object, GAsyncResult *res, gpointer user_d
     auto inst = static_cast<Application*>(user_data);
 
     GError *error = nullptr;
-    if (!miracast_interface_manager_call_scan_finish(inst->manager_, res, &error)) {
+    if (!aethercast_interface_manager_call_scan_finish(inst->manager_, res, &error)) {
         std::cerr << "Failed to scan:" << error->message << std::endl;
         g_error_free(error);
         return;
@@ -183,28 +183,28 @@ void Application::HandleScanCommand(const std::string &arguments) {
     if (!manager_)
         return;
 
-    miracast_interface_manager_call_scan(manager_, nullptr, &Application::OnScanDone, this);
+    aethercast_interface_manager_call_scan(manager_, nullptr, &Application::OnScanDone, this);
 }
 
-void Application::ForeachDevice(std::function<void(MiracastInterfaceDevice*)> callback, const std::string &address_filter) {
+void Application::ForeachDevice(std::function<void(AethercastInterfaceDevice*)> callback, const std::string &address_filter) {
     if (!callback)
         return;
 
     auto objects = g_dbus_object_manager_get_objects(object_manager_);
 
     for (auto obj = objects; obj != nullptr; obj = obj->next) {
-        auto device = MIRACAST_INTERFACE_OBJECT_PROXY(obj->data);
+        auto device = AETHERCAST_INTERFACE_DEVICE_PROXY(obj->data);
         if (!device)
             continue;
 
-        auto iface = g_dbus_object_get_interface(G_DBUS_OBJECT(device), "org.wds.Device");
+        auto iface = g_dbus_object_get_interface(G_DBUS_OBJECT(device), "org.aethercast.Device");
         if (!iface)
             continue;
 
-        auto device_obj = MIRACAST_INTERFACE_DEVICE(iface);
+        auto device_obj = AETHERCAST_INTERFACE_DEVICE(iface);
 
         if (address_filter.length() > 0) {
-            auto device_address = miracast_interface_device_get_address(device_obj);
+            auto device_address = aethercast_interface_device_get_address(device_obj);
             if (address_filter != device_address)
                 continue;
         }
@@ -214,9 +214,9 @@ void Application::ForeachDevice(std::function<void(MiracastInterfaceDevice*)> ca
 }
 
 void Application::HandleDevicesCommand(const std::string &arguments) {
-    ForeachDevice([=](MiracastInterfaceDevice *device) {
-        auto address = miracast_interface_device_get_address(device);
-        auto name = miracast_interface_device_get_name(device);
+    ForeachDevice([=](AethercastInterfaceDevice *device) {
+        auto address = aethercast_interface_device_get_address(device);
+        auto name = aethercast_interface_device_get_name(device);
         std::cout << "Device " << address << " " << name << std::endl;
     });
 }
@@ -229,17 +229,17 @@ void Application::HandleInfoCommand(const std::string &arguments) {
 
     bool found = false;
 
-    ForeachDevice([&](MiracastInterfaceDevice *device) {
-        auto address = miracast_interface_device_get_address(device);
+    ForeachDevice([&](AethercastInterfaceDevice *device) {
+        auto address = aethercast_interface_device_get_address(device);
         std::cout << "Address: " << address << std::endl;
 
-        auto name = miracast_interface_device_get_name(device);
+        auto name = aethercast_interface_device_get_name(device);
         std::cout << "Name: " << name << std::endl;
 
-        auto state = miracast_interface_device_get_state(device);
+        auto state = aethercast_interface_device_get_state(device);
         std::cout << "State: " << state << std::endl;
 
-        auto capabilities = miracast_interface_device_get_capabilities(device);
+        auto capabilities = aethercast_interface_device_get_capabilities(device);
         std::cout << "Capabilities: " << std::endl;
         for (int n = 0; capabilities[n] != nullptr; n++)
             std::cout << "  " << capabilities[n] << std::endl;
@@ -255,7 +255,7 @@ void Application::OnDeviceConnected(GObject *object, GAsyncResult *res, gpointer
     PromptSaver ps;
 
     GError *error = nullptr;
-    if (!miracast_interface_device_call_connect_finish(MIRACAST_INTERFACE_DEVICE(object), res, &error)) {
+    if (!aethercast_interface_device_call_connect_finish(AETHERCAST_INTERFACE_DEVICE(object), res, &error)) {
         std::cerr << "Failed to connect with device: " << error->message << std::endl;
         g_error_free(error);
         return;
@@ -272,9 +272,9 @@ void Application::HandleConnectCommand(const std::string &arguments) {
 
     bool found = false;
 
-    ForeachDevice([&](MiracastInterfaceDevice *device) {
+    ForeachDevice([&](AethercastInterfaceDevice *device) {
 
-        miracast_interface_device_call_connect(device, "sink", nullptr,
+        aethercast_interface_device_call_connect(device, "sink", nullptr,
                                                &Application::OnDeviceConnected, nullptr);
 
         found = true;
@@ -288,7 +288,7 @@ void Application::OnDeviceDisconnected(GObject *object, GAsyncResult *res, gpoin
     PromptSaver ps;
 
     GError *error = nullptr;
-    if (!miracast_interface_device_call_disconnect_finish(MIRACAST_INTERFACE_DEVICE(object), res, &error)) {
+    if (!aethercast_interface_device_call_disconnect_finish(AETHERCAST_INTERFACE_DEVICE(object), res, &error)) {
         std::cerr << "Failed to disconnect from device: " << error->message << std::endl;
         g_error_free(error);
         return;
@@ -305,9 +305,9 @@ void Application::HandleDisconnectCommand(const std::string &arguments) {
 
     bool found = false;
 
-    ForeachDevice([&](MiracastInterfaceDevice *device) {
+    ForeachDevice([&](AethercastInterfaceDevice *device) {
 
-        miracast_interface_device_call_disconnect(device, nullptr,
+        aethercast_interface_device_call_disconnect(device, nullptr,
                                                &Application::OnDeviceDisconnected, nullptr);
 
         found = true;
@@ -415,8 +415,8 @@ void Application::OnServiceLost(GDBusConnection *connection, const gchar *name, 
 void Application::OnServiceFound(GDBusConnection *connection, const gchar *name, const gchar *name_owner, gpointer user_data) {
     auto inst = static_cast<Application*>(user_data);
 
-    miracast_interface_manager_proxy_new(inst->bus_connection_, G_DBUS_PROXY_FLAGS_NONE,
-                                         "org.wds", "/org/wds", nullptr,
+    aethercast_interface_manager_proxy_new(inst->bus_connection_, G_DBUS_PROXY_FLAGS_NONE,
+                                         "org.aethercast", "/org/aethercast", nullptr,
                                          &Application::OnManagerConnected, inst);
 }
 
@@ -426,7 +426,7 @@ void Application::OnManagerConnected(GObject *object, GAsyncResult *res, gpointe
     auto inst = static_cast<Application*>(user_data);
 
     GError *error = nullptr;
-    inst->manager_ = miracast_interface_manager_proxy_new_finish(res, &error);
+    inst->manager_ = aethercast_interface_manager_proxy_new_finish(res, &error);
     if (!inst->manager_) {
         std::cerr << "Could not connect with manager: " << error->message << std::endl;
         g_error_free(error);
@@ -438,7 +438,7 @@ void Application::OnManagerConnected(GObject *object, GAsyncResult *res, gpointe
     // method call which has an internal timeout of 30 seconds
     g_dbus_proxy_set_default_timeout(G_DBUS_PROXY(inst->manager_), 60 * 1000);
 
-    miracast_interface_object_manager_client_new(inst->bus_connection_,
+    aethercast_interface_object_manager_client_new(inst->bus_connection_,
                              G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_NONE,
                              "org.wds", "/org/wds",
                              nullptr, &Application::OnObjectManagerCreated, inst);
@@ -491,10 +491,10 @@ void Application::OnDeviceAdded(GDBusObjectManager *manager, GDBusObject *object
     if (!iface)
         return;
 
-    auto device = MIRACAST_INTERFACE_DEVICE(iface);
+    auto device = AETHERCAST_INTERFACE_DEVICE(iface);
 
-    auto address = miracast_interface_device_get_address(device);
-    auto name = miracast_interface_device_get_name(device);
+    auto address = aethercast_interface_device_get_address(device);
+    auto name = aethercast_interface_device_get_name(device);
 
     std::cout << "Device " << address << " " << name << " added" << std::endl;
 }
@@ -506,10 +506,10 @@ void Application::OnDeviceRemoved(GDBusObjectManager *manager, GDBusObject *obje
     if (!iface)
         return;
 
-    auto device = MIRACAST_INTERFACE_DEVICE(iface);
+    auto device = AETHERCAST_INTERFACE_DEVICE(iface);
 
-    auto address = miracast_interface_device_get_address(device);
-    auto name = miracast_interface_device_get_name(device);
+    auto address = aethercast_interface_device_get_address(device);
+    auto name = aethercast_interface_device_get_name(device);
 
     std::cout << "Device " << address << " " << name <<" removed" << std::endl;
 }
@@ -518,7 +518,7 @@ void Application::OnObjectManagerCreated(GObject *object, GAsyncResult *res, gpo
     auto inst = static_cast<Application*>(user_data);
 
     GError *error = nullptr;
-    inst->object_manager_ = miracast_interface_object_manager_client_new_finish(res, &error);
+    inst->object_manager_ = aethercast_interface_object_manager_client_new_finish(res, &error);
     if (!inst->object_manager_) {
         g_error_free(error);
         return;

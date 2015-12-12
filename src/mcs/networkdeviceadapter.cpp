@@ -47,7 +47,7 @@ NetworkDeviceAdapter::~NetworkDeviceAdapter() {
 }
 
 std::shared_ptr<NetworkDeviceAdapter> NetworkDeviceAdapter::FinalizeConstruction() {
-    device_iface_ = miracast_interface_device_skeleton_new();
+    device_iface_ = aethercast_interface_device_skeleton_new();
 
     auto sp = shared_from_this();
 
@@ -60,22 +60,22 @@ std::shared_ptr<NetworkDeviceAdapter> NetworkDeviceAdapter::FinalizeConstruction
 
     SyncProperties();
 
-    object_ = miracast_interface_object_skeleton_new(path_.c_str());
+    object_ = aethercast_interface_object_skeleton_new(path_.c_str());
     if (!object_)
         ERROR("Failed to create object for device %s", device_->Address());
     else
-        miracast_interface_object_skeleton_set_device(object_, device_iface_);
+        aethercast_interface_object_skeleton_set_device(object_, device_iface_);
 
     return sp;
 }
 
 void NetworkDeviceAdapter::SyncProperties() {
-    miracast_interface_device_set_address(device_iface_, device_->Address().c_str());
-    miracast_interface_device_set_name(device_iface_, device_->Name().c_str());
-    miracast_interface_device_set_state(device_iface_, NetworkDevice::StateToStr(device_->State()).c_str());
+    aethercast_interface_device_set_address(device_iface_, device_->Address().c_str());
+    aethercast_interface_device_set_name(device_iface_, device_->Name().c_str());
+    aethercast_interface_device_set_state(device_iface_, NetworkDevice::StateToStr(device_->State()).c_str());
 
     auto capabilities = DBusHelpers::GenerateCapabilities(device_->SupportedRoles());
-    miracast_interface_device_set_capabilities(device_iface_, capabilities);
+    aethercast_interface_device_set_capabilities(device_iface_, capabilities);
     g_strfreev(capabilities);
 }
 
@@ -87,7 +87,7 @@ std::string NetworkDeviceAdapter::Path() const {
     return path_;
 }
 
-void NetworkDeviceAdapter::OnHandleConnect(MiracastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
+void NetworkDeviceAdapter::OnHandleConnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
                                            const gchar *role, gpointer user_data)
 {
     boost::ignore_unused_variable_warning(skeleton);
@@ -112,7 +112,7 @@ void NetworkDeviceAdapter::OnHandleConnect(MiracastInterfaceDevice *skeleton, GD
     });
 }
 
-void NetworkDeviceAdapter::OnHandleDisconnect(MiracastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
+void NetworkDeviceAdapter::OnHandleDisconnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
                                               gpointer user_data)
 {
     boost::ignore_unused_variable_warning(skeleton);

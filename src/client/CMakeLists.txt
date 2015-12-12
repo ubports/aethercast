@@ -1,5 +1,5 @@
 set(SOURCES
-    ${CMAKE_CURRENT_BINARY_DIR}/../mcs/miracastinterface.c
+    ${CMAKE_CURRENT_BINARY_DIR}/../mcs/aethercastinterface.c
     main.cpp
     application.cpp
 )
