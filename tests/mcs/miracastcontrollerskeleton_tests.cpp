@@ -44,8 +44,11 @@ TEST(MiracastControllerSkeleton, ForwardsCallsToImpl) {
 
     auto impl = std::make_shared<MockMiracastController>();
 
-    // Times(2) as MiracastControllerSkeleton::create(...) already calls it :)
-    EXPECT_CALL(*impl, SetDelegate(_)).Times(2);
+    // Times(AtLeast(1)) as MiracastControllerSkeleton::create(...) already calls it.
+    // In addition, we have to account for the case where we encounter issues during
+    // construction of mcs::MiracastControllerSkeleton (such that a WPA supplicant connection
+    // is never set up.
+    EXPECT_CALL(*impl, SetDelegate(_)).Times(AtLeast(1));
     EXPECT_CALL(*impl, ResetDelegate()).Times(1);
     EXPECT_CALL(*impl, Connect(_,_)).Times(1);
     EXPECT_CALL(*impl, Disconnect(_,_)).Times(1);
