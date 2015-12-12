@@ -160,7 +160,7 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
     // P2P-DEVICE-FOUND 4e:74:03:70:e2:c1 p2p_dev_addr=4e:74:03:70:e2:c1
     // pri_dev_type=8-0050F204-2 name='Aquaris M10' config_methods=0x188 dev_capab=0x5
     // group_capab=0x0 wfd_dev_info=0x00111c440032 new=1
-    Named<std::string> address{"address"};
+    Named<std::string> address{"p2p_dev_addr"};
     Named<std::string> name{"name"};
     Named<std::string> config_methods_str{"config_methods"};
     Named<std::string> wfd_dev_info{"wfd_dev_info"};
