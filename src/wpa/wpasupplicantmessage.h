@@ -20,7 +20,47 @@
 
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
+
+template<typename V>
+class Named {
+public:
+    explicit Named(const std::string& key, const V& value = V{}) :
+        key_{key},
+        value_{value} {
+    }
+
+    const std::string& Key() const {
+        return key_;
+    }
+
+    V& Value() {
+        return value_;
+    }
+
+    const V& Value() const {
+        return value_;
+    }
+
+    operator V() const {
+        return value_;
+    }
+
+private:
+    std::string key_;
+    V value_;
+};
+
+template<typename T>
+struct Skip {
+};
+
+template<typename T>
+inline T& skip() {
+    static T t;
+    return t;
+}
 
 class WpaSupplicantMessage {
 public:
@@ -45,6 +85,15 @@ public:
         return *this;
     }
 
+    template<typename T, typename... Tail>
+    const WpaSupplicantMessage& Read(Named<T>& named, Tail&&... tail) const {
+        auto it = optional_args_.find(named.Key());
+        if (it != optional_args_.end()) {
+            std::stringstream ss{it->second}; ss >> named.Value();
+        }
+        return Read(std::forward<Tail>(tail)...);
+    }
+
     template<typename Head, typename... Tail>
     const WpaSupplicantMessage& Read(Head& head, Tail&&... tail) const {
         ThrowIfAtEnd();
@@ -58,10 +107,18 @@ public:
     }
 
     template<typename Head, typename... Tail>
-    WpaSupplicantMessage& Write(const Head& head, Tail&&... tail) {
+    WpaSupplicantMessage& Write(const Head& head, const Tail&... tail) {
         ThrowIfSealed();
         std::stringstream ss; ss << head;
-        argv_.push_back(ss.str());
+        positional_args_.push_back(ss.str());
+        return Write(std::forward<Tail>(tail)...);
+    }
+
+    template<typename T, typename... Tail>
+    WpaSupplicantMessage& Write(const Named<T>& named, const Tail&... tail) {
+        ThrowIfSealed();
+        std::stringstream ss; ss << named.Value();
+        optional_args_[named.Key()] = ss.str();
         return Write(std::forward<Tail>(tail)...);
     }
 
@@ -70,7 +127,7 @@ public:
     }
 
     template<typename Head, typename... Tail>
-    WpaSupplicantMessage Write(const Head& head, Tail&&... tail) const {
+    WpaSupplicantMessage Write(const Head& head, const Tail&... tail) const {
         WpaSupplicantMessage that{*this};
         return that.Write(head, std::forward<Tail>(tail)...);
     }
@@ -90,67 +147,35 @@ private:
     std::string raw_;
     std::string name_;
     Type type_ = Type::kInvalid;
-    std::vector<std::string> argv_;
-    mutable std::vector<std::string>::iterator iter_ = argv_.begin();
+    std::vector<std::string> positional_args_;
+    std::unordered_map<std::string, std::string> optional_args_;
+    mutable std::vector<std::string>::iterator iter_ = positional_args_.begin();
     bool sealed_ = false;
 };
 
 template<typename V>
-struct Named {
-    operator V() const {
-        return value;
-    }
-
-    std::string key;
-    V value;
-};
-
-template<typename V>
 inline bool operator!=(const Named<V>& lhs, const V& rhs) {
-    return lhs.value != rhs;
+    return lhs.Value() != rhs;
 }
 
 template<typename V>
 inline bool operator!=(const V& lhs, const Named<V>& rhs) {
-    return rhs != lhs;
+    return rhs.Value() != lhs;
 }
 
 template<typename V>
 inline bool operator==(const Named<V>& lhs, const V& rhs) {
-    return lhs.value == rhs;
+    return lhs.Value() == rhs;
 }
 
 template<typename V>
 inline bool operator==(const V& lhs, const Named<V>& rhs) {
-    return rhs == lhs;
-}
-
-template<typename T>
-struct Skip {
-};
-
-template<typename T>
-inline T& skip() {
-    static T t;
-    return t;
+    return rhs.Value() == lhs;
 }
 
 template<typename V>
 inline std::ostream& operator<<(std::ostream& out, const Named<V>& entry) {
-    return out << entry.key << "=" << entry.value;
-}
-
-template<typename V>
-inline std::istream& operator>>(std::istream& in, Named<V>& entry) {
-    std::string s; in >> s;
-    auto pos = s.find("=");
-
-    if (pos != std::string::npos) {
-        entry.key = s.substr(0, pos);
-        std::stringstream sv{s.substr(pos+1)}; sv >> entry.value;
-    }
-
-    return in;
+    return out << entry.Key() << "=" << entry.Value();
 }
 
 template<typename T>
