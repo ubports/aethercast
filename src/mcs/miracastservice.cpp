@@ -32,7 +32,7 @@
 #include "keep_alive.h"
 #include "logger.h"
 #include "miracastservice.h"
-#include "miracastserviceadapter.h"
+#include "miracastcontrollerskeleton.h"
 #include "networkmanagerfactory.h"
 #include "wfddeviceinfo.h"
 #include "types.h"
@@ -156,7 +156,7 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
 
     auto network_manager = mcs::NetworkManagerFactory::Create();
     auto service = mcs::MiracastService::Create(network_manager);
-    auto mcsa = mcs::MiracastServiceAdapter::create(service);
+    auto mcsa = mcs::MiracastControllerSkeleton::create(service);
 
     rt.Run();
 
@@ -190,7 +190,7 @@ MiracastService::~MiracastService() {
         g_source_remove(scan_timeout_source_);
 }
 
-void MiracastService::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+void MiracastService::SetDelegate(const std::weak_ptr<MiracastController::Delegate> &delegate) {
     delegate_ = delegate;
 }
 

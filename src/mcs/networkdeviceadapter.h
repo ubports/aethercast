@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 #include "networkdevice.h"
-#include "miracastservice.h"
+#include "miracastcontroller.h"
 #include "shared_gobject.h"
 
 namespace mcs {
@@ -36,7 +36,7 @@ class NetworkDeviceAdapter : public std::enable_shared_from_this<NetworkDeviceAd
 public:
     typedef std::shared_ptr<NetworkDeviceAdapter> Ptr;
 
-    static NetworkDeviceAdapter::Ptr Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service);
+    static NetworkDeviceAdapter::Ptr Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &controller);
 
     ~NetworkDeviceAdapter();
 
@@ -52,7 +52,7 @@ private:
                                    gpointer user_data);
 
 private:
-    NetworkDeviceAdapter(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastService::Ptr &service);
+    NetworkDeviceAdapter(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &service);
 
     std::shared_ptr<NetworkDeviceAdapter> FinalizeConstruction();
 
@@ -61,7 +61,7 @@ private:
     AethercastInterfaceObjectSkeleton *object_;
     std::string path_;
     NetworkDevice::Ptr device_;
-    MiracastService::Ptr service_;
+    MiracastController::Ptr controller_;
     AethercastInterfaceDevice *device_iface_;
 };
 

@@ -31,20 +31,21 @@ extern "C" {
 
 #include "scoped_gobject.h"
 
-#include "miracastservice.h"
+#include "forwardingmiracastcontroller.h"
 #include "networkdeviceadapter.h"
 
 namespace mcs {
-class MiracastServiceAdapter : public std::enable_shared_from_this<MiracastServiceAdapter>,
-                               public MiracastService::Delegate {
+class MiracastControllerSkeleton : public std::enable_shared_from_this<MiracastControllerSkeleton>,
+                                   public ForwardingMiracastController,
+                                   public MiracastController::Delegate {
 public:
     static constexpr const char *kBusName{"org.aethercast"};
     static constexpr const char *kManagerPath{"/org/aethercast"};
     static constexpr const char *kManagerIface{"org.aethercast.Manager"};
 
-    static std::shared_ptr<MiracastServiceAdapter> create(const std::shared_ptr<MiracastService> &service);
+    static std::shared_ptr<MiracastControllerSkeleton> create(const std::shared_ptr<MiracastController> &controller);
 
-    ~MiracastServiceAdapter();
+    ~MiracastControllerSkeleton();
 
     void OnStateChanged(NetworkDeviceState state) override;
     void OnDeviceFound(const NetworkDevice::Ptr &device) override;
@@ -58,14 +59,14 @@ private:
     static void OnHandleScan(AethercastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                               gpointer user_data);
 
-    MiracastServiceAdapter(const std::shared_ptr<MiracastService> &service);
-    std::shared_ptr<MiracastServiceAdapter> FinalizeConstruction();
+    MiracastControllerSkeleton(const std::shared_ptr<MiracastController> &controller);
+    std::shared_ptr<MiracastControllerSkeleton> FinalizeConstruction();
 
     void SyncProperties();
 
     std::string GenerateDevicePath(const NetworkDevice::Ptr &device) const;
+
 private:
-    std::shared_ptr<MiracastService> service_;
     ScopedGObject<AethercastInterfaceManager> manager_obj_;
     SharedGObject<GDBusConnection> bus_connection_;
     guint bus_id_;
