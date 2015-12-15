@@ -193,7 +193,7 @@ void Application::ForeachDevice(std::function<void(AethercastInterfaceDevice*)> 
     auto objects = g_dbus_object_manager_get_objects(object_manager_);
 
     for (auto obj = objects; obj != nullptr; obj = obj->next) {
-        auto device = AETHERCAST_INTERFACE_DEVICE_PROXY(obj->data);
+        auto device = AETHERCAST_INTERFACE_OBJECT_PROXY(obj->data);
         if (!device)
             continue;
 
