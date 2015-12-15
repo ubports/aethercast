@@ -112,13 +112,13 @@ Application::Application() :
         return;
     }
 
-    g_bus_watch_name_on_connection(bus_connection_, "org.wds",
+    g_bus_watch_name_on_connection(bus_connection_, "org.aethercast",
                                    G_BUS_NAME_WATCHER_FLAGS_NONE,
                                    &Application::OnServiceFound,
                                    &Application::OnServiceLost,
                                    this, nullptr);
 
-    g_dbus_connection_signal_subscribe(bus_connection_, "org.wds", "org.freedesktop.DBus.Properties", "PropertiesChanged", "/org/wds", nullptr,
+    g_dbus_connection_signal_subscribe(bus_connection_, "org.aethercast", "org.freedesktop.DBus.Properties", "PropertiesChanged", "/org/aethercast", nullptr,
                                        G_DBUS_SIGNAL_FLAGS_NONE, &Application::OnManagerPropertiesChanged, this, nullptr);
 
     RegisterCommand(Command { "show", "", "Show manager properties", std::bind(&Application::HandleShowCommand, this, _1) });
@@ -440,7 +440,7 @@ void Application::OnManagerConnected(GObject *object, GAsyncResult *res, gpointe
 
     aethercast_interface_object_manager_client_new(inst->bus_connection_,
                              G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_NONE,
-                             "org.wds", "/org/wds",
+                             "org.aethercast", "/org/aethercast",
                              nullptr, &Application::OnObjectManagerCreated, inst);
 }
 
@@ -487,7 +487,7 @@ void Application::OnManagerPropertiesChanged(GDBusConnection *connection, const 
 void Application::OnDeviceAdded(GDBusObjectManager *manager, GDBusObject *object, gpointer user_data) {
     PromptSaver ps;
 
-    auto iface = g_dbus_object_get_interface(G_DBUS_OBJECT(object), "org.wds.Device");
+    auto iface = g_dbus_object_get_interface(G_DBUS_OBJECT(object), "org.aethercast.Device");
     if (!iface)
         return;
 
@@ -502,7 +502,7 @@ void Application::OnDeviceAdded(GDBusObjectManager *manager, GDBusObject *object
 void Application::OnDeviceRemoved(GDBusObjectManager *manager, GDBusObject *object, gpointer user_data) {
     PromptSaver ps;
 
-    auto iface = g_dbus_object_get_interface(G_DBUS_OBJECT(object), "org.wds.Device");
+    auto iface = g_dbus_object_get_interface(G_DBUS_OBJECT(object), "org.aethercast.Device");
     if (!iface)
         return;
 
