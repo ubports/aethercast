@@ -15,7 +15,7 @@ Scanning for available devices
 Scanning for available devices is performed through the manager
 interface.
 
- $ gdbus call -y -d org.wds -o / -m org.wds.Manager.Scan
+ $ gdbus call -y -d org.aethercast -o / -m org.aethercast.Manager.Scan
 
 The method call will return once the scan is finished (current
 timeout is 30 seconds).
@@ -29,7 +29,7 @@ Connecting a remote device
 For connecting a remote device we have to know its MAC address
 for now until device management API is fully in place.
 
- $ gdbus call -y -d org.wds -o / -m org.wds.Manager.ConnectSink \
+ $ gdbus call -y -d org.aethercast -o / -m org.aethercast.Manager.ConnectSink \
     'aa:bb:cc:dd:ee'
 
 The call either returns with an error or without any return value

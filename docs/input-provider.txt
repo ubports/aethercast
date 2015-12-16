@@ -35,7 +35,7 @@ Input provider hierarchy
 =======================
 
 Service		unique name
-Interface	org.wds.InputProvider
+Interface	org.aethercast.InputProvider
 Object path	freely definable
 
 Methods		void Release()
@@ -48,8 +48,8 @@ Methods		void Release()
 			This methods gets called when a connection to a remote
 			display is established.
 
-			Possible errors: org.wds.Error.Rejected
-			                 org.wds.Error.Canceled
+			Possible errors: org.aethercast.Error.Rejected
+			                 org.aethercast.Error.Canceled
 
 		void RequestDisconnection(object device)
 
@@ -59,8 +59,8 @@ Methods		void Release()
 			daemon and the input provider implementation needs to
 			stop writing to it and close the connection.
 
-			Possible errors: org.wds.Error.Rejected
-			                 org.wds.Error.Canceled
+			Possible errors: org.aethercast.Error.Rejected
+			                 org.aethercast.Error.Canceled
 
 Properties		string Cursor
 

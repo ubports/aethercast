@@ -1,8 +1,8 @@
 Manager hierarchy
 =================
 
-Service		org.wds
-Interface	org.wds.Manager
+Service		org.aethercast
+Interface	org.aethercast.Manager
 Object path	/
 
 Methods		void Scan()
