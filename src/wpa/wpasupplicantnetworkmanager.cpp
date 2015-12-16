@@ -706,8 +706,10 @@ bool WpaSupplicantNetworkManager::Connect(const mcs::NetworkDevice::Ptr &device)
         RequestAsync(WpaSupplicantMessage::CreateRequest("P2P_STOP_FIND"));
     }
 
+    MCS_DEBUG("Now sending connect request to wpa");
+
     auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT") << device->Address() << "pbc";
-    
+
     RequestAsync(m, [&](const WpaSupplicantMessage &message) {
         if (message.IsFail()) {
             AdvanceDeviceState(current_peer_, mcs::kFailure);
