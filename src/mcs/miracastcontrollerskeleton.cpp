@@ -133,19 +133,23 @@ void MiracastControllerSkeleton::OnNameAcquired(GDBusConnection *connection, con
     INFO("Registered bus name %s", name);
 }
 
-void MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *skeleton,
+gboolean MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *skeleton,
                                               GDBusMethodInvocation *invocation, gpointer user_data) {
     boost::ignore_unused_variable_warning(skeleton);
     auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
 
-    if (not inst)
-        return;
+    if (not inst) {
+        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");
+        return TRUE;
+    }
 
     INFO("Scanning for remote devices");
 
     inst->Scan();
 
     g_dbus_method_invocation_return_value(invocation, nullptr);
+
+    return TRUE;
 }
 
 std::shared_ptr<MiracastControllerSkeleton> MiracastControllerSkeleton::FinalizeConstruction() {

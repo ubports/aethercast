@@ -46,9 +46,9 @@ public:
     void SyncProperties();
 
 private:
-    static void OnHandleConnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
+    static gboolean OnHandleConnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
                                 const gchar *role, gpointer user_data);
-    static void OnHandleDisconnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
+    static gboolean OnHandleDisconnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
                                    gpointer user_data);
 
 private:
