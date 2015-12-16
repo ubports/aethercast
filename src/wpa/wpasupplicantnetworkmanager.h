@@ -32,6 +32,7 @@
 
 #include "wpasupplicantmessage.h"
 #include "wpasupplicantcommandqueue.h"
+#include "wpasupplicantnetworkdevice.h"
 #include "wififirmwareloader.h"
 
 class WpaSupplicantNetworkManager : public mcs::NetworkManager,
@@ -75,7 +76,7 @@ private:
     bool CreateSupplicantConfig(const std::string &conf_path);
     void HandleSupplicantFailed();
     void Reset();
-    void AdvanceDeviceState(const mcs::NetworkDevice::Ptr &device, mcs::NetworkDeviceState state);
+    void AdvanceDeviceState(const WpaSupplicantNetworkDevice::Ptr &device, mcs::NetworkDeviceState state);
 
     void OnP2pDeviceFound(WpaSupplicantMessage &message);
     void OnP2pDeviceLost(WpaSupplicantMessage &message);
@@ -101,9 +102,9 @@ private:
     wpa::WiFiFirmwareLoader firmware_loader_;
     std::string ctrl_path_;
     int sock_;
-    std::map<std::string,mcs::NetworkDevice::Ptr> available_devices_;
+    std::map<std::string, WpaSupplicantNetworkDevice::Ptr> available_devices_;
     std::unique_ptr<WpaSupplicantCommandQueue> command_queue_;
-    mcs::NetworkDevice::Ptr current_peer_;
+    WpaSupplicantNetworkDevice::Ptr current_peer_;
     DhcpClient dhcp_client_;
     DhcpServer dhcp_server_;
     GPid supplicant_pid_;

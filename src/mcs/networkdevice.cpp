@@ -51,60 +51,8 @@ std::string NetworkDevice::RoleToStr(NetworkDeviceRole role) {
     return "unknown";
 }
 
-NetworkDevice::NetworkDevice() :
-    state_(kIdle) {
-}
-
-NetworkDevice::~NetworkDevice() {
-}
-
-MacAddress NetworkDevice::Address() const {
-    return address_;
-}
-
-IpV4Address NetworkDevice::IPv4Address() const {
-    return ipv4_address_;
-}
-
-std::string NetworkDevice::Name() const {
-    return name_;
-}
-
-NetworkDeviceState NetworkDevice::State() const {
-    return state_;
-}
-
 bool NetworkDevice::IsConnecting() const {
-    return state_ == kConfiguration ||
-            state_ == kAssociation;
+    return State() == kConfiguration ||
+            State() == kAssociation;
 }
-
-std::string NetworkDevice::StateAsString() const {
-    return StateToStr(state_);
-}
-
-std::vector<NetworkDeviceRole> NetworkDevice::SupportedRoles() const {
-    return supported_roles_;
-}
-
-void NetworkDevice::SetAddress(const MacAddress &address) {
-    address_ = address;
-}
-
-void NetworkDevice::SetIPv4Address(const IpV4Address &address) {
-    ipv4_address_ = address;
-}
-
-void NetworkDevice::SetName(const std::string &name) {
-    name_ = name;
-}
-
-void NetworkDevice::SetState(NetworkDeviceState state) {
-    state_ = state;
-}
-
-void NetworkDevice::SetSupportedRoles(const std::vector<NetworkDeviceRole> roles) {
-    supported_roles_ = roles;
-}
-
 } // namespace mcs

@@ -26,19 +26,19 @@ extern "C" {
 }
 #endif
 
-#include "networkdevice.h"
+#include "forwardingnetworkdevice.h"
 #include "miracastcontroller.h"
+#include "scoped_gobject.h"
 #include "shared_gobject.h"
 
 namespace mcs {
 
-class NetworkDeviceAdapter : public std::enable_shared_from_this<NetworkDeviceAdapter> {
+class NetworkDeviceSkeleton : public std::enable_shared_from_this<NetworkDeviceSkeleton>,
+                              public ForwardingNetworkDevice {
 public:
-    typedef std::shared_ptr<NetworkDeviceAdapter> Ptr;
+    typedef std::shared_ptr<NetworkDeviceSkeleton> Ptr;
 
-    static NetworkDeviceAdapter::Ptr Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &controller);
-
-    ~NetworkDeviceAdapter();
+    static NetworkDeviceSkeleton::Ptr Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &controller);
 
     GDBusObjectSkeleton* DBusObject() const;
     std::string Path() const;
@@ -52,17 +52,16 @@ private:
                                    gpointer user_data);
 
 private:
-    NetworkDeviceAdapter(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &service);
+    NetworkDeviceSkeleton(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &service);
 
-    std::shared_ptr<NetworkDeviceAdapter> FinalizeConstruction();
+    std::shared_ptr<NetworkDeviceSkeleton> FinalizeConstruction();
 
 private:
     SharedGObject<GDBusConnection> connection_;
-    AethercastInterfaceObjectSkeleton *object_;
+    SharedGObject<AethercastInterfaceObjectSkeleton> object_;
     std::string path_;
-    NetworkDevice::Ptr device_;
     MiracastController::Ptr controller_;
-    AethercastInterfaceDevice *device_iface_;
+    ScopedGObject<AethercastInterfaceDevice> device_iface_;
 };
 
 } // namespace mcs
