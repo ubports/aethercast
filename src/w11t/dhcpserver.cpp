@@ -25,6 +25,7 @@
 
 #include "dhcpserver.h"
 
+namespace w11t {
 DhcpServer::DhcpServer(Delegate *delegate, const std::string &interface_name) :
     interface_name_(interface_name) {
     interface_index_ = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
@@ -94,4 +95,5 @@ void DhcpServer::Stop() {
     g_dhcp_server_unref(server_);
 
     mcs::NetworkUtils::ResetInterface(interface_index_);
+}
 }

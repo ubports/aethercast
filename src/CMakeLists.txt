@@ -43,19 +43,19 @@ set(SOURCES
   mcs/dbushelpers.cpp
   mcs/networkdeviceskeleton.cpp
 
-  wpa/gdhcp/common.c
-  wpa/gdhcp/ipv4ll.c
-  wpa/gdhcp/server.c
-  wpa/gdhcp/client.c
-  wpa/dhcpclient.cpp
-  wpa/dhcpserver.cpp
-  wpa/wififirmwareloader.cpp
-  wpa/wfddeviceinfo.cpp
-  wpa/wpasupplicantmessage.cpp
-  wpa/wpasupplicantcommand.cpp
-  wpa/wpasupplicantcommandqueue.cpp
-  wpa/wpasupplicantnetworkdevice.cpp
-  wpa/wpasupplicantnetworkmanager.cpp
+  w11t/gdhcp/common.c
+  w11t/gdhcp/ipv4ll.c
+  w11t/gdhcp/server.c
+  w11t/gdhcp/client.c
+  w11t/dhcpclient.cpp
+  w11t/dhcpserver.cpp
+  w11t/wififirmwareloader.cpp
+  w11t/wfddeviceinfo.cpp
+  w11t/message.cpp
+  w11t/command.cpp
+  w11t/commandqueue.cpp
+  w11t/networkdevice.cpp
+  w11t/networkmanager.cpp
 )
 
 link_directories(
@@ -72,8 +72,7 @@ include_directories(
   ${GIO-UNIX_INCLUDE_DIRS}
   ${GST_INCLUDE_DIRS}
   ${WDS_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/wpa
-  ${CMAKE_CURRENT_SOURCE_DIR}/wpa/gdhcp
+  ${CMAKE_CURRENT_SOURCE_DIR}/w11t/gdhcp
   ${CMAKE_CURRENT_BINARY_DIR}/src
 )
 

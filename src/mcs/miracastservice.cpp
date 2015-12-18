@@ -34,9 +34,10 @@
 #include "miracastservice.h"
 #include "miracastcontrollerskeleton.h"
 #include "networkmanagerfactory.h"
-#include "wfddeviceinfo.h"
 #include "types.h"
 #include "logging.h"
+
+#include <w11t/wfddeviceinfo.h>
 
 namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.

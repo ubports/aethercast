@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <vector>
 
+namespace w11t {
 template<typename V>
 class Named {
 public:
@@ -62,10 +63,10 @@ inline T& skip() {
     return t;
 }
 
-class WpaSupplicantMessage {
+class Message {
 public:
-    static WpaSupplicantMessage CreateRequest(const std::string &Name);
-    static WpaSupplicantMessage Parse(const std::string &payload);
+    static Message CreateRequest(const std::string &Name);
+    static Message Parse(const std::string &payload);
 
     enum class Type {
         kInvalid = 0,
@@ -81,12 +82,12 @@ public:
     bool IsOk() const;
     bool IsFail() const;    
 
-    const WpaSupplicantMessage& Read() const {
+    const Message& Read() const {
         return *this;
     }
 
     template<typename T, typename... Tail>
-    const WpaSupplicantMessage& Read(Named<T>& named, Tail&&... tail) const {
+    const Message& Read(Named<T>& named, Tail&&... tail) const {
         auto it = optional_args_.find(named.Key());
         if (it != optional_args_.end()) {
             std::stringstream ss{it->second}; ss >> named.Value();
@@ -95,19 +96,19 @@ public:
     }
 
     template<typename Head, typename... Tail>
-    const WpaSupplicantMessage& Read(Head& head, Tail&&... tail) const {
+    const Message& Read(Head& head, Tail&&... tail) const {
         ThrowIfAtEnd();
         std::stringstream ss{*iter_}; ss >> head;
         ++iter_;
         return Read(std::forward<Tail>(tail)...);
     }
 
-    WpaSupplicantMessage& Write() {
+    Message& Write() {
         return *this;
     }
 
     template<typename Head, typename... Tail>
-    WpaSupplicantMessage& Write(const Head& head, const Tail&... tail) {
+    Message& Write(const Head& head, const Tail&... tail) {
         ThrowIfSealed();
         std::stringstream ss; ss << head;
         positional_args_.push_back(ss.str());
@@ -115,20 +116,20 @@ public:
     }
 
     template<typename T, typename... Tail>
-    WpaSupplicantMessage& Write(const Named<T>& named, const Tail&... tail) {
+    Message& Write(const Named<T>& named, const Tail&... tail) {
         ThrowIfSealed();
         std::stringstream ss; ss << named.Value();
         optional_args_[named.Key()] = ss.str();
         return Write(std::forward<Tail>(tail)...);
     }
 
-    WpaSupplicantMessage Write() const {
+    Message Write() const {
         return *this;
     }
 
     template<typename Head, typename... Tail>
-    WpaSupplicantMessage Write(const Head& head, const Tail&... tail) const {
-        WpaSupplicantMessage that{*this};
+    Message Write(const Head& head, const Tail&... tail) const {
+        Message that{*this};
         return that.Write(head, std::forward<Tail>(tail)...);
     }
 
@@ -138,7 +139,7 @@ public:
     const std::string& Raw() const;
 
 private:
-    WpaSupplicantMessage() = default;
+    Message() = default;
 
     void ThrowIfAtEnd() const;
     void ThrowIfSealed() const;
@@ -190,13 +191,13 @@ inline std::istream& operator>>(std::istream& in, Skip<T>) {
 }
 
 template<typename T>
-inline WpaSupplicantMessage& operator<<(WpaSupplicantMessage &msg, const T& field) {
+inline Message& operator<<(Message &msg, const T& field) {
     return msg.Write(field);
 }
 
 template<typename T>
-inline WpaSupplicantMessage operator<<(const WpaSupplicantMessage &msg, const T& field) {
+inline Message operator<<(const Message &msg, const T& field) {
     return msg.Write(field);
 }
-
+}
 #endif

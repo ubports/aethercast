@@ -23,7 +23,7 @@
 
 #include "wififirmwareloader.h"
 
-namespace wpa {
+namespace w11t {
 
 WiFiFirmwareLoader::WiFiFirmwareLoader(const std::string &interface_name, Delegate *delegate) :
     interface_name_(interface_name),

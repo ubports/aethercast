@@ -27,6 +27,7 @@
 
 #include "gdhcp.h"
 
+namespace w11t {
 class DhcpServer {
 public:
     class Delegate : private mcs::NonCopyable {
@@ -53,5 +54,5 @@ private:
     int interface_index_;
     GDHCPServer *server_;
 };
-
+}
 #endif

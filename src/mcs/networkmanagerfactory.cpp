@@ -18,7 +18,8 @@
 #include <boost/concept_check.hpp>
 
 #include "networkmanagerfactory.h"
-#include "wpasupplicantnetworkmanager.h"
+
+#include <w11t/networkmanager.h>
 
 namespace mcs {
 
@@ -27,7 +28,7 @@ NetworkManager::Ptr NetworkManagerFactory::Create(const std::string &type) {
 
     // FIXME for now we only can create the wpa one but this will be extended
     // with further types.
-    return std::make_shared<WpaSupplicantNetworkManager>();
+    return std::make_shared<w11t::NetworkManager>();
 }
 
 } // namespace mcs
