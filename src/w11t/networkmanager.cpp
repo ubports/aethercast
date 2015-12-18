@@ -704,6 +704,7 @@ bool NetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
         RequestAsync(Message::CreateRequest("P2P_STOP_FIND"));
     }
 
+    MCS_DEBUG("Now sending connect request to wpa");
     auto m = Message::CreateRequest("P2P_CONNECT") << device->Address() << "pbc";
     
     RequestAsync(m, [&](const Message &message) {

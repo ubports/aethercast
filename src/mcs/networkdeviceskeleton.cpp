@@ -82,7 +82,7 @@ std::string NetworkDeviceSkeleton::Path() const {
 // implement the connect/disconnect calls coming in via the bus. The complication then is the async handling of
 // the invocation, as we will likely have to reach out to WPASupplicant for example (which is dispatched via the same
 // event loop as we are). In addition, we should not start littering our public interfaces by handing down callbacks.
-void NetworkDeviceSkeleton::OnHandleConnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
+gboolean NetworkDeviceSkeleton::OnHandleConnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
                                            const gchar *role, gpointer user_data)
 {
     boost::ignore_unused_variable_warning(skeleton);
@@ -90,8 +90,10 @@ void NetworkDeviceSkeleton::OnHandleConnect(AethercastInterfaceDevice *skeleton,
 
     auto inst = static_cast<WeakKeepAlive<NetworkDeviceSkeleton>*>(user_data)->GetInstance().lock();
 
-    if (not inst)
-        return;
+    if (not inst) {
+        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");
+        return TRUE;
+    }
 
     g_object_ref(invocation);
     auto inv = make_shared_gobject(invocation);
@@ -105,17 +107,21 @@ void NetworkDeviceSkeleton::OnHandleConnect(AethercastInterfaceDevice *skeleton,
 
         g_dbus_method_invocation_return_value(inv.get(), nullptr);
     });
+
+    return TRUE;
 }
 
-void NetworkDeviceSkeleton::OnHandleDisconnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
-                                              gpointer user_data)
+gboolean NetworkDeviceSkeleton::OnHandleDisconnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
+                                                   gpointer user_data)
 {
     boost::ignore_unused_variable_warning(skeleton);
 
     auto inst = static_cast<WeakKeepAlive<NetworkDeviceSkeleton>*>(user_data)->GetInstance().lock();
 
-    if (not inst)
-        return;
+    if (not inst) {
+        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");
+        return TRUE;
+    }
 
     g_object_ref(invocation);
     auto inv = make_shared_gobject(invocation);
@@ -129,6 +135,8 @@ void NetworkDeviceSkeleton::OnHandleDisconnect(AethercastInterfaceDevice *skelet
 
         g_dbus_method_invocation_return_value(inv.get(), nullptr);
     });
+
+    return TRUE;
 }
 
 } // namespace mcs

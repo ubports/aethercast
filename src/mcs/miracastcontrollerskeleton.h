@@ -56,8 +56,8 @@ public:
 private:
     static void OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data);
 
-    static void OnHandleScan(AethercastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
-                              gpointer user_data);
+    static gboolean OnHandleScan(AethercastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
+                                 gpointer user_data);
 
     MiracastControllerSkeleton(const std::shared_ptr<MiracastController> &controller);
     std::shared_ptr<MiracastControllerSkeleton> FinalizeConstruction();

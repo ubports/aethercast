@@ -1,8 +1,8 @@
 Device hierarchy
 ================
 
-Service		org.wds
-Interface	org.wds.Device
+Service		org.aethercast
+Interface	org.aethercast.Device
 Object path	/dev_*
 
 Methods		void Connect()
@@ -10,10 +10,10 @@ Methods		void Connect()
 			This method will try to connect with the remote
 			display device.
 
-			Possible errors: org.wds.Error.NotReady
-					  org.wds.Error.Failed
-					  org.wds.Error.InProgress
-					  org.wds.Error.AlreadyConnected
+			Possible errors: org.aethercast.Error.NotReady
+					  org.aethercast.Error.Failed
+					  org.aethercast.Error.InProgress
+					  org.aethercast.Error.AlreadyConnected
 
 		void Disconnect()
 
@@ -23,7 +23,7 @@ Methods		void Connect()
 			It can also be used to cancel a preceding Connect
 			call before a reply to it has been received.
 
-			Possible errors: org.wds.Error.NotConnected
+			Possible errors: org.aethercast.Error.NotConnected
 
 
 Properties		string State [readonly]

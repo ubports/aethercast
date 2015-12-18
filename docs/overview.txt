@@ -4,7 +4,7 @@ DBus API Overview
 The service implements a top level manager object at / which implements
 the following interfaces:
 
- - org.wds.Manager
+ - org.aethercast.Manager
  - org.freedesktop.DBus.ObjectManager
  - org.freedesktop.DBus.Properties
 
@@ -21,7 +21,7 @@ through the ObjectManager interface.
 
 Each device object will implement the following interfaces:
 
- - org.wds.Device
+ - org.aethercast.Device
  - org.freedesktop.DBus.Properties
 
 API Versioning
@@ -30,6 +30,6 @@ API Versioning
 After the API is considered stable we will gurantee it will not break.
 If breaking changes are introduced this will be reflected in the major
 version of the service being increased and the interface being appened
-with a increasing number. For example if the org.wds.Device interface
+with a increasing number. For example if the org.aethercast.Device interface
 is changed in a breaking way a new interface will be defined with the
-name org.wds.Device1 to reflect the API breakage.
+name org.aethercast.Device1 to reflect the API breakage.
