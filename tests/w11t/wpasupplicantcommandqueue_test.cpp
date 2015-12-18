@@ -21,7 +21,7 @@
 
 #include <memory>
 
-#include <wpa/wpasupplicantcommandqueue.h>
+#include <w11t/commandqueue.h>
 
 using ::testing::AtLeast;
 using ::testing::_;
@@ -33,29 +33,29 @@ static void RunMainLoopIteration() {
     g_main_context_iteration(context, TRUE);
 }
 
-class MockWpaSupplicantCommandQueueDelegate : public WpaSupplicantCommandQueue::Delegate {
+class CommandQueueDelegate : public w11t::CommandQueue::Delegate {
 public:
-    MOCK_METHOD1(OnUnsolicitedResponse, void(WpaSupplicantMessage message));
-    MOCK_METHOD1(OnWriteMessage, void(WpaSupplicantMessage message));
+    MOCK_METHOD1(OnUnsolicitedResponse, void(w11t::Message message));
+    MOCK_METHOD1(OnWriteMessage, void(w11t::Message message));
 };
 
-struct WpaSupplicantCommandQueueFixture : public ::testing::Test {
-    void CycleAndRespond(WpaSupplicantCommandQueue &queue, const std::string &data) {
+struct CommandQueueFixture : public ::testing::Test {
+    void CycleAndRespond(w11t::CommandQueue &queue, const std::string &data) {
         RunMainLoopIteration();
-        auto m = WpaSupplicantMessage::Parse(data);
+        auto m = w11t::Message::Parse(data);
         queue.HandleMessage(m);
     }
 };
 }
 
-TEST_F(WpaSupplicantCommandQueueFixture, MessageIsWrittenOut) {
-    MockWpaSupplicantCommandQueueDelegate mock;
+TEST_F(CommandQueueFixture, MessageIsWrittenOut) {
+    CommandQueueDelegate mock;
     EXPECT_CALL(mock, OnWriteMessage(_))
             .Times(AtLeast(1));
 
-    WpaSupplicantCommandQueue queue(&mock);
-    auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
-    queue.EnqueueCommand(m, [=](const WpaSupplicantMessage &msg) {
+    w11t::CommandQueue queue(&mock);
+    auto m = w11t::Message::CreateRequest("P2P_CONNECT");
+    queue.EnqueueCommand(m, [=](const w11t::Message &msg) {
         EXPECT_TRUE(msg.IsOk());
     });
 
@@ -63,20 +63,20 @@ TEST_F(WpaSupplicantCommandQueueFixture, MessageIsWrittenOut) {
 }
 
 
-TEST_F(WpaSupplicantCommandQueueFixture, MultipeMessagesWrittenOut) {
-    MockWpaSupplicantCommandQueueDelegate mock;
+TEST_F(CommandQueueFixture, MultipeMessagesWrittenOut) {
+    CommandQueueDelegate mock;
     EXPECT_CALL(mock, OnWriteMessage(_))
             .Times(AtLeast(2));
 
-    WpaSupplicantCommandQueue queue(&mock);
+    w11t::CommandQueue queue(&mock);
 
-    auto m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
-    queue.EnqueueCommand(m, [=](const WpaSupplicantMessage &msg) {
+    auto m = w11t::Message::CreateRequest("P2P_CONNECT");
+    queue.EnqueueCommand(m, [=](const w11t::Message &msg) {
         EXPECT_TRUE(msg.IsOk());
     });
 
-    m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
-    queue.EnqueueCommand(m, [=](const WpaSupplicantMessage &msg) {
+    m = w11t::Message::CreateRequest("P2P_CONNECT");
+    queue.EnqueueCommand(m, [=](const w11t::Message &msg) {
             EXPECT_TRUE(msg.IsFail());
     });
 
@@ -86,23 +86,23 @@ TEST_F(WpaSupplicantCommandQueueFixture, MultipeMessagesWrittenOut) {
 }
 
 
-TEST(WpaSupplicantCommandQueue, UnsolicitedResponseIsNotified) {
-    MockWpaSupplicantCommandQueueDelegate mock;
+TEST(CommandQueue, UnsolicitedResponseIsNotified) {
+    CommandQueueDelegate mock;
     EXPECT_CALL(mock, OnUnsolicitedResponse(_))
             .Times(AtLeast(1));
 
-    WpaSupplicantCommandQueue queue(&mock);
+    w11t::CommandQueue queue(&mock);
 
-    auto m = WpaSupplicantMessage::Parse("<3> P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1");
+    auto m = w11t::Message::Parse("<3> P2P-DEVICE-LOST p2p_dev_addr=4e:74:03:70:e2:c1");
     queue.HandleMessage(m);
 }
 
-TEST(WpaSupplicantCommandQueue, InvalidMessageNotHandled) {
-    MockWpaSupplicantCommandQueueDelegate mock;
+TEST(CommandQueue, InvalidMessageNotHandled) {
+    CommandQueueDelegate mock;
     EXPECT_CALL(mock, OnUnsolicitedResponse(_))
             .Times(AtLeast(0));
 
-    WpaSupplicantCommandQueue queue(&mock);
-    auto m = WpaSupplicantMessage::Parse("foobar");
+    w11t::CommandQueue queue(&mock);
+    auto m = w11t::Message::Parse("foobar");
     queue.HandleMessage(m);
 }

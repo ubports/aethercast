@@ -15,9 +15,22 @@
  *
  */
 
-#include "wpasupplicantcommand.h"
+#include <gmock/gmock.h>
 
-WpaSupplicantCommand::WpaSupplicantCommand(const WpaSupplicantMessage &message, ResponseCallback callback) :
-    message(message),
-    callback(callback) {
+#include "mock_network_device.h"
+
+using namespace testing;
+
+TEST(NetworkDevice, IsConnectingReturnsTrueForConfiguration) {
+    testing::MockNetworkDevice mnd;
+
+    EXPECT_CALL(mnd, State()).Times(AtLeast(1)).WillRepeatedly(Return(mcs::NetworkDeviceState::kConfiguration));
+    EXPECT_TRUE(mnd.IsConnecting());
+}
+
+TEST(NetworkDevice, IsConnectingReturnsTrueForAssociation) {
+    testing::MockNetworkDevice mnd;
+
+    EXPECT_CALL(mnd, State()).Times(AtLeast(1)).WillRepeatedly(Return(mcs::NetworkDeviceState::kAssociation));
+    EXPECT_TRUE(mnd.IsConnecting());
 }

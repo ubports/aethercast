@@ -30,17 +30,19 @@
 #include "dhcpclient.h"
 #include "dhcpserver.h"
 
-#include "wpasupplicantmessage.h"
-#include "wpasupplicantcommandqueue.h"
+#include "message.h"
+#include "commandqueue.h"
+#include "networkdevice.h"
 #include "wififirmwareloader.h"
 
-class WpaSupplicantNetworkManager : public mcs::NetworkManager,
-                                    public WpaSupplicantCommandQueue::Delegate,
+namespace w11t {
+class NetworkManager : public mcs::NetworkManager,
+                                    public CommandQueue::Delegate,
                                     public DhcpClient::Delegate,
-                                    public wpa::WiFiFirmwareLoader::Delegate {
+                                    public w11t::WiFiFirmwareLoader::Delegate {
 public:
-    WpaSupplicantNetworkManager();
-    ~WpaSupplicantNetworkManager();
+    NetworkManager();
+    ~NetworkManager();
 
     void SetDelegate(mcs::NetworkManager::Delegate *delegate) override;
 
@@ -58,8 +60,8 @@ public:
     bool Scanning() const override;
     std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
 
-    void OnUnsolicitedResponse(WpaSupplicantMessage message);
-    void OnWriteMessage(WpaSupplicantMessage message);
+    void OnUnsolicitedResponse(Message message);
+    void OnWriteMessage(Message message);
 
     void OnAddressAssigned(const mcs::IpV4Address &address);
 
@@ -71,20 +73,20 @@ private:
     void StopSupplicant();
     bool ConnectSupplicant();
     void DisconnectSupplicant();
-    void RequestAsync(const WpaSupplicantMessage &message, std::function<void(WpaSupplicantMessage)> callback = nullptr);
+    void RequestAsync(const Message &message, std::function<void(Message)> callback = nullptr);
     bool CreateSupplicantConfig(const std::string &conf_path);
     void HandleSupplicantFailed();
     void Reset();
-    void AdvanceDeviceState(const mcs::NetworkDevice::Ptr &device, mcs::NetworkDeviceState state);
+    void AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::NetworkDeviceState state);
 
-    void OnP2pDeviceFound(WpaSupplicantMessage &message);
-    void OnP2pDeviceLost(WpaSupplicantMessage &message);
-    void OnP2pGroupStarted(WpaSupplicantMessage &message);
-    void OnP2pGroupRemoved(WpaSupplicantMessage &message);
-    void OnP2pGoNegFailure(WpaSupplicantMessage &message);
-    void OnP2pFindStopped(WpaSupplicantMessage &message);
-    void OnApStaConnected(WpaSupplicantMessage &message);
-    void OnApStaDisconnected(WpaSupplicantMessage &message);
+    void OnP2pDeviceFound(Message &message);
+    void OnP2pDeviceLost(Message &message);
+    void OnP2pGroupStarted(Message &message);
+    void OnP2pGroupRemoved(Message &message);
+    void OnP2pGoNegFailure(Message &message);
+    void OnP2pFindStopped(Message &message);
+    void OnApStaConnected(Message &message);
+    void OnApStaDisconnected(Message &message);
 
     static gboolean OnConnectSupplicant(gpointer user_data);
     static void OnSupplicantWatch(GPid pid, gint status, gpointer user_data);
@@ -96,14 +98,14 @@ private:
     static void OnSupplicantProcessSetup(gpointer user_data);
 
 private:
-    NetworkManager::Delegate *delegate_;
+    mcs::NetworkManager::Delegate *delegate_;
     std::string interface_name_;
-    wpa::WiFiFirmwareLoader firmware_loader_;
+    w11t::WiFiFirmwareLoader firmware_loader_;
     std::string ctrl_path_;
     int sock_;
-    std::map<std::string,mcs::NetworkDevice::Ptr> available_devices_;
-    std::unique_ptr<WpaSupplicantCommandQueue> command_queue_;
-    mcs::NetworkDevice::Ptr current_peer_;
+    std::map<std::string, NetworkDevice::Ptr> available_devices_;
+    std::unique_ptr<CommandQueue> command_queue_;
+    NetworkDevice::Ptr current_peer_;
     DhcpClient dhcp_client_;
     DhcpServer dhcp_server_;
     GPid supplicant_pid_;
@@ -115,5 +117,5 @@ private:
     bool is_group_owner_;
     bool scanning_;
 };
-
+}
 #endif

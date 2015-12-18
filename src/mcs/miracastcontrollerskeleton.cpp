@@ -86,8 +86,8 @@ void MiracastControllerSkeleton::OnDeviceFound(const NetworkDevice::Ptr &device)
     DEBUG("device %s", device->Address().c_str());
 
     auto path = GenerateDevicePath(device);
-    auto adapter = NetworkDeviceAdapter::Create(bus_connection_, path , device, shared_from_this());
-    devices_.insert(std::pair<std::string,NetworkDeviceAdapter::Ptr>(device->Address(), adapter));
+    auto adapter = NetworkDeviceSkeleton::Create(bus_connection_, path , device, shared_from_this());
+    devices_.insert(std::pair<std::string,NetworkDeviceSkeleton::Ptr>(device->Address(), adapter));
 
     g_dbus_object_manager_server_export(object_manager_.get(), adapter->DBusObject());
 }

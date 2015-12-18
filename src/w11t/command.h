@@ -15,20 +15,23 @@
  *
  */
 
-#include <boost/concept_check.hpp>
+#ifndef WPASUPPLICANTCOMMAND_H_
+#define WPASUPPLICANTCOMMAND_H_
 
-#include "networkmanagerfactory.h"
+#include <string>
+#include <functional>
 
-#include <w11t/networkmanager.h>
+#include "message.h"
 
-namespace mcs {
+namespace w11t {
+class Command {
+public:
+    typedef std::function<void(Message)> ResponseCallback;
 
-NetworkManager::Ptr NetworkManagerFactory::Create(const std::string &type) {
-    boost::ignore_unused_variable_warning(type);
+    Command(const Message &message, ResponseCallback callback);
 
-    // FIXME for now we only can create the wpa one but this will be extended
-    // with further types.
-    return std::make_shared<w11t::NetworkManager>();
+    Message message;
+    ResponseCallback callback;
+};
 }
-
-} // namespace mcs
+#endif

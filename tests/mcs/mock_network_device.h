@@ -15,20 +15,21 @@
  *
  */
 
-#include <boost/concept_check.hpp>
+#ifndef MOCK_NETWORK_DEVICE_H_
+#define MOCK_NETWORK_DEVICE_H_
 
-#include "networkmanagerfactory.h"
+#include <gmock/gmock.h>
 
-#include <w11t/networkmanager.h>
+#include <mcs/networkdevice.h>
 
-namespace mcs {
-
-NetworkManager::Ptr NetworkManagerFactory::Create(const std::string &type) {
-    boost::ignore_unused_variable_warning(type);
-
-    // FIXME for now we only can create the wpa one but this will be extended
-    // with further types.
-    return std::make_shared<w11t::NetworkManager>();
+namespace testing {
+struct MockNetworkDevice : public mcs::NetworkDevice {
+    MOCK_CONST_METHOD0(Address, mcs::MacAddress());
+    MOCK_CONST_METHOD0(IPv4Address, mcs::IpV4Address());
+    MOCK_CONST_METHOD0(Name, std::string());
+    MOCK_CONST_METHOD0(State, mcs::NetworkDeviceState());
+    MOCK_CONST_METHOD0(SupportedRoles, std::vector<mcs::NetworkDeviceRole>());
+};
 }
 
-} // namespace mcs
+#endif

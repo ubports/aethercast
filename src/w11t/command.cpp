@@ -15,22 +15,11 @@
  *
  */
 
-#ifndef WPASUPPLICANTCOMMAND_H_
-#define WPASUPPLICANTCOMMAND_H_
+#include "command.h"
 
-#include <string>
-#include <functional>
-
-#include "wpasupplicantmessage.h"
-
-class WpaSupplicantCommand {
-public:
-    typedef std::function<void(WpaSupplicantMessage)> ResponseCallback;
-
-    WpaSupplicantCommand(const WpaSupplicantMessage &message, ResponseCallback callback);
-
-    WpaSupplicantMessage message;
-    ResponseCallback callback;
-};
-
-#endif
+namespace w11t {
+Command::Command(const Message &message, ResponseCallback callback) :
+    message(message),
+    callback(callback) {
+}
+}

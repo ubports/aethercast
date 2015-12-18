@@ -58,7 +58,7 @@ public:
     virtual bool Scanning() const = 0;
 
 protected:
-
+    MiracastController() = default;
 };
 } // namespace mcs
 #endif

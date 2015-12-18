@@ -32,7 +32,7 @@ extern "C" {
 #include "scoped_gobject.h"
 
 #include "forwardingmiracastcontroller.h"
-#include "networkdeviceadapter.h"
+#include "networkdeviceskeleton.h"
 
 namespace mcs {
 class MiracastControllerSkeleton : public std::enable_shared_from_this<MiracastControllerSkeleton>,
@@ -71,7 +71,7 @@ private:
     SharedGObject<GDBusConnection> bus_connection_;
     guint bus_id_;
     ScopedGObject<GDBusObjectManagerServer> object_manager_;
-    std::unordered_map<std::string,NetworkDeviceAdapter::Ptr> devices_;
+    std::unordered_map<std::string,NetworkDeviceSkeleton::Ptr> devices_;
 };
 } // namespace mcs
 #endif

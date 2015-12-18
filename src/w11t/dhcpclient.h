@@ -15,48 +15,49 @@
  *
  */
 
-#ifndef WPASUPPLICANTCOMMANDQUEUE_H_
-#define WPASUPPLICANTCOMMANDQUEUE_H_
+#ifndef DHCPCLIENT_H_
+#define DHCPCLIENT_H_
 
 #include <boost/noncopyable.hpp>
 
 #include <string>
-#include <queue>
 
+#include <mcs/ip_v4_address.h>
 #include <mcs/non_copyable.h>
 
-#include "wpasupplicantcommand.h"
+#include <gdhcp.h>
 
-class WpaSupplicantCommandQueue {
+namespace w11t {
+class DhcpClient {
 public:
     class Delegate : private mcs::NonCopyable {
     public:
-        virtual void OnUnsolicitedResponse(WpaSupplicantMessage message) = 0;
-        virtual void OnWriteMessage(WpaSupplicantMessage message) = 0;
+        virtual void OnAddressAssigned(const mcs::IpV4Address &address) = 0;
 
     protected:
         Delegate() = default;
     };
 
-    WpaSupplicantCommandQueue(Delegate *delegate);
-    ~WpaSupplicantCommandQueue();
+    DhcpClient(Delegate *delegate, const std::string &interface_name);
+    ~DhcpClient();
 
-    void EnqueueCommand(const WpaSupplicantMessage &message, WpaSupplicantCommand::ResponseCallback callback = nullptr);
-    void HandleMessage(WpaSupplicantMessage message);
+    bool Start();
+    void Stop();
 
-private:
-    void RestartQueue();
-    void CheckRestartingQueue();
-    void WriteNextCommand();
+    mcs::IpV4Address LocalAddress() const;
 
 private:
-    static gboolean OnRestartQueue(gpointer user_data);
+    static void OnClientDebug(const char *str, gpointer user_data);
+    static void OnLeaseAvailable(GDHCPClient *client, gpointer user_data);
 
 private:
     Delegate *delegate_;
-    WpaSupplicantCommand *current_;
-    std::queue<WpaSupplicantCommand*> queue_;
-    unsigned int idle_source_;
+    std::string interface_name_;
+    int interface_index_;
+    GDHCPClient *client_;
+    mcs::IpV4Address local_address_;
+    std::string netmask_;
 };
+}
 
 #endif

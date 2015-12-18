@@ -25,6 +25,7 @@ namespace {
 constexpr const unsigned int kWfdDeviceInfoLength = 14;
 }
 
+namespace w11t {
 std::ostream& operator<<(std::ostream &out, WfdDeviceType type) {
     switch (type) {
     case WfdDeviceType::kSource:
@@ -69,4 +70,5 @@ bool WfdDeviceInfo::IsSupportedSink() const {
 
 bool WfdDeviceInfo::IsSupportedSource() const {
     return device_type_ == WfdDeviceType::kSource || device_type_ == WfdDeviceType::kSourceOrPrimarySink;
+}
 }

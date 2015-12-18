@@ -19,10 +19,11 @@
 
 #include <mcs/utils.h>
 
-#include "wpasupplicantmessage.h"
+#include "message.h"
 
-WpaSupplicantMessage WpaSupplicantMessage::CreateRequest(const std::string &name) {
-    WpaSupplicantMessage m;
+namespace w11t {
+Message Message::CreateRequest(const std::string &name) {
+    Message m;
 
     m.type_ = Type::kRequest;
     m.name_ = name;
@@ -30,8 +31,8 @@ WpaSupplicantMessage WpaSupplicantMessage::CreateRequest(const std::string &name
     return m;
 }
 
-WpaSupplicantMessage WpaSupplicantMessage::Parse(const std::string &payload) {
-    WpaSupplicantMessage m;
+Message Message::Parse(const std::string &payload) {
+    Message m;
 
     if (payload.length() == 0) {
         m.type_ = Type::kInvalid;
@@ -69,40 +70,40 @@ WpaSupplicantMessage WpaSupplicantMessage::Parse(const std::string &payload) {
     return m;
 }
 
-const std::string& WpaSupplicantMessage::Name() const {
+const std::string& Message::Name() const {
     return name_;
 }
 
-WpaSupplicantMessage::Type WpaSupplicantMessage::ItsType() const {
+Message::Type Message::ItsType() const {
     return type_;
 }
 
-bool WpaSupplicantMessage::Sealed() const {
+bool Message::Sealed() const {
     return sealed_;
 }
 
-bool WpaSupplicantMessage::IsOk() const {
+bool Message::IsOk() const {
     return type_ == Type::kReply && raw_ == "OK";
 }
 
-bool WpaSupplicantMessage::IsFail() const {
+bool Message::IsFail() const {
     return type_ == Type::kReply && raw_ == "FAIL";
 }
 
-void WpaSupplicantMessage::Rewind() {
+void Message::Rewind() {
     iter_ = positional_args_.begin();
 }
 
-void WpaSupplicantMessage::Seal() {
+void Message::Seal() {
     raw_ = Dump();
     sealed_ = true;
 }
 
-const std::string& WpaSupplicantMessage::Raw() const {
+const std::string& Message::Raw() const {
     return raw_;
 }
 
-std::string WpaSupplicantMessage::Dump() const {
+std::string Message::Dump() const {
     std::stringstream ss; ss << name_;
     for (const auto& arg : positional_args_) {
         ss << " " << arg;
@@ -113,14 +114,15 @@ std::string WpaSupplicantMessage::Dump() const {
     return ss.str();
 }
 
-void WpaSupplicantMessage::ThrowIfAtEnd() const {
+void Message::ThrowIfAtEnd() const {
     if (iter_ == positional_args_.end()) {
         throw std::out_of_range{"WpaSupplicantMessage: No more argument to extract"};
     }
 }
 
-void WpaSupplicantMessage::ThrowIfSealed() const {
+void Message::ThrowIfSealed() const {
     if (sealed_) {
         throw std::logic_error{"WpaSupplicantMessage: Cannot append data to sealed message."};
     }
+}
 }

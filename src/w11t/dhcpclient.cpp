@@ -26,6 +26,7 @@
 #include "dhcpclient.h"
 #include "gdhcp.h"
 
+namespace w11t {
 DhcpClient::DhcpClient(Delegate *delegate, const std::string &interface_name) :
     delegate_(delegate),
     interface_name_(interface_name) {
@@ -97,4 +98,5 @@ void DhcpClient::Stop() {
     netmask_ = "";
 
     mcs::NetworkUtils::ResetInterface(interface_index_);
+}
 }

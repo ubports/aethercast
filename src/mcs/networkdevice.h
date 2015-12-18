@@ -24,6 +24,7 @@
 
 #include "ip_v4_address.h"
 #include "mac_address.h"
+#include "non_copyable.h"
 
 namespace mcs {
 enum NetworkDeviceState {
@@ -40,37 +41,23 @@ enum NetworkDeviceRole {
     kSink
 };
 
-class NetworkDevice {
+class NetworkDevice : public NonCopyable {
 public:
     typedef std::shared_ptr<NetworkDevice> Ptr;
 
     static std::string StateToStr(NetworkDeviceState state);
     static std::string RoleToStr(NetworkDeviceRole role);
 
-    NetworkDevice();
-    ~NetworkDevice();
-
-    MacAddress Address() const;
-    IpV4Address IPv4Address() const;
-    std::string Name() const;
-    NetworkDeviceState State() const;
-    std::string StateAsString() const;
-    std::vector<NetworkDeviceRole> SupportedRoles() const;
+    virtual MacAddress Address() const = 0;
+    virtual IpV4Address IPv4Address() const = 0;
+    virtual std::string Name() const = 0;
+    virtual NetworkDeviceState State() const = 0;
+    virtual std::vector<NetworkDeviceRole> SupportedRoles() const = 0;
 
     bool IsConnecting() const;
 
-    void SetAddress(const MacAddress &address);
-    void SetIPv4Address(const IpV4Address &Address);
-    void SetName(const std::string &name);
-    void SetState(NetworkDeviceState state);
-    void SetSupportedRoles(const std::vector<NetworkDeviceRole> roles);
-
-private:
-    std::string name_;
-    std::string address_;
-    IpV4Address ipv4_address_;
-    NetworkDeviceState state_;
-    std::vector<NetworkDeviceRole> supported_roles_;
+protected:
+    NetworkDevice() = default;
 };
 } // namespace mcs
 #endif
