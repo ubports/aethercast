@@ -111,7 +111,7 @@ gboolean NetworkDeviceSkeleton::OnHandleConnect(AethercastInterfaceDevice *skele
     return TRUE;
 }
 
-gboolean NetworkDeviceAdapter::OnHandleDisconnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
+gboolean NetworkDeviceSkeleton::OnHandleDisconnect(AethercastInterfaceDevice *skeleton, GDBusMethodInvocation *invocation,
                                                   gpointer user_data)
 {
     boost::ignore_unused_variable_warning(skeleton);
