@@ -10,15 +10,34 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src
 )
 
+macro(AETHERCAST_ADD_TEST test_name src)
+  add_executable(
+    ${test_name}
+    ${src})
+
+  target_link_libraries(
+    ${test_name}
+
+    aethercast-core
+
+    gmock
+    gmock_main
+
+    process-cpp
+
+    ${ARGN}
+
+    ${Boost_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+
+  add_test(${test_name} ${CMAKE_CURRENT_BINARY_DIR}/${test_name} --gtest_filter=*-*requires*)
+endmacro(AETHERCAST_ADD_TEST)
+
 add_subdirectory(3rd_party/process-cpp-minimal)
 
-add_executable(utilities_tests utilities_tests.cpp)
-target_link_libraries(utilities_tests aethercast-core gtest gtest_main)
-add_test(utilities_tests utilities_tests)
-
-add_executable(scoped_gobject_tests scoped_gobject_tests.cpp)
-target_link_libraries(scoped_gobject_tests aethercast-core gtest gtest_main)
-add_test(scoped_gobject_tests scoped_gobject_tests)
+AETHERCAST_ADD_TEST(utilities_tests utilities_tests.cpp)
+AETHERCAST_ADD_TEST(scoped_gobject_tests scoped_gobject_tests.cpp)
 
 add_subdirectory(wpa)
 add_subdirectory(mcs)

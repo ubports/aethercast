@@ -189,17 +189,14 @@ void WpaSupplicantNetworkManager::OnP2pDeviceFound(WpaSupplicantMessage &message
         if (device->Address() != address)
             continue;
 
-        device->SetAddress(address);
-        device->SetName(name);
-        device->SetSupportedRoles(roles);
+        device->Address() = address;
+        device->Name() = name;
+        device->SupportedRoles() = roles;
 
         return;
     }
 
-    mcs::NetworkDevice::Ptr device(new mcs::NetworkDevice);
-    device->SetAddress(address);
-    device->SetName(name);
-    device->SetSupportedRoles(roles);
+    WpaSupplicantNetworkDevice::Ptr device(new WpaSupplicantNetworkDevice(address, name, roles));
 
     available_devices_[address] = device;
 
@@ -617,7 +614,7 @@ void WpaSupplicantNetworkManager::OnAddressAssigned(const mcs::IpV4Address &addr
 
 gboolean WpaSupplicantNetworkManager::OnDeviceFailureTimeout(gpointer user_data) {
     auto inst = static_cast<WpaSupplicantNetworkManager*>(user_data);
-    inst->current_peer_->SetState(mcs::kIdle);
+    inst->current_peer_->State() = mcs::kIdle;
 
     return FALSE;
 }
@@ -680,10 +677,10 @@ std::vector<mcs::NetworkDevice::Ptr> WpaSupplicantNetworkManager::Devices() cons
     return values;
 }
 
-void WpaSupplicantNetworkManager::AdvanceDeviceState(const mcs::NetworkDevice::Ptr &device, mcs::NetworkDeviceState state) {
+void WpaSupplicantNetworkManager::AdvanceDeviceState(const WpaSupplicantNetworkDevice::Ptr &device, mcs::NetworkDeviceState state) {
     MCS_DEBUG("new state %s", mcs::NetworkDevice::StateToStr(state).c_str());
 
-    device->SetState(state);
+    device->State() = state;
     if (delegate_) {
         delegate_->OnDeviceStateChanged(device);
         delegate_->OnDeviceChanged(device);

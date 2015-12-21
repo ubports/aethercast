@@ -29,6 +29,7 @@ set(SOURCES
   mcs/logger.cpp
   mcs/mirsourcemediamanager.cpp
   mcs/forwardingmiracastcontroller.cpp
+  mcs/forwardingnetworkdevice.cpp
   mcs/miracastcontroller.cpp
   mcs/miracastcontrollerskeleton.cpp
   mcs/miracastservice.cpp
@@ -40,7 +41,7 @@ set(SOURCES
 
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/aethercastinterface.c
   mcs/dbushelpers.cpp
-  mcs/networkdeviceadapter.cpp
+  mcs/networkdeviceskeleton.cpp
 
   wpa/gdhcp/common.c
   wpa/gdhcp/ipv4ll.c
@@ -53,6 +54,7 @@ set(SOURCES
   wpa/wpasupplicantmessage.cpp
   wpa/wpasupplicantcommand.cpp
   wpa/wpasupplicantcommandqueue.cpp
+  wpa/wpasupplicantnetworkdevice.cpp
   wpa/wpasupplicantnetworkmanager.cpp
 )
 
