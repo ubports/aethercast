@@ -39,5 +39,5 @@ add_subdirectory(3rd_party/process-cpp-minimal)
 AETHERCAST_ADD_TEST(utilities_tests utilities_tests.cpp)
 AETHERCAST_ADD_TEST(scoped_gobject_tests scoped_gobject_tests.cpp)
 
-add_subdirectory(wpa)
+add_subdirectory(w11t)
 add_subdirectory(mcs)

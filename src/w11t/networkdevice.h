@@ -24,11 +24,12 @@
 
 #include <mcs/networkdevice.h>
 
-class WpaSupplicantNetworkDevice : public mcs::NetworkDevice {
+namespace w11t {
+class NetworkDevice : public mcs::NetworkDevice {
 public:
-    typedef std::shared_ptr<WpaSupplicantNetworkDevice> Ptr;
+    typedef std::shared_ptr<NetworkDevice> Ptr;
 
-    WpaSupplicantNetworkDevice(const mcs::MacAddress &address, const std::string &name, const std::vector<mcs::NetworkDeviceRole> &roles);
+    NetworkDevice(const mcs::MacAddress &address, const std::string &name, const std::vector<mcs::NetworkDeviceRole> &roles);
 
     mcs::MacAddress Address() const override;
     mcs::IpV4Address IPv4Address() const override;
@@ -49,4 +50,5 @@ private:
     mcs::NetworkDeviceState state_;
     std::vector<mcs::NetworkDeviceRole> supported_roles_;
 };
+}
 #endif

@@ -17,29 +17,30 @@
 
 #include <glib.h>
 
-#include "wpasupplicantcommandqueue.h"
+#include "commandqueue.h"
 
-WpaSupplicantCommandQueue::WpaSupplicantCommandQueue(Delegate *delegate) :
+namespace w11t {
+CommandQueue::CommandQueue(Delegate *delegate) :
     delegate_(delegate),
     current_(nullptr),
     idle_source_(0) {
 }
 
-WpaSupplicantCommandQueue::~WpaSupplicantCommandQueue() {
+CommandQueue::~CommandQueue() {
     if (idle_source_ > 0)
         g_source_remove(idle_source_);
 }
 
-void WpaSupplicantCommandQueue::EnqueueCommand(const WpaSupplicantMessage &message, WpaSupplicantCommand::ResponseCallback callback) {
-    queue_.push(new WpaSupplicantCommand(message, callback));
+void CommandQueue::EnqueueCommand(const Message &message, Command::ResponseCallback callback) {
+    queue_.push(new Command(message, callback));
     RestartQueue();
 }
 
-void WpaSupplicantCommandQueue::HandleMessage(WpaSupplicantMessage message) {
-    if (message.ItsType() == WpaSupplicantMessage::Type::kInvalid)
+void CommandQueue::HandleMessage(Message message) {
+    if (message.ItsType() == Message::Type::kInvalid)
         return;
 
-    if (message.ItsType() == WpaSupplicantMessage::Type::kEvent) {
+    if (message.ItsType() == Message::Type::kEvent) {
         if (delegate_)
             delegate_->OnUnsolicitedResponse(message);
         return;
@@ -58,21 +59,21 @@ void WpaSupplicantCommandQueue::HandleMessage(WpaSupplicantMessage message) {
     RestartQueue();
 }
 
-gboolean WpaSupplicantCommandQueue::OnRestartQueue(gpointer user_data) {
-    auto inst = static_cast<WpaSupplicantCommandQueue*>(user_data);
+gboolean CommandQueue::OnRestartQueue(gpointer user_data) {
+    auto inst = static_cast<CommandQueue*>(user_data);
     inst->idle_source_ = 0;
     inst->CheckRestartingQueue();
     return FALSE;
 }
 
-void WpaSupplicantCommandQueue::RestartQueue() {
+void CommandQueue::RestartQueue() {
     if (idle_source_ > 0)
         return;
 
-    idle_source_ = g_idle_add(&WpaSupplicantCommandQueue::OnRestartQueue, this);
+    idle_source_ = g_idle_add(&CommandQueue::OnRestartQueue, this);
 }
 
-void WpaSupplicantCommandQueue::CheckRestartingQueue() {
+void CommandQueue::CheckRestartingQueue() {
     if (current_ != nullptr || queue_.size() == 0)
         return;
 
@@ -80,7 +81,7 @@ void WpaSupplicantCommandQueue::CheckRestartingQueue() {
     RestartQueue();
 }
 
-void WpaSupplicantCommandQueue::WriteNextCommand() {
+void CommandQueue::WriteNextCommand() {
     current_ = queue_.front();
     queue_.pop();
 
@@ -98,4 +99,5 @@ void WpaSupplicantCommandQueue::WriteNextCommand() {
         delete current_;
         current_ = nullptr;
     }
+}
 }

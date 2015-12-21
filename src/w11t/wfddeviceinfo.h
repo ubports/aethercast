@@ -21,6 +21,7 @@
 #include <iosfwd>
 #include <string>
 
+namespace w11t {
 enum class WpsConfig {
     kDisplay = 0x0008,
     kPushbutton = 0x0080,
@@ -60,5 +61,5 @@ struct WfdDeviceInfo
     ushort ctrl_port_ = 0;
     uint max_tput_ = 0;
 };
-
+}
 #endif

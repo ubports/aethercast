@@ -18,23 +18,23 @@
 #include <glib.h>
 #include <gtest/gtest.h>
 
-#include "wpa/wpasupplicantmessage.h"
+#include <w11t/message.h>
 
-TEST(WpaSupplicantMessage, Ctor) {
-    WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
-    EXPECT_TRUE(m.ItsType() == WpaSupplicantMessage::Type::kRequest);
+TEST(Message, Ctor) {
+    w11t::Message m = w11t::Message::CreateRequest("P2P_CONNECT");
+    EXPECT_TRUE(m.ItsType() == w11t::Message::Type::kRequest);
     EXPECT_TRUE(m.Name() == std::string("P2P_CONNECT"));
 }
 
-TEST(WpaSupplicantMessage, ReadAndSkip) {
-    WpaSupplicantMessage m = WpaSupplicantMessage::Parse("<3>P2P-GROUP-STARTED p2p0 GO ssid=\"DIRECT-hB\" freq=2412 go_dev_addr=4e:74:03:64:95:a7");
+TEST(Message, ReadAndSkip) {
+    w11t::Message m = w11t::Message::Parse("<3>P2P-GROUP-STARTED p2p0 GO ssid=\"DIRECT-hB\" freq=2412 go_dev_addr=4e:74:03:64:95:a7");
 
     struct P2PGroupStarted {
         std::string interface_name;
         std::string type;
-        Named<std::string> ssid{"ssid"};
-        Named<std::uint32_t> freq{"freq"};
-        Named<std::string> go_dev_addr{"go_dev_addr"};
+        w11t::Named<std::string> ssid{"ssid"};
+        w11t::Named<std::uint32_t> freq{"freq"};
+        w11t::Named<std::string> go_dev_addr{"go_dev_addr"};
     } ev;
 
     std::string key;
@@ -46,7 +46,7 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     EXPECT_EQ(ev.freq.Value(), 2412);
     EXPECT_EQ(ev.go_dev_addr.Value(), "4e:74:03:64:95:a7");
 
-    m = WpaSupplicantMessage::Parse("<3>P2P-GROUP-STARTED p2p0 GO -12 ssid=\"DIRECT-hB\" 45623 freq=2412 11223344 -42");
+    m = w11t::Message::Parse("<3>P2P-GROUP-STARTED p2p0 GO -12 ssid=\"DIRECT-hB\" 45623 freq=2412 11223344 -42");
 
     ev = P2PGroupStarted{};
 
@@ -54,7 +54,7 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     int32_t i32 = 0;
 
     EXPECT_STREQ(m.Name().c_str(), "P2P-GROUP-STARTED");
-    EXPECT_NO_THROW(m.Read(ev.interface_name, skip<std::string>(), skip<std::string>(), skip<std::string>(), ev.freq, u32, i32));
+    EXPECT_NO_THROW(m.Read(ev.interface_name, w11t::skip<std::string>(), w11t::skip<std::string>(), w11t::skip<std::string>(), ev.freq, u32, i32));
     EXPECT_EQ(ev.interface_name, "p2p0");
     EXPECT_EQ(ev.freq.Value(), 2412);
     EXPECT_EQ(u32, 11223344);
@@ -64,7 +64,7 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     ev = P2PGroupStarted{};
     i32 = 0;
 
-    EXPECT_NO_THROW(m.Read(ev.interface_name, skip<std::string>(), i32));
+    EXPECT_NO_THROW(m.Read(ev.interface_name, w11t::skip<std::string>(), i32));
     EXPECT_EQ(ev.interface_name, "p2p0");
     EXPECT_EQ(i32, -12);
 
@@ -72,26 +72,26 @@ TEST(WpaSupplicantMessage, ReadAndSkip) {
     ev = P2PGroupStarted{};
     i32 = 0;
 
-    EXPECT_NO_THROW(m.Read(skip<std::string>(), skip<std::string>(), skip<std::int32_t>(), ev.ssid, skip<std::int32_t>(), ev.freq));
+    EXPECT_NO_THROW(m.Read(w11t::skip<std::string>(), w11t::skip<std::string>(), w11t::skip<std::int32_t>(), ev.ssid, w11t::skip<std::int32_t>(), ev.freq));
     EXPECT_EQ(ev.ssid.Value(), "\"DIRECT-hB\"");
     EXPECT_EQ(ev.freq.Value(), 2412);
 }
 
-TEST(WpaSupplicantMessage, Append) {
-    WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT")
-            << "string" << -42 << 1337 << Named<std::string>{"key", "value"};
+TEST(Message, Append) {
+    w11t::Message m = w11t::Message::CreateRequest("P2P_CONNECT")
+            << "string" << -42 << 1337 << w11t::Named<std::string>{"key", "value"};
     auto raw = m.Dump();
     EXPECT_STREQ(raw.c_str(), "P2P_CONNECT string -42 1337 key=value");
 
-    m = WpaSupplicantMessage::CreateRequest("P2P_FIND");
+    m = w11t::Message::CreateRequest("P2P_FIND");
     int timeout = 30;
     m << timeout;
     raw = m.Dump();
     EXPECT_STREQ(raw.c_str(), "P2P_FIND 30");
 }
 
-TEST(WpaSupplicantMessage, Sealing) {
-    WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT");
+TEST(Message, Sealing) {
+    w11t::Message m = w11t::Message::CreateRequest("P2P_CONNECT");
 
     EXPECT_TRUE(!m.Sealed());
     m << "test1" << "test2";
@@ -101,26 +101,26 @@ TEST(WpaSupplicantMessage, Sealing) {
     EXPECT_STREQ(m.Raw().c_str(), "P2P_CONNECT test1 test2");
 }
 
-TEST(WpaSupplicantMessage, CopyCtor) {
-    WpaSupplicantMessage m = WpaSupplicantMessage::CreateRequest("P2P_CONNECT") << "test1" << "test2";
+TEST(Message, CopyCtor) {
+    w11t::Message m = w11t::Message::CreateRequest("P2P_CONNECT") << "test1" << "test2";
     EXPECT_TRUE(!m.Sealed());
-    EXPECT_EQ(m.ItsType(), WpaSupplicantMessage::Type::kRequest);
+    EXPECT_EQ(m.ItsType(), w11t::Message::Type::kRequest);
     EXPECT_STREQ(m.Name().c_str(), "P2P_CONNECT");
     m.Seal();
     EXPECT_TRUE(m.Sealed());
     EXPECT_STREQ(m.Raw().c_str(), "P2P_CONNECT test1 test2");
 
-    WpaSupplicantMessage m2 = m;
-    EXPECT_TRUE(m.ItsType() == WpaSupplicantMessage::Type::kRequest);
+    w11t::Message m2 = m;
+    EXPECT_TRUE(m.ItsType() == w11t::Message::Type::kRequest);
     EXPECT_STREQ(m.Name().c_str(), "P2P_CONNECT");
     EXPECT_TRUE(m.Sealed());
     EXPECT_STREQ(m.Raw().c_str(), "P2P_CONNECT test1 test2");
 }
 
-TEST(WpaSupplicantMessage, OkFail) {
-    WpaSupplicantMessage m = WpaSupplicantMessage::Parse("OK");
+TEST(Message, OkFail) {
+    w11t::Message m = w11t::Message::Parse("OK");
     EXPECT_TRUE(m.IsOk());
 
-    m = WpaSupplicantMessage::Parse("FAIL");
+    m = w11t::Message::Parse("FAIL");
     EXPECT_TRUE(m.IsFail());
 }

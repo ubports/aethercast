@@ -15,47 +15,49 @@
  *
  */
 
-#ifndef DHCPCLIENT_H_
-#define DHCPCLIENT_H_
+#ifndef WPASUPPLICANTCOMMANDQUEUE_H_
+#define WPASUPPLICANTCOMMANDQUEUE_H_
 
 #include <boost/noncopyable.hpp>
 
 #include <string>
+#include <queue>
 
-#include <mcs/ip_v4_address.h>
 #include <mcs/non_copyable.h>
 
-#include <gdhcp.h>
+#include "command.h"
 
-class DhcpClient {
+namespace w11t {
+class CommandQueue {
 public:
     class Delegate : private mcs::NonCopyable {
     public:
-        virtual void OnAddressAssigned(const mcs::IpV4Address &address) = 0;
+        virtual void OnUnsolicitedResponse(Message message) = 0;
+        virtual void OnWriteMessage(Message message) = 0;
 
     protected:
         Delegate() = default;
     };
 
-    DhcpClient(Delegate *delegate, const std::string &interface_name);
-    ~DhcpClient();
+    CommandQueue(Delegate *delegate);
+    ~CommandQueue();
 
-    bool Start();
-    void Stop();
-
-    mcs::IpV4Address LocalAddress() const;
+    void EnqueueCommand(const Message &message, Command::ResponseCallback callback = nullptr);
+    void HandleMessage(Message message);
 
 private:
-    static void OnClientDebug(const char *str, gpointer user_data);
-    static void OnLeaseAvailable(GDHCPClient *client, gpointer user_data);
+    void RestartQueue();
+    void CheckRestartingQueue();
+    void WriteNextCommand();
+
+private:
+    static gboolean OnRestartQueue(gpointer user_data);
 
 private:
     Delegate *delegate_;
-    std::string interface_name_;
-    int interface_index_;
-    GDHCPClient *client_;
-    mcs::IpV4Address local_address_;
-    std::string netmask_;
+    Command *current_;
+    std::queue<Command*> queue_;
+    unsigned int idle_source_;
 };
-
+}
 #endif
