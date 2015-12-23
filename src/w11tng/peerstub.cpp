@@ -15,8 +15,11 @@
  *
  */
 
+#include <sstream>
+
 #include <mcs/keep_alive.h>
 #include <mcs/logger.h>
+#include <mcs/utils.h>
 
 #include "peerstub.h"
 
@@ -53,10 +56,11 @@ PeerStub::Ptr PeerStub::FinalizeConstruction(const std::string &object_path) {
             return;
         }
 
-        MCS_DEBUG("Connected with peer");
-
         inst->ConnectSignals();
-        inst->SyncProperties();
+        inst->SyncProperties(false);
+
+        if (auto sp = inst->delegate_.lock())
+            sp->OnPeerReady();
 
     }, new mcs::SharedKeepAlive<PeerStub>{shared_from_this()});
 
@@ -69,26 +73,80 @@ void PeerStub::OnPropertyChanged(GObject *source, GParamSpec *spec, gpointer use
     if (not inst)
         return;
 
-    MCS_DEBUG("Peer property changed");
-
     inst->SyncProperties();
 }
 
 void PeerStub::ConnectSignals() {
     g_signal_connect_data(proxy_.get(), "notify::device-name",
                           G_CALLBACK(&PeerStub::OnPropertyChanged), new mcs::WeakKeepAlive<PeerStub>(shared_from_this()),
-                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<PeerStub>*>(data); }, GConnectFlags(0));
+                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<PeerStub>*>(data); },
+                          GConnectFlags(0));
+
+    g_signal_connect_data(proxy_.get(), "notify::device-address",
+                          G_CALLBACK(&PeerStub::OnPropertyChanged), new mcs::WeakKeepAlive<PeerStub>(shared_from_this()),
+                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<PeerStub>*>(data); },
+                          GConnectFlags(0));
+
 }
 
-void PeerStub::SyncProperties() {
+std::string ByteArrayToMacAddress(const gchar *data) {
+    if (!data)
+        return "";
+
+    std::stringstream ss;
+    for (int n = 0; n < 6; n++) {
+        char buf[10];
+        snprintf(buf, 10, "%02x", (uint8_t) data[n]);
+        // FIXME doesn't work yet
+        // ss << mcs::Utils::Sprintf("%02x", (uint8_t) data[n]);
+        ss << buf;
+        if (n < 5)
+            ss << ":";
+    }
+    return ss.str();
+}
+
+std::string PeerStub::RetrieveAddressFromProxy() {
+    // NOTE We have to parse the 'DeviceAddress' property here manually as
+    // gdbus-codegen doesn't properly give us a value of type 'ay'. Or it
+    // could be still that I am to stupid using it but this now works
+    // perfectly.
+
+    WpaSupplicantPeerProxy *proxy = WPA_SUPPLICANT_PEER_PROXY(proxy_.get());
+    auto variant = g_dbus_proxy_get_cached_property (G_DBUS_PROXY (proxy), "DeviceAddress");
+
+    if (!variant)
+        return "";
+
+    GVariantIter iter;
+    gchar raw_addr[6];
+
+    g_variant_iter_init(&iter, variant);
+
+    for (int n = 0; n < 6; n++) {
+        if (!g_variant_iter_next(&iter, "y", &raw_addr[n]))
+            break;
+    }
+
+    auto address = ByteArrayToMacAddress(raw_addr);
+
+    g_variant_unref (variant);
+
+    return address;
+}
+
+void PeerStub::SyncProperties(bool update_delegate) {
     if (!proxy_)
         return;
 
-    address_ = wpa_supplicant_peer_get_device_address(proxy_.get());
     name_ = wpa_supplicant_peer_get_device_name(proxy_.get());
+    address_ = RetrieveAddressFromProxy();
+
+    if (!update_delegate)
+        return;
 
     if (auto sp = delegate_.lock())
-        sp->OnChanged();
+        sp->OnPeerChanged();
 }
 
 void PeerStub::SetDelegate(const std::weak_ptr<Delegate> delegate) {

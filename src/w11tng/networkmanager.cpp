@@ -106,11 +106,10 @@ void NetworkManager::OnDeviceFound(const std::string &path) {
 
     auto device = NetworkDevice::Create(path);
     device->SetDelegate(shared_from_this());
-
     devices_[path] = device;
 
-    if (delegate_)
-        delegate_->OnDeviceFound(device);
+    // NOTE: OnDeviceFound will be send to delegate once the device
+    // reports through OnDeviceReady that its ready for operation.
 }
 
 void NetworkManager::OnDeviceLost(const std::string &path) {
@@ -127,6 +126,11 @@ void NetworkManager::OnDeviceLost(const std::string &path) {
 void NetworkManager::OnDeviceChanged(const NetworkDevice::Ptr &device) {
     if (delegate_)
         delegate_->OnDeviceChanged(device);
+}
+
+void NetworkManager::OnDeviceReady(const NetworkDevice::Ptr &device) {
+    if (delegate_)
+        delegate_->OnDeviceFound(device);
 }
 
 } // namespace w11tng

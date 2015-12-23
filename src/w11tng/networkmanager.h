@@ -56,6 +56,7 @@ public:
     void OnDeviceLost(const std::string &path) override;
 
     void OnDeviceChanged(const NetworkDevice::Ptr &device) override;
+    void OnDeviceReady(const NetworkDevice::Ptr &device) override;
 
 private:
     NetworkManager();

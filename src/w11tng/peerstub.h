@@ -39,7 +39,8 @@ public:
 
     class Delegate : public mcs::NonCopyable {
     public:
-        virtual void OnChanged() = 0;
+        virtual void OnPeerChanged() = 0;
+        virtual void OnPeerReady() = 0;
     };
 
     static Ptr Create(const std::string &object_path);
@@ -56,7 +57,9 @@ private:
     Ptr FinalizeConstruction(const std::string &object_path);
 
     void ConnectSignals();
-    void SyncProperties();
+    void SyncProperties(bool update_delegate = true);
+
+    std::string RetrieveAddressFromProxy();
 
 private:
     static void OnPropertyChanged(GObject *source, GParamSpec *spec, gpointer user_data);

@@ -49,13 +49,25 @@ void NetworkDevice::ResetDelegate() {
     delegate_.reset();
 }
 
-void NetworkDevice::OnChanged() {
-    MCS_DEBUG("Peer properties changed");
+void NetworkDevice::SyncWithPeer()
+{
     address_ = peer_->Address();
     name_ = peer_->Name();
+}
+
+void NetworkDevice::OnPeerChanged() {
+    MCS_DEBUG("Peer properties changed");
+    SyncWithPeer();
 
     if (auto sp = delegate_.lock())
         sp->OnDeviceChanged(shared_from_this());
+}
+
+void NetworkDevice::OnPeerReady() {
+    SyncWithPeer();
+
+    if (auto sp = delegate_.lock())
+        sp->OnDeviceReady(shared_from_this());
 }
 
 void NetworkDevice::SetAddress(const mcs::MacAddress &address) {

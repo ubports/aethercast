@@ -284,6 +284,8 @@ void P2PDeviceStub::Find(const std::chrono::seconds &timeout) {
     if (!p2p_device_ || scan_timeout_source_ > 0)
         return;
 
+    MCS_DEBUG("timeout %d", timeout.count());
+
     scan_timeout_ = timeout;
 
     // FIXME wpa-supplicant starts to implement the FindStopped signal starting
@@ -320,7 +322,7 @@ void P2PDeviceStub::StopFind() {
     if (!p2p_device_)
         return;
 
-    MCS_DEBUG("Stopping P2P discovery");
+    MCS_DEBUG("");
 
     wpa_supplicant_interface_p2_pdevice_call_stop_find(p2p_device_.get(), nullptr,
                                                   [](GObject *source, GAsyncResult *res, gpointer user_data) {
@@ -338,8 +340,10 @@ void P2PDeviceStub::StopFind() {
 }
 
 bool P2PDeviceStub::Connect(const w11tng::NetworkDevice::Ptr &device) {
-    if (!p2p_device_)
+    if (!p2p_device_ || !device)
         return false;
+
+    MCS_DEBUG("address %s", device->Address());
 
     auto builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 
@@ -365,6 +369,8 @@ bool P2PDeviceStub::Connect(const w11tng::NetworkDevice::Ptr &device) {
 }
 
 bool P2PDeviceStub::Disconnect() {
+    MCS_DEBUG("");
+
     return false;
 }
 

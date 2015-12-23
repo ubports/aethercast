@@ -39,6 +39,7 @@ public:
 
     class Delegate : public mcs::NonCopyable {
     public:
+        virtual void OnDeviceReady(const NetworkDevice::Ptr &device) = 0;
         virtual void OnDeviceChanged(const NetworkDevice::Ptr &device) = 0;
     };
 
@@ -63,7 +64,8 @@ public:
 
     std::string ObjectPath() const;
 
-    void OnChanged() override;
+    void OnPeerChanged() override;
+    void OnPeerReady() override;
 
 private:
     NetworkDevice(const std::string &object_path);
@@ -78,6 +80,7 @@ private:
     std::vector<mcs::NetworkDeviceRole> supported_roles_;
     std::string object_path_;
     std::shared_ptr<PeerStub> peer_;
+    void SyncWithPeer();
 };
 
 } // namespace w11tng
