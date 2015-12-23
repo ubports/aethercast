@@ -49,7 +49,7 @@ void NullSourceMediaManager::Configure() {
 std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const std::string &remote_address) {
     std::string type = Utils::GetEnvValue("MIRACAST_SOURCE_TYPE");
 
-    WARNING("Creating source media manager of type %s", type.c_str());
+    DEBUG("Creating source media manager of type %s", type.c_str());
 
     if (type.length() == 0 || type == "mir")
         return std::make_shared<MirSourceMediaManager>(remote_address);

@@ -5,9 +5,9 @@ include_directories(
   ${GIO-UNIX_INCLUDE_DIRS}
   ${GST_INCLUDE_DIRS}
   ${WDS_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/wpa
-  ${CMAKE_SOURCE_DIR}/wpa/gdhcp
   ${CMAKE_SOURCE_DIR}/src
+  ${CMAKE_SOURCE_DIR}/src/mcs
+  ${CMAKE_SOURCE_DIR}/src/mcs/w11t/gdhcp
   # We have to pull in generated header files.
   ${CMAKE_BINARY_DIR}/src/mcs
 )
@@ -18,5 +18,6 @@ AETHERCAST_ADD_TEST(miracastcontrollerskeleton_tests miracastcontrollerskeleton_
 AETHERCAST_ADD_TEST(forwardingnetworkdevice_tests forwardingnetworkdevice_tests.cpp)
 AETHERCAST_ADD_TEST(networkdeviceskeleton_tests networkdeviceskeleton_tests.cpp)
 AETHERCAST_ADD_TEST(networkdevice_tests networkdevice_tests.cpp)
+AETHERCAST_ADD_TEST(networkmanagerfactory_tests networkmanagerfactory_tests.cpp)
 
 add_subdirectory(acceptance_tests)

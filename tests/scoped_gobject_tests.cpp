@@ -14,6 +14,7 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 #include <mcs/scoped_gobject.h>
 
 #include <gio/gio.h>

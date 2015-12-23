@@ -5,9 +5,8 @@ include_directories(
   ${GIO-UNIX_INCLUDE_DIRS}
   ${GST_INCLUDE_DIRS}
   ${WDS_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/wpa
-  ${CMAKE_SOURCE_DIR}/wpa/gdhcp
   ${CMAKE_SOURCE_DIR}/src
+  ${CMAKE_SOURCE_DIR}/src/mcs
 )
 
 macro(AETHERCAST_ADD_TEST test_name src)

@@ -28,6 +28,38 @@ gchar** DBusHelpers::GenerateCapabilities(const std::vector<NetworkDeviceRole> r
     return capabilities;
 }
 
+void DBusHelpers::ParseDictionary(GVariant *properties, std::function<void(std::string, GVariant*)> callback, const std::string &key_filter) {
+    if (!callback || !properties)
+        return;
+
+    for (int n = 0; n < g_variant_n_children(properties); n++) {
+        auto property = g_variant_get_child_value(properties, n);
+        auto key_v = g_variant_get_child_value(property, 0);
+        auto value_v = g_variant_get_child_value(property, 1);
+
+        std::string key = g_variant_get_string(key_v, nullptr);
+
+        if (key_filter.length() > 0) {
+            if (key_filter != key)
+                continue;
+
+            callback(key, value_v);
+        }
+        else
+            callback(key, value_v);
+    }
+}
+
+void DBusHelpers::ParseArray(GVariant *array, std::function<void(GVariant*)> callback) {
+    if (!callback || !array)
+        return;
+
+    for (int n = 0; n < g_variant_n_children(array); n++) {
+        auto element = g_variant_get_child_value(array, n);
+        callback(element);
+    }
+}
+
 } // namespace mcs
 
 

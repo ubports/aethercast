@@ -25,7 +25,7 @@
 #include <mcs/ip_v4_address.h>
 #include <mcs/non_copyable.h>
 
-#include "gdhcp.h"
+#include <w11t/gdhcp/gdhcp.h>
 
 namespace w11t {
 class DhcpServer {

@@ -9,6 +9,13 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
                         --interface-prefix org.aethercast.
                         ${CMAKE_CURRENT_SOURCE_DIR}/../data/org.aethercast.xml)
 
+execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
+                        --c-namespace WpaSupplicant
+                        --c-generate-object-manager
+                        --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/mcs/wpasupplicantinterface
+                        --interface-prefix fi.w1.wpa_supplicant1.
+                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/fi.w1.wpa_supplicant1.xml)
+
 # Make sure that generated header files can be found
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
 
@@ -56,6 +63,12 @@ set(SOURCES
   w11t/commandqueue.cpp
   w11t/networkdevice.cpp
   w11t/networkmanager.cpp
+
+  ${CMAKE_CURRENT_BINARY_DIR}/mcs/wpasupplicantinterface.c
+  w11tng/networkmanager.cpp
+  w11tng/networkdevice.cpp
+  w11tng/p2pdevicestub.cpp
+  w11tng/peerstub.cpp
 )
 
 link_directories(

@@ -17,18 +17,76 @@
 
 #include <boost/concept_check.hpp>
 
+#include <w11t/networkmanager.h>
+#include <w11tng/networkmanager.h>
+
 #include "networkmanagerfactory.h"
 
-#include <w11t/networkmanager.h>
+#include "logger.h"
+#include "utils.h"
 
 namespace mcs {
 
-NetworkManager::Ptr NetworkManagerFactory::Create(const std::string &type) {
-    boost::ignore_unused_variable_warning(type);
+void NullNetworkManager::SetDelegate(Delegate * delegate) {
+    ERROR("Not implemented");
+}
 
-    // FIXME for now we only can create the wpa one but this will be extended
-    // with further types.
-    return std::make_shared<w11t::NetworkManager>();
+bool NullNetworkManager::Setup() {
+    ERROR("Not implemented");
+    return false;
+}
+
+void NullNetworkManager::Scan(const std::chrono::seconds &timeout) {
+    ERROR("Not implemented");
+}
+
+bool NullNetworkManager::Connect(const NetworkDevice::Ptr &device) {
+    ERROR("Not implemented");
+    return false;
+}
+
+bool NullNetworkManager::Disconnect(const NetworkDevice::Ptr &device) {
+    ERROR("Not implemented");
+    return false;
+}
+
+void NullNetworkManager::SetWfdSubElements(const std::list<std::string> &elements) {
+    ERROR("Not implemented");
+}
+
+std::vector<NetworkDevice::Ptr> NullNetworkManager::Devices() const {
+    ERROR("Not implemented");
+    return std::vector<NetworkDevice::Ptr>();
+}
+
+IpV4Address NullNetworkManager::LocalAddress() const {
+    ERROR("Not implemented");
+    return IpV4Address();
+}
+
+bool NullNetworkManager::Running() const {
+    ERROR("Not implemented");
+    return false;
+}
+
+bool NullNetworkManager::Scanning() const {
+    ERROR("Not implemented");
+    return false;
+}
+
+NetworkManager::Ptr NetworkManagerFactory::Create(const std::string &type) {
+    auto final_type = type.length() > 0 ? type : Utils::GetEnvValue("AETHERCAST_NETWORK_MANAGER");
+
+    DEBUG("Creating network manager of type %s", final_type);
+
+    // We will always default to the w11t implementation if no invalid
+    // type is specified.
+    if (final_type == "w11t" || final_type.length() == 0)
+        return std::make_shared<w11t::NetworkManager>();
+    else if (final_type == "w11tng")
+        return w11tng::NetworkManager::Create();
+
+    return std::make_shared<NullNetworkManager>();
 }
 
 } // namespace mcs

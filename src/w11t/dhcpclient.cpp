@@ -29,7 +29,8 @@
 namespace w11t {
 DhcpClient::DhcpClient(Delegate *delegate, const std::string &interface_name) :
     delegate_(delegate),
-    interface_name_(interface_name) {
+    interface_name_(interface_name),
+    client_(nullptr) {
     interface_index_ = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
     if (interface_index_ < 0)
         MCS_WARNING("Failed to determine index of network interface %s", interface_name_.c_str());
