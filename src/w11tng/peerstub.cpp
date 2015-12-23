@@ -95,11 +95,8 @@ std::string ByteArrayToMacAddress(const gchar *data) {
 
     std::stringstream ss;
     for (int n = 0; n < 6; n++) {
-        char buf[10];
-        snprintf(buf, 10, "%02x", (uint8_t) data[n]);
-        // FIXME doesn't work yet
-        // ss << mcs::Utils::Sprintf("%02x", (uint8_t) data[n]);
-        ss << buf;
+        ss << mcs::Utils::Sprintf("%02x", (uint16_t) (data[n] & 0xff));
+        //ss << buf;
         if (n < 5)
             ss << ":";
     }

@@ -62,6 +62,8 @@ private:
     NetworkManager();
     std::shared_ptr<NetworkManager> FinalizeConstruction();
 
+    NetworkDevice::Ptr FindDevice(const std::string &address);
+
 private:
     mcs::NetworkManager::Delegate *delegate_;
     std::shared_ptr<P2PDeviceStub> p2p_device_;

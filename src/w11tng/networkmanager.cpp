@@ -59,14 +59,34 @@ void NetworkManager::Scan(const std::chrono::seconds &timeout) {
     p2p_device_->Find(timeout);
 }
 
+NetworkDevice::Ptr NetworkManager::FindDevice(const std::string &address) {
+    for (auto iter : devices_) {
+        if (iter.second->Address() == address)
+            return iter.second;
+    }
+    return NetworkDevice::Ptr{};
+}
+
 bool NetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
-   return false;
+    MCS_DEBUG("address %s", device->Address());
+
+    // Lets check here if we really own this device and if yes then we
+    // select our own instance of it rather than relying on the input
+    auto d = FindDevice(device->Address());
+    if (!d)
+        return false;
+
+    return p2p_device_->Connect(d);
 }
 
 bool NetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {
-    // Supplicant doesn't take any arguments yet when disconnected. It will
-    // either stop the whole group we're operating or disconnects us from
-    // a group
+    // Lets check here if we really own this device and if yes then we
+    // select our own instance of it rather than relying on the input
+    auto d = FindDevice(device->Address());
+    if (!d)
+        return false;
+
+
     return p2p_device_->Disconnect();
 }
 

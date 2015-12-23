@@ -28,6 +28,7 @@
         </method>
         <method name="Connect">
             <arg name="args" type="a{sv}" direction="in"/>
+            <arg name="group" type="s" direction="out"/>
         </method>
         <method name="Cancel"/>
         <method name="Disconnect"/>

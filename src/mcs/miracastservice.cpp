@@ -318,10 +318,10 @@ void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback c
         return;
     }
 
-    DEBUG("Connecting remote device %s", device->Address());
+    DEBUG("address %s", device->Address());
 
     if (!network_manager_->Connect(device)) {
-         DEBUG("FAiled to connect remote device");
+        DEBUG("Failed to connect remote device");
         callback(Error::kFailed);
         return;
     }

@@ -340,6 +340,8 @@ void P2PDeviceStub::StopFind() {
 }
 
 bool P2PDeviceStub::Connect(const w11tng::NetworkDevice::Ptr &device) {
+    MCS_DEBUG("");
+
     if (!p2p_device_ || !device)
         return false;
 
@@ -347,7 +349,9 @@ bool P2PDeviceStub::Connect(const w11tng::NetworkDevice::Ptr &device) {
 
     auto builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 
-    g_variant_builder_add(builder, "{sv}", "peer", g_variant_new_string(device->ObjectPath().c_str()));
+    g_variant_builder_add(builder, "{sv}", "peer", g_variant_new_object_path(device->ObjectPath().c_str()));
+    // We support only WPS PBC for now
+    g_variant_builder_add(builder, "{sv}", "wps_method", g_variant_new_string("pbc"));
 
     auto arguments = g_variant_builder_end(builder);
 
@@ -357,7 +361,7 @@ bool P2PDeviceStub::Connect(const w11tng::NetworkDevice::Ptr &device) {
         auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
 
         GError *error = nullptr;
-        if (!wpa_supplicant_interface_p2_pdevice_call_connect_finish(inst->p2p_device_.get(), res, &error)) {
+        if (!wpa_supplicant_interface_p2_pdevice_call_connect_finish(inst->p2p_device_.get(), nullptr, res, &error)) {
             MCS_ERROR("Failed to connect with P2P device: %s", error->message);
             g_error_free(error);
             return;
