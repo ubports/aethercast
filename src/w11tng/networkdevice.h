@@ -67,9 +67,13 @@ public:
     void OnPeerChanged() override;
     void OnPeerReady() override;
 
+    void SetRole(const std::string &role);
+    std::string Role() const;
+
 private:
     NetworkDevice(const std::string &object_path);
     Ptr FinalizeConstruction();
+    void SyncWithPeer();
 
 private:
     std::weak_ptr<Delegate> delegate_;
@@ -80,7 +84,7 @@ private:
     std::vector<mcs::NetworkDeviceRole> supported_roles_;
     std::string object_path_;
     std::shared_ptr<PeerStub> peer_;
-    void SyncWithPeer();
+    std::string role_;
 };
 
 } // namespace w11tng

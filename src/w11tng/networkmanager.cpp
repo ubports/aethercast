@@ -15,11 +15,15 @@
  *
  */
 
+#include <boost/concept_check.hpp>
+
 #include <algorithm>
 
 #include <mcs/logger.h>
+#include <mcs/keep_alive.h>
 
 #include "networkmanager.h"
+#include "informationelement.h"
 
 namespace w11tng {
 
@@ -30,7 +34,13 @@ mcs::NetworkManager::Ptr NetworkManager::Create() {
 std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
     auto sp = shared_from_this();
 
-    p2p_device_ = P2PDeviceStub::Create(sp);
+    GError *error = nullptr;
+    connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
+    if (!connection_) {
+        MCS_ERROR("Failed to connect to system bus: %s", error->message);
+        g_error_free(error);
+        return sp;
+    }
 
     return sp;
 }
@@ -41,10 +51,74 @@ NetworkManager::NetworkManager() {
 NetworkManager::~NetworkManager() {
 }
 
-void NetworkManager::OnSystemReady() {
+void NetworkManager::OnServiceFound(GDBusConnection *connection, const gchar *name, const gchar *name_owner, gpointer user_data) {
+    boost::ignore_unused_variable_warning(connection);
+    boost::ignore_unused_variable_warning(name);
+    boost::ignore_unused_variable_warning(name_owner);
+
+    auto inst = static_cast<mcs::WeakKeepAlive<NetworkManager>*>(user_data)->GetInstance().lock();
+
+    if (not inst)
+        return;
+
+    inst->Initialize();
 }
 
-void NetworkManager::OnSystemKilled() {
+void NetworkManager::OnServiceLost(GDBusConnection *connection, const gchar *name, gpointer user_data) {
+    boost::ignore_unused_variable_warning(connection);
+    boost::ignore_unused_variable_warning(name);
+
+    auto inst = static_cast<mcs::WeakKeepAlive<NetworkManager>*>(user_data)->GetInstance().lock();
+
+    if (not inst)
+        return;
+
+    inst->Release();
+}
+
+void NetworkManager::Initialize() {
+    MCS_DEBUG("");
+
+    interface_selector_ = InterfaceSelector::Create();
+    interface_selector_->Done().connect([&](const std::string &object_path) {
+        if (object_path.length() == 0)
+            return;
+
+        MCS_DEBUG("Found P2P interface %s", object_path);
+
+        SetupInterface(object_path);
+    });
+
+    manager_ = ManagerStub::Create();
+    manager_->Ready().connect([&]() {
+        InformationElement ie;
+        auto sub_element = new_subelement(DEVICE_INFORMATION);
+        auto dev_info = (DeviceInformationSubelement*) sub_element;
+
+        dev_info->session_management_control_port = htons(7236);
+        dev_info->maximum_throughput = htons(50);
+        dev_info->field1.device_type = SOURCE;
+        dev_info->field1.session_availability = true;
+        ie.add_subelement(sub_element);
+
+        auto ie_data = ie.serialize();
+
+        manager_->SetWFDIEs(ie_data->bytes, ie_data->length);
+
+        interface_selector_->Process(manager_->Interfaces());
+    });
+}
+
+void NetworkManager::SetupInterface(const std::string &object_path) {
+    p2p_device_ = P2PDeviceStub::Create(object_path, shared_from_this());
+    p2p_device_->Ready().connect([&]() {
+        // Bring the device into a well known state
+        p2p_device_->Flush();
+    });
+}
+
+void NetworkManager::Release() {
+    MCS_DEBUG("");
 }
 
 void NetworkManager::SetDelegate(mcs::NetworkManager::Delegate *delegate) {
@@ -52,6 +126,14 @@ void NetworkManager::SetDelegate(mcs::NetworkManager::Delegate *delegate) {
 }
 
 bool NetworkManager::Setup() {
+    g_bus_watch_name_on_connection(connection_.get(),
+                                   kBusName,
+                                   G_BUS_NAME_WATCHER_FLAGS_NONE,
+                                   &NetworkManager::OnServiceFound,
+                                   &NetworkManager::OnServiceLost,
+                                   new mcs::WeakKeepAlive<NetworkManager>(shared_from_this()),
+                                   nullptr);
+
     return false;
 }
 
@@ -67,30 +149,107 @@ NetworkDevice::Ptr NetworkManager::FindDevice(const std::string &address) {
     return NetworkDevice::Ptr{};
 }
 
+void NetworkManager::StartConnectTimeout() {
+    MCS_DEBUG("");
+
+    connect_timeout_ = g_timeout_add_seconds(kConnectTimeout, [](gpointer user_data) {
+        auto inst = static_cast<mcs::SharedKeepAlive<NetworkManager>*>(user_data)->ShouldDie();
+        if (not inst)
+            return FALSE;
+
+        MCS_WARNING("Connect timeout happened");
+
+        inst->connect_timeout_ = 0;
+
+        // If the device is either already connected or trying to get an address
+        // over DHCP we don't do anything. DHCP process will fail on its own after
+        // some time and we will react on this.
+        if (inst->current_device_->State() == mcs::kConnected ||
+            inst->current_device_->State() == mcs::kConfiguration)
+            return FALSE;
+
+        inst->p2p_device_->Cancel();
+
+        inst->AdvanceDeviceState(inst->current_device_, mcs::kFailure);
+        inst->current_device_.reset();
+
+        // We don't have an active group if we're not in connected or configuration
+        // state so we don't have to care about terminating any group at this point.
+
+        return FALSE;
+    }, new mcs::SharedKeepAlive<NetworkManager>{shared_from_this()});
+}
+
+void NetworkManager::StopConnectTimeout() {
+    if (connect_timeout_ == 0)
+        return;
+
+    MCS_DEBUG("");
+
+    g_source_remove(connect_timeout_);
+    connect_timeout_ = 0;
+}
+
 bool NetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
+    if (current_device_)
+        return false;
+
     MCS_DEBUG("address %s", device->Address());
 
     // Lets check here if we really own this device and if yes then we
     // select our own instance of it rather than relying on the input
     auto d = FindDevice(device->Address());
-    if (!d)
+    if (!d) {
+        MCS_WARNING("Could not find instance for device %s", device->Address());
+        return false;
+    }
+
+    current_device_ = d;
+
+    p2p_device_->StopFind();
+
+    if (!p2p_device_->Connect(d->ObjectPath()))
         return false;
 
-    return p2p_device_->Connect(d);
+    current_device_->SetState(mcs::kAssociation);
+    if (delegate_)
+        delegate_->OnDeviceStateChanged(current_device_);
+
+    StartConnectTimeout();
+
+    return true;
 }
 
 bool NetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {
-    // Lets check here if we really own this device and if yes then we
-    // select our own instance of it rather than relying on the input
-    auto d = FindDevice(device->Address());
-    if (!d)
+    if (!current_device_)
         return false;
 
+    if (!FindDevice(device->Address()))
+        return false;
 
-    return p2p_device_->Disconnect();
+    dhcp_client_.reset();
+    dhcp_server_.reset();
+
+    // This will trigger the GroupFinished signal where we will release
+    // all parts in order.
+    current_group_device_->Disconnect();
+
+#if 0
+    current_group_device_.reset();
+    current_group_iface_.reset();
+
+    current_device_->SetState(mcs::kDisconnected);
+    if (delegate_)
+        delegate_->OnDeviceStateChanged(current_device_);
+
+    current_device_.reset();
+#endif
+
+    return true;
 }
 
 void NetworkManager::SetWfdSubElements(const std::list<std::string> &elements) {
+    MCS_WARNING("Not implemeneted");
 }
 
 std::vector<mcs::NetworkDevice::Ptr> NetworkManager::Devices() const {
@@ -104,15 +263,24 @@ std::vector<mcs::NetworkDevice::Ptr> NetworkManager::Devices() const {
 }
 
 mcs::IpV4Address NetworkManager::LocalAddress() const {
-    return mcs::IpV4Address();
+    mcs::IpV4Address address;
+
+    if (dhcp_server_)
+        address = dhcp_server_->LocalAddress();
+    else if (dhcp_client_)
+        address = dhcp_client_->LocalAddress();
+
+    MCS_DEBUG("address %s", address);
+
+    return address;
 }
 
 bool NetworkManager::Running() const {
-    return p2p_device_->Connected();
+    return p2p_device_ && p2p_device_->Connected();
 }
 
 bool NetworkManager::Scanning() const {
-    return p2p_device_->Scanning();
+    return p2p_device_ && p2p_device_->Scanning();
 }
 
 void NetworkManager::OnChanged() {
@@ -136,11 +304,94 @@ void NetworkManager::OnDeviceLost(const std::string &path) {
     if (devices_.find(path) == devices_.end())
         return;
 
+    MCS_DEBUG("peer %s", path);
+
     auto device = devices_[path];
     devices_.erase(path);
 
     if (delegate_)
         delegate_->OnDeviceLost(device);
+}
+
+void NetworkManager::AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::NetworkDeviceState state) {
+    device->SetState(state);
+    if (delegate_)
+        delegate_->OnDeviceStateChanged(device);
+}
+
+void NetworkManager::OnGroupOwnerNegotiationFailure(const std::string &peer_path) {
+    if (!current_device_)
+        return;
+
+    MCS_DEBUG("peer %s", peer_path);
+
+    AdvanceDeviceState(current_device_, mcs::kFailure);
+
+    current_device_.reset();
+
+    StopConnectTimeout();
+}
+
+void NetworkManager::OnGroupOwnerNegotiationSuccess(const std::string &peer_path) {
+    if (!current_device_)
+        return;
+
+    MCS_DEBUG("peer %s", peer_path);
+}
+
+void NetworkManager::OnGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role) {
+    if (!current_device_)
+        return;
+
+    MCS_DEBUG("group %s interface %s role %s", group_path, interface_path, role);
+
+    AdvanceDeviceState(current_device_, mcs::kConfiguration);
+
+    current_device_->SetRole(role);
+
+    // We have to find out more about the actual group we're now part of
+    // and which role we play in it.
+    current_group_iface_ = InterfaceStub::Create(interface_path);
+    current_group_iface_->InterfaceReady().connect([&]() {
+        if (!current_device_ || current_device_->State() != mcs::kConfiguration)
+            return;
+
+        auto ifname = current_group_iface_->Ifname();
+
+        if (current_device_->Role() == "GO") {
+            dhcp_server_ = std::shared_ptr<w11t::DhcpServer>(new w11t::DhcpServer(nullptr, ifname));
+            dhcp_server_->Start();
+        }
+        else {
+            dhcp_client_ = std::shared_ptr<w11t::DhcpClient>(new w11t::DhcpClient(this, ifname));
+            dhcp_client_->Start();
+        }
+    });
+
+    std::weak_ptr<P2PDeviceStub::Delegate> null_delegate;
+    current_group_device_ = P2PDeviceStub::Create(interface_path, null_delegate);
+}
+
+void NetworkManager::OnGroupFinished(const std::string &group_path, const std::string &interface_path) {
+    if (!current_device_)
+        return;
+
+    MCS_DEBUG("group %s interface %s", group_path, interface_path);
+
+    StopConnectTimeout();
+
+    dhcp_client_.reset();
+    dhcp_server_.reset();
+
+    current_group_iface_.reset();
+    current_group_device_.reset();
+
+    AdvanceDeviceState(current_device_, mcs::kDisconnected);
+    current_device_.reset();
+}
+
+void NetworkManager::OnGroupRequest(const std::string &peer_path) {
+    MCS_DEBUG("");
 }
 
 void NetworkManager::OnDeviceChanged(const NetworkDevice::Ptr &device) {
@@ -151,6 +402,32 @@ void NetworkManager::OnDeviceChanged(const NetworkDevice::Ptr &device) {
 void NetworkManager::OnDeviceReady(const NetworkDevice::Ptr &device) {
     if (delegate_)
         delegate_->OnDeviceFound(device);
+}
+
+void NetworkManager::OnAddressAssigned(const mcs::IpV4Address &address) {
+    if (!current_device_ || current_device_->State() != mcs::kConfiguration)
+        return;
+
+    MCS_DEBUG("address %s", address);
+
+    current_device_->SetIpV4Address(address);
+
+    AdvanceDeviceState(current_device_, mcs::kConnected);
+}
+
+void NetworkManager::OnNoLease() {
+    if (!current_device_ || current_device_->State() != mcs::kConfiguration)
+        return;
+
+    MCS_DEBUG("");
+
+    // Save a reference here as Disconnect will reset current_device_
+    // and we can access it anymore after we called it.
+    auto d = current_device_;
+
+    Disconnect(d);
+
+    AdvanceDeviceState(d, mcs::kFailure);
 }
 
 } // namespace w11tng

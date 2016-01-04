@@ -27,7 +27,9 @@ std::string NetworkDevice::StateToStr(NetworkDeviceState state) {
     case kFailure:
         return "failure";
     case kAssociation:
-        return "connecting";
+        return "association";
+    case kConfiguration:
+        return "configuration";
     case kConnected:
         return "connected";
     case kDisconnected:

@@ -20,10 +20,16 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
 
 set(HEADERS
+    core/connection.h
+    core/property.h
+    core/signal.h
+
     mcs/ip_v4_address.h
     mcs/keep_alive.h
     mcs/mac_address.h
     mcs/types.h
+
+    w11t/gdhcp/gdhcp.h
 )
 
 set(SOURCES
@@ -33,6 +39,7 @@ set(SOURCES
   mcs/basesourcemediamanager.cpp
   mcs/gstsourcemediamanager.cpp
   mcs/testsourcemediamanager.cpp
+  mcs/x11sourcemediamanager.cpp
   mcs/logger.cpp
   mcs/mirsourcemediamanager.cpp
   mcs/forwardingmiracastcontroller.cpp
@@ -67,8 +74,13 @@ set(SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/wpasupplicantinterface.c
   w11tng/networkmanager.cpp
   w11tng/networkdevice.cpp
+  w11tng/interfaceselector.cpp
   w11tng/p2pdevicestub.cpp
+  w11tng/managerstub.cpp
   w11tng/peerstub.cpp
+  w11tng/interfacestub.cpp
+  w11tng/groupstub.cpp
+  w11tng/informationelement.cpp
 )
 
 link_directories(

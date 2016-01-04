@@ -33,6 +33,7 @@ public:
     class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnAddressAssigned(const mcs::IpV4Address &address) = 0;
+        virtual void OnNoLease() = 0;
 
     protected:
         Delegate() = default;
@@ -49,6 +50,7 @@ public:
 private:
     static void OnClientDebug(const char *str, gpointer user_data);
     static void OnLeaseAvailable(GDHCPClient *client, gpointer user_data);
+    static void OnNoLease(GDHCPClient *client, gpointer user_data);
 
 private:
     Delegate *delegate_;

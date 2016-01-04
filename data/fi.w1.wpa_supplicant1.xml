@@ -11,12 +11,15 @@
         </signal>
         <property name="Interfaces" type="ao" access="read"/>
         <property name="Capabilities" type="as" access="read"/>
-        <property name="WFDIEs" type="ay" access="readwrite"/>
+        <property name="WFDIEs" type="ay" access="readwrite">
+            <annotation name="org.gtk.GDBus.C.ForceGVariant" value="true"/>
+        </property>
     </interface>
     <interface name="fi.w1.wpa_supplicant1.Interface">
         <property name="Capabilities" type="a{sv}" access="read"/>
         <property name="State" type="s" access="read"/>
         <property name="Ifname" type="s" access="read"/>
+        <property name="Driver" type="s" access="read"/>
     </interface>
     <interface name="fi.w1.wpa_supplicant1.Interface.P2PDevice">
         <method name="Find">
@@ -32,6 +35,7 @@
         </method>
         <method name="Cancel"/>
         <method name="Disconnect"/>
+        <method name="Flush"/>
         <signal name="DeviceFound">
             <arg name="path" type="o"/>
         </signal>
@@ -39,9 +43,6 @@
             <arg name="path" type="o"/>
         </signal>
         <signal name="FindStopped"/>
-        <signal name="GroupStarted">
-            <arg name="properties" type="a{sv}"/>
-        </signal>
         <signal name="GONegotiationSuccess">
             <arg name="properties" type="a{sv}"/>
         </signal>
@@ -49,6 +50,9 @@
             <arg name="properties" type="a{sv}"/>
         </signal>
         <signal name="GONegotiationRequest">
+            <arg name="properties" type="a{sv}"/>
+        </signal>
+        <signal name="GroupStarted">
             <arg name="properties" type="a{sv}"/>
         </signal>
         <signal name="GroupFinished">

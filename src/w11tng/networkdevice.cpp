@@ -35,7 +35,8 @@ NetworkDevice::Ptr NetworkDevice::FinalizeConstruction() {
 
 NetworkDevice::NetworkDevice(const std::string &object_path) :
     object_path_(object_path),
-    peer_(PeerStub::Create(object_path)) {
+    peer_(PeerStub::Create(object_path)),
+    state_(mcs::kIdle) {
 }
 
 NetworkDevice::~NetworkDevice() {
@@ -90,6 +91,10 @@ void NetworkDevice::SetSupportedRoles(const std::vector<mcs::NetworkDeviceRole> 
     supported_roles_ = roles;
 }
 
+void NetworkDevice::SetRole(const std::string &role) {
+    role_ = role;
+}
+
 mcs::MacAddress NetworkDevice::Address() const {
     return address_;
 }
@@ -112,6 +117,10 @@ std::vector<mcs::NetworkDeviceRole> NetworkDevice::SupportedRoles() const {
 
 std::string NetworkDevice::ObjectPath() const {
     return object_path_;
+}
+
+std::string NetworkDevice::Role() const {
+    return role_;
 }
 
 } // namespace w11tng

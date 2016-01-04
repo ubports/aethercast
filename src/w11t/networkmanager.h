@@ -63,7 +63,8 @@ public:
     void OnUnsolicitedResponse(Message message);
     void OnWriteMessage(Message message);
 
-    void OnAddressAssigned(const mcs::IpV4Address &address);
+    void OnAddressAssigned(const mcs::IpV4Address &address) override;
+    void OnNoLease() override;
 
     void OnFirmwareLoaded();
     void OnFirmwareUnloaded();

@@ -613,6 +613,19 @@ void NetworkManager::OnAddressAssigned(const mcs::IpV4Address &address) {
     AdvanceDeviceState(current_peer_, mcs::kConnected);
 }
 
+void NetworkManager::OnNoLease() {
+    if (!current_peer_)
+        return;
+
+    if (dhcp_timeout_ > 0) {
+        g_source_remove(dhcp_timeout_);
+        dhcp_timeout_ = 0;
+    }
+
+    Disconnect(current_peer_);
+    AdvanceDeviceState(current_peer_, mcs::kFailure);
+}
+
 gboolean NetworkManager::OnDeviceFailureTimeout(gpointer user_data) {
     auto inst = static_cast<NetworkManager*>(user_data);
     inst->current_peer_->State() = mcs::kIdle;

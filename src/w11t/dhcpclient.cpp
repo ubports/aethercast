@@ -37,6 +37,7 @@ DhcpClient::DhcpClient(Delegate *delegate, const std::string &interface_name) :
 }
 
 DhcpClient::~DhcpClient() {
+    Stop();
 }
 
 void DhcpClient::OnLeaseAvailable(GDHCPClient *client, gpointer user_data) {
@@ -65,6 +66,13 @@ void DhcpClient::OnLeaseAvailable(GDHCPClient *client, gpointer user_data) {
     inst->delegate_->OnAddressAssigned(inst->local_address_);
 }
 
+void DhcpClient::OnNoLease(GDHCPClient *client, gpointer user_data) {
+    auto inst = static_cast<DhcpClient*>(user_data);
+
+    if (inst->delegate_)
+        inst->delegate_->OnNoLease();
+}
+
 void DhcpClient::OnClientDebug(const char *str, gpointer user_data) {
     MCS_DEBUG("DHCP: %s", str);
 }
@@ -83,6 +91,7 @@ bool DhcpClient::Start() {
 
     g_dhcp_client_set_debug(client_, &DhcpClient::OnClientDebug, this);
     g_dhcp_client_register_event(client_, G_DHCP_CLIENT_EVENT_LEASE_AVAILABLE, &DhcpClient::OnLeaseAvailable, this);
+    g_dhcp_client_register_event(client_, G_DHCP_CLIENT_EVENT_NO_LEASE, &DhcpClient::OnNoLease, this);
     g_dhcp_client_start(client_, NULL);
 
     return true;

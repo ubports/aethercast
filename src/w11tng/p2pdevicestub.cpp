@@ -25,11 +25,11 @@
 
 namespace w11tng {
 
-P2PDeviceStub::Ptr P2PDeviceStub::Create(const std::weak_ptr<P2PDeviceStub::Delegate> &delegate) {
-    return std::shared_ptr<P2PDeviceStub>(new P2PDeviceStub(delegate))->FinalizeConstruction();
+P2PDeviceStub::Ptr P2PDeviceStub::Create(const std::string &object_path, const std::weak_ptr<P2PDeviceStub::Delegate> &delegate) {
+    return std::shared_ptr<P2PDeviceStub>(new P2PDeviceStub(delegate))->FinalizeConstruction(object_path);
 }
 
-std::shared_ptr<P2PDeviceStub> P2PDeviceStub::FinalizeConstruction() {
+std::shared_ptr<P2PDeviceStub> P2PDeviceStub::FinalizeConstruction(const std::string &object_path) {
     auto sp = shared_from_this();
 
     GError *error = nullptr;
@@ -40,142 +40,43 @@ std::shared_ptr<P2PDeviceStub> P2PDeviceStub::FinalizeConstruction() {
         return sp;
     }
 
-    g_bus_watch_name_on_connection(connection_.get(),
-                                   kBusName,
-                                   G_BUS_NAME_WATCHER_FLAGS_NONE,
-                                   &P2PDeviceStub::OnServiceFound,
-                                   &P2PDeviceStub::OnServiceLost,
-                                   new mcs::WeakKeepAlive<P2PDeviceStub>(sp),
-                                   nullptr);
+    wpa_supplicant_interface_p2_pdevice_proxy_new(connection_.get(),
+                                                  G_DBUS_PROXY_FLAGS_NONE,
+                                                  kBusName,
+                                                  object_path.c_str(),
+                                                  nullptr,
+                                                  [](GObject *source, GAsyncResult *res, gpointer user_data) {
+
+        auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
+
+        GError *error = nullptr;
+        inst->p2p_device_proxy_.reset(wpa_supplicant_interface_p2_pdevice_proxy_new_finish(res, &error));
+        if (!inst->p2p_device_proxy_) {
+            MCS_ERROR("Failed to connect with P2P interface: %s", error->message);
+            g_error_free(error);
+            return;
+        }
+
+        inst->ConnectSignals();
+
+        MCS_DEBUG("Successfully setup P2P device proxy");
+
+        inst->ready_();
+
+        if (auto sp = inst->delegate_.lock())
+            sp->OnChanged();
+
+    }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
 
     return sp;
 }
 
 P2PDeviceStub::P2PDeviceStub(const std::weak_ptr<P2PDeviceStub::Delegate> &delegate) :
     delegate_(delegate),
-    p2p_supported_(false),
     scan_timeout_source_(0) {
 }
 
 P2PDeviceStub::~P2PDeviceStub() {
-}
-
-void P2PDeviceStub::OnServiceFound(GDBusConnection *connection, const gchar *name, const gchar *name_owner, gpointer user_data) {
-    boost::ignore_unused_variable_warning(connection);
-    boost::ignore_unused_variable_warning(name);
-    boost::ignore_unused_variable_warning(name_owner);
-
-    auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
-
-    wpa_supplicant_fi_w1_wpa_supplicant1_proxy_new(inst->connection_.get(),
-                                                   G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
-                                                   kBusName,
-                                                   kManagerPath,
-                                                   nullptr,
-                                                   [](GObject *source, GAsyncResult *res, gpointer user_data) {
-
-        boost::ignore_unused_variable_warning(source);
-
-        auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
-
-        GError *error = nullptr;
-        inst->manager_.reset(wpa_supplicant_fi_w1_wpa_supplicant1_proxy_new_finish(res, &error));
-        if (!inst->manager_) {
-            MCS_ERROR("Failed to connect with supplicant manager object: %s", error->message);
-            g_error_free(error);
-            return;
-        }
-
-        inst->Initialize();
-
-    }, new mcs::SharedKeepAlive<P2PDeviceStub>{inst->shared_from_this()});
-}
-
-void P2PDeviceStub::OnServiceLost(GDBusConnection *connection, const gchar *name, gpointer user_data) {
-    boost::ignore_unused_variable_warning(connection);
-    boost::ignore_unused_variable_warning(name);
-
-    MCS_DEBUG("Lost supplicant service");
-
-    auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
-
-    inst->Reset();
-
-    if (auto sp = inst->delegate_.lock())
-        sp->OnSystemKilled();
-}
-
-void P2PDeviceStub::Initialize() {
-    auto capabilities = wpa_supplicant_fi_w1_wpa_supplicant1_get_capabilities(manager_.get());
-
-    if (!capabilities) {
-        MCS_WARNING("Could not retrieve any capabilities from supplicant. Aborting.");
-        return;
-    }
-
-    int n = 0;
-    for (auto capability = capabilities[n]; capability != nullptr; n++, capability = capabilities[n]) {
-        if (std::string(capability) == "p2p") {
-            p2p_supported_ = true;
-            break;
-        }
-    }
-
-    if (!p2p_supported_)
-        return;
-
-    MCS_DEBUG("System supports P2P");
-
-    auto interfaces = wpa_supplicant_fi_w1_wpa_supplicant1_get_interfaces(manager_.get());
-    if (!interfaces) {
-        MCS_WARNING("No WiFi interface available. Waiting for one to appear.");
-        return;
-    }
-
-    n = 0;
-    for (auto iface = interfaces[n]; iface != nullptr; n++, iface = interfaces[n]) {
-        wpa_supplicant_interface_proxy_new(connection_.get(),
-                                           G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
-                                           kBusName,
-                                           iface,
-                                           nullptr, [](GObject *source, GAsyncResult *res, gpointer user_data) {
-
-                auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
-
-                GError *error = nullptr;
-                auto proxy = wpa_supplicant_interface_proxy_new_finish(res, &error);
-                if (!proxy) {
-                    MCS_ERROR("Failed to create proxy for interface: %s", error->message);
-                    g_error_free(error);
-                    return;
-                }
-
-                bool supports_p2p = false;
-
-                auto capabilities = wpa_supplicant_interface_get_capabilities(proxy);
-                mcs::DBusHelpers::ParseDictionary(capabilities, [&](const std::string &key, GVariant *value) {
-                    mcs::DBusHelpers::ParseArray(g_variant_get_variant(value), [&](GVariant *mode) {
-                        if (std::string(g_variant_get_string(mode, nullptr)) == "p2p")
-                            supports_p2p = true;
-                    });
-                }, "Modes");
-
-                if (supports_p2p) {
-                    MCS_DEBUG("Found interface which supports P2P");
-                    // We take the first interface which supports p2p here and ignore
-                    // all others. That is really enough for now.
-                    inst->iface_.reset(proxy);
-                    inst->InitializeP2P();
-                    return;
-                }
-
-                g_object_unref(proxy);
-
-        }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
-    }
-}
-
-void P2PDeviceStub::OnFindStopped(gpointer user_data) {
 }
 
 void P2PDeviceStub::OnDeviceFound(WpaSupplicantInterfaceP2PDevice *device, const gchar *path, gpointer user_data) {
@@ -202,86 +103,146 @@ void P2PDeviceStub::OnDeviceLost(WpaSupplicantInterfaceP2PDevice *device, const 
         sp->OnDeviceLost(std::string(path));
 }
 
-void P2PDeviceStub::InitializeP2P() {
+void P2PDeviceStub::OnGONegotiationSuccess(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data) {
+    MCS_DEBUG("");
 
-    auto object_path = g_dbus_proxy_get_object_path(G_DBUS_PROXY(iface_.get()));
+    auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
 
-    wpa_supplicant_interface_p2_pdevice_proxy_new(connection_.get(),
-                                                  G_DBUS_PROXY_FLAGS_NONE,
-                                                  kBusName,
-                                                  object_path,
-                                                  nullptr,
-                                                  [](GObject *source, GAsyncResult *res, gpointer user_data) {
+    std::string peer_path;
 
-        auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
+    mcs::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
+        if (name == "peer_object")
+            peer_path = g_variant_get_string(g_variant_get_variant(value), nullptr);
+    });
 
-        GError *error = nullptr;
-        inst->p2p_device_.reset(wpa_supplicant_interface_p2_pdevice_proxy_new_finish(res, &error));
-        if (!inst->p2p_device_) {
-            MCS_ERROR("Failed to connect with P2P interface: %s", error->message);
-            g_error_free(error);
-            return;
-        }
+    if (peer_path.length() == 0)
+        return;
 
-        inst->ConnectSignals();
+    if (auto sp = inst->delegate_.lock())
+        sp->OnGroupOwnerNegotiationSuccess(peer_path);
+}
 
-        MCS_DEBUG("Successfully setup P2P device proxy");
+void P2PDeviceStub::OnGONegotiationFailure(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data) {
+    MCS_DEBUG("");
 
-        if (auto sp = inst->delegate_.lock())
-            sp->OnChanged();
+    auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
 
-    }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
+    std::string peer_path;
+    int status = 0;
+
+    mcs::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
+        if (name == "peer_object")
+            peer_path = g_variant_get_string(g_variant_get_variant(value), nullptr);
+        else if (name == "status")
+            status = g_variant_get_int32(g_variant_get_variant(value));
+    });
+
+    if (peer_path.length() == 0)
+        return;
+
+    if (auto sp = inst->delegate_.lock())
+        sp->OnGroupOwnerNegotiationFailure(peer_path);
+}
+
+void P2PDeviceStub::OnGroupStarted(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data) {
+    MCS_DEBUG("");
+
+    auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
+
+    std::string interface_object;
+    std::string group_object;
+    std::string role;
+
+    mcs::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
+        if (name == "interface_object")
+            interface_object = g_variant_get_string(g_variant_get_variant(value), nullptr);
+        else if (name == "group_object")
+            group_object = g_variant_get_string(g_variant_get_variant(value), nullptr);
+        else if (name == "role")
+            role = g_variant_get_string(g_variant_get_variant(value), nullptr);
+    });
+
+    if (auto sp = inst->delegate_.lock())
+        sp->OnGroupStarted(group_object, interface_object, role);
+}
+
+void P2PDeviceStub::OnGroupFinished(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data) {
+    auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
+
+    std::string interface_object;
+    std::string group_object;
+
+    mcs::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
+        if (name == "interface_object")
+            interface_object = g_variant_get_string(g_variant_get_variant(value), nullptr);
+        else if (name == "group_object")
+            group_object = g_variant_get_string(g_variant_get_variant(value), nullptr);
+    });
+
+    MCS_DEBUG("interface %s group %s", interface_object, group_object);
+
+    if (auto sp = inst->delegate_.lock())
+        sp->OnGroupFinished(group_object, interface_object);
+}
+
+void P2PDeviceStub::OnGroupRequest(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data) {
+    auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
+
+    std::string peer_path;
+
+    mcs::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
+        if (name == "path")
+            peer_path = g_variant_get_string(g_variant_get_variant(value), nullptr);
+    });
+
+    MCS_DEBUG("peer_path %s", peer_path);
+
+    if (auto sp = inst->delegate_.lock())
+        sp->OnGroupRequest(peer_path);
 }
 
 void P2PDeviceStub::ConnectSignals() {
     auto sp = shared_from_this();
 
-    // FIXME the FindStopped signal is supported with supplicant >= 2.5 but we add it here to
-    // be ready for the future.
-    g_signal_connect_data(p2p_device_.get(), "find-stopped",
-                          G_CALLBACK(&P2PDeviceStub::OnFindStopped), new mcs::WeakKeepAlive<P2PDeviceStub>(sp),
-                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(data); },
+#define CONNECT_SIGNAL(name, callback) \
+    g_signal_connect_data(p2p_device_proxy_.get(), name, \
+                          G_CALLBACK(&P2PDeviceStub::callback), new mcs::WeakKeepAlive<P2PDeviceStub>(sp), \
+                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(data); }, \
                           GConnectFlags(0));
 
-    g_signal_connect_data(p2p_device_.get(), "device-found",
-                          G_CALLBACK(&P2PDeviceStub::OnDeviceFound), new mcs::WeakKeepAlive<P2PDeviceStub>(sp),
-                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(data); },
-                          GConnectFlags(0));
-
-    g_signal_connect_data(p2p_device_.get(), "device-lost",
-                          G_CALLBACK(&P2PDeviceStub::OnDeviceLost), new mcs::WeakKeepAlive<P2PDeviceStub>(sp),
-                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(data); },
-                          GConnectFlags(0));
-
-}
-
-void P2PDeviceStub::Reset() {
-    p2p_supported_ = false;
-    manager_.reset();
-    iface_.reset();
-}
-
-bool P2PDeviceStub::IsP2PSupport() const {
-    return p2p_supported_;
+    CONNECT_SIGNAL("device-found", OnDeviceFound);
+    CONNECT_SIGNAL("device-lost", OnDeviceLost);
+    CONNECT_SIGNAL("gonegotiation-success", OnGONegotiationSuccess);
+    CONNECT_SIGNAL("gonegotiation-failure", OnGONegotiationFailure);
+    CONNECT_SIGNAL("group-started", OnGroupStarted);
+    CONNECT_SIGNAL("group-finished", OnGroupFinished);
+    CONNECT_SIGNAL("gonegotiation-request", OnGroupRequest);
 }
 
 void P2PDeviceStub::StartFindTimeout() {
     scan_timeout_source_ = g_timeout_add_seconds(scan_timeout_.count(), [](gpointer user_data) {
         auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
 
-        inst->scan_timeout_source_ = 0;
-        inst->scan_timeout_ = std::chrono::seconds{0};
-        inst->StopFind();
-
-        if (auto sp = inst->delegate_.lock())
-            sp->OnChanged();
+        inst->StopFindTimeout();
 
         return FALSE;
     }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
 }
 
+void P2PDeviceStub::StopFindTimeout() {
+    if (scan_timeout_source_ == 0)
+        return;
+
+    scan_timeout_source_ = 0;
+    scan_timeout_ = std::chrono::seconds{0};
+    StopFind();
+
+    if (auto sp = delegate_.lock())
+        sp->OnChanged();
+}
+
 void P2PDeviceStub::Find(const std::chrono::seconds &timeout) {
-    if (!p2p_device_ || scan_timeout_source_ > 0)
+    if (!p2p_device_proxy_ || scan_timeout_source_ > 0)
         return;
 
     MCS_DEBUG("timeout %d", timeout.count());
@@ -298,13 +259,13 @@ void P2PDeviceStub::Find(const std::chrono::seconds &timeout) {
     // don't use them so lets create just an empty array
     auto arguments = g_variant_new_array(g_variant_type_new("{sv}"), nullptr, 0);
 
-    wpa_supplicant_interface_p2_pdevice_call_find(p2p_device_.get(), arguments, nullptr,
+    wpa_supplicant_interface_p2_pdevice_call_find(p2p_device_proxy_.get(), arguments, nullptr,
                                                   [](GObject *source, GAsyncResult *res, gpointer user_data) {
 
         auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
 
         GError *error = nullptr;
-        if (!wpa_supplicant_interface_p2_pdevice_call_find_finish(inst->p2p_device_.get(), res, &error)) {
+        if (!wpa_supplicant_interface_p2_pdevice_call_find_finish(inst->p2p_device_proxy_.get(), res, &error)) {
             MCS_ERROR("Failed to start P2P discovery: %s", error->message);
             g_error_free(error);
             return;
@@ -319,50 +280,71 @@ void P2PDeviceStub::Find(const std::chrono::seconds &timeout) {
 }
 
 void P2PDeviceStub::StopFind() {
-    if (!p2p_device_)
+    if (!p2p_device_proxy_)
         return;
 
     MCS_DEBUG("");
 
-    wpa_supplicant_interface_p2_pdevice_call_stop_find(p2p_device_.get(), nullptr,
+    wpa_supplicant_interface_p2_pdevice_call_stop_find(p2p_device_proxy_.get(), nullptr,
                                                   [](GObject *source, GAsyncResult *res, gpointer user_data) {
 
         auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
 
         GError *error = nullptr;
-        if (!wpa_supplicant_interface_p2_pdevice_call_stop_find_finish(inst->p2p_device_.get(), res, &error)) {
+        if (!wpa_supplicant_interface_p2_pdevice_call_stop_find_finish(inst->p2p_device_proxy_.get(), res, &error)) {
             MCS_ERROR("Failed to stop P2P discovery: %s", error->message);
             g_error_free(error);
             return;
         }
 
     }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
+
+    StopFindTimeout();
 }
 
-bool P2PDeviceStub::Connect(const w11tng::NetworkDevice::Ptr &device) {
+bool P2PDeviceStub::Connect(const std::string &path) {
     MCS_DEBUG("");
 
-    if (!p2p_device_ || !device)
+    if (!p2p_device_proxy_ || path.length() == 0)
         return false;
 
-    MCS_DEBUG("address %s", device->Address());
+    MCS_DEBUG("path %s", path);
 
     auto builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 
-    g_variant_builder_add(builder, "{sv}", "peer", g_variant_new_object_path(device->ObjectPath().c_str()));
+    g_variant_builder_add(builder, "{sv}", "peer", g_variant_new_object_path(path.c_str()));
     // We support only WPS PBC for now
     g_variant_builder_add(builder, "{sv}", "wps_method", g_variant_new_string("pbc"));
 
     auto arguments = g_variant_builder_end(builder);
 
-    wpa_supplicant_interface_p2_pdevice_call_connect(p2p_device_.get(), arguments, nullptr,
+    wpa_supplicant_interface_p2_pdevice_call_connect(p2p_device_proxy_.get(), arguments, nullptr,
                                                      [](GObject *source, GAsyncResult *res, gpointer user_data) {
 
         auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
 
         GError *error = nullptr;
-        if (!wpa_supplicant_interface_p2_pdevice_call_connect_finish(inst->p2p_device_.get(), nullptr, res, &error)) {
+        if (!wpa_supplicant_interface_p2_pdevice_call_connect_finish(inst->p2p_device_proxy_.get(), nullptr, res, &error)) {
             MCS_ERROR("Failed to connect with P2P device: %s", error->message);
+            g_error_free(error);
+            return;
+        }
+    }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
+
+    return true;
+}
+
+bool P2PDeviceStub::Disconnect() {
+    MCS_DEBUG("");
+
+    wpa_supplicant_interface_p2_pdevice_call_disconnect(p2p_device_proxy_.get(), nullptr,
+                                                        [](GObject *source, GAsyncResult *res, gpointer user_data) {
+
+        auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
+
+        GError *error = nullptr;
+        if (!wpa_supplicant_interface_p2_pdevice_call_disconnect_finish(inst->p2p_device_proxy_.get(), res, &error)) {
+            MCS_ERROR("Failed to disconnect with P2P device: %s", error->message);
             g_error_free(error);
             return;
         }
@@ -372,10 +354,40 @@ bool P2PDeviceStub::Connect(const w11tng::NetworkDevice::Ptr &device) {
     return true;
 }
 
-bool P2PDeviceStub::Disconnect() {
+void P2PDeviceStub::Flush() {
     MCS_DEBUG("");
 
-    return false;
+    wpa_supplicant_interface_p2_pdevice_call_flush(p2p_device_proxy_.get(), nullptr,
+                                                   [](GObject *source, GAsyncResult *res, gpointer user_data) {
+
+        auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
+
+        GError *error = nullptr;
+        if (!wpa_supplicant_interface_p2_pdevice_call_flush_finish(inst->p2p_device_proxy_.get(), res, &error)) {
+            MCS_ERROR("Failed to flush P2P device state: %s", error->message);
+            g_error_free(error);
+            return;
+        }
+
+    }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
+}
+
+void P2PDeviceStub::Cancel() {
+    MCS_DEBUG("");
+
+    wpa_supplicant_interface_p2_pdevice_call_cancel(p2p_device_proxy_.get(), nullptr,
+                                                   [](GObject *source, GAsyncResult *res, gpointer user_data) {
+
+        auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
+
+        GError *error = nullptr;
+        if (!wpa_supplicant_interface_p2_pdevice_call_cancel_finish(inst->p2p_device_proxy_.get(), res, &error)) {
+            MCS_ERROR("Failed to cancel P2P device operation: %s", error->message);
+            g_error_free(error);
+            return;
+        }
+
+    }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
 }
 
 } // namespace w11tng

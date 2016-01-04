@@ -35,8 +35,7 @@ DhcpServer::DhcpServer(Delegate *delegate, const std::string &interface_name) :
 }
 
 DhcpServer::~DhcpServer() {
-    if (server_)
-        g_dhcp_server_unref(server_);
+    Stop();
 }
 
 mcs::IpV4Address DhcpServer::LocalAddress() const {

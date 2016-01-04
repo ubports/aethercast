@@ -15,27 +15,24 @@
  *
  */
 
-#ifndef DBUSHELPERS_H_
-#define DBUSHELPERS_H_
+#ifndef X11SOURCEMEDIAMANAGER_H_
+#define X11SOURCEMEDIAMANAGER_H_
 
-#include <functional>
-
-#include <glib.h>
-#include <gio/gio.h>
-
-#include <core/signal.h>
-
-#include "networkdevice.h"
-#include "scoped_gobject.h"
+#include "gstsourcemediamanager.h"
 
 namespace mcs {
+class X11SourceMediaManager : public GstSourceMediaManager {
+public:
+    static std::shared_ptr<X11SourceMediaManager> create(const std::string &remote_address);
+    ~X11SourceMediaManager();
 
-struct DBusHelpers {
-    static gchar** GenerateCapabilities(const std::vector<NetworkDeviceRole> roles);
-    static void ParseDictionary(GVariant *properties, std::function<void(std::string, GVariant*)> callback, const std::string &key_filter = "");
-    static void ParseArray(GVariant *array, std::function<void(GVariant*)> callback);
+protected:
+    SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) override;
+
+private:
+    explicit X11SourceMediaManager(const std::string &remote_address);
+    std::string remote_address_;
 };
-
 } // namespace mcs
 
 #endif
