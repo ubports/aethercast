@@ -112,6 +112,4 @@ TEST_F(PeerStubFixture, ConstructionAndProperties) {
 
     EXPECT_EQ(stub->Address(), "aa:bb:cc:dd:ee:ff");
     EXPECT_EQ(stub->Name(), std::string("Test Peer"));
-
-    MCS_DEBUG("done");
 }
