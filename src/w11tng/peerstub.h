@@ -45,7 +45,7 @@ public:
 
     static Ptr Create(const std::string &object_path);
 
-    void SetDelegate(const std::weak_ptr<Delegate> delegate);
+    void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
 
     mcs::MacAddress Address() const;

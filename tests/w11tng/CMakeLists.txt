@@ -1,0 +1,3 @@
+AETHERCAST_ADD_TEST(peerstub_tests peerstub_tests.cpp)
+
+AETHERCAST_ADD_TEST(informationelement_tests informationelement_tests.cpp)

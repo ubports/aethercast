@@ -78,7 +78,9 @@
         <property name="SecondaryDeviceTypes" type="aay" access="read"/>
         <property name="VendorExtension" type="aay" access="read"/>
         <property name="IEs" type="ay" access="read"/>
-        <property name="DeviceAddress" type="ay" access="read"/>
+        <property name="DeviceAddress" type="ay" access="read">
+            <annotation name="org.gtk.GDBus.C.ForceGVariant" value="true"/>
+        </property>
         <property name="Groups" type="ao" access="read"/>
     </interface>
     <interface name="fi.w1.wpa_supplicant1.Group">

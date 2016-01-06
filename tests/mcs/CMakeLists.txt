@@ -8,8 +8,6 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/src/mcs
   ${CMAKE_SOURCE_DIR}/src/mcs/w11t/gdhcp
-  # We have to pull in generated header files.
-  ${CMAKE_BINARY_DIR}/src/mcs
 )
 
 AETHERCAST_ADD_TEST(mediamanagerfactory_tests mediamanagerfactory_tests.cpp)

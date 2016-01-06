@@ -40,7 +40,7 @@ PeerStub::Ptr PeerStub::FinalizeConstruction(const std::string &object_path) {
         return sp;
     }
 
-    wpa_supplicant_peer_proxy_new(connection_.get(), G_DBUS_PROXY_FLAGS_NONE,
+    wpa_supplicant_peer_proxy_new(connection_.get(), G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
                                   kBusName,
                                   object_path.c_str(),
                                   nullptr,
@@ -68,7 +68,7 @@ PeerStub::Ptr PeerStub::FinalizeConstruction(const std::string &object_path) {
 }
 
 void PeerStub::OnPropertyChanged(GObject *source, GParamSpec *spec, gpointer user_data) {
-    auto inst = static_cast<mcs::SharedKeepAlive<PeerStub>*>(user_data)->ShouldDie();
+    auto inst = static_cast<mcs::WeakKeepAlive<PeerStub>*>(user_data)->GetInstance().lock();
 
     if (not inst)
         return;
@@ -116,7 +116,7 @@ std::string PeerStub::RetrieveAddressFromProxy() {
         return "";
 
     GVariantIter iter;
-    gchar raw_addr[6];
+    gchar raw_addr[6] = { 0x0 };
 
     g_variant_iter_init(&iter, variant);
 
@@ -136,7 +136,7 @@ void PeerStub::SyncProperties(bool update_delegate) {
     if (!proxy_)
         return;
 
-    name_ = wpa_supplicant_peer_get_device_name(proxy_.get());
+    name_ = wpa_supplicant_peer_get_device_name(proxy_.get()) ? : "";
     address_ = RetrieveAddressFromProxy();
 
     if (!update_delegate)
@@ -146,7 +146,7 @@ void PeerStub::SyncProperties(bool update_delegate) {
         sp->OnPeerChanged();
 }
 
-void PeerStub::SetDelegate(const std::weak_ptr<Delegate> delegate) {
+void PeerStub::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
     delegate_ = delegate;
 }
 
