@@ -21,14 +21,12 @@ namespace w11tng {
 namespace testing {
 
 PeerSkeleton::PeerSkeleton(const std::string &object_path) {
-
     GError *error = nullptr;
     bus_connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
     if (!bus_connection_) {
         g_error_free(error);
         return;
     }
-
 
     skeleton_.reset(wpa_supplicant_peer_skeleton_new());
 

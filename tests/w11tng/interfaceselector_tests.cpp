@@ -22,6 +22,8 @@
 #include <common/dbusnameowner.h>
 
 #include <mcs/utils.h>
+#include <mcs/logger.h>
+
 #include <w11tng/interfaceselector.h>
 
 #include "interfaceskeleton.h"
@@ -110,6 +112,8 @@ TEST_F(InterfaceSelectorFixture, ProcessWithNoInterfaces) {
 }
 
 TEST_F(InterfaceSelectorFixture, NoSelectableInterfaceAvailable) {
+    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+
     auto selector = w11tng::InterfaceSelector::Create();
     EXPECT_TRUE(!!selector);
 
@@ -134,32 +138,11 @@ TEST_F(InterfaceSelectorFixture, NoSelectableInterfaceAvailable) {
     EXPECT_EQ(selected_object_path, "");
 }
 
-TEST_F(InterfaceSelectorFixture, JustOneSelectableInterface) {
-    auto selector = w11tng::InterfaceSelector::Create();
-    EXPECT_TRUE(!!selector);
-
-    AvailableInterfaces ifaces(10, 1);
-
-    unsigned int done_called = 0;
-    std::string selected_object_path;
-    selector->Done().connect([&](const std::string &object_path) {
-        done_called++;
-        selected_object_path = object_path;
-    });
-
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
-
-    selector->Process(ifaces.ObjectPaths());
-
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
-
-    EXPECT_EQ(done_called, 1);
-    EXPECT_EQ(selected_object_path, "/interface_10");
-}
-
 TEST_F(InterfaceSelectorFixture, MultipleSelectableInterface) {
     auto selector = w11tng::InterfaceSelector::Create();
     EXPECT_TRUE(!!selector);
+
+    mcs::testing::RunMainLoop(std::chrono::seconds{1});
 
     AvailableInterfaces ifaces(2, 2);
 

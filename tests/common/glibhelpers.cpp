@@ -32,5 +32,12 @@ void RunMainLoop(const std::chrono::seconds &seconds) {
     g_main_loop_run(loop.get());
 }
 
+void RunMainLoopIteration() {
+    std::shared_ptr<GMainLoop> loop(g_main_loop_new(g_main_context_default(), false), &g_main_loop_unref);
+    auto context = g_main_loop_get_context(loop.get());
+    g_main_context_iteration(context, TRUE);
+}
+
+
 } // namespace testing
 } // namespace mcs

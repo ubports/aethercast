@@ -19,12 +19,17 @@
 #include <sstream>
 #include <fstream>
 
+#include <gio/gio.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 
 #include <core/posix/exec.h>
 #include <core/posix/this_process.h>
 
+#include <mcs/scoped_gobject.h>
+
+#include "glibhelpers.h"
 #include "dbusfixture.h"
 
 namespace
@@ -127,6 +132,7 @@ struct mcs::testing::DBusFixture::Private
                 "--print-address"
             };
 
+
             std::map<std::string, std::string> env;
             core::posix::this_process::env::for_each([&env](const std::string& key, const std::string& value)
             {
@@ -155,13 +161,17 @@ struct mcs::testing::DBusFixture::Private
             std::error_code ec; // And just ignore all error codes.
             core::posix::this_process::env::unset(dbus_system_bus_address, ec);
 
-            daemon.send_signal_or_throw(core::posix::Signal::sig_kill);
+            daemon.send_signal_or_throw(core::posix::Signal::sig_term);
             daemon.wait_for(core::posix::wait::Flags::untraced);
+
+            mcs::testing::RunMainLoop(std::chrono::seconds{5});
         }
 
         core::posix::ChildProcess daemon = core::posix::ChildProcess::invalid();
         std::string address;
     } system;
+
+    mcs::ScopedGObject<GDBusConnection> connection_;
 };
 
 mcs::testing::DBusFixture::Seconds& mcs::testing::DBusFixture::default_daemon_timeout()
@@ -173,6 +183,14 @@ mcs::testing::DBusFixture::Seconds& mcs::testing::DBusFixture::default_daemon_ti
 mcs::testing::DBusFixture::DBusFixture()
     : d(new Private{Private::System{}})
 {
+    // The connection object we retrieve here is the one all others will
+    // get as well as its a singleton shared across multipe users.
+    d->connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, nullptr));
+
+    // We need to mark the connection as not to terminate ourself when
+    // the connection to the bus is lost as we restart the bus for every
+    // test we run.
+    g_dbus_connection_set_exit_on_close(d->connection_.get(), FALSE);
 }
 
 mcs::testing::DBusFixture::~DBusFixture()

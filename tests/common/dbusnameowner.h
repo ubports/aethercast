@@ -19,8 +19,11 @@
 #define MCS_TESTING_DBUSNAMEOWNER_H_
 
 #include <glib.h>
+#include <gio/gio.h>
 
 #include <string>
+
+#include <mcs/scoped_gobject.h>
 
 namespace mcs {
 namespace testing {
@@ -32,6 +35,7 @@ public:
 
 private:
     guint id_;
+    mcs::ScopedGObject<GDBusConnection> connection_;
 };
 
 } // namespace testing

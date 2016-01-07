@@ -52,7 +52,7 @@ TEST_F(PeerStubFixture, ConstructionAndProperties) {
     auto delegate = std::make_shared<MockPeerDelegate>();
 
     EXPECT_CALL(*delegate, OnPeerReady()).Times(1);
-    EXPECT_CALL(*delegate, OnPeerChanged()).Times(4);
+    EXPECT_CALL(*delegate, OnPeerChanged()).Times(2);
 
     auto skeleton = std::make_shared<w11tng::testing::PeerSkeleton>("/peer_1");
 

@@ -23,8 +23,15 @@ namespace mcs {
 namespace testing {
 
 DBusNameOwner::DBusNameOwner(const std::string &name) {
-    id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, "fi.w1.wpa_supplicant1", G_BUS_NAME_OWNER_FLAGS_NONE,
-                   nullptr, nullptr, nullptr, nullptr, nullptr);
+    connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, nullptr));
+
+    // We need to mark the connection as not to terminate ourself when
+    // the connection to the bus is lost as we restart the bus for every
+    // test we run.
+    g_dbus_connection_set_exit_on_close(connection_.get(), FALSE);
+
+    id_ = g_bus_own_name_on_connection(connection_.get(), "fi.w1.wpa_supplicant1", G_BUS_NAME_OWNER_FLAGS_NONE,
+                                       nullptr, nullptr, nullptr, nullptr);
 }
 
 DBusNameOwner::~DBusNameOwner() {

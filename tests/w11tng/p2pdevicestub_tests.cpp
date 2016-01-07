@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Canonical, Ltd.
+ * Copyright (C) 2015 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,20 +15,29 @@
  *
  */
 
-#ifndef GLIBHELPERS_H_
-#define GLIBHELPERS_H_
+#include <cstdint>
 
-#include <glib.h>
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
-#include <chrono>
+#include <core/posix/fork.h>
 
-namespace mcs {
-namespace testing {
+#include <common/glibhelpers.h>
+#include <common/dbusfixture.h>
+#include <common/dbusnameowner.h>
 
-void RunMainLoop(const std::chrono::seconds &seconds);
-void RunMainLoopIteration();
+#include <mcs/keep_alive.h>
 
-} // namespace testing
-} // namespace mcs
+namespace {
+class P2PDeviceStubFixture : public ::testing::Test,
+                        public mcs::testing::DBusFixture,
+                        public mcs::testing::DBusNameOwner {
+public:
+    P2PDeviceStubFixture() :
+        mcs::testing::DBusNameOwner("fi.w1.wpa_supplicant1") {
+    }
+};
+}
 
-#endif
+TEST_F(P2PDeviceStubFixture, Dummy) {
+}
