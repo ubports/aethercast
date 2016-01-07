@@ -41,7 +41,7 @@ std::shared_ptr<P2PDeviceStub> P2PDeviceStub::FinalizeConstruction(const std::st
     }
 
     wpa_supplicant_interface_p2_pdevice_proxy_new(connection_.get(),
-                                                  G_DBUS_PROXY_FLAGS_NONE,
+                                                  G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
                                                   kBusName,
                                                   object_path.c_str(),
                                                   nullptr,

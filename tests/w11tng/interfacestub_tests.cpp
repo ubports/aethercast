@@ -22,55 +22,50 @@
 
 #include <core/posix/fork.h>
 
-#include <mcs/keep_alive.h>
-#include <w11tng/peerstub.h>
-
 #include <common/glibhelpers.h>
 #include <common/dbusfixture.h>
 #include <common/dbusnameowner.h>
 
-#include "peerskeleton.h"
+#include <mcs/keep_alive.h>
+#include <w11tng/interfacestub.h>
+
+#include "interfaceskeleton.h"
 
 namespace {
-class PeerStubFixture : public ::testing::Test,
+class InterfaceStubFixture : public ::testing::Test,
                         public mcs::testing::DBusFixture,
                         public mcs::testing::DBusNameOwner {
 public:
-    PeerStubFixture() :
+    InterfaceStubFixture() :
         mcs::testing::DBusNameOwner("fi.w1.wpa_supplicant1") {
     }
 };
-
-class MockPeerDelegate : public w11tng::PeerStub::Delegate {
-public:
-    MOCK_METHOD0(OnPeerReady, void());
-    MOCK_METHOD0(OnPeerChanged, void());
-};
 }
 
-TEST_F(PeerStubFixture, ConstructionAndProperties) {
-    auto delegate = std::make_shared<MockPeerDelegate>();
+TEST_F(InterfaceStubFixture, ConstructionAndProperties) {
 
-    EXPECT_CALL(*delegate, OnPeerReady()).Times(1);
-    EXPECT_CALL(*delegate, OnPeerChanged()).Times(4);
+    auto skeleton = std::make_shared<w11tng::testing::InterfaceSkeleton>("/interface_1");
 
-    auto skeleton = std::make_shared<w11tng::testing::PeerSkeleton>("/peer_1");
-
-    auto stub = w11tng::PeerStub::Create("/peer_1");
+    auto stub = w11tng::InterfaceStub::Create("/interface_1");
     EXPECT_TRUE(!!stub);
 
-    stub->SetDelegate(delegate);
+    bool iface_ready_called = false;
+    stub->Ready().connect([&]() {
+        iface_ready_called = true;
+    });
 
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
 
-    EXPECT_EQ(stub->Address(), "00:00:00:00:00:00");
-    EXPECT_EQ(stub->Name(), std::string(""));
+    EXPECT_TRUE(iface_ready_called);
+    EXPECT_EQ(stub->Capabilities().size(), 0);
+    EXPECT_EQ(stub->Driver(), "");
+    EXPECT_EQ(stub->Ifname(), "");
 
-    skeleton->SetAddress(std::vector<uint8_t>{ 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff });
-    skeleton->SetName("Test Peer");
+    skeleton->SetDriver("nl80211");
+    skeleton->SetIfname("wlan0");
 
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
 
-    EXPECT_EQ(stub->Address(), "aa:bb:cc:dd:ee:ff");
-    EXPECT_EQ(stub->Name(), std::string("Test Peer"));
+    EXPECT_EQ(stub->Driver(), "nl80211");
+    EXPECT_EQ(stub->Ifname(), "wlan0");
 }

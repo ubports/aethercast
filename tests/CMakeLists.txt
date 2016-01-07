@@ -14,6 +14,8 @@ include_directories(
 )
 
 set(TEST_COMMON_SOURCE
+    ${CMAKE_SOURCE_DIR}/tests/common/glibhelpers.cpp
+    ${CMAKE_SOURCE_DIR}/tests/common/dbusnameowner.cpp
     ${CMAKE_SOURCE_DIR}/tests/common/dbusfixture.cpp)
 
 macro(AETHERCAST_ADD_TEST test_name src)

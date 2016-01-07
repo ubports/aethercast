@@ -152,14 +152,11 @@ struct mcs::testing::DBusFixture::Private
 
         ~System()
         {
-            try
-            {
-                daemon.send_signal_or_throw(core::posix::Signal::sig_term);
-                daemon.wait_for(core::posix::wait::Flags::untraced);
-            } catch(...)
-            {
-                // We drop any exception to make the dtor exception safe.
-            }
+            std::error_code ec; // And just ignore all error codes.
+            core::posix::this_process::env::unset(dbus_system_bus_address, ec);
+
+            daemon.send_signal_or_throw(core::posix::Signal::sig_kill);
+            daemon.wait_for(core::posix::wait::Flags::untraced);
         }
 
         core::posix::ChildProcess daemon = core::posix::ChildProcess::invalid();

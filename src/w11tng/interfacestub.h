@@ -47,7 +47,7 @@ public:
     std::string Driver() const;
     std::string Ifname() const;
 
-    const core::Signal<void>& InterfaceReady() const { return interface_ready_; }
+    const core::Signal<void>& Ready() const { return interface_ready_; }
 
 private:
     InterfaceStub();

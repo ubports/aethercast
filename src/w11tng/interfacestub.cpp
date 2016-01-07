@@ -37,7 +37,8 @@ InterfaceStub::Ptr InterfaceStub::FinalizeConstruction(const std::string &object
         return sp;
     }
 
-    wpa_supplicant_interface_proxy_new(connection_.get(), G_DBUS_PROXY_FLAGS_NONE,
+    wpa_supplicant_interface_proxy_new(connection_.get(),
+                                       G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
                                        kBusName,
                                        object_path.c_str(),
                                        nullptr,

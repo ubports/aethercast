@@ -352,7 +352,7 @@ void NetworkManager::OnGroupStarted(const std::string &group_path, const std::st
     // We have to find out more about the actual group we're now part of
     // and which role we play in it.
     current_group_iface_ = InterfaceStub::Create(interface_path);
-    current_group_iface_->InterfaceReady().connect([&]() {
+    current_group_iface_->Ready().connect([&]() {
         if (!current_device_ || current_device_->State() != mcs::kConfiguration)
             return;
 

@@ -28,6 +28,8 @@ set(HEADERS
     mcs/keep_alive.h
     mcs/mac_address.h
     mcs/types.h
+    mcs/shared_gobject.h
+    mcs/keep_alive.h
 
     w11t/gdhcp/gdhcp.h
 )
