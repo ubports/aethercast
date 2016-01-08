@@ -34,24 +34,9 @@
 
 namespace
 {
-static constexpr const char* dbus_session_bus_address
-{
-    "DBUS_SESSION_BUS_ADDRESS"
-};
-
 static constexpr const char* dbus_system_bus_address
 {
     "DBUS_SYSTEM_BUS_ADDRESS"
-};
-
-static constexpr const char* dbus_starter_address
-{
-    "DBUS_STARTER_ADDRESS"
-};
-
-static constexpr const char* dbus_starter_bus_type
-{
-    "DBUS_STARTER_BUS_TYPE"
 };
 
 boost::optional<boost::filesystem::path> find_executable(const boost::filesystem::path& name)
@@ -164,7 +149,9 @@ struct mcs::testing::DBusFixture::Private
             daemon.send_signal_or_throw(core::posix::Signal::sig_term);
             daemon.wait_for(core::posix::wait::Flags::untraced);
 
-            mcs::testing::RunMainLoop(std::chrono::seconds{5});
+            // Give GLib a iteration to cleanup and perform all async handling
+            // for any occuring events when the dbus daemon disconnects.
+            mcs::testing::RunMainLoopIteration();
         }
 
         core::posix::ChildProcess daemon = core::posix::ChildProcess::invalid();

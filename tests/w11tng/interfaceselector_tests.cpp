@@ -138,7 +138,7 @@ TEST_F(InterfaceSelectorFixture, NoSelectableInterfaceAvailable) {
     EXPECT_EQ(selected_object_path, "");
 }
 
-TEST_F(InterfaceSelectorFixture, MultipleSelectableInterface) {
+TEST_F(InterfaceSelectorFixture, MultipleSelectableInterfaces) {
     auto selector = w11tng::InterfaceSelector::Create();
     EXPECT_TRUE(!!selector);
 
