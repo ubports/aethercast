@@ -20,14 +20,11 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <core/posix/fork.h>
-
-#include <mcs/keep_alive.h>
-#include <w11tng/peerstub.h>
-
 #include <common/glibhelpers.h>
 #include <common/dbusfixture.h>
 #include <common/dbusnameowner.h>
+
+#include <w11tng/peerstub.h>
 
 #include "peerskeleton.h"
 

@@ -15,28 +15,27 @@
  *
  */
 
-#ifndef W11TNG_TESTING_INTERFACE_SKELETON_H_
-#define W11TNG_TESTING_INTERFACE_SKELETON_H_
+#ifndef W11TNG_TESTING_BASE_SKELETON_H_
+#define W11TNG_TESTING_BASE_SKELETON_H_
 
-extern "C" {
-#include "wpasupplicantinterface.h"
-}
+#include <gio/gio.h>
 
-#include "baseskeleton.h"
+#include <mcs/scoped_gobject.h>
 
 namespace w11tng {
 namespace testing {
 
-class InterfaceSkeleton : public BaseSkeleton<WpaSupplicantInterface> {
+template <typename T>
+class BaseSkeleton {
 public:
-    typedef std::shared_ptr<InterfaceSkeleton> Ptr;
+    BaseSkeleton(T *instance, const std::string &object_path);
+    virtual ~BaseSkeleton();
 
-    InterfaceSkeleton(const std::string &object_path);
-    ~InterfaceSkeleton();
+    std::string ObjectPath() const;
 
-    void SetCapabilities(GVariant *value);
-    void SetDriver(const std::string &driver);
-    void SetIfname(const std::string &ifname);
+protected:
+    mcs::ScopedGObject<GDBusConnection> bus_connection_;
+    mcs::ScopedGObject<T> skeleton_;
 };
 
 } // namespace testing

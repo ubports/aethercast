@@ -20,13 +20,13 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <core/posix/fork.h>
-
 #include <common/glibhelpers.h>
 #include <common/dbusfixture.h>
 #include <common/dbusnameowner.h>
 
-#include <mcs/keep_alive.h>
+#include <w11tng/p2pdevicestub.h>
+
+#include "p2pdeviceskeleton.h"
 
 namespace {
 class P2PDeviceStubFixture : public ::testing::Test,

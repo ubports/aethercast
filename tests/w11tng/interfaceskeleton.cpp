@@ -20,18 +20,8 @@
 namespace w11tng {
 namespace testing {
 
-InterfaceSkeleton::InterfaceSkeleton(const std::string &object_path) {
-    GError *error = nullptr;
-    bus_connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
-    if (!bus_connection_) {
-        g_error_free(error);
-        return;
-    }
-
-    skeleton_.reset(wpa_supplicant_interface_skeleton_new());
-
-    g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(skeleton_.get()),
-                                     bus_connection_.get(), object_path.c_str(), nullptr);
+InterfaceSkeleton::InterfaceSkeleton(const std::string &object_path) :
+    BaseSkeleton(wpa_supplicant_interface_skeleton_new(), object_path) {
 }
 
 InterfaceSkeleton::~InterfaceSkeleton() {
@@ -47,10 +37,6 @@ void InterfaceSkeleton::SetDriver(const std::string &driver) {
 
 void InterfaceSkeleton::SetIfname(const std::string &ifname) {
     wpa_supplicant_interface_set_ifname(skeleton_.get(), ifname.c_str());
-}
-
-std::string InterfaceSkeleton::ObjectPath() const {
-    return std::string(g_dbus_interface_skeleton_get_object_path(G_DBUS_INTERFACE_SKELETON(skeleton_.get())));
 }
 
 } // namespace testing

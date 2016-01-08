@@ -20,25 +20,22 @@
 
 #include <vector>
 
-#include <mcs/scoped_gobject.h>
-
 extern "C" {
 #include "wpasupplicantinterface.h"
 }
 
+#include "baseskeleton.h"
+
 namespace w11tng {
 namespace testing {
 
-class PeerSkeleton {
+class PeerSkeleton : public BaseSkeleton<WpaSupplicantPeer> {
 public:
     PeerSkeleton(const std::string &object_path);
+    ~PeerSkeleton();
 
     void SetAddress(const std::vector<uint8_t> &address);
     void SetName(const std::string &name);
-
-private:
-    mcs::ScopedGObject<GDBusConnection> bus_connection_;
-    mcs::ScopedGObject<WpaSupplicantPeer> skeleton_;
 };
 
 } // namespace testing

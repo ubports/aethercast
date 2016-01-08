@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef W11TNG_TESTING_INTERFACE_SKELETON_H_
-#define W11TNG_TESTING_INTERFACE_SKELETON_H_
+#ifndef W11TNG_TESTING_P2PDEVICE_SKELETON_H_
+#define W11TNG_TESTING_P2PDEVICE_SKELETON_H_
 
 extern "C" {
 #include "wpasupplicantinterface.h"
@@ -27,16 +27,10 @@ extern "C" {
 namespace w11tng {
 namespace testing {
 
-class InterfaceSkeleton : public BaseSkeleton<WpaSupplicantInterface> {
+class P2PDeviceSkeleton : public BaseSkeleton<WpaSupplicantInterfaceP2PDevice> {
 public:
-    typedef std::shared_ptr<InterfaceSkeleton> Ptr;
-
-    InterfaceSkeleton(const std::string &object_path);
-    ~InterfaceSkeleton();
-
-    void SetCapabilities(GVariant *value);
-    void SetDriver(const std::string &driver);
-    void SetIfname(const std::string &ifname);
+    P2PDeviceSkeleton(const std::string &object_path);
+    ~P2PDeviceSkeleton();
 };
 
 } // namespace testing

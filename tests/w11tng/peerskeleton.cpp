@@ -20,24 +20,11 @@
 namespace w11tng {
 namespace testing {
 
-PeerSkeleton::PeerSkeleton(const std::string &object_path) {
-    GError *error = nullptr;
-    bus_connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
-    if (!bus_connection_) {
-        g_error_free(error);
-        return;
-    }
+PeerSkeleton::PeerSkeleton(const std::string &object_path) :
+    BaseSkeleton(wpa_supplicant_peer_skeleton_new(), object_path) {
+}
 
-    skeleton_.reset(wpa_supplicant_peer_skeleton_new());
-
-    SetName("");
-    SetAddress(std::vector<uint8_t>{});
-
-    g_bus_own_name(G_BUS_TYPE_SYSTEM, "fi.w1.wpa_supplicant1", G_BUS_NAME_OWNER_FLAGS_NONE,
-                   nullptr, nullptr, nullptr, nullptr, nullptr);
-
-    g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(skeleton_.get()),
-                                     bus_connection_.get(), object_path.c_str(), nullptr);
+PeerSkeleton::~PeerSkeleton() {
 }
 
 void PeerSkeleton::SetAddress(const std::vector<uint8_t> &address) {
@@ -48,7 +35,6 @@ void PeerSkeleton::SetAddress(const std::vector<uint8_t> &address) {
 void PeerSkeleton::SetName(const std::string &name) {
     wpa_supplicant_peer_set_device_name(skeleton_.get(), name.c_str());
 }
-
 
 } // namespace testing
 } // namespace w11tng
