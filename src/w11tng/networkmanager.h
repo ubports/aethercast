@@ -105,6 +105,7 @@ private:
     InterfaceSelector::Ptr interface_selector_;
     guint connect_timeout_;
     w11t::WiFiFirmwareLoader firmware_loader_;
+    bool has_dedicated_p2p_interface_;
 };
 
 } // namespace w11tng

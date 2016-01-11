@@ -46,7 +46,8 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
 }
 
 NetworkManager::NetworkManager() :
-    firmware_loader_("", nullptr) {
+    firmware_loader_("", nullptr),
+    has_dedicated_p2p_interface_(mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE").length() > 0){
     // Pass through when firmware was successfully loaded and
     // do all other needed initialization stuff
     firmware_loader_.Loaded().connect([&]() { Initialize(); });
@@ -83,8 +84,8 @@ void NetworkManager::OnServiceLost(GDBusConnection *connection, const gchar *nam
 void NetworkManager::Initialize(bool firmware_loading) {
     MCS_DEBUG("");
 
-    if (firmware_loading && mcs::Utils::GetEnvValue("AETHERCAST_P2P_FIRMWARE_NEEDED") == "1") {
-        auto interface_name = mcs::Utils::GetEnvValue("AETHERCAST_P2P_NETWORK_INTERFACE");
+    if (firmware_loading && mcs::Utils::GetEnvValue("AETHERCAST_NEED_FIRMWARE") == "1") {
+        auto interface_name = mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE");
         if (interface_name.length() == 0)
             interface_name = "p2p0";
 
@@ -102,7 +103,6 @@ void NetworkManager::Initialize(bool firmware_loading) {
             return;
 
         MCS_DEBUG("Found P2P interface %s", object_path);
-
         SetupInterface(object_path);
     });
 
@@ -122,8 +122,9 @@ void NetworkManager::Initialize(bool firmware_loading) {
 
         manager_->SetWFDIEs(ie_data->bytes, ie_data->length);
 
-        if (mcs::Utils::GetEnvValue("AETHERCAST_P2P_NEED_INTERFACE_CREATION") == "1") {
-            manager_->CreateInterface("p2p0");
+        auto dedicated_p2p_interface = mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE");
+        if (dedicated_p2p_interface.length() > 0) {
+            manager_->CreateInterface(dedicated_p2p_interface);
             return;
         }
 
