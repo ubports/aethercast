@@ -83,6 +83,8 @@ set(SOURCES
   w11tng/interfacestub.cpp
   w11tng/groupstub.cpp
   w11tng/informationelement.cpp
+  w11tng/dhcpclient.cpp
+  w11tng/dhcpserver.cpp
 )
 
 link_directories(
