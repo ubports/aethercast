@@ -138,6 +138,9 @@ bool NetworkManager::Setup() {
 }
 
 void NetworkManager::Scan(const std::chrono::seconds &timeout) {
+    if (!p2p_device_)
+        return;
+
     p2p_device_->Find(timeout);
 }
 
@@ -191,7 +194,7 @@ void NetworkManager::StopConnectTimeout() {
 }
 
 bool NetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
-    if (current_device_)
+    if (!p2p_device_ || current_device_)
         return false;
 
     MCS_DEBUG("address %s", device->Address());
@@ -221,7 +224,7 @@ bool NetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
 }
 
 bool NetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {
-    if (!current_device_)
+    if (!p2p_device_ || !current_device_)
         return false;
 
     if (!FindDevice(device->Address()))
