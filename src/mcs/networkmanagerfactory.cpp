@@ -77,7 +77,7 @@ bool NullNetworkManager::Scanning() const {
 NetworkManager::Ptr NetworkManagerFactory::Create(const std::string &type) {
     auto final_type = type.length() > 0 ? type : Utils::GetEnvValue("AETHERCAST_NETWORK_MANAGER");
 
-    DEBUG("Creating network manager of type %s", final_type);
+    DEBUG("Creating network manager of type %s", final_type.length() > 0 ? final_type : "w11tng");
 
     // We will always default to the w11t implementation if no invalid
     // type is specified.

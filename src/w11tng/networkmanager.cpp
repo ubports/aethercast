@@ -45,7 +45,11 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
     return sp;
 }
 
-NetworkManager::NetworkManager() {
+NetworkManager::NetworkManager() :
+    firmware_loader_("", nullptr) {
+    // Pass through when firmware was successfully loaded and
+    // do all other needed initialization stuff
+    firmware_loader_.Loaded().connect([&]() { Initialize(); });
 }
 
 NetworkManager::~NetworkManager() {
@@ -61,7 +65,7 @@ void NetworkManager::OnServiceFound(GDBusConnection *connection, const gchar *na
     if (not inst)
         return;
 
-    inst->Initialize();
+    inst->Initialize(true);
 }
 
 void NetworkManager::OnServiceLost(GDBusConnection *connection, const gchar *name, gpointer user_data) {
@@ -76,8 +80,21 @@ void NetworkManager::OnServiceLost(GDBusConnection *connection, const gchar *nam
     inst->Release();
 }
 
-void NetworkManager::Initialize() {
+void NetworkManager::Initialize(bool firmware_loading) {
     MCS_DEBUG("");
+
+    if (firmware_loading && mcs::Utils::GetEnvValue("AETHERCAST_P2P_FIRMWARE_NEEDED") == "1") {
+        auto interface_name = mcs::Utils::GetEnvValue("AETHERCAST_P2P_NETWORK_INTERFACE");
+        if (interface_name.length() == 0)
+            interface_name = "p2p0";
+
+        firmware_loader_.SetInterfaceName(interface_name);
+        if (firmware_loader_.IsNeeded()) {
+            MCS_DEBUG("Loading WiFi firmware for interface %s", interface_name);
+            firmware_loader_.TryLoad();
+            return;
+        }
+    }
 
     interface_selector_ = InterfaceSelector::Create();
     interface_selector_->Done().connect([&](const std::string &object_path) {
@@ -105,6 +122,15 @@ void NetworkManager::Initialize() {
 
         manager_->SetWFDIEs(ie_data->bytes, ie_data->length);
 
+        if (mcs::Utils::GetEnvValue("AETHERCAST_P2P_NEED_INTERFACE_CREATION") == "1") {
+            manager_->CreateInterface("p2p0");
+            return;
+        }
+
+        interface_selector_->Process(manager_->Interfaces());
+    });
+
+    manager_->InterfaceAdded().connect([&](const std::string &path) {
         interface_selector_->Process(manager_->Interfaces());
     });
 }

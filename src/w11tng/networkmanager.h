@@ -23,6 +23,7 @@
 #include <mcs/networkmanager.h>
 #include <w11t/dhcpclient.h>
 #include <w11t/dhcpserver.h>
+#include <w11t/wififirmwareloader.h>
 
 #include "managerstub.h"
 #include "p2pdevicestub.h"
@@ -82,7 +83,7 @@ private:
     std::shared_ptr<NetworkManager> FinalizeConstruction();
 
     NetworkDevice::Ptr FindDevice(const std::string &address);
-    void Initialize();
+    void Initialize(bool firmware_loading = false);
     void Release();
     void SetupInterface(const std::string &object_path);
     void AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::NetworkDeviceState state);
@@ -103,6 +104,7 @@ private:
     std::shared_ptr<w11t::DhcpServer> dhcp_server_;
     InterfaceSelector::Ptr interface_selector_;
     guint connect_timeout_;
+    w11t::WiFiFirmwareLoader firmware_loader_;
 };
 
 } // namespace w11tng

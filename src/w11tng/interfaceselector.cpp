@@ -69,6 +69,8 @@ void InterfaceSelector::TryNextInterface() {
     auto object_path = interfaces_.back();
     interfaces_.pop_back();
 
+    MCS_DEBUG("Looking at %s", object_path);
+
     wpa_supplicant_interface_proxy_new(connection_.get(),
                                        G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
                                        kBusName,

@@ -47,8 +47,12 @@ public:
     std::vector<std::string> Interfaces() const;
 
     const core::Signal<void>& Ready() const { return ready_; }
+    const core::Signal<std::string>& InterfaceAdded() const { return interface_added_; }
+    const core::Signal<std::string>& InterfaceRemoved() const { return interface_removed_; }
 
     void SetWFDIEs(uint8_t *bytes, int length);
+
+    void CreateInterface(const std::string &interface_name);
 
 private:
     ManagerStub();
@@ -57,12 +61,18 @@ private:
     void Initialize();
 
 private:
+    static void OnInterfaceAdded(GObject *source, const gchar *path, GVariant *properties, gpointer user_data);
+    static void OnInterfaceRemoved(GObject *source, const gchar *path, gpointer user_data);
+
+private:
     mcs::ScopedGObject<GDBusConnection> connection_;
     mcs::ScopedGObject<WpaSupplicantFiW1Wpa_supplicant1> proxy_;
     core::Signal<void> ready_;
     bool p2p_supported_;
     std::vector<std::string> capabilities_;
     std::vector<std::string> interfaces_;
+    core::Signal<std::string> interface_added_;
+    core::Signal<std::string> interface_removed_;
 };
 
 } // namespace w11tng

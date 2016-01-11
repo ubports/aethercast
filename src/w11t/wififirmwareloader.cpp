@@ -38,6 +38,10 @@ WiFiFirmwareLoader::~WiFiFirmwareLoader() {
         g_source_remove(reload_timeout_source_);
 }
 
+void WiFiFirmwareLoader::SetInterfaceName(const std::string &interface_name) {
+    interface_name_ = interface_name;
+}
+
 bool WiFiFirmwareLoader::IsNeeded() {
     auto path = mcs::Utils::Sprintf("/sys/class/net/%s/uevent", interface_name_.c_str());
     return !g_file_test(path.c_str(), (GFileTest) (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR));
@@ -69,6 +73,8 @@ gboolean WiFiFirmwareLoader::OnRetryLoad(gpointer user_data) {
     if (inst->delegate_)
         inst->delegate_->OnFirmwareLoaded();
 
+    inst->loaded_();
+
     return FALSE;
 }
 
@@ -85,6 +91,10 @@ void WiFiFirmwareLoader::OnInterfaceFirmwareSet(GDBusConnection *conn, GAsyncRes
     }
 
     inst->reload_timeout_source_ = g_timeout_add(timeout.count(), &WiFiFirmwareLoader::OnRetryLoad, inst);
+}
+
+const core::Signal<void>& WiFiFirmwareLoader::Loaded() const {
+    return loaded_;
 }
 
 
