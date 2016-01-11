@@ -22,6 +22,10 @@
 
 #include <mcs/scoped_gobject.h>
 
+extern "C" {
+#include "wpasupplicantinterface.h"
+}
+
 namespace w11tng {
 namespace testing {
 
@@ -35,6 +39,7 @@ public:
 
 protected:
     mcs::ScopedGObject<GDBusConnection> bus_connection_;
+    mcs::ScopedGObject<WpaSupplicantObjectProxy> proxy_;
     mcs::ScopedGObject<T> skeleton_;
 };
 

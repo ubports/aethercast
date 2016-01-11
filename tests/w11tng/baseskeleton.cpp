@@ -17,10 +17,6 @@
 
 #include "baseskeleton.h"
 
-extern "C" {
-#include "wpasupplicantinterface.h"
-}
-
 namespace w11tng {
 namespace testing {
 
@@ -29,14 +25,18 @@ BaseSkeleton<T>::BaseSkeleton(T *instance, const std::string &object_path) {
     GError *error = nullptr;
     bus_connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
     if (!bus_connection_) {
+        MCS_ERROR("Failed to connect with system bus: %s", error->message);
         g_error_free(error);
         return;
     }
 
     skeleton_.reset(instance);
 
-    g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(skeleton_.get()),
-                                     bus_connection_.get(), object_path.c_str(), nullptr);
+    if (!g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(skeleton_.get()),
+                                     bus_connection_.get(), object_path.c_str(), &error)) {
+        MCS_ERROR("Failed to export interface on path %s: %s", object_path, error->message);
+        g_error_free(error);
+    }
 }
 
 template <typename T>

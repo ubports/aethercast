@@ -18,6 +18,8 @@
 #ifndef W11TNG_TESTING_P2PDEVICE_SKELETON_H_
 #define W11TNG_TESTING_P2PDEVICE_SKELETON_H_
 
+#include <mcs/non_copyable.h>
+
 extern "C" {
 #include "wpasupplicantinterface.h"
 }
@@ -27,10 +29,35 @@ extern "C" {
 namespace w11tng {
 namespace testing {
 
-class P2PDeviceSkeleton : public BaseSkeleton<WpaSupplicantInterfaceP2PDevice> {
+class P2PDeviceSkeleton : public std::enable_shared_from_this<P2PDeviceSkeleton>,
+        public BaseSkeleton<WpaSupplicantInterfaceP2PDevice> {
 public:
-    P2PDeviceSkeleton(const std::string &object_path);
+    typedef std::shared_ptr<P2PDeviceSkeleton> Ptr;
+
+    class Delegate : public mcs::NonCopyable {
+    public:
+        virtual void OnFind() = 0;
+        virtual void OnStopFind() = 0;
+    };
+
+    static Ptr Create(const std::string &object_path);
+
     ~P2PDeviceSkeleton();
+
+    void SetDelegate(const std::weak_ptr<Delegate> &delegate);
+
+    void EmitDeviceFound(const std::string &path);
+    void EmitDeviceLost(const std::string &path);
+
+private:
+    P2PDeviceSkeleton(const std::string &object_path);
+    Ptr FinalizeConstruction();
+
+private:
+    static gboolean OnHandleFind(WpaSupplicantInterfaceP2PDevice *device, GDBusMethodInvocation *invocation, GVariant *properties, gpointer user_data);
+
+private:
+    std::weak_ptr<Delegate> delegate_;
 };
 
 } // namespace testing

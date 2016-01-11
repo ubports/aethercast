@@ -18,6 +18,7 @@
 #include <gio/gio.h>
 
 #include "dbusnameowner.h"
+#include "glibhelpers.h"
 
 namespace mcs {
 namespace testing {
