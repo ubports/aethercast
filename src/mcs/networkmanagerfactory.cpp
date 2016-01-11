@@ -81,9 +81,9 @@ NetworkManager::Ptr NetworkManagerFactory::Create(const std::string &type) {
 
     // We will always default to the w11t implementation if no invalid
     // type is specified.
-    if (final_type == "w11t" || final_type.length() == 0)
+    if (final_type == "w11t")
         return std::make_shared<w11t::NetworkManager>();
-    else if (final_type == "w11tng")
+    else if (final_type == "w11tng" || final_type.length() == 0)
         return w11tng::NetworkManager::Create();
 
     return std::make_shared<NullNetworkManager>();

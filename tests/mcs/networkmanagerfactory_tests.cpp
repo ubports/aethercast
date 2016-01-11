@@ -34,7 +34,7 @@ TEST_F(NetworkManagerFactoryFixture, InvalidType) {
 }
 
 TEST_F(NetworkManagerFactoryFixture, DefaultType) {
-    CheckManagerCreation<w11t::NetworkManager>("");
+    CheckManagerCreation<w11tng::NetworkManager>("");
 }
 
 TEST_F(NetworkManagerFactoryFixture, W11tTypeCreation) {
