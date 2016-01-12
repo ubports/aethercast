@@ -97,6 +97,8 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
             auto thiz = static_cast<Runtime*>(user_data);
             g_main_loop_quit(thiz->ml);
 
+            MCS_DEBUG("Exiting");
+
             return 0;
         }
 

@@ -68,6 +68,7 @@ public:
     void StopFind();
     bool Connect(const std::string &path);
     bool Disconnect();
+    bool DisconnectSync();
     void Flush();
     void Cancel();
 

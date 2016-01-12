@@ -355,6 +355,19 @@ bool P2PDeviceStub::Disconnect() {
     return true;
 }
 
+bool P2PDeviceStub::DisconnectSync() {
+    MCS_DEBUG("");
+
+    GError *error = nullptr;
+    if (!wpa_supplicant_interface_p2_pdevice_call_disconnect_sync(p2p_device_proxy_.get(), nullptr, &error)) {
+        MCS_ERROR("Failed to disconnect: %s", error->message);
+        g_error_free(error);
+        return false;
+    }
+
+    return true;
+}
+
 void P2PDeviceStub::Flush() {
     MCS_DEBUG("");
 

@@ -51,6 +51,8 @@ NetworkManager::NetworkManager() :
 }
 
 NetworkManager::~NetworkManager() {
+    if (current_group_device_)
+        current_group_device_->DisconnectSync();
 }
 
 void NetworkManager::OnServiceFound(GDBusConnection *connection, const gchar *name, const gchar *name_owner, gpointer user_data) {
@@ -223,9 +225,6 @@ bool NetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {
     if (!FindDevice(device->Address()))
         return false;
 
-    dhcp_client_.reset();
-    dhcp_server_.reset();
-
     // This will trigger the GroupFinished signal where we will release
     // all parts in order.
     current_group_device_->Disconnect();
@@ -299,6 +298,12 @@ void NetworkManager::OnDeviceLost(const std::string &path) {
     auto device = devices_[path];
     devices_.erase(path);
 
+    // If we're currently connecting with the lost device (which can
+    // happen if we're the owner of the group and the remote disappears)
+    // then we have to disconnect everything too.
+    if (current_device_ == device && current_group_device_)
+        current_group_device_->Disconnect();
+
     if (delegate_)
         delegate_->OnDeviceLost(device);
 }
@@ -367,7 +372,10 @@ void NetworkManager::OnGroupFinished(const std::string &group_path, const std::s
 }
 
 void NetworkManager::OnGroupRequest(const std::string &peer_path) {
-    MCS_DEBUG("");
+    MCS_DEBUG("peer %s", peer_path);
+
+    // FIXME once we implement sink support we need to have this
+    // respected as well
 }
 
 void NetworkManager::OnDeviceChanged(const NetworkDevice::Ptr &device) {
@@ -387,6 +395,8 @@ void NetworkManager::OnAddressAssigned(const mcs::IpV4Address &address) {
     MCS_DEBUG("address %s", address);
 
     current_device_->SetIpV4Address(address);
+
+    StopConnectTimeout();
 
     AdvanceDeviceState(current_device_, mcs::kConnected);
 }
@@ -469,9 +479,18 @@ void NetworkManager::OnInterfaceReady() {
 
     auto ifname = current_group_iface_->Ifname();
 
+    MCS_DEBUG("interface %s", ifname);
+
     if (current_device_->Role() == "GO") {
         dhcp_server_ = std::shared_ptr<w11t::DhcpServer>(new w11t::DhcpServer(nullptr, ifname));
         dhcp_server_->Start();
+
+        StopConnectTimeout();
+
+        // We don't have anything more to do when we play the owner
+        // role. The core will setup the necessary endpoints and
+        // waits for incoming connections.
+        AdvanceDeviceState(current_device_, mcs::kConnected);
     }
     else {
         dhcp_client_ = std::shared_ptr<w11t::DhcpClient>(new w11t::DhcpClient(this, ifname));
