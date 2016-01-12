@@ -59,7 +59,9 @@ ManagerStub::Ptr ManagerStub::FinalizeConstruction() {
         }
 
         inst->Initialize();
-        inst->ready_();
+
+        if (auto sp = inst->delegate_.lock())
+            sp->OnManagerReady();
 
     }, new mcs::SharedKeepAlive<ManagerStub>{sp});
     return sp;
@@ -72,6 +74,14 @@ ManagerStub::ManagerStub() :
 ManagerStub::~ManagerStub() {
 }
 
+void ManagerStub::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+    delegate_ = delegate;
+}
+
+void ManagerStub::ResetDelegate() {
+    delegate_.reset();
+}
+
 void ManagerStub::OnInterfaceAdded(GObject *source, const gchar *path, GVariant *properties, gpointer user_data) {
     auto inst = static_cast<mcs::WeakKeepAlive<ManagerStub>*>(user_data)->GetInstance().lock();
 
@@ -82,7 +92,8 @@ void ManagerStub::OnInterfaceAdded(GObject *source, const gchar *path, GVariant 
 
     inst->interfaces_.push_back(path);
 
-    inst->interface_added_(std::string(path));
+    if (auto sp = inst->delegate_.lock())
+        sp->OnManagerInterfaceAdded(std::string(path));
 }
 
 void ManagerStub::OnInterfaceRemoved(GObject *source, const gchar *path, gpointer user_data) {
@@ -96,7 +107,8 @@ void ManagerStub::OnInterfaceRemoved(GObject *source, const gchar *path, gpointe
     inst->interfaces_.erase(std::remove(inst->interfaces_.begin(), inst->interfaces_.end(), std::string(path)),
                             inst->interfaces_.end());
 
-    inst->interface_removed_(std::string(path));
+    if (auto sp = inst->delegate_.lock())
+        sp->OnManagerInterfaceRemoved(std::string(path));
 }
 
 void ManagerStub::Initialize() {

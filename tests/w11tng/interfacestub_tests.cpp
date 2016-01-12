@@ -40,23 +40,27 @@ public:
         mcs::testing::DBusNameOwner("fi.w1.wpa_supplicant1") {
     }
 };
+
+class MockInterfaceStubDelegate : public w11tng::InterfaceStub::Delegate {
+public:
+    MOCK_METHOD0(OnInterfaceReady, void());
+};
 }
 
 TEST_F(InterfaceStubFixture, ConstructionAndProperties) {
 
     auto skeleton = std::make_shared<w11tng::testing::InterfaceSkeleton>("/interface_1");
 
+    auto delegate = std::make_shared<MockInterfaceStubDelegate>();
+
+    EXPECT_CALL(*delegate, OnInterfaceReady()).Times(1);
+
     auto stub = w11tng::InterfaceStub::Create("/interface_1");
     EXPECT_TRUE(!!stub);
-
-    bool iface_ready_called = false;
-    stub->Ready().connect([&]() {
-        iface_ready_called = true;
-    });
+    stub->SetDelegate(delegate);
 
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
 
-    EXPECT_TRUE(iface_ready_called);
     EXPECT_EQ(stub->Capabilities().size(), 0);
     EXPECT_EQ(stub->Driver(), "");
     EXPECT_EQ(stub->Ifname(), "");

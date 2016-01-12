@@ -23,8 +23,6 @@
 #include <mcs/shared_gobject.h>
 #include <mcs/scoped_gobject.h>
 
-#include <core/signal.h>
-
 extern "C" {
 #include "wpasupplicantinterface.h"
 }
@@ -38,17 +36,23 @@ public:
 
     typedef std::shared_ptr<ManagerStub> Ptr;
 
+    class Delegate : public mcs::NonCopyable {
+    public:
+        virtual void OnManagerReady() = 0;
+        virtual void OnManagerInterfaceAdded(const std::string &path) = 0;
+        virtual void OnManagerInterfaceRemoved(const std::string &path) = 0;
+    };
+
     static Ptr Create();
 
     ~ManagerStub();
 
+    void SetDelegate(const std::weak_ptr<Delegate>& delegate);
+    void ResetDelegate();
+
     std::vector<std::string> Capabilities() const;
     bool IsP2PSupported() const;
     std::vector<std::string> Interfaces() const;
-
-    const core::Signal<void>& Ready() const { return ready_; }
-    const core::Signal<std::string>& InterfaceAdded() const { return interface_added_; }
-    const core::Signal<std::string>& InterfaceRemoved() const { return interface_removed_; }
 
     void SetWFDIEs(uint8_t *bytes, int length);
 
@@ -65,14 +69,12 @@ private:
     static void OnInterfaceRemoved(GObject *source, const gchar *path, gpointer user_data);
 
 private:
+    std::weak_ptr<Delegate> delegate_;
     mcs::ScopedGObject<GDBusConnection> connection_;
     mcs::ScopedGObject<WpaSupplicantFiW1Wpa_supplicant1> proxy_;
-    core::Signal<void> ready_;
     bool p2p_supported_;
     std::vector<std::string> capabilities_;
     std::vector<std::string> interfaces_;
-    core::Signal<std::string> interface_added_;
-    core::Signal<std::string> interface_removed_;
 };
 
 } // namespace w11tng

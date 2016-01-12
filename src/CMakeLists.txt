@@ -20,10 +20,6 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
 
 set(HEADERS
-    core/connection.h
-    core/property.h
-    core/signal.h
-
     mcs/ip_v4_address.h
     mcs/keep_alive.h
     mcs/mac_address.h
@@ -32,6 +28,8 @@ set(HEADERS
     mcs/keep_alive.h
 
     w11t/gdhcp/gdhcp.h
+
+    w11tng/config.h
 )
 
 set(SOURCES
@@ -103,6 +101,7 @@ include_directories(
   ${WDS_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/w11t/gdhcp
   ${CMAKE_CURRENT_BINARY_DIR}/src
+  ${CMAKE_CURRENT_BINARY_DIR}/src/w11tng
 )
 
 add_library(aethercast-core ${SOURCES} ${HEADERS})

@@ -33,8 +33,6 @@ extern "C" {
 #include <mcs/shared_gobject.h>
 #include <mcs/scoped_gobject.h>
 
-#include <core/signal.h>
-
 #include "networkdevice.h"
 
 namespace w11tng {
@@ -55,7 +53,9 @@ public:
         virtual void OnGroupRequest(const std::string &peer_path) = 0;
 
         // Called whenver any of the exposed properties changes.
-        virtual void OnChanged() = 0;
+        virtual void OnP2PDeviceChanged() = 0;
+
+        virtual void OnP2PDeviceReady() = 0;
     };
 
     typedef std::shared_ptr<P2PDeviceStub> Ptr;
@@ -73,8 +73,6 @@ public:
 
     bool Scanning() const { return scan_timeout_source_ > 0; }
     bool Connected() const { return !!p2p_device_proxy_; }
-
-    const core::Signal<void>& Ready() const { return ready_; }
 
 private:
     static void OnDeviceFound(WpaSupplicantInterfaceP2PDevice *device, const gchar *path, gpointer user_data);
@@ -102,7 +100,6 @@ private:
     std::chrono::seconds scan_timeout_;
     guint scan_timeout_source_;
     std::unordered_map<std::string,w11tng::NetworkDevice::Ptr> devices_;
-    core::Signal<void> ready_;
 };
 
 } // namespace w11tng

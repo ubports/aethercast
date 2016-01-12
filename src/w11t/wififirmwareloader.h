@@ -24,8 +24,6 @@
 #include <string>
 #include <boost/noncopyable.hpp>
 
-#include <core/signal.h>
-
 namespace w11t {
 class WiFiFirmwareLoader {
 public:
@@ -43,8 +41,6 @@ public:
     bool IsNeeded();
     bool TryLoad();
 
-    const core::Signal<void>& Loaded() const;
-
 private:
     static gboolean OnRetryLoad(gpointer user_data);
     static void OnInterfaceFirmwareSet(GDBusConnection *conn, GAsyncResult *res, gpointer user_data);
@@ -53,7 +49,6 @@ private:
     std::string interface_name_;
     Delegate *delegate_;
     guint reload_timeout_source_;
-    core::Signal<void> loaded_;
 };
 }
 

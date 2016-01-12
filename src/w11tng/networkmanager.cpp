@@ -46,11 +46,8 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
 }
 
 NetworkManager::NetworkManager() :
-    firmware_loader_("", nullptr),
+    firmware_loader_("", this),
     has_dedicated_p2p_interface_(mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE").length() > 0){
-    // Pass through when firmware was successfully loaded and
-    // do all other needed initialization stuff
-    firmware_loader_.Loaded().connect([&]() { Initialize(); });
 }
 
 NetworkManager::~NetworkManager() {
@@ -97,51 +94,20 @@ void NetworkManager::Initialize(bool firmware_loading) {
         }
     }
 
-    interface_selector_ = InterfaceSelector::Create();
-    interface_selector_->Done().connect([&](const std::string &object_path) {
-        if (object_path.length() == 0)
-            return;
+    auto sp = shared_from_this();
 
-        MCS_DEBUG("Found P2P interface %s", object_path);
-        SetupInterface(object_path);
-    });
+    interface_selector_ = InterfaceSelector::Create();
+    interface_selector_->SetDelegate(sp);
 
     manager_ = ManagerStub::Create();
-    manager_->Ready().connect([&]() {
-        InformationElement ie;
-        auto sub_element = new_subelement(DEVICE_INFORMATION);
-        auto dev_info = (DeviceInformationSubelement*) sub_element;
-
-        dev_info->session_management_control_port = htons(7236);
-        dev_info->maximum_throughput = htons(50);
-        dev_info->field1.device_type = SOURCE;
-        dev_info->field1.session_availability = true;
-        ie.add_subelement(sub_element);
-
-        auto ie_data = ie.serialize();
-
-        manager_->SetWFDIEs(ie_data->bytes, ie_data->length);
-
-        auto dedicated_p2p_interface = mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE");
-        if (dedicated_p2p_interface.length() > 0) {
-            manager_->CreateInterface(dedicated_p2p_interface);
-            return;
-        }
-
-        interface_selector_->Process(manager_->Interfaces());
-    });
-
-    manager_->InterfaceAdded().connect([&](const std::string &path) {
-        interface_selector_->Process(manager_->Interfaces());
-    });
+    manager_->SetDelegate(sp);
 }
 
 void NetworkManager::SetupInterface(const std::string &object_path) {
+    if (p2p_device_)
+        return;
+
     p2p_device_ = P2PDeviceStub::Create(object_path, shared_from_this());
-    p2p_device_->Ready().connect([&]() {
-        // Bring the device into a well known state
-        p2p_device_->Flush();
-    });
 }
 
 void NetworkManager::Release() {
@@ -264,17 +230,6 @@ bool NetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {
     // all parts in order.
     current_group_device_->Disconnect();
 
-#if 0
-    current_group_device_.reset();
-    current_group_iface_.reset();
-
-    current_device_->SetState(mcs::kDisconnected);
-    if (delegate_)
-        delegate_->OnDeviceStateChanged(current_device_);
-
-    current_device_.reset();
-#endif
-
     return true;
 }
 
@@ -313,9 +268,14 @@ bool NetworkManager::Scanning() const {
     return p2p_device_ && p2p_device_->Scanning();
 }
 
-void NetworkManager::OnChanged() {
+void NetworkManager::OnP2PDeviceChanged() {
     if (delegate_)
         delegate_->OnChanged();
+}
+
+void NetworkManager::OnP2PDeviceReady() {
+    // Bring the device into a well known state
+    p2p_device_->Flush();
 }
 
 void NetworkManager::OnDeviceFound(const std::string &path) {
@@ -382,21 +342,7 @@ void NetworkManager::OnGroupStarted(const std::string &group_path, const std::st
     // We have to find out more about the actual group we're now part of
     // and which role we play in it.
     current_group_iface_ = InterfaceStub::Create(interface_path);
-    current_group_iface_->Ready().connect([&]() {
-        if (!current_device_ || current_device_->State() != mcs::kConfiguration)
-            return;
-
-        auto ifname = current_group_iface_->Ifname();
-
-        if (current_device_->Role() == "GO") {
-            dhcp_server_ = std::shared_ptr<w11t::DhcpServer>(new w11t::DhcpServer(nullptr, ifname));
-            dhcp_server_->Start();
-        }
-        else {
-            dhcp_client_ = std::shared_ptr<w11t::DhcpClient>(new w11t::DhcpClient(this, ifname));
-            dhcp_client_->Start();
-        }
-    });
+    current_group_iface_->SetDelegate(shared_from_this());
 
     std::weak_ptr<P2PDeviceStub::Delegate> null_delegate;
     current_group_device_ = P2PDeviceStub::Create(interface_path, null_delegate);
@@ -458,6 +404,70 @@ void NetworkManager::OnNoLease() {
     Disconnect(d);
 
     AdvanceDeviceState(d, mcs::kFailure);
+}
+
+void NetworkManager::OnFirmwareLoaded() {
+    // Pass through when firmware was successfully loaded and
+    // do all other needed initialization stuff
+    Initialize();
+}
+
+void NetworkManager::OnFirmwareUnloaded() {
+}
+
+void NetworkManager::OnInterfaceSelectionDone(const std::string &path) {
+    if (path.length() == 0)
+        return;
+
+    MCS_DEBUG("Found P2P interface %s", path);
+    SetupInterface(path);
+}
+
+void NetworkManager::OnManagerReady() {
+    InformationElement ie;
+    auto sub_element = new_subelement(DEVICE_INFORMATION);
+    auto dev_info = (DeviceInformationSubelement*) sub_element;
+
+    dev_info->session_management_control_port = htons(7236);
+    dev_info->maximum_throughput = htons(50);
+    dev_info->field1.device_type = SOURCE;
+    dev_info->field1.session_availability = true;
+    ie.add_subelement(sub_element);
+
+    auto ie_data = ie.serialize();
+
+    manager_->SetWFDIEs(ie_data->bytes, ie_data->length);
+
+    auto dedicated_p2p_interface = mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE");
+    if (dedicated_p2p_interface.length() > 0) {
+        manager_->CreateInterface(dedicated_p2p_interface);
+        return;
+    }
+
+    interface_selector_->Process(manager_->Interfaces());
+}
+
+void NetworkManager::OnManagerInterfaceAdded(const std::string &path) {
+    interface_selector_->Process(manager_->Interfaces());
+}
+
+void NetworkManager::OnManagerInterfaceRemoved(const std::string &path) {
+}
+
+void NetworkManager::OnInterfaceReady() {
+    if (!current_device_ || current_device_->State() != mcs::kConfiguration)
+        return;
+
+    auto ifname = current_group_iface_->Ifname();
+
+    if (current_device_->Role() == "GO") {
+        dhcp_server_ = std::shared_ptr<w11t::DhcpServer>(new w11t::DhcpServer(nullptr, ifname));
+        dhcp_server_->Start();
+    }
+    else {
+        dhcp_client_ = std::shared_ptr<w11t::DhcpClient>(new w11t::DhcpClient(this, ifname));
+        dhcp_client_->Start();
+    }
 }
 
 } // namespace w11tng

@@ -16,6 +16,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <common/glibhelpers.h>
 #include <common/dbusfixture.h>
@@ -90,25 +91,26 @@ private:
     std::vector<w11tng::testing::InterfaceSkeleton::Ptr> interfaces_;
     unsigned int interface_counter_;
 };
+
+class MockInterfaceSelectorDelegate : public w11tng::InterfaceSelector::Delegate {
+public:
+    MOCK_METHOD1(OnInterfaceSelectionDone, void(const std::string&));
+};
 }
 
 TEST_F(InterfaceSelectorFixture, ProcessWithNoInterfaces) {
     auto selector = w11tng::InterfaceSelector::Create();
     EXPECT_TRUE(!!selector);
 
-    unsigned int done_called = 0;
-    std::string selected_object_path;
-    selector->Done().connect([&](const std::string &object_path) {
-        done_called++;
-        selected_object_path = object_path;
-    });
+    auto delegate = std::make_shared<MockInterfaceSelectorDelegate>();
+
+    EXPECT_CALL(*delegate, OnInterfaceSelectionDone(std::string(""))).Times(1);
+
+    selector->SetDelegate(delegate);
 
     selector->Process(std::vector<std::string>{});
 
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
-
-    EXPECT_EQ(done_called, 1);
-    EXPECT_EQ(selected_object_path, "");
 }
 
 TEST_F(InterfaceSelectorFixture, NoSelectableInterfaceAvailable) {
@@ -117,48 +119,40 @@ TEST_F(InterfaceSelectorFixture, NoSelectableInterfaceAvailable) {
     auto selector = w11tng::InterfaceSelector::Create();
     EXPECT_TRUE(!!selector);
 
+    auto delegate = std::make_shared<MockInterfaceSelectorDelegate>();
+
+    EXPECT_CALL(*delegate, OnInterfaceSelectionDone(std::string(""))).Times(1);
+
+    selector->SetDelegate(delegate);
+
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
 
     AvailableInterfaces ifaces(5, 0);
-
-    int done_called = 0;
-    std::string selected_object_path;
-    selector->Done().connect([&](const std::string &object_path) {
-        done_called++;
-        selected_object_path = object_path;
-    });
 
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
 
     selector->Process(ifaces.ObjectPaths());
 
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
-
-    EXPECT_EQ(done_called, 1);
-    EXPECT_EQ(selected_object_path, "");
 }
 
 TEST_F(InterfaceSelectorFixture, MultipleSelectableInterfaces) {
     auto selector = w11tng::InterfaceSelector::Create();
     EXPECT_TRUE(!!selector);
 
+    auto delegate = std::make_shared<MockInterfaceSelectorDelegate>();
+
+    EXPECT_CALL(*delegate, OnInterfaceSelectionDone(std::string("/interface_3"))).Times(1);
+
+    selector->SetDelegate(delegate);
+
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
 
     AvailableInterfaces ifaces(2, 2);
-
-    unsigned int done_called = 0;
-    std::string selected_object_path;
-    selector->Done().connect([&](const std::string &object_path) {
-        done_called++;
-        selected_object_path = object_path;
-    });
 
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
 
     selector->Process(ifaces.ObjectPaths());
 
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
-
-    EXPECT_EQ(done_called, 1);
-    EXPECT_EQ(selected_object_path, "/interface_3");
 }

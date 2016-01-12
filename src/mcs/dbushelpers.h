@@ -23,8 +23,6 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include <core/signal.h>
-
 #include "networkdevice.h"
 #include "scoped_gobject.h"
 

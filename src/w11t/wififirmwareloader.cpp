@@ -73,8 +73,6 @@ gboolean WiFiFirmwareLoader::OnRetryLoad(gpointer user_data) {
     if (inst->delegate_)
         inst->delegate_->OnFirmwareLoaded();
 
-    inst->loaded_();
-
     return FALSE;
 }
 
@@ -92,10 +90,5 @@ void WiFiFirmwareLoader::OnInterfaceFirmwareSet(GDBusConnection *conn, GAsyncRes
 
     inst->reload_timeout_source_ = g_timeout_add(timeout.count(), &WiFiFirmwareLoader::OnRetryLoad, inst);
 }
-
-const core::Signal<void>& WiFiFirmwareLoader::Loaded() const {
-    return loaded_;
-}
-
 
 } // namespace wpa

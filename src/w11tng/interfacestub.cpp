@@ -54,7 +54,8 @@ InterfaceStub::Ptr InterfaceStub::FinalizeConstruction(const std::string &object
             return;
         }
 
-        inst->interface_ready_();
+        if (auto sp = inst->delegate_.lock())
+            sp->OnInterfaceReady();
 
     }, new mcs::SharedKeepAlive<InterfaceStub>{shared_from_this()});
 
@@ -65,6 +66,14 @@ InterfaceStub::InterfaceStub() {
 }
 
 InterfaceStub::~InterfaceStub() {
+}
+
+void InterfaceStub::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+    delegate_ = delegate;
+}
+
+void InterfaceStub::ResetDelegate() {
+    delegate_.reset();
 }
 
 std::vector<std::string> InterfaceStub::Capabilities() const {

@@ -36,7 +36,11 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>,
                        public mcs::NetworkManager,
                        public P2PDeviceStub::Delegate,
                        public NetworkDevice::Delegate,
-                       public w11t::DhcpClient::Delegate {
+                       public w11t::DhcpClient::Delegate,
+                       public w11t::WiFiFirmwareLoader::Delegate,
+                       public w11tng::InterfaceSelector::Delegate,
+                       public w11tng::ManagerStub::Delegate,
+                       public w11tng::InterfaceStub::Delegate {
 public:
     static constexpr const char *kBusName{"fi.w1.wpa_supplicant1"};
     static constexpr unsigned int kConnectTimeout = 100;
@@ -59,7 +63,9 @@ public:
     bool Running() const override;
     bool Scanning() const override;
 
-    void OnChanged() override;
+    void OnP2PDeviceChanged() override;
+    void OnP2PDeviceReady() override;
+
     void OnDeviceFound(const std::string &path) override;
     void OnDeviceLost(const std::string &path) override;
     void OnGroupOwnerNegotiationFailure(const std::string &peer_path) override;
@@ -73,6 +79,17 @@ public:
 
     void OnAddressAssigned(const mcs::IpV4Address &address) override;
     void OnNoLease() override;
+
+    void OnFirmwareLoaded() override;
+    void OnFirmwareUnloaded() override;
+
+    void OnInterfaceSelectionDone(const std::string &path) override;
+
+    void OnManagerReady() override;
+    void OnManagerInterfaceAdded(const std::string &path) override;
+    void OnManagerInterfaceRemoved(const std::string &path) override;
+
+    void OnInterfaceReady() override;
 
 private:
     static void OnServiceLost(GDBusConnection *connection, const gchar *name, gpointer user_data);

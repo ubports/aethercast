@@ -61,10 +61,11 @@ std::shared_ptr<P2PDeviceStub> P2PDeviceStub::FinalizeConstruction(const std::st
 
         MCS_DEBUG("Successfully setup P2P device proxy");
 
-        inst->ready_();
+        if (auto sp = inst->delegate_.lock())
+            sp->OnP2PDeviceReady();
 
         if (auto sp = inst->delegate_.lock())
-            sp->OnChanged();
+            sp->OnP2PDeviceChanged();
 
     }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
 
@@ -238,7 +239,7 @@ void P2PDeviceStub::StopFindTimeout() {
     StopFind();
 
     if (auto sp = delegate_.lock())
-        sp->OnChanged();
+        sp->OnP2PDeviceChanged();
 }
 
 void P2PDeviceStub::Find(const std::chrono::seconds &timeout) {
@@ -274,7 +275,7 @@ void P2PDeviceStub::Find(const std::chrono::seconds &timeout) {
         inst->StartFindTimeout();
 
         if (auto sp = inst->delegate_.lock())
-            sp->OnChanged();
+            sp->OnP2PDeviceChanged();
 
     }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
 }

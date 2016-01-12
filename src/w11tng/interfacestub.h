@@ -25,8 +25,6 @@
 #include <mcs/non_copyable.h>
 #include <mcs/mac_address.h>
 
-#include <core/signal.h>
-
 extern "C" {
 #include "wpasupplicantinterface.h"
 }
@@ -39,24 +37,30 @@ public:
 
     typedef std::shared_ptr<InterfaceStub> Ptr;
 
+    class Delegate : public mcs::NonCopyable {
+    public:
+        virtual void OnInterfaceReady() = 0;
+    };
+
     static Ptr Create(const std::string &object_path);
 
     ~InterfaceStub();
 
+    void SetDelegate(const std::weak_ptr<Delegate>& delegate);
+    void ResetDelegate();
+
     std::vector<std::string> Capabilities() const;
     std::string Driver() const;
     std::string Ifname() const;
-
-    const core::Signal<void>& Ready() const { return interface_ready_; }
 
 private:
     InterfaceStub();
     Ptr FinalizeConstruction(const std::string &object_path);
 
 private:
+    std::weak_ptr<Delegate> delegate_;
     mcs::ScopedGObject<GDBusConnection> connection_;
     mcs::ScopedGObject<WpaSupplicantInterface> proxy_;
-    core::Signal<void> interface_ready_;
 };
 
 } // namespace w11tng

@@ -25,8 +25,6 @@
 
 #include <mcs/scoped_gobject.h>
 
-#include <core/signal.h>
-
 namespace w11tng {
 
 typedef std::vector<std::string> InterfaceList;
@@ -35,15 +33,21 @@ class InterfaceSelector : public std::enable_shared_from_this<InterfaceSelector>
 public:
     static constexpr const char *kBusName{"fi.w1.wpa_supplicant1"};
 
+    class Delegate : mcs::NonCopyable {
+    public:
+        virtual void OnInterfaceSelectionDone(const std::string &path) = 0;
+    };
+
     typedef std::shared_ptr<InterfaceSelector> Ptr;
 
     static Ptr Create();
 
     ~InterfaceSelector();
 
-    void Process(const InterfaceList &interfaces);
+    void SetDelegate(const std::weak_ptr<Delegate>& delegate);
+    void ResetDelegate();
 
-    const core::Signal<std::string>& Done() const { return done_; }
+    void Process(const InterfaceList &interfaces);
 
 private:
     InterfaceSelector();
@@ -52,9 +56,9 @@ private:
     void TryNextInterface();
 
 private:
+    std::weak_ptr<Delegate> delegate_;
     mcs::ScopedGObject<GDBusConnection> connection_;
     std::vector<std::string> interfaces_;
-    core::Signal<std::string> done_;
 };
 
 } // namespace w11tng

@@ -51,6 +51,14 @@ InterfaceSelector::Ptr InterfaceSelector::FinalizeConstruction() {
     return sp;
 }
 
+void InterfaceSelector::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+    delegate_ = delegate;
+}
+
+void InterfaceSelector::ResetDelegate() {
+    delegate_.reset();
+}
+
 void InterfaceSelector::Process(const InterfaceList &interfaces) {
     if (interfaces_.size() > 0)
         return;
@@ -62,7 +70,8 @@ void InterfaceSelector::Process(const InterfaceList &interfaces) {
 
 void InterfaceSelector::TryNextInterface() {
     if (interfaces_.size() == 0) {
-        done_("");
+        if (auto sp = delegate_.lock())
+            sp->OnInterfaceSelectionDone("");
         return;
     }
 
@@ -101,7 +110,8 @@ void InterfaceSelector::TryNextInterface() {
                 MCS_DEBUG("Found interface which supports P2P");
                 // We take the first interface which supports p2p here and ignore
                 // all others. That is really enough for now.
-                inst->done_(g_dbus_proxy_get_object_path(G_DBUS_PROXY(proxy)));
+                if (auto sp = inst->delegate_.lock())
+                    sp->OnInterfaceSelectionDone(g_dbus_proxy_get_object_path(G_DBUS_PROXY(proxy)));
                 return;
             }
 

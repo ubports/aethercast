@@ -47,7 +47,8 @@ public:
     MOCK_METHOD3(OnGroupStarted, void(const std::string&, const std::string&, const std::string&));
     MOCK_METHOD2(OnGroupFinished, void(const std::string&, const std::string&));
     MOCK_METHOD1(OnGroupRequest, void(const std::string&));
-    MOCK_METHOD0(OnChanged, void());
+    MOCK_METHOD0(OnP2PDeviceChanged, void());
+    MOCK_METHOD0(OnP2PDeviceReady, void());
 };
 
 class MockP2PDeviceSkeletonDelegate : public w11tng::testing::P2PDeviceSkeleton::Delegate {
@@ -60,8 +61,8 @@ public:
 TEST_F(P2PDeviceStubFixture, ConstructionAndSetup) {
     auto delegate = std::make_shared<MockP2PDeviceStubDelegate>();
 
-    // Called to mark the stub as ready
-    EXPECT_CALL(*delegate, OnChanged()).Times(1);
+    EXPECT_CALL(*delegate, OnP2PDeviceChanged()).Times(1);
+    EXPECT_CALL(*delegate, OnP2PDeviceReady()).Times(1);
 
     auto skeleton = w11tng::testing::P2PDeviceSkeleton::Create("/device_1");
 
@@ -70,12 +71,8 @@ TEST_F(P2PDeviceStubFixture, ConstructionAndSetup) {
     EXPECT_FALSE(stub->Connected());
     EXPECT_FALSE(stub->Scanning());
 
-    unsigned int ready_called = 0;
-    stub->Ready().connect([&]() { ready_called++; });
-
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
 
-    EXPECT_EQ(ready_called, 1);
     EXPECT_TRUE(stub->Connected());
     EXPECT_FALSE(stub->Scanning());
 }
@@ -83,8 +80,8 @@ TEST_F(P2PDeviceStubFixture, ConstructionAndSetup) {
 TEST_F(P2PDeviceStubFixture, DeviceFound) {
     auto delegate = std::make_shared<MockP2PDeviceStubDelegate>();
 
-    // Called to mark the stub as ready
-    EXPECT_CALL(*delegate, OnChanged()).Times(1);
+    EXPECT_CALL(*delegate, OnP2PDeviceChanged()).Times(1);
+    EXPECT_CALL(*delegate, OnP2PDeviceReady()).Times(1);
     EXPECT_CALL(*delegate, OnDeviceFound(std::string("/peer_1"))).Times(2);
 
     auto skeleton = w11tng::testing::P2PDeviceSkeleton::Create("/device_1");
@@ -108,8 +105,8 @@ TEST_F(P2PDeviceStubFixture, DeviceFound) {
 TEST_F(P2PDeviceStubFixture, DeviceLost) {
     auto delegate = std::make_shared<MockP2PDeviceStubDelegate>();
 
-    // Called to mark the stub as ready
-    EXPECT_CALL(*delegate, OnChanged()).Times(1);
+    EXPECT_CALL(*delegate, OnP2PDeviceChanged()).Times(1);
+    EXPECT_CALL(*delegate, OnP2PDeviceReady()).Times(1);
     EXPECT_CALL(*delegate, OnDeviceLost(std::string("/peer_1"))).Times(2);
 
     auto skeleton = w11tng::testing::P2PDeviceSkeleton::Create("/device_1");
@@ -134,8 +131,8 @@ TEST_F(P2PDeviceStubFixture, FindAndTimeoutHandling) {
     auto stub_delegate = std::make_shared<MockP2PDeviceStubDelegate>();
     auto skeleton_delegate = std::make_shared<MockP2PDeviceSkeletonDelegate>();
 
-    // Called to mark the stub as ready
-    EXPECT_CALL(*stub_delegate, OnChanged()).Times(1);
+    EXPECT_CALL(*stub_delegate, OnP2PDeviceReady()).Times(1);
+    EXPECT_CALL(*stub_delegate, OnP2PDeviceChanged()).Times(1);
 
     EXPECT_CALL(*skeleton_delegate, OnFind()).Times(1);
     //EXPECT_CALL(*skeleton_delegate, OnStopFind()).Times(1);
