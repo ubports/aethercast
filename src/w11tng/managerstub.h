@@ -41,6 +41,7 @@ public:
         virtual void OnManagerReady() = 0;
         virtual void OnManagerInterfaceAdded(const std::string &path) = 0;
         virtual void OnManagerInterfaceRemoved(const std::string &path) = 0;
+        virtual void OnManagerInterfaceCreationFailed() = 0;
     };
 
     static Ptr Create();

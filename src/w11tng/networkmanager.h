@@ -88,6 +88,7 @@ public:
     void OnManagerReady() override;
     void OnManagerInterfaceAdded(const std::string &path) override;
     void OnManagerInterfaceRemoved(const std::string &path) override;
+    void OnManagerInterfaceCreationFailed() override;
 
     void OnInterfaceReady() override;
 
@@ -122,7 +123,7 @@ private:
     InterfaceSelector::Ptr interface_selector_;
     guint connect_timeout_;
     w11t::WiFiFirmwareLoader firmware_loader_;
-    bool has_dedicated_p2p_interface_;
+    std::string dedicated_p2p_interface_;
 };
 
 } // namespace w11tng

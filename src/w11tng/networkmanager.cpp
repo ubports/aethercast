@@ -47,7 +47,7 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
 
 NetworkManager::NetworkManager() :
     firmware_loader_("", this),
-    has_dedicated_p2p_interface_(mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE").length() > 0){
+    dedicated_p2p_interface_(mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE")) {
 }
 
 NetworkManager::~NetworkManager() {
@@ -438,9 +438,11 @@ void NetworkManager::OnManagerReady() {
 
     manager_->SetWFDIEs(ie_data->bytes, ie_data->length);
 
-    auto dedicated_p2p_interface = mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE");
-    if (dedicated_p2p_interface.length() > 0) {
-        manager_->CreateInterface(dedicated_p2p_interface);
+    // If we need to create an interface object at wpa first we
+    // do that and continue in one of the delegate callbacks from
+    // the manager stub.
+    if (dedicated_p2p_interface_.length() > 0) {
+        manager_->CreateInterface(dedicated_p2p_interface_);
         return;
     }
 
@@ -452,6 +454,13 @@ void NetworkManager::OnManagerInterfaceAdded(const std::string &path) {
 }
 
 void NetworkManager::OnManagerInterfaceRemoved(const std::string &path) {
+}
+
+void NetworkManager::OnManagerInterfaceCreationFailed() {
+    // When interface creation failed its most likely that we were
+    // restarted and that the interface stayed available at wpa and
+    // we can simply start and reuse it here.
+    interface_selector_->Process(manager_->Interfaces());
 }
 
 void NetworkManager::OnInterfaceReady() {

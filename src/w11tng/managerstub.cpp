@@ -166,7 +166,9 @@ void ManagerStub::CreateInterface(const std::string &interface_name) {
     g_variant_builder_add(builder, "{sv}", "Ifname", g_variant_new_string(interface_name.c_str()));
     auto args = g_variant_builder_end(builder);
 
-    wpa_supplicant_fi_w1_wpa_supplicant1_call_create_interface(proxy_.get(), args, nullptr, [](GObject *source, GAsyncResult *res, gpointer user_data) {
+    wpa_supplicant_fi_w1_wpa_supplicant1_call_create_interface(proxy_.get(), args, nullptr,
+                                     [](GObject *source, GAsyncResult *res, gpointer user_data) {
+
         boost::ignore_unused_variable_warning(source);
 
         auto inst = static_cast<mcs::SharedKeepAlive<ManagerStub>*>(user_data)->ShouldDie();
@@ -176,6 +178,10 @@ void ManagerStub::CreateInterface(const std::string &interface_name) {
         if (!wpa_supplicant_fi_w1_wpa_supplicant1_call_create_interface_finish(inst->proxy_.get(), &path, res, &error)) {
             MCS_ERROR("Failed to create interface: %s", error->message);
             g_error_free(error);
+
+            if (auto sp = inst->delegate_.lock())
+                sp->OnManagerInterfaceCreationFailed();
+
             return;
         }
     }, new mcs::SharedKeepAlive<ManagerStub>{shared_from_this()});
