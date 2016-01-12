@@ -63,7 +63,7 @@ pkg_check_modules(GIO REQUIRED gio-2.0)
 pkg_check_modules(GIO-UNIX REQUIRED gio-unix-2.0)
 pkg_check_modules(GST REQUIRED gstreamer-1.0)
 pkg_check_modules(WDS REQUIRED wds)
-pkg_check_modules(READLINE REQUIRED readline)
+
 # Build with system gmock and embedded gtest
 set (GMOCK_INCLUDE_DIR "/usr/include/gmock/include" CACHE PATH "gmock source include directory")
 set (GMOCK_SOURCE_DIR "/usr/src/gmock" CACHE PATH "gmock source directory")
