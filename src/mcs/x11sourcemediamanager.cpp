@@ -35,7 +35,7 @@ X11SourceMediaManager::~X11SourceMediaManager() {
 }
 
 SharedGObject<GstElement> X11SourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
-    auto config = Utils::Sprintf("ximagesrc ! videoconvert ! video/x-raw,format=I420 ! vaapiencode_h264 ! mpegtsmux ! rtpmp2tpay ! udpsink name=sink host=%s port=%d",
+    auto config = Utils::Sprintf("ximagesrc ! videoconvert ! video/x-raw,format=I420 ! x264enc ! mpegtsmux ! rtpmp2tpay ! udpsink name=sink host=%s port=%d",
                                      remote_address_.c_str(), sink_port1_);
 
     GError *error = nullptr;
