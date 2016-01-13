@@ -43,6 +43,7 @@ namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.
 const std::uint16_t kMiracastDefaultRtspCtrlPort{7236};
 const std::chrono::milliseconds kStateIdleTimeout{5000};
+const std::chrono::seconds kShutdownGracePreriod{1};
 
 // SafeLog serves as integration point to the wds::LogSystem world.
 template <mcs::Logger::Severity severity>
@@ -93,13 +94,24 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
     }
 
     struct Runtime {
-        static int OnSignalRaised(gpointer user_data) {
+        static gboolean OnSignalRaised(gpointer user_data) {
             auto thiz = static_cast<Runtime*>(user_data);
-            g_main_loop_quit(thiz->ml);
+
+            // This will bring down everything and the timeout below will give
+            // things a small amount of time to perform their shutdown jobs.
+            thiz->service->Shutdown();
 
             MCS_DEBUG("Exiting");
 
-            return 0;
+            g_timeout_add_seconds(kShutdownGracePreriod.count(), [](gpointer user_data) {
+                auto thiz = static_cast<Runtime*>(user_data);
+                g_main_loop_quit(thiz->ml);
+                return FALSE;
+            }, thiz);
+
+            // A second SIGTERM should really terminate us and also overlay
+            // the grace period for a proper shutdown we're performing.
+            return FALSE;
         }
 
         Runtime() {
@@ -142,11 +154,14 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
             // Become a reaper of all our children
             if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0)
                 g_warning("Failed to make us a subreaper of our children");
+
+            network_manager = mcs::NetworkManagerFactory::Create();
+            service = mcs::MiracastService::Create(network_manager);
+            mcsa = mcs::MiracastControllerSkeleton::create(service);
         }
 
         ~Runtime() {
             g_main_loop_unref(ml);
-            gst_deinit();
         }
 
         void Run() {
@@ -155,11 +170,10 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
 
         GMainLoop *ml = g_main_loop_new(nullptr, FALSE);
         bool is_gst_initialized = gst_init_check(nullptr, nullptr, nullptr);
+        mcs::NetworkManager::Ptr network_manager;
+        mcs::MiracastService::Ptr service;
+        mcs::MiracastControllerSkeleton::Ptr mcsa;
     } rt;
-
-    auto network_manager = mcs::NetworkManagerFactory::Create();
-    auto service = mcs::MiracastService::Create(network_manager);
-    auto mcsa = mcs::MiracastControllerSkeleton::create(service);
 
     rt.Run();
 
@@ -349,4 +363,10 @@ void MiracastService::Disconnect(const NetworkDevice::Ptr &device, ResultCallbac
 void MiracastService::Scan(const std::chrono::seconds &timeout) {
     network_manager_->Scan(timeout);
 }
+
+void MiracastService::Shutdown() {
+    if (current_device_)
+        network_manager_->Disconnect(current_device_);
+}
+
 } // namespace miracast

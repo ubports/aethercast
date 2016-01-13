@@ -91,6 +91,8 @@ private:
     void StartIdleTimer();
     void LoadWiFiFirmware();
 
+    void Shutdown();
+
 private:
     std::weak_ptr<MiracastController::Delegate> delegate_;
     std::shared_ptr<NetworkManager> network_manager_;

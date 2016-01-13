@@ -51,8 +51,6 @@ NetworkManager::NetworkManager() :
 }
 
 NetworkManager::~NetworkManager() {
-    if (current_group_device_)
-        current_group_device_->DisconnectSync();
 }
 
 void NetworkManager::OnServiceFound(GDBusConnection *connection, const gchar *name, const gchar *name_owner, gpointer user_data) {
@@ -460,6 +458,9 @@ void NetworkManager::OnManagerReady() {
 }
 
 void NetworkManager::OnManagerInterfaceAdded(const std::string &path) {
+    if (p2p_device_)
+        return;
+
     interface_selector_->Process(manager_->Interfaces());
 }
 
