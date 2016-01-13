@@ -73,7 +73,7 @@ public:
     void Cancel();
 
     bool Scanning() const { return scan_timeout_source_ > 0; }
-    bool Connected() const { return !!p2p_device_proxy_; }
+    bool Connected() const { return !!proxy_; }
 
 private:
     static void OnDeviceFound(WpaSupplicantInterfaceP2PDevice *device, const gchar *path, gpointer user_data);
@@ -97,7 +97,7 @@ private:
 private:
     std::weak_ptr<P2PDeviceStub::Delegate> delegate_;
     mcs::ScopedGObject<GDBusConnection> connection_;
-    mcs::ScopedGObject<WpaSupplicantInterfaceP2PDevice> p2p_device_proxy_;
+    mcs::ScopedGObject<WpaSupplicantInterfaceP2PDevice> proxy_;
     std::chrono::seconds scan_timeout_;
     guint scan_timeout_source_;
     std::unordered_map<std::string,w11tng::NetworkDevice::Ptr> devices_;
