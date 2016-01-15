@@ -16,7 +16,8 @@ include_directories(
 set(TEST_COMMON_SOURCE
     ${CMAKE_SOURCE_DIR}/tests/common/glibhelpers.cpp
     ${CMAKE_SOURCE_DIR}/tests/common/dbusnameowner.cpp
-    ${CMAKE_SOURCE_DIR}/tests/common/dbusfixture.cpp)
+    ${CMAKE_SOURCE_DIR}/tests/common/dbusfixture.cpp
+    ${CMAKE_SOURCE_DIR}/tests/common/virtualnetwork.cpp)
 
 macro(AETHERCAST_ADD_TEST test_name src)
   add_executable(
@@ -33,6 +34,7 @@ macro(AETHERCAST_ADD_TEST test_name src)
     gmock_main
 
     process-cpp
+    lxc-network
 
     ${ARGN}
 
@@ -44,6 +46,7 @@ macro(AETHERCAST_ADD_TEST test_name src)
 endmacro(AETHERCAST_ADD_TEST)
 
 add_subdirectory(3rd_party/process-cpp-minimal)
+add_subdirectory(3rd_party/lxc-nl)
 
 AETHERCAST_ADD_TEST(utilities_tests utilities_tests.cpp)
 AETHERCAST_ADD_TEST(scoped_gobject_tests scoped_gobject_tests.cpp)

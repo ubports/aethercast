@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical, Ltd.
+ * Copyright (C) 2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,15 +15,6 @@
  *
  */
 
-#ifndef W11TNG_CONFIG_H_
-#define W11TNG_CONFIG_H_
-
-namespace w11tng {
-constexpr const char* kRuntimePath{"/run/aethercast"};
-constexpr const char* kDhcpPrivateSocketPath{"/run/aethercast/private-dhcp"};
-constexpr const char* kDhcpClientPath{"@DHCP_CLIENT_PATH@"};
-constexpr const char* kDhcpServerPath{"@DHCP_SERVER_PATH@"};
-constexpr const char* kDhcpHelperPath{"@AETHERCAST_DHCP_HELPER_PATH@"};
+int main(int argc, char **argv) {
+    return 0;
 }
-
-#endif

@@ -18,6 +18,8 @@
 #ifndef DHCPSERVER_H_
 #define DHCPSERVER_H_
 
+#include <glib.h>
+
 #include <boost/noncopyable.hpp>
 
 #include <string>
@@ -26,8 +28,10 @@
 #include <mcs/non_copyable.h>
 
 namespace w11tng {
-class DhcpServer {
+class DhcpServer : public std::enable_shared_from_this<DhcpServer> {
 public:
+    typedef std::shared_ptr<DhcpServer> Ptr;
+
     class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnLeaseAdded() = 0;
@@ -36,16 +40,22 @@ public:
         Delegate() = default;
     };
 
-    DhcpServer(Delegate *delegate, const std::string &interface_name_h);
+    static Ptr Create(Delegate *delegate, const std::string &interface_name);
+
     ~DhcpServer();
 
     bool Start();
     void Stop();
 
+    bool Running() const { return pid_ > 0; }
     mcs::IpV4Address LocalAddress() const;
 
 private:
+    DhcpServer(Delegate *delegate, const std::string &interface_name);
+
+private:
     std::string interface_name_;
+    GPid pid_;
 };
 }
 #endif

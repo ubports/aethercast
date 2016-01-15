@@ -18,6 +18,8 @@
 #ifndef DHCPCLIENT_H_
 #define DHCPCLIENT_H_
 
+#include <glib.h>
+
 #include <boost/noncopyable.hpp>
 
 #include <string>
@@ -26,8 +28,10 @@
 #include <mcs/non_copyable.h>
 
 namespace w11tng {
-class DhcpClient {
+class DhcpClient : public std::enable_shared_from_this<DhcpClient> {
 public:
+    typedef std::shared_ptr<DhcpClient> Ptr;
+
     class Delegate : private mcs::NonCopyable {
     public:
         virtual void OnAddressAssigned(const mcs::IpV4Address &address) = 0;
@@ -36,6 +40,8 @@ public:
     protected:
         Delegate() = default;
     };
+
+    static Ptr Create(Delegate *delegate, const std::string &interface_name);
 
     DhcpClient(Delegate *delegate, const std::string &interface_name);
     ~DhcpClient();
@@ -49,6 +55,7 @@ private:
     Delegate *delegate_;
     std::string interface_name_;
     mcs::IpV4Address local_address_;
+    GPid pid_;
 };
 }
 

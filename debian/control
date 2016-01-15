@@ -32,6 +32,8 @@ Package: aethercast
 Architecture: any
 Depends: ${misc:Depends},
          ${shlibs:Depends},
+         dhcpcd5,
+         isc-dhcp-client,
          wpasupplicant
 Description: Display casting service
  A management service for remote displays which it can stream the

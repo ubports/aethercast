@@ -19,6 +19,12 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
 # Make sure that generated header files can be found
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
 
+set(AETHERCAST_DHCP_HELPER "/usr/sbin/aethercast-dhcp-helper")
+set(DHCP_SERVER_PATH "/sbin/dhcpcd")
+set(DHCP_CLIENT_PATH "/sbin/dhclient")
+
+configure_file(w11tng/config.h.in w11tng/config.h @ONLY)
+
 set(HEADERS
     mcs/ip_v4_address.h
     mcs/keep_alive.h
@@ -83,6 +89,8 @@ set(SOURCES
   w11tng/informationelement.cpp
   w11tng/dhcpclient.cpp
   w11tng/dhcpserver.cpp
+  w11tng/dhcplistenerskeleton.cpp
+  w11tng/dhcplistenerstub.cpp
 )
 
 link_directories(
@@ -126,6 +134,18 @@ install(
   RUNTIME DESTINATION sbin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static
+)
+
+add_executable(dhcp-helper w11tng/dhcphelper.cpp)
+target_link_libraries(dhcp-helper
+  ${GLIB_LIBRARIES}
+  ${GIO_LIBRARIES}
+  ${GIO-UNIX_LIBRARIES}
+)
+
+install(
+    TARGETS dhcp-helper
+    RUNTIME DESTINATION lib/aethercast
 )
 
 add_subdirectory(client)
