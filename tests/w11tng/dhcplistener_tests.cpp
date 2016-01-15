@@ -63,7 +63,7 @@ TEST(DhcpListener, ConnectionEstablishment) {
         auto props = std::map<std::string,std::string>{};
         props["foo"] = "bar";
 
-        stub->EmitEvent(props);
+        stub->EmitEventSync(props);
 
         return static_cast<core::posix::exit::Status>(result);
     }, core::posix::StandardStream::empty);

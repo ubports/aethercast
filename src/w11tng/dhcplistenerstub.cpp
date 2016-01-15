@@ -53,7 +53,7 @@ DhcpListenerStub::Ptr DhcpListenerStub::FinalizeConstruction() {
     return sp;
 }
 
-void DhcpListenerStub::EmitEvent(const std::map<std::string, std::string> &properties) {
+void DhcpListenerStub::EmitEventSync(const std::map<std::string, std::string> &properties) {
     if (!connection_)
         return;
 

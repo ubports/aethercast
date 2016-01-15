@@ -27,8 +27,9 @@
 #include <mcs/keep_alive.h>
 #include <mcs/scoped_gobject.h>
 
-#include <w11tng/dhcpclient.h>
 #include <w11tng/config.h>
+
+#include "dhcpclient.h"
 
 namespace w11tng {
 
@@ -38,7 +39,8 @@ DhcpClient::Ptr DhcpClient::Create(Delegate *delegate, const std::string &interf
 
 DhcpClient::DhcpClient(Delegate *delegate, const std::string &interface_name) :
     delegate_(delegate),
-    interface_name_(interface_name) {
+    interface_name_(interface_name),
+    pid_(-1) {
 }
 
 DhcpClient::~DhcpClient() {
@@ -50,8 +52,12 @@ mcs::IpV4Address DhcpClient::LocalAddress() const {
 }
 
 bool DhcpClient::Start() {
+    MCS_DEBUG("");
+
     if (pid_ > 0)
         return true;
+
+    listener_skeleton_ = DhcpListenerSkeleton::Create(kDhcpPrivateSocketPath, shared_from_this());
 
     auto argv = g_ptr_array_new();
 
@@ -62,10 +68,7 @@ bool DhcpClient::Start() {
     // Don't be verbose
     g_ptr_array_add(argv, (gpointer) "-q");
 
-    g_ptr_array_add(argv, (gpointer) "-sf");
-
-    auto override_helper_path = mcs::Utils::GetEnvValue("AETHERCAST_W11TNG_DHCP_HELPER");
-    g_ptr_array_add(argv, (gpointer) (override_helper_path.length() > 0 ? override_helper_path.c_str() : kDhcpHelperPath));
+    g_ptr_array_add(argv, (gpointer) "-v");
 
     // We only want dhclient to operate on the P2P interface an no other
     g_ptr_array_add(argv, (gpointer) interface_name_.c_str());
@@ -78,7 +81,7 @@ bool DhcpClient::Start() {
 
     GError *error = nullptr;
     if (!g_spawn_async(nullptr, reinterpret_cast<gchar**>(argv->pdata), nullptr,
-                       GSpawnFlags(G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL),
+                       GSpawnFlags(G_SPAWN_DO_NOT_REAP_CHILD),
                        nullptr, nullptr, &pid_, &error)) {
         MCS_ERROR("Failed to spawn DHCP client: %s", error->message);
         g_error_free(error);
@@ -110,4 +113,19 @@ void DhcpClient::Stop() {
 
     pid_ = 0;
 }
+
+void DhcpClient::OnNewConnection() {
+    MCS_DEBUG("");
+}
+
+void DhcpClient::OnConnectionClosed() {
+    MCS_DEBUG("");
+}
+
+void DhcpClient::OnEvent(const std::map<std::string, std::string> &properties) {
+    MCS_DEBUG("Got event with:");
+    for (auto prop : properties)
+        MCS_DEBUG("  %s=%s", prop.first, prop.second);
+}
+
 }

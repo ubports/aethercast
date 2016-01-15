@@ -483,7 +483,7 @@ void NetworkManager::OnInterfaceReady() {
     MCS_DEBUG("interface %s", ifname);
 
     if (current_device_->Role() == "GO") {
-        dhcp_server_ = std::shared_ptr<w11t::DhcpServer>(new w11t::DhcpServer(nullptr, ifname));
+        dhcp_server_ = w11tng::DhcpServer::Create(nullptr, ifname);
         dhcp_server_->Start();
 
         StopConnectTimeout();

@@ -15,9 +15,11 @@
  *
  */
 
+#include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <memory>
+#include <fstream>
 
 #include <cstring>
 #include <cstdarg>
@@ -45,5 +47,17 @@ std::string Utils::GetEnvValue(const std::string &name) {
     if (!value)
         return std::string("");
     return std::string(value);
+}
+
+bool Utils::CreateFile(const std::string &file_path) {
+    boost::filesystem::path p(file_path);
+    if (boost::filesystem::exists(p))
+        return false;
+
+    std::ofstream of;
+    of.open(file_path, std::ofstream::out);
+    of << "";
+    of.close();
+    return true;
 }
 } // namespace mcs

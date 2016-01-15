@@ -45,14 +45,11 @@ TEST(DhcpServer, Startup) {
     auto server_delegate = std::make_shared<MockDhcpServerDelegate>();
     auto client_delegate = std::make_shared<MockDhcpClientDelegate>();
 
-    std::error_code e;
-    core::posix::this_process::env::set("AETHERCAST_W11TNG_DHCP_HELPER", "/dev/null", e);
-
     auto server = w11tng::DhcpServer::Create(server_delegate.get(), veth.Endpoint1());
     auto client = w11tng::DhcpClient::Create(client_delegate.get(), veth.Endpoint2());
 
     server->Start();
     client->Start();
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{5});
+    mcs::testing::RunMainLoop(std::chrono::seconds{2});
 }

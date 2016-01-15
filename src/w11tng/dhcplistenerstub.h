@@ -37,7 +37,7 @@ public:
 
     std::string Address() const;
 
-    void EmitEvent(const std::map<std::string,std::string> &properties);
+    void EmitEventSync(const std::map<std::string,std::string> &properties);
 
 private:
     DhcpListenerStub(const std::string &address);

@@ -15,6 +15,46 @@
  *
  */
 
+#include <map>
+#include <vector>
+#include <string>
+
+#include <mcs/utils.h>
+
+#include <w11tng/config.h>
+
+#include "dhcplistenerstub.h"
+
+std::vector<std::string> ignore_variables = { "PATH", "SHLVL", "_", "PWD", "dhc_dbus" };
+
 int main(int argc, char **argv) {
+    char **item;
+    std::map<std::string,std::string> properties;
+
+    printf("test\n");
+
+    for (item = environ; *item; item++) {
+        auto parts = mcs::Utils::StringSplit(std::string(*item), '=');
+
+        bool should_ignore = false;
+        for (auto ignore : ignore_variables) {
+            if (ignore == parts[0]) {
+                should_ignore = true;
+                break;
+            }
+        }
+
+        if (should_ignore)
+            continue;
+
+        properties[parts[0]] = parts[1];
+
+        MCS_DEBUG("%s=%s", parts[0], parts[1]);
+    }
+
+    auto stub = w11tng::DhcpListenerStub::Create(w11tng::kDhcpPrivateSocketPath);
+
+    stub->EmitEventSync(properties);
+
     return 0;
 }

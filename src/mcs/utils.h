@@ -40,6 +40,8 @@ struct Utils
     static std::string Sprintf(const std::string& fmt_str, Types&&... args);
     // GetEnv - returns a variable value from the environment
     static std::string GetEnvValue(const std::string &name);
+    // CreateFile - create an empty file at the specified path
+    static bool CreateFile(const std::string &file_path);
 };
 
 namespace impl {

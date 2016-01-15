@@ -28,5 +28,7 @@ int lxc_veth_create(const char *name1, const char *name2);
 int lxc_netdev_delete_by_name(const char *name);
 int lxc_netdev_delete_by_index(int ifindex);
 char *lxc_mkifname(char *tmplate);
+int lxc_netdev_up(const char *name);
+int lxc_netdev_down(const char *name);
 
 #endif

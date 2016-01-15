@@ -29,6 +29,7 @@
 #include "p2pdevicestub.h"
 #include "interfacestub.h"
 #include "interfaceselector.h"
+#include "w11tng/dhcpserver.h"
 
 namespace w11tng {
 
@@ -119,7 +120,7 @@ private:
     InterfaceStub::Ptr current_group_iface_;
     P2PDeviceStub::Ptr current_group_device_;
     std::shared_ptr<w11t::DhcpClient> dhcp_client_;
-    std::shared_ptr<w11t::DhcpServer> dhcp_server_;
+    std::shared_ptr<w11tng::DhcpServer> dhcp_server_;
     InterfaceSelector::Ptr interface_selector_;
     guint connect_timeout_;
     w11t::WiFiFirmwareLoader firmware_loader_;

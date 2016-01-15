@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef DHCPSERVER_H_
-#define DHCPSERVER_H_
+#ifndef W11TNG_DHCPSERVER_H_
+#define W11TNG_DHCPSERVER_H_
 
 #include <glib.h>
 
@@ -56,6 +56,7 @@ private:
 private:
     std::string interface_name_;
     GPid pid_;
+    std::string lease_file_path_;
 };
 }
 #endif

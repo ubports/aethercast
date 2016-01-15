@@ -23,6 +23,7 @@ class NetworkUtils
 {
 public:
     static int RetrieveInterfaceIndex(const char *name);
+    static std::string RetrieveInterfaceName(int index);
     static int ModifyInterfaceAddress(int cmd, int flags, int index, int family,
                              const char *address, const char *peer,
                              unsigned char prefixlen, const char *broadcast);

@@ -20,7 +20,7 @@ execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
 
 set(AETHERCAST_DHCP_HELPER "/usr/sbin/aethercast-dhcp-helper")
-set(DHCP_SERVER_PATH "/sbin/dhcpcd")
+set(DHCP_SERVER_PATH "/usr/sbin/dhcpd")
 set(DHCP_CLIENT_PATH "/sbin/dhclient")
 
 configure_file(w11tng/config.h.in w11tng/config.h @ONLY)
@@ -91,6 +91,7 @@ set(SOURCES
   w11tng/dhcpserver.cpp
   w11tng/dhcplistenerskeleton.cpp
   w11tng/dhcplistenerstub.cpp
+  w11tng/netlinklistener.cpp
 )
 
 link_directories(
@@ -136,11 +137,19 @@ install(
   ARCHIVE DESTINATION lib/static
 )
 
-add_executable(dhcp-helper w11tng/dhcphelper.cpp)
+add_executable(dhcp-helper
+    w11tng/dhcphelper.cpp
+    w11tng/dhcplistenerstub.cpp
+    mcs/logger.cpp
+    mcs/utils.cpp
+)
 target_link_libraries(dhcp-helper
+  ${Boost_LIBRARIES}
   ${GLIB_LIBRARIES}
   ${GIO_LIBRARIES}
   ${GIO-UNIX_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT}
+  -ldl
 )
 
 install(

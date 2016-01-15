@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef DHCPCLIENT_H_
-#define DHCPCLIENT_H_
+#ifndef W11TNG_DHCPCLIENT_H_
+#define W11TNG_DHCPCLIENT_H_
 
 #include <glib.h>
 
@@ -27,8 +27,11 @@
 #include <mcs/ip_v4_address.h>
 #include <mcs/non_copyable.h>
 
+#include "dhcplistenerskeleton.h"
+
 namespace w11tng {
-class DhcpClient : public std::enable_shared_from_this<DhcpClient> {
+class DhcpClient : public std::enable_shared_from_this<DhcpClient>,
+                   public w11tng::DhcpListenerSkeleton::Delegate {
 public:
     typedef std::shared_ptr<DhcpClient> Ptr;
 
@@ -51,11 +54,16 @@ public:
 
     mcs::IpV4Address LocalAddress() const;
 
+    void OnNewConnection();
+    void OnConnectionClosed();
+    void OnEvent(const std::map<std::string, std::string> &properties);
+
 private:
     Delegate *delegate_;
     std::string interface_name_;
     mcs::IpV4Address local_address_;
     GPid pid_;
+    DhcpListenerSkeleton::Ptr listener_skeleton_;
 };
 }
 

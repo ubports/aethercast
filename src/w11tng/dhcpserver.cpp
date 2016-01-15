@@ -20,6 +20,8 @@
 #include <linux/rtnetlink.h>
 #include <sys/socket.h>
 
+#include <boost/filesystem.hpp>
+
 #include <mcs/logger.h>
 #include <mcs/networkutils.h>
 #include <mcs/keep_alive.h>
@@ -51,6 +53,33 @@ bool DhcpServer::Start() {
     if (pid_ > 0)
         return true;
 
+    lease_file_path_ = mcs::Utils::Sprintf("%s/aethercast-dhcp-leases-%s",
+                                    boost::filesystem::temp_directory_path().string(),
+                                    boost::filesystem::unique_path().string());
+    if (!mcs::Utils::CreateFile(lease_file_path_)) {
+        MCS_ERROR("Failed to create database for DHCP leases at %s",
+                  lease_file_path_);
+        return false;
+    }
+
+    // FIXME store those defaults somewhere else
+    const char *address = "192.168.7.1";
+    const char *broadcast = "192.168.7.255";
+    unsigned char prefixlen = 24;
+
+    auto interface_index = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
+    if (interface_index < 0)
+        MCS_ERROR("Failed to determine index of network interface: %s", interface_name_);
+
+    if (mcs::NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, interface_index,
+                                    AF_INET, address,
+                                    NULL, prefixlen, broadcast) < 0) {
+        MCS_ERROR("Failed to assign network address for %s", interface_name_);
+        return false;
+    }
+
+    MCS_DEBUG("Assigned network address %s", address);
+
     auto argv = g_ptr_array_new();
 
     g_ptr_array_add(argv, (gpointer) kDhcpServerPath);
@@ -61,6 +90,12 @@ bool DhcpServer::Start() {
     // WiFi Direct is only specified for IPv4 so we insist on not using
     // any IPv6 support.
     g_ptr_array_add(argv, (gpointer) "-4");
+
+    g_ptr_array_add(argv, (gpointer) "-cf");
+    g_ptr_array_add(argv, (gpointer) "/home/simon/Work/ubuntu/p2p/ac-wpa-dbus/conf/dhcpd.conf");
+
+    g_ptr_array_add(argv, (gpointer) "-lf");
+    g_ptr_array_add(argv, (gpointer) lease_file_path_.c_str());
 
     // We only want dhcpd to listen on the P2P interface an no other
     // which it would do if we don't supply an interface here.
@@ -75,7 +110,9 @@ bool DhcpServer::Start() {
     GError *error = nullptr;
     if (!g_spawn_async(nullptr, reinterpret_cast<gchar**>(argv->pdata), nullptr,
                        GSpawnFlags(G_SPAWN_DO_NOT_REAP_CHILD),
-                       nullptr, nullptr, &pid_, &error)) {
+                       [](gpointer user_data) { }, nullptr,
+                       &pid_, &error)) {
+
         MCS_ERROR("Failed to spawn DHCP server: %s", error->message);
         g_error_free(error);
         g_ptr_array_free(argv, TRUE);
@@ -104,6 +141,8 @@ void DhcpServer::Stop() {
     ::kill(pid_, SIGTERM);
     g_spawn_close_pid(pid_);
 
-    pid_ = 0;
+    pid_ = -1;
+
+    ::unlink(lease_file_path_.c_str());
 }
 }

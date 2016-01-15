@@ -10,5 +10,6 @@ AETHERCAST_ADD_TEST(interfacestub_tests interfacestub_tests.cpp aethercast-test-
 AETHERCAST_ADD_TEST(interfaceselector_tests interfaceselector_tests.cpp aethercast-test-w11tng)
 AETHERCAST_ADD_TEST(dhcplistener_tests dhcplistener_tests.cpp)
 AETHERCAST_ADD_TEST(dhcpserver_tests dhcpserver_tests.cpp)
+AETHERCAST_ADD_TEST(netlinklistener_tests netlinklistener_tests.cpp)
 
 AETHERCAST_ADD_TEST(informationelement_tests informationelement_tests.cpp)

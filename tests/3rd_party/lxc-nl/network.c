@@ -61,6 +61,8 @@ int lxc_veth_create(const char *name1, const char *name2)
     struct rtattr *nest1, *nest2, *nest3;
     int len, err;
 
+    printf("name1 %s name2 %s\n", name1, name2);
+
     err = netlink_open(&nlh, NETLINK_ROUTE);
     if (err)
         return err;
@@ -244,4 +246,65 @@ char *lxc_mkifname(char *tmplate)
 
     freeifaddrs(ifaddr);
     return name;
+}
+
+static int netdev_set_flag(const char *name, int flag)
+{
+    struct nl_handler nlh;
+    struct nlmsg *nlmsg = NULL, *answer = NULL;
+    struct ifinfomsg *ifi;
+    int index, len, err;
+
+    err = netlink_open(&nlh, NETLINK_ROUTE);
+    if (err)
+        return err;
+
+    err = -EINVAL;
+    len = strlen(name);
+    if (len == 1 || len >= IFNAMSIZ)
+        goto out;
+
+    err = -ENOMEM;
+    nlmsg = nlmsg_alloc(NLMSG_GOOD_SIZE);
+    if (!nlmsg)
+        goto out;
+
+    answer = nlmsg_alloc_reserve(NLMSG_GOOD_SIZE);
+    if (!answer)
+        goto out;
+
+    err = -EINVAL;
+    index = if_nametoindex(name);
+    if (!index)
+        goto out;
+
+    nlmsg->nlmsghdr->nlmsg_flags = NLM_F_REQUEST|NLM_F_ACK;
+    nlmsg->nlmsghdr->nlmsg_type = RTM_NEWLINK;
+
+    ifi = nlmsg_reserve(nlmsg, sizeof(struct ifinfomsg));
+    if (!ifi) {
+        err = -ENOMEM;
+        goto out;
+    }
+    ifi->ifi_family = AF_UNSPEC;
+    ifi->ifi_index = index;
+    ifi->ifi_change |= IFF_UP;
+    ifi->ifi_flags |= flag;
+
+    err = netlink_transaction(&nlh, nlmsg, answer);
+out:
+    netlink_close(&nlh);
+    nlmsg_free(nlmsg);
+    nlmsg_free(answer);
+    return err;
+}
+
+int lxc_netdev_up(const char *name)
+{
+    return netdev_set_flag(name, IFF_UP);
+}
+
+int lxc_netdev_down(const char *name)
+{
+    return netdev_set_flag(name, 0);
 }

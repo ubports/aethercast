@@ -34,6 +34,8 @@ VirtualNetwork::VirtualNetwork() :
     endpoint2_(lxc_mkifname(kVethNameTemplate)) {
 
     lxc_veth_create(endpoint1_.c_str(), endpoint2_.c_str());
+    lxc_netdev_up(endpoint1_.c_str());
+    lxc_netdev_up(endpoint2_.c_str());
 }
 
 VirtualNetwork::~VirtualNetwork() {
