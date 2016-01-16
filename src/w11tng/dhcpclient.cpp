@@ -40,7 +40,8 @@ DhcpClient::Ptr DhcpClient::Create(const std::weak_ptr<Delegate> &delegate, cons
 DhcpClient::DhcpClient(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name) :
     delegate_(delegate),
     interface_name_(interface_name),
-    pid_(-1) {
+    pid_(-1),
+    process_watch_(0) {
 }
 
 DhcpClient::~DhcpClient() {
@@ -94,7 +95,7 @@ bool DhcpClient::Start() {
         return false;
     }
 
-    g_child_watch_add_full(0, pid_, [](GPid pid, gint status, gpointer user_data) {
+    process_watch_ = g_child_watch_add_full(0, pid_, [](GPid pid, gint status, gpointer user_data) {
         auto inst = static_cast<mcs::WeakKeepAlive<DhcpClient>*>(user_data)->GetInstance().lock();
 
         if (!WIFEXITED(status))
@@ -102,8 +103,10 @@ bool DhcpClient::Start() {
         else
             MCS_DEBUG("DHCP client (pid %d) successfully terminated", pid);
 
-        inst->pid_ = -1;
+        if (not inst)
+            return;
 
+        inst->pid_ = -1;
     }, new mcs::WeakKeepAlive<DhcpClient>(shared_from_this()), [](gpointer data) { delete static_cast<mcs::WeakKeepAlive<DhcpClient>*>(data); });
 
     return true;
@@ -117,6 +120,9 @@ void DhcpClient::Stop() {
     g_spawn_close_pid(pid_);
 
     pid_ = 0;
+
+    if (process_watch_ > 0)
+        g_source_remove(process_watch_);
 }
 
 void DhcpClient::OnInterfaceAddressChanged(const std::string &interface, const std::string &address) {

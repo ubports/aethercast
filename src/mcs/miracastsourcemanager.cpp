@@ -50,7 +50,7 @@ void MiracastSourceManager::ResetDelegate() {
 }
 
 bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short port) {
-    GError *error;
+    GError *error = nullptr;
 
     if (socket_)
         return false;

@@ -62,6 +62,7 @@ private:
     w11tng::NetlinkListener::Ptr netlink_listener_;
     mcs::IpV4Address local_address_;
     GPid pid_;
+    guint process_watch_;
 };
 }
 
