@@ -57,6 +57,7 @@ private:
     std::string interface_name_;
     GPid pid_;
     std::string lease_file_path_;
+    guint process_watch_;
 };
 }
 #endif

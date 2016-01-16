@@ -37,7 +37,8 @@ DhcpServer::Ptr DhcpServer::Create(Delegate *delegate, const std::string &interf
 
 DhcpServer::DhcpServer(Delegate *delegate, const std::string &interface_name) :
     interface_name_(interface_name),
-    pid_(-1) {
+    pid_(-1),
+    process_watch_(0) {
 }
 
 DhcpServer::~DhcpServer() {
@@ -119,7 +120,7 @@ bool DhcpServer::Start() {
         return false;
     }
 
-    g_child_watch_add_full(0, pid_, [](GPid pid, gint status, gpointer user_data) {
+    process_watch_ = g_child_watch_add_full(0, pid_, [](GPid pid, gint status, gpointer user_data) {
         auto inst = static_cast<mcs::WeakKeepAlive<DhcpServer>*>(user_data)->GetInstance().lock();
 
         if (!WIFEXITED(status))
@@ -127,8 +128,10 @@ bool DhcpServer::Start() {
         else
             MCS_DEBUG("DHCP server successfully terminated");
 
-        inst->pid_ = -1;
+        if (not inst)
+            return;
 
+        inst->pid_ = -1;
     }, new mcs::WeakKeepAlive<DhcpServer>(shared_from_this()), [](gpointer data) { delete static_cast<mcs::WeakKeepAlive<DhcpServer>*>(data); });
 
     return true;
@@ -144,5 +147,8 @@ void DhcpServer::Stop() {
     pid_ = -1;
 
     ::unlink(lease_file_path_.c_str());
+
+    if (process_watch_ > 0)
+        g_source_remove(process_watch_);
 }
 }
