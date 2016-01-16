@@ -19,6 +19,7 @@
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <sys/socket.h>
+#include <sys/prctl.h>
 
 #include <boost/filesystem.hpp>
 
@@ -111,7 +112,7 @@ bool DhcpServer::Start() {
     GError *error = nullptr;
     if (!g_spawn_async(nullptr, reinterpret_cast<gchar**>(argv->pdata), nullptr,
                        GSpawnFlags(G_SPAWN_DO_NOT_REAP_CHILD),
-                       [](gpointer user_data) { }, nullptr,
+                       [](gpointer user_data) { prctl(PR_SET_PDEATHSIG, SIGKILL); }, nullptr,
                        &pid_, &error)) {
 
         MCS_ERROR("Failed to spawn DHCP server: %s", error->message);

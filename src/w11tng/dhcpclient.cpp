@@ -21,6 +21,7 @@
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <sys/socket.h>
+#include <sys/prctl.h>
 
 #include <mcs/logger.h>
 #include <mcs/networkutils.h>
@@ -88,7 +89,8 @@ bool DhcpClient::Start() {
     GError *error = nullptr;
     if (!g_spawn_async(nullptr, reinterpret_cast<gchar**>(argv->pdata), nullptr,
                        GSpawnFlags(G_SPAWN_DO_NOT_REAP_CHILD),
-                       nullptr, nullptr, &pid_, &error)) {
+                       [](gpointer user_data) { prctl(PR_SET_PDEATHSIG, SIGKILL); },
+                       nullptr, &pid_, &error)) {
         MCS_ERROR("Failed to spawn DHCP client: %s", error->message);
         g_error_free(error);
         g_ptr_array_free(argv, TRUE);
