@@ -287,6 +287,9 @@ void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &device) {
         return;
 
     AdvanceState(device->State());
+
+    if (auto sp = delegate_.lock())
+        sp->OnDeviceChanged(device);
 }
 
 void MiracastService::OnDeviceChanged(const NetworkDevice::Ptr &device) {
