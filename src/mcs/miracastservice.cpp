@@ -37,8 +37,6 @@
 #include "types.h"
 #include "logging.h"
 
-#include <w11t/wfddeviceinfo.h>
-
 namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.
 const std::uint16_t kMiracastDefaultRtspCtrlPort{7236};

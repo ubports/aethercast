@@ -18,7 +18,6 @@
 #include <gtest/gtest.h>
 
 #include <mcs/networkmanagerfactory.h>
-#include <w11t/networkmanager.h>
 #include <w11tng/networkmanager.h>
 
 struct NetworkManagerFactoryFixture : public ::testing::Test {
@@ -35,13 +34,6 @@ TEST_F(NetworkManagerFactoryFixture, InvalidType) {
 
 TEST_F(NetworkManagerFactoryFixture, DefaultType) {
     CheckManagerCreation<w11tng::NetworkManager>("");
-}
-
-TEST_F(NetworkManagerFactoryFixture, W11tTypeCreation) {
-    CheckManagerCreation<w11t::NetworkManager>("w11t");
-    CheckManagerCreation<mcs::NullNetworkManager>("w11t123");
-    CheckManagerCreation<mcs::NullNetworkManager>("123w11t123");
-    CheckManagerCreation<mcs::NullNetworkManager>("123w11t");
 }
 
 TEST_F(NetworkManagerFactoryFixture, W11tngTypeCreation) {

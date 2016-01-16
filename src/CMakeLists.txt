@@ -33,8 +33,6 @@ set(HEADERS
     mcs/shared_gobject.h
     mcs/keep_alive.h
 
-    w11t/gdhcp/gdhcp.h
-
     w11tng/config.h
 )
 
@@ -63,20 +61,6 @@ set(SOURCES
   mcs/dbushelpers.cpp
   mcs/networkdeviceskeleton.cpp
 
-  w11t/gdhcp/common.c
-  w11t/gdhcp/ipv4ll.c
-  w11t/gdhcp/server.c
-  w11t/gdhcp/client.c
-  w11t/dhcpclient.cpp
-  w11t/dhcpserver.cpp
-  w11t/wififirmwareloader.cpp
-  w11t/wfddeviceinfo.cpp
-  w11t/message.cpp
-  w11t/command.cpp
-  w11t/commandqueue.cpp
-  w11t/networkdevice.cpp
-  w11t/networkmanager.cpp
-
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/wpasupplicantinterface.c
   w11tng/networkmanager.cpp
   w11tng/networkdevice.cpp
@@ -89,9 +73,8 @@ set(SOURCES
   w11tng/informationelement.cpp
   w11tng/dhcpclient.cpp
   w11tng/dhcpserver.cpp
-  w11tng/dhcplistenerskeleton.cpp
-  w11tng/dhcplistenerstub.cpp
   w11tng/netlinklistener.cpp
+  w11tng/wififirmwareloader.cpp
 )
 
 link_directories(
@@ -108,7 +91,6 @@ include_directories(
   ${GIO-UNIX_INCLUDE_DIRS}
   ${GST_INCLUDE_DIRS}
   ${WDS_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/w11t/gdhcp
   ${CMAKE_CURRENT_BINARY_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}/src/w11tng
 )
@@ -135,26 +117,6 @@ install(
   RUNTIME DESTINATION sbin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib/static
-)
-
-add_executable(dhcp-helper
-    w11tng/dhcphelper.cpp
-    w11tng/dhcplistenerstub.cpp
-    mcs/logger.cpp
-    mcs/utils.cpp
-)
-target_link_libraries(dhcp-helper
-  ${Boost_LIBRARIES}
-  ${GLIB_LIBRARIES}
-  ${GIO_LIBRARIES}
-  ${GIO-UNIX_LIBRARIES}
-  ${CMAKE_THREAD_LIBS_INIT}
-  -ldl
-)
-
-install(
-    TARGETS dhcp-helper
-    RUNTIME DESTINATION lib/aethercast
 )
 
 add_subdirectory(client)

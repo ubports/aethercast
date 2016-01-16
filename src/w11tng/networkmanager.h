@@ -21,14 +21,14 @@
 #include <unordered_map>
 
 #include <mcs/networkmanager.h>
-#include <w11t/wififirmwareloader.h>
 
 #include "managerstub.h"
 #include "p2pdevicestub.h"
 #include "interfacestub.h"
 #include "interfaceselector.h"
-#include "w11tng/dhcpserver.h"
-#include "w11tng/dhcpclient.h"
+#include "dhcpserver.h"
+#include "dhcpclient.h"
+#include "wififirmwareloader.h"
 
 namespace w11tng {
 
@@ -37,7 +37,7 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>,
                        public P2PDeviceStub::Delegate,
                        public NetworkDevice::Delegate,
                        public w11tng::DhcpClient::Delegate,
-                       public w11t::WiFiFirmwareLoader::Delegate,
+                       public w11tng::WiFiFirmwareLoader::Delegate,
                        public w11tng::InterfaceSelector::Delegate,
                        public w11tng::ManagerStub::Delegate,
                        public w11tng::InterfaceStub::Delegate {
@@ -122,7 +122,7 @@ private:
     std::shared_ptr<w11tng::DhcpServer> dhcp_server_;
     InterfaceSelector::Ptr interface_selector_;
     guint connect_timeout_;
-    w11t::WiFiFirmwareLoader firmware_loader_;
+    w11tng::WiFiFirmwareLoader firmware_loader_;
     std::string dedicated_p2p_interface_;
 };
 

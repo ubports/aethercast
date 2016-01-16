@@ -23,7 +23,7 @@
 
 #include "wififirmwareloader.h"
 
-namespace w11t {
+namespace w11tng {
 
 WiFiFirmwareLoader::WiFiFirmwareLoader(const std::string &interface_name, Delegate *delegate) :
     interface_name_(interface_name),
@@ -91,4 +91,4 @@ void WiFiFirmwareLoader::OnInterfaceFirmwareSet(GDBusConnection *conn, GAsyncRes
     inst->reload_timeout_source_ = g_timeout_add(timeout.count(), &WiFiFirmwareLoader::OnRetryLoad, inst);
 }
 
-} // namespace wpa
+} // namespace w11tng

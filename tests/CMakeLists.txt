@@ -51,6 +51,5 @@ add_subdirectory(3rd_party/lxc-nl)
 AETHERCAST_ADD_TEST(utilities_tests utilities_tests.cpp)
 AETHERCAST_ADD_TEST(scoped_gobject_tests scoped_gobject_tests.cpp)
 
-add_subdirectory(w11t)
 add_subdirectory(w11tng)
 add_subdirectory(mcs)

@@ -27,7 +27,6 @@
 #include <mcs/ip_v4_address.h>
 #include <mcs/non_copyable.h>
 
-#include "dhcplistenerskeleton.h"
 #include "netlinklistener.h"
 
 namespace w11tng {

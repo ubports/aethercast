@@ -24,7 +24,7 @@
 #include <string>
 #include <boost/noncopyable.hpp>
 
-namespace w11t {
+namespace w11tng {
 class WiFiFirmwareLoader {
 public:
     class Delegate : private boost::noncopyable {
@@ -50,6 +50,6 @@ private:
     Delegate *delegate_;
     guint reload_timeout_source_;
 };
-}
+} // namespace w11tng
 
 #endif

@@ -17,8 +17,6 @@
 
 #include "networkdevice.h"
 
-#include <w11t/wfddeviceinfo.h>
-
 namespace mcs {
 std::string NetworkDevice::StateToStr(NetworkDeviceState state) {
     switch (state) {
