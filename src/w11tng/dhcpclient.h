@@ -28,10 +28,11 @@
 #include <mcs/non_copyable.h>
 
 #include "dhcplistenerskeleton.h"
+#include "netlinklistener.h"
 
 namespace w11tng {
 class DhcpClient : public std::enable_shared_from_this<DhcpClient>,
-                   public w11tng::DhcpListenerSkeleton::Delegate {
+                   public w11tng::NetlinkListener::Delegate {
 public:
     typedef std::shared_ptr<DhcpClient> Ptr;
 
@@ -44,9 +45,9 @@ public:
         Delegate() = default;
     };
 
-    static Ptr Create(Delegate *delegate, const std::string &interface_name);
+    static Ptr Create(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name);
 
-    DhcpClient(Delegate *delegate, const std::string &interface_name);
+    DhcpClient(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name);
     ~DhcpClient();
 
     bool Start();
@@ -54,16 +55,14 @@ public:
 
     mcs::IpV4Address LocalAddress() const;
 
-    void OnNewConnection();
-    void OnConnectionClosed();
-    void OnEvent(const std::map<std::string, std::string> &properties);
+    void OnInterfaceAddressChanged(const std::string &interface, const std::string &address);
 
 private:
-    Delegate *delegate_;
+    std::weak_ptr<Delegate> delegate_;
     std::string interface_name_;
+    w11tng::NetlinkListener::Ptr netlink_listener_;
     mcs::IpV4Address local_address_;
     GPid pid_;
-    DhcpListenerSkeleton::Ptr listener_skeleton_;
 };
 }
 

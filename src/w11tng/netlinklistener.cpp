@@ -44,26 +44,30 @@ NetlinkListener::Ptr NetlinkListener::Create(const std::weak_ptr<Delegate> &dele
 NetlinkListener::Ptr NetlinkListener::FinalizeConstruction() {
     auto sp = shared_from_this();
 
-    fd_ = ::socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-    if (fd_ < 0) {
+    auto fd = ::socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    if (fd < 0) {
         MCS_ERROR("Could not connect with netlink");
         return sp;
     }
 
     struct sockaddr_nl addr = {};
+    memset(&addr, 0, sizeof(addr));
     addr.nl_family = AF_NETLINK;
-    addr.nl_pid = ::getpid();
     addr.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
 
-    if (::bind(fd_, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
+    if (::bind(fd, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
         MCS_ERROR("Failed to bind netlink socket");
-        ::close(fd_);
+        ::close(fd);
         return sp;
     }
 
-    channel_ = g_io_channel_unix_new(fd_);
+    channel_ = g_io_channel_unix_new(fd);
+    g_io_channel_set_encoding(channel_, nullptr, nullptr);
+    g_io_channel_set_buffered(channel_, FALSE);
+    g_io_channel_set_close_on_unref(channel_, TRUE);
 
-    g_io_add_watch_full(channel_, 0, GIOCondition(G_IO_IN | G_IO_ERR | G_IO_HUP), NetlinkListener::OnDataAvailable,
+    g_io_add_watch_full(channel_, 0, GIOCondition(G_IO_IN | G_IO_NVAL | G_IO_ERR | G_IO_HUP),
+                        NetlinkListener::OnDataAvailable,
                         new mcs::WeakKeepAlive<NetlinkListener>(sp),
                         [](gpointer data) { delete static_cast<mcs::WeakKeepAlive<NetlinkListener>*>(data); });
 
@@ -72,16 +76,13 @@ NetlinkListener::Ptr NetlinkListener::FinalizeConstruction() {
 
 NetlinkListener::NetlinkListener(const std::weak_ptr<Delegate> &delegate) :
     delegate_(delegate),
-    fd_(0),
+    channel_(nullptr),
     interface_index_filter_(0) {
 }
 
 NetlinkListener::~NetlinkListener() {
     if (channel_)
         g_io_channel_unref(channel_);
-
-    if (fd_ > 0)
-        ::close(fd_);
 }
 
 void NetlinkListener::SetInterfaceFilter(const std::string &interface_name) {

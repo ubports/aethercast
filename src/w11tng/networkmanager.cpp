@@ -494,7 +494,7 @@ void NetworkManager::OnInterfaceReady() {
         AdvanceDeviceState(current_device_, mcs::kConnected);
     }
     else {
-        dhcp_client_ = std::shared_ptr<w11t::DhcpClient>(new w11t::DhcpClient(this, ifname));
+        dhcp_client_ = w11tng::DhcpClient::Create(shared_from_this(), ifname);
         dhcp_client_->Start();
     }
 }

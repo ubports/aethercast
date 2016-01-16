@@ -61,8 +61,6 @@ int lxc_veth_create(const char *name1, const char *name2)
     struct rtattr *nest1, *nest2, *nest3;
     int len, err;
 
-    printf("name1 %s name2 %s\n", name1, name2);
-
     err = netlink_open(&nlh, NETLINK_ROUTE);
     if (err)
         return err;

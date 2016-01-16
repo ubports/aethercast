@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef W11TNG_PEER_STUB_H_
-#define W11TNG_PEER_STUB_H_
+#ifndef W11TNG_NETLINK_LISTENER_H_
+#define W11TNG_NETLINK_LISTENER_H_
 
 #include <glib.h>
 
@@ -56,7 +56,6 @@ private:
 private:
     const std::weak_ptr<Delegate> delegate_;
     GIOChannel *channel_;
-    int fd_;
     int interface_index_filter_;
 };
 

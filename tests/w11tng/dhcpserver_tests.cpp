@@ -43,13 +43,16 @@ TEST(DhcpServer, Startup) {
     mcs::testing::VirtualNetwork veth;
 
     auto server_delegate = std::make_shared<MockDhcpServerDelegate>();
+
     auto client_delegate = std::make_shared<MockDhcpClientDelegate>();
+    EXPECT_CALL(*client_delegate, OnAddressAssigned(mcs::IpV4Address::from_string("192.168.7.5")))
+            .Times(1);
 
     auto server = w11tng::DhcpServer::Create(server_delegate.get(), veth.Endpoint1());
-    auto client = w11tng::DhcpClient::Create(client_delegate.get(), veth.Endpoint2());
+    auto client = w11tng::DhcpClient::Create(client_delegate, veth.Endpoint2());
 
     server->Start();
     client->Start();
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{2});
+    mcs::testing::RunMainLoop(std::chrono::seconds{5});
 }

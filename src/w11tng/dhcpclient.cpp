@@ -33,11 +33,11 @@
 
 namespace w11tng {
 
-DhcpClient::Ptr DhcpClient::Create(Delegate *delegate, const std::string &interface_name) {
+DhcpClient::Ptr DhcpClient::Create(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name) {
     return std::shared_ptr<DhcpClient>(new DhcpClient(delegate, interface_name));
 }
 
-DhcpClient::DhcpClient(Delegate *delegate, const std::string &interface_name) :
+DhcpClient::DhcpClient(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name) :
     delegate_(delegate),
     interface_name_(interface_name),
     pid_(-1) {
@@ -57,7 +57,12 @@ bool DhcpClient::Start() {
     if (pid_ > 0)
         return true;
 
-    listener_skeleton_ = DhcpListenerSkeleton::Create(kDhcpPrivateSocketPath, shared_from_this());
+    if (!netlink_listener_) {
+        netlink_listener_ = w11tng::NetlinkListener::Create(shared_from_this());
+        // We're only interested in events for the network interface we're
+        // operating on.
+        netlink_listener_->SetInterfaceFilter(interface_name_);
+    }
 
     auto argv = g_ptr_array_new();
 
@@ -114,18 +119,18 @@ void DhcpClient::Stop() {
     pid_ = 0;
 }
 
-void DhcpClient::OnNewConnection() {
-    MCS_DEBUG("");
-}
+void DhcpClient::OnInterfaceAddressChanged(const std::string &interface, const std::string &address) {
+    if (interface != interface_name_)
+        return;
 
-void DhcpClient::OnConnectionClosed() {
-    MCS_DEBUG("");
-}
+    auto ipv4_addr = mcs::IpV4Address::from_string(address);
+    if (ipv4_addr == local_address_)
+        return;
 
-void DhcpClient::OnEvent(const std::map<std::string, std::string> &properties) {
-    MCS_DEBUG("Got event with:");
-    for (auto prop : properties)
-        MCS_DEBUG("  %s=%s", prop.first, prop.second);
+    local_address_ = ipv4_addr;
+
+    if (auto sp = delegate_.lock())
+        sp->OnAddressAssigned(ipv4_addr);
 }
 
 }
