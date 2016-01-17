@@ -1,0 +1,10 @@
+# vim:syntax=apparmor
+
+  # Allow aethercast to start dhcpd with its own configuration
+  # file it needs to provide DHCP for groups it manages through
+  # WiFi Direct. This need to stay as long as NetworkManager does
+  # not has support for WiFi Direct and aethercast is using that.
+  /etc/aethercast/dhcpd.conf r,
+  # In addition aethercast will also point dhcpd to a private
+  # lease file only used per session.
+  /tmp/aethercast-dhcp-leases-* lrw,
