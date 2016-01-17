@@ -94,7 +94,7 @@ bool DhcpServer::Start() {
     g_ptr_array_add(argv, (gpointer) "-4");
 
     g_ptr_array_add(argv, (gpointer) "-cf");
-    g_ptr_array_add(argv, (gpointer) "/home/simon/Work/ubuntu/p2p/ac-wpa-dbus/conf/dhcpd.conf");
+    g_ptr_array_add(argv, (gpointer) "/etc/aethercast/dhcpd.conf");
 
     g_ptr_array_add(argv, (gpointer) "-lf");
     g_ptr_array_add(argv, (gpointer) lease_file_path_.c_str());
