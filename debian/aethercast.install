@@ -1,1 +1,1 @@
-usr.sbin.aethercast /etc/apparmor.d/dhcpd.d/
+debian/usr.sbin.aethercast /etc/apparmor.d/dhcpd.d/
