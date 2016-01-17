@@ -55,6 +55,7 @@ private:
 
 private:
     static gboolean OnHandleFind(WpaSupplicantInterfaceP2PDevice *device, GDBusMethodInvocation *invocation, GVariant *properties, gpointer user_data);
+    static gboolean OnHandleStopFind(WpaSupplicantInterfaceP2PDevice *device, GDBusMethodInvocation *invocation, gpointer user_data);
 
 private:
     std::weak_ptr<Delegate> delegate_;

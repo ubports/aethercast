@@ -126,16 +126,15 @@ TEST_F(P2PDeviceStubFixture, DeviceLost) {
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
 }
 
-/*
 TEST_F(P2PDeviceStubFixture, FindAndTimeoutHandling) {
     auto stub_delegate = std::make_shared<MockP2PDeviceStubDelegate>();
     auto skeleton_delegate = std::make_shared<MockP2PDeviceSkeletonDelegate>();
 
     EXPECT_CALL(*stub_delegate, OnP2PDeviceReady()).Times(1);
-    EXPECT_CALL(*stub_delegate, OnP2PDeviceChanged()).Times(1);
+    EXPECT_CALL(*stub_delegate, OnP2PDeviceChanged()).Times(3);
 
     EXPECT_CALL(*skeleton_delegate, OnFind()).Times(1);
-    //EXPECT_CALL(*skeleton_delegate, OnStopFind()).Times(1);
+    EXPECT_CALL(*skeleton_delegate, OnStopFind()).Times(1);
 
     auto skeleton = w11tng::testing::P2PDeviceSkeleton::Create("/device_1");
 
@@ -152,6 +151,7 @@ TEST_F(P2PDeviceStubFixture, FindAndTimeoutHandling) {
 
     stub->Find(std::chrono::seconds{1});
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    // If we're waiting a bit longer here we will get the stop find
+    // call the stub issues after the timeout.
+    mcs::testing::RunMainLoop(std::chrono::seconds{2});
 }
-*/
