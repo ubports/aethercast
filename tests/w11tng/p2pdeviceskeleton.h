@@ -48,6 +48,11 @@ public:
 
     void EmitDeviceFound(const std::string &path);
     void EmitDeviceLost(const std::string &path);
+    void EmitGroupOwnerNegotiationSuccess(const std::string &path);
+    void EmitGroupOwnerNegotiationFailure(const std::string &path);
+    void EmitGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role);
+    void EmitGroupFinished(const std::string &group_path, const std::string &interface_path);
+    void EmitGroupRequest(const std::string &path, int dev_passwd_id);
 
 private:
     P2PDeviceSkeleton(const std::string &object_path);

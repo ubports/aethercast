@@ -186,20 +186,15 @@ void P2PDeviceStub::OnGroupFinished(WpaSupplicantInterfaceP2PDevice *device, GVa
         sp->OnGroupFinished(group_object, interface_object);
 }
 
-void P2PDeviceStub::OnGroupRequest(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data) {
+void P2PDeviceStub::OnGroupRequest(WpaSupplicantInterfaceP2PDevice *device, const gchar *path, int dev_passwd_id, gpointer user_data) {
     auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
 
-    std::string peer_path;
-
-    mcs::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
-        if (name == "path")
-            peer_path = g_variant_get_string(g_variant_get_variant(value), nullptr);
-    });
+    std::string peer_path(path);
 
     MCS_DEBUG("peer_path %s", peer_path);
 
     if (auto sp = inst->delegate_.lock())
-        sp->OnGroupRequest(peer_path);
+        sp->OnGroupRequest(peer_path, dev_passwd_id);
 }
 
 void P2PDeviceStub::ConnectSignals() {

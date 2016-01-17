@@ -50,7 +50,7 @@ public:
         virtual void OnGroupOwnerNegotiationFailure(const std::string &peer_path) = 0;
         virtual void OnGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role) = 0;
         virtual void OnGroupFinished(const std::string &group_path, const std::string &interface_path) = 0;
-        virtual void OnGroupRequest(const std::string &peer_path) = 0;
+        virtual void OnGroupRequest(const std::string &peer_path, int dev_passwd_id) = 0;
 
         // Called whenver any of the exposed properties changes.
         virtual void OnP2PDeviceChanged() = 0;
@@ -83,7 +83,7 @@ private:
     static void OnGONegotiationFailure(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data);
     static void OnGroupStarted(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data);
     static void OnGroupFinished(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data);
-    static void OnGroupRequest(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data);
+    static void OnGroupRequest(WpaSupplicantInterfaceP2PDevice *device, const gchar *path, int dev_passwd_id, gpointer user_data);
 
 private:
     P2PDeviceStub(const std::weak_ptr<P2PDeviceStub::Delegate> &delegate);

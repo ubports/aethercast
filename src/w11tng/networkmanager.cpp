@@ -369,8 +369,8 @@ void NetworkManager::OnGroupFinished(const std::string &group_path, const std::s
     current_device_.reset();
 }
 
-void NetworkManager::OnGroupRequest(const std::string &peer_path) {
-    MCS_DEBUG("peer %s", peer_path);
+void NetworkManager::OnGroupRequest(const std::string &peer_path, int dev_passwd_id) {
+    MCS_DEBUG("peer %s dev_passwd_id %d", peer_path, dev_passwd_id);
 
     // FIXME once we implement sink support we need to have this
     // respected as well

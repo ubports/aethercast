@@ -94,6 +94,41 @@ void P2PDeviceSkeleton::EmitDeviceLost(const std::string &path) {
     wpa_supplicant_interface_p2_pdevice_emit_device_lost(skeleton_.get(), path.c_str());
 }
 
+void P2PDeviceSkeleton::EmitGroupOwnerNegotiationSuccess(const std::string &path) {
+    auto builder = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+    g_variant_builder_add(builder, "{sv}", "peer_object", g_variant_new_string(path.c_str()));
+    auto value = g_variant_builder_end(builder);
+    wpa_supplicant_interface_p2_pdevice_emit_gonegotiation_success(skeleton_.get(), value);
+}
+
+void P2PDeviceSkeleton::EmitGroupOwnerNegotiationFailure(const std::string &path) {
+    auto builder = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+    g_variant_builder_add(builder, "{sv}", "peer_object", g_variant_new_string(path.c_str()));
+    auto value = g_variant_builder_end(builder);
+    wpa_supplicant_interface_p2_pdevice_emit_gonegotiation_failure(skeleton_.get(), value);
+}
+
+void P2PDeviceSkeleton::EmitGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role) {
+    auto builder = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+    g_variant_builder_add(builder, "{sv}", "group_object", g_variant_new_string(group_path.c_str()));
+    g_variant_builder_add(builder, "{sv}", "interface_object", g_variant_new_string(interface_path.c_str()));
+    g_variant_builder_add(builder, "{sv}", "role", g_variant_new_string(role.c_str()));
+    auto value = g_variant_builder_end(builder);
+    wpa_supplicant_interface_p2_pdevice_emit_group_started(skeleton_.get(), value);
+}
+
+void P2PDeviceSkeleton::EmitGroupFinished(const std::string &group_path, const std::string &interface_path) {
+    auto builder = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+    g_variant_builder_add(builder, "{sv}", "group_object", g_variant_new_string(group_path.c_str()));
+    g_variant_builder_add(builder, "{sv}", "interface_object", g_variant_new_string(interface_path.c_str()));
+    auto value = g_variant_builder_end(builder);
+    wpa_supplicant_interface_p2_pdevice_emit_group_finished(skeleton_.get(), value);
+}
+
+void P2PDeviceSkeleton::EmitGroupRequest(const std::string &path, int dev_passwd_id) {
+    wpa_supplicant_interface_p2_pdevice_emit_gonegotiation_request(skeleton_.get(), path.c_str(), dev_passwd_id);
+}
+
 void P2PDeviceSkeleton::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
     delegate_ = delegate;
 }

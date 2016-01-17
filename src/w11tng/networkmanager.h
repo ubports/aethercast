@@ -72,7 +72,7 @@ public:
     void OnGroupOwnerNegotiationSuccess(const std::string &peer_path) override;
     void OnGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role) override;
     void OnGroupFinished(const std::string &group_path, const std::string &interface_path) override;
-    void OnGroupRequest(const std::string &peer_path) override;
+    void OnGroupRequest(const std::string &peer_path, int dev_passwd_id) override;
 
     void OnDeviceChanged(const NetworkDevice::Ptr &device) override;
     void OnDeviceReady(const NetworkDevice::Ptr &device) override;

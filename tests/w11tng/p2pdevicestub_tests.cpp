@@ -46,7 +46,7 @@ public:
     MOCK_METHOD1(OnGroupOwnerNegotiationFailure, void(const std::string&));
     MOCK_METHOD3(OnGroupStarted, void(const std::string&, const std::string&, const std::string&));
     MOCK_METHOD2(OnGroupFinished, void(const std::string&, const std::string&));
-    MOCK_METHOD1(OnGroupRequest, void(const std::string&));
+    MOCK_METHOD2(OnGroupRequest, void(const std::string&, int));
     MOCK_METHOD0(OnP2PDeviceChanged, void());
     MOCK_METHOD0(OnP2PDeviceReady, void());
 };
@@ -122,6 +122,40 @@ TEST_F(P2PDeviceStubFixture, DeviceLost) {
     // both are going through even if they have the same payload.
     skeleton->EmitDeviceLost("/peer_1");
     skeleton->EmitDeviceLost("/peer_1");
+
+    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+}
+
+TEST_F(P2PDeviceStubFixture, AllOtherSignalsSuccessfullySent) {
+    auto delegate = std::make_shared<MockP2PDeviceStubDelegate>();
+
+    EXPECT_CALL(*delegate, OnP2PDeviceChanged()).Times(::testing::AtLeast(1));
+    EXPECT_CALL(*delegate, OnP2PDeviceReady()).Times(1);
+    EXPECT_CALL(*delegate, OnGroupOwnerNegotiationSuccess(std::string("/peer_1")))
+            .Times(1);
+    EXPECT_CALL(*delegate, OnGroupOwnerNegotiationFailure(std::string("/peer_1")))
+            .Times(1);
+    EXPECT_CALL(*delegate, OnGroupStarted(std::string("/peer_1"), std::string("/interface_1"), std::string("GO")))
+            .Times(1);
+    EXPECT_CALL(*delegate, OnGroupFinished(std::string("/peer_1"), std::string("/interface_1")))
+            .Times(1);
+    EXPECT_CALL(*delegate, OnGroupRequest(std::string("/peer_1"), 1337))
+            .Times(1);
+
+    auto skeleton = w11tng::testing::P2PDeviceSkeleton::Create("/device_1");
+
+    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+
+    auto stub = w11tng::P2PDeviceStub::Create("/device_1", delegate);
+    EXPECT_TRUE(!!stub);
+
+    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+
+    skeleton->EmitGroupOwnerNegotiationSuccess("/peer_1");
+    skeleton->EmitGroupOwnerNegotiationFailure("/peer_1");
+    skeleton->EmitGroupStarted("/peer_1", "/interface_1", "GO");
+    skeleton->EmitGroupFinished("/peer_1", "/interface_1");
+    skeleton->EmitGroupRequest("/peer_1", 1337);
 
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
 }

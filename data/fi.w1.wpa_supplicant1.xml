@@ -53,9 +53,6 @@
         <signal name="GONegotiationFailure">
             <arg name="properties" type="a{sv}"/>
         </signal>
-        <signal name="GONegotiationRequest">
-            <arg name="properties" type="a{sv}"/>
-        </signal>
         <signal name="GroupStarted">
             <arg name="properties" type="a{sv}"/>
         </signal>
@@ -64,6 +61,10 @@
         </signal>
         <signal name="GroupFormationFailure">
             <arg name="reason" type="s"/>
+        </signal>
+        <signal name="GONegotiationRequest">
+            <arg name="path" type="o"/>
+            <arg name="dev_passwd_id" type="i"/>
         </signal>
         <property name="P2PDeviceConfig" type="a{sv}" access="readwrite"/>
         <property name="Peers" type="ao" access="read"/>
