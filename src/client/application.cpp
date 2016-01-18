@@ -435,8 +435,8 @@ void Application::OnManagerConnected(GObject *object, GAsyncResult *res, gpointe
     }
 
     // Use a high enough timeout to make sure we get the end of the scan
-    // method call which has an internal timeout of 30 seconds
-    g_dbus_proxy_set_default_timeout(G_DBUS_PROXY(inst->manager_), 60 * 1000);
+    // method call which has an internal timeout of 240 seconds
+    g_dbus_proxy_set_default_timeout(G_DBUS_PROXY(inst->manager_), 240 * 1000);
 
     aethercast_interface_object_manager_client_new(inst->bus_connection_,
                              G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_NONE,
