@@ -230,8 +230,8 @@ void NetworkManager::SyncDeviceConfiguration() {
     if (hostname.length() == 0) {
         // Our last resort is to get the hostname via a system
         // call and not from the hostname service.
-        char name[255] = {};
-        ::gethostname(name, 255);
+        char name[HOST_NAME_MAX + 1] = {};
+        ::gethostname(name, HOST_NAME_MAX);
         hostname = name;
     }
 
