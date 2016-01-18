@@ -114,6 +114,7 @@ private:
     void StopConnectTimeout();
 
     std::string SelectHostname();
+    std::string SelectDeviceType();
     void SyncDeviceConfiguration();
 
 private:

@@ -71,7 +71,10 @@ void Hostname1Stub::OnPropertiesChanged(GDBusConnection *connection, const gchar
     if (not thiz)
         return;
 
-    thiz->SyncProperties();
+    thiz->ParseProperties(parameters);
+
+    if (auto sp = thiz->delegate_.lock())
+        sp->OnHostnameChanged();
 }
 
 void Hostname1Stub::SyncProperties() {
@@ -113,9 +116,6 @@ void Hostname1Stub::ParseProperties(GVariant *properties) {
         else if (key == "Chassis")
             chassis_ = g_variant_get_string(g_variant_get_variant(value), nullptr) ? : "";
     });
-
-    if (auto sp = delegate_.lock())
-        sp->OnHostnameChanged();
 }
 
 std::string Hostname1Stub::Hostname() const {

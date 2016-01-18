@@ -75,7 +75,7 @@ public:
     bool Scanning() const { return scan_timeout_source_ > 0; }
     bool Connected() const { return !!proxy_; }
 
-    void SetDeviceConfiguration(const std::string &device_name);
+    void SetDeviceConfiguration(const std::string &device_name, const std::string &device_type);
 
 private:
     static void OnDeviceFound(WpaSupplicantInterfaceP2PDevice *device, const gchar *path, gpointer user_data);

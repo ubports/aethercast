@@ -234,13 +234,40 @@ std::string NetworkManager::SelectHostname() {
     return hostname;
 }
 
+std::string NetworkManager::SelectDeviceType() {
+    std::string oui = "0050F204";
+    std::string category = "0001";
+    std::string sub_category = "0000";
+
+    auto chassis = hostname_service_->Chassis();
+    if (chassis == "handset") {
+        category = "000A";
+        sub_category = "0005";
+    }
+    else if (chassis == "vm" || chassis == "container")
+        sub_category = "0001";
+    else if (chassis == "server")
+        sub_category = "0002";
+    else if (chassis == "laptop")
+        sub_category = "0005";
+    else if (chassis == "desktop")
+        sub_category = "0006";
+    else if (chassis == "tablet")
+        sub_category = "0009";
+    else if (chassis == "watch")
+        sub_category = "00FF";
+
+    return mcs::Utils::Sprintf("%s%s%s", category, oui, sub_category);
+}
+
 void NetworkManager::SyncDeviceConfiguration() {
     if (!p2p_device_)
         return;
 
     auto hostname = SelectHostname();
+    auto device_type = SelectDeviceType();
 
-    p2p_device_->SetDeviceConfiguration(hostname);
+    p2p_device_->SetDeviceConfiguration(hostname, device_type);
 }
 
 bool NetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {

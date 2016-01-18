@@ -399,11 +399,42 @@ void P2PDeviceStub::Cancel() {
     }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
 }
 
-void P2PDeviceStub::SetDeviceConfiguration(const std::string &device_name) {
-    MCS_DEBUG("name %s", device_name);
+int DevTypeStringToBinary(const std::string &type, unsigned char dev_type[8]) {
+    int length, pos, end;
+    char b[3] = {};
+    char *e = nullptr;
+
+    end = type.length();
+    for (length = pos = 0; type.c_str()[pos] != '\0' && length < 8; length++) {
+        if (pos + 2 > end)
+            return 0;
+
+        b[0] = type.at(pos);
+        b[1] = type.at(pos + 1);
+
+        dev_type[length] = strtol(b, &e, 16);
+        if (e && *e != '\0')
+            return 0;
+
+        pos += 2;
+    }
+
+    return 8;
+}
+
+void P2PDeviceStub::SetDeviceConfiguration(const std::string &device_name, const std::string &device_type) {
+    MCS_DEBUG("name %s device type %s", device_name, device_type);
+
     auto builder = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+
     g_variant_builder_add(builder, "{sv}", "DeviceName", g_variant_new_string(device_name.c_str()));
+
+    unsigned char dev_type[8] = {};
+    int len = DevTypeStringToBinary(device_type, dev_type);
+    g_variant_builder_add(builder, "{sv}", "PrimaryDeviceType", g_variant_new_fixed_array(G_VARIANT_TYPE("y"), dev_type, len, 1));
+
     auto value = g_variant_builder_end(builder);
+
     wpa_supplicant_interface_p2_pdevice_set_p2_pdevice_config(proxy_.get(), value);
 }
 
