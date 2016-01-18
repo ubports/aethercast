@@ -218,10 +218,7 @@ bool NetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
     return true;
 }
 
-void NetworkManager::SyncDeviceConfiguration() {
-    if (!p2p_device_)
-        return;
-
+std::string NetworkManager::SelectHostname() {
     auto hostname = hostname_service_->PrettyHostname();
     if (hostname.length() == 0)
         hostname = hostname_service_->StaticHostname();
@@ -234,6 +231,14 @@ void NetworkManager::SyncDeviceConfiguration() {
         ::gethostname(name, HOST_NAME_MAX);
         hostname = name;
     }
+    return hostname;
+}
+
+void NetworkManager::SyncDeviceConfiguration() {
+    if (!p2p_device_)
+        return;
+
+    auto hostname = SelectHostname();
 
     p2p_device_->SetDeviceConfiguration(hostname);
 }

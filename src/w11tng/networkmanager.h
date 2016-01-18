@@ -113,6 +113,7 @@ private:
     void StartConnectTimeout();
     void StopConnectTimeout();
 
+    std::string SelectHostname();
     void SyncDeviceConfiguration();
 
 private:
