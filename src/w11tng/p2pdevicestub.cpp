@@ -399,4 +399,12 @@ void P2PDeviceStub::Cancel() {
     }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
 }
 
+void P2PDeviceStub::SetDeviceConfiguration(const std::string &device_name) {
+    MCS_DEBUG("name %s", device_name);
+    auto builder = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+    g_variant_builder_add(builder, "{sv}", "DeviceName", g_variant_new_string(device_name.c_str()));
+    auto value = g_variant_builder_end(builder);
+    wpa_supplicant_interface_p2_pdevice_set_p2_pdevice_config(proxy_.get(), value);
+}
+
 } // namespace w11tng

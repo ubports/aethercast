@@ -96,6 +96,8 @@ void NetworkManager::Initialize(bool firmware_loading) {
 
     auto sp = shared_from_this();
 
+    hostname_service_ = Hostname1Stub::Create(sp);
+
     interface_selector_ = InterfaceSelector::Create();
     interface_selector_->SetDelegate(sp);
 
@@ -216,6 +218,22 @@ bool NetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
     return true;
 }
 
+void NetworkManager::SyncDeviceConfiguration() {
+    if (!p2p_device_)
+        return;
+
+    auto hostname = hostname_service_->PrettyHostname();
+    if (hostname.length() == 0)
+        hostname = hostname_service_->StaticHostname();
+    if (hostname.length() == 0)
+        hostname = hostname_service_->Hostname();
+
+    if (hostname.length() == 0)
+        return;
+
+    p2p_device_->SetDeviceConfiguration(hostname);
+}
+
 bool NetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {
     if (!p2p_device_ || !current_device_)
         return false;
@@ -271,8 +289,10 @@ void NetworkManager::OnP2PDeviceChanged() {
 }
 
 void NetworkManager::OnP2PDeviceReady() {
+    MCS_DEBUG("");
     // Bring the device into a well known state
     p2p_device_->Flush();
+    SyncDeviceConfiguration();
 }
 
 void NetworkManager::OnDeviceFound(const std::string &path) {
@@ -497,6 +517,11 @@ void NetworkManager::OnInterfaceReady() {
         dhcp_client_ = w11tng::DhcpClient::Create(shared_from_this(), ifname);
         dhcp_client_->Start();
     }
+}
+
+void NetworkManager::OnHostnameChanged() {
+    MCS_DEBUG("");
+    SyncDeviceConfiguration();
 }
 
 } // namespace w11tng

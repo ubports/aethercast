@@ -29,6 +29,7 @@
 #include "dhcpserver.h"
 #include "dhcpclient.h"
 #include "wififirmwareloader.h"
+#include "hostname1stub.h"
 
 namespace w11tng {
 
@@ -40,7 +41,8 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>,
                        public w11tng::WiFiFirmwareLoader::Delegate,
                        public w11tng::InterfaceSelector::Delegate,
                        public w11tng::ManagerStub::Delegate,
-                       public w11tng::InterfaceStub::Delegate {
+                       public w11tng::InterfaceStub::Delegate,
+                       public w11tng::Hostname1Stub::Delegate {
 public:
     static constexpr const char *kBusName{"fi.w1.wpa_supplicant1"};
     static constexpr unsigned int kConnectTimeout = 100;
@@ -92,6 +94,8 @@ public:
 
     void OnInterfaceReady() override;
 
+    void OnHostnameChanged() override;
+
 private:
     static void OnServiceLost(GDBusConnection *connection, const gchar *name, gpointer user_data);
     static void OnServiceFound(GDBusConnection *connection, const gchar *name, const gchar *name_owner, gpointer user_data);
@@ -109,6 +113,8 @@ private:
     void StartConnectTimeout();
     void StopConnectTimeout();
 
+    void SyncDeviceConfiguration();
+
 private:
     mcs::ScopedGObject<GDBusConnection> connection_;
     mcs::NetworkManager::Delegate *delegate_;
@@ -124,6 +130,7 @@ private:
     guint connect_timeout_;
     w11tng::WiFiFirmwareLoader firmware_loader_;
     std::string dedicated_p2p_interface_;
+    Hostname1Stub::Ptr hostname_service_;
 };
 
 } // namespace w11tng

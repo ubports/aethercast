@@ -75,6 +75,7 @@ set(SOURCES
   w11tng/dhcpserver.cpp
   w11tng/netlinklistener.cpp
   w11tng/wififirmwareloader.cpp
+  w11tng/hostname1stub.cpp
 )
 
 link_directories(
