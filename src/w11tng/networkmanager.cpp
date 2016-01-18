@@ -227,9 +227,13 @@ void NetworkManager::SyncDeviceConfiguration() {
         hostname = hostname_service_->StaticHostname();
     if (hostname.length() == 0)
         hostname = hostname_service_->Hostname();
-
-    if (hostname.length() == 0)
-        return;
+    if (hostname.length() == 0) {
+        // Our last resort is to get the hostname via a system
+        // call and not from the hostname service.
+        char name[255] = {};
+        ::gethostname(name, 255);
+        hostname = name;
+    }
 
     p2p_device_->SetDeviceConfiguration(hostname);
 }

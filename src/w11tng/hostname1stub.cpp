@@ -114,9 +114,6 @@ void Hostname1Stub::ParseProperties(GVariant *properties) {
             chassis_ = g_variant_get_string(g_variant_get_variant(value), nullptr) ? : "";
     });
 
-    MCS_DEBUG("hostname %s static %s pretty %s chassis %s",
-              hostname_, static_hostname_, pretty_hostname_, chassis_);
-
     if (auto sp = delegate_.lock())
         sp->OnHostnameChanged();
 }
