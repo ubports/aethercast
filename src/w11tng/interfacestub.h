@@ -52,6 +52,7 @@ public:
     std::vector<std::string> Capabilities() const;
     std::string Driver() const;
     std::string Ifname() const;
+    std::string ObjectPath() const;
 
 private:
     InterfaceStub();

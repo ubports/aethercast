@@ -88,4 +88,8 @@ std::string InterfaceStub::Ifname() const {
     return wpa_supplicant_interface_get_ifname(proxy_.get());
 }
 
+std::string InterfaceStub::ObjectPath() const {
+    return g_dbus_proxy_get_object_path(G_DBUS_PROXY(proxy_.get()));
+}
+
 } // namespace w11tng

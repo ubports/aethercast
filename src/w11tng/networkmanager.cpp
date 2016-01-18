@@ -425,13 +425,8 @@ void NetworkManager::OnNoLease() {
 
     MCS_DEBUG("");
 
-    // Save a reference here as Disconnect will reset current_device_
-    // and we can access it anymore after we called it.
-    auto d = current_device_;
-
-    Disconnect(d);
-
-    AdvanceDeviceState(d, mcs::kFailure);
+    Disconnect(current_device_);
+    AdvanceDeviceState(current_device_, mcs::kFailure);
 }
 
 void NetworkManager::OnFirmwareLoaded() {
@@ -485,6 +480,13 @@ void NetworkManager::OnManagerInterfaceAdded(const std::string &path) {
 }
 
 void NetworkManager::OnManagerInterfaceRemoved(const std::string &path) {
+    if (!current_group_iface_)
+        return;
+
+    if (path == current_group_iface_->ObjectPath()) {
+        Disconnect(current_device_);
+        AdvanceDeviceState(current_device_, mcs::kFailure);
+    }
 }
 
 void NetworkManager::OnManagerInterfaceCreationFailed() {
