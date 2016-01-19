@@ -68,8 +68,8 @@ bool DhcpClient::Start() {
         netlink_listener_->SetInterfaceFilter(interface_name_);
     }
 
-    lease_file_path_ = mcs::Utils::Sprintf("%s/aethercast-dhcp-client-leases-%s",
-                                    boost::filesystem::temp_directory_path().string(),
+    lease_file_path_ = mcs::Utils::Sprintf("%s/dhclient_%s.leases",
+                                    kRuntimePath,
                                     boost::filesystem::unique_path().string());
     if (!mcs::Utils::CreateFile(lease_file_path_)) {
         MCS_ERROR("Failed to create database for DHCP leases at %s",
@@ -87,6 +87,12 @@ bool DhcpClient::Start() {
     g_ptr_array_add(argv, (gpointer) "-q");
 
     g_ptr_array_add(argv, (gpointer) "-v");
+
+    // Use the temporary lease file we used above to not interfere
+    // with any other parts in the system which are using dhclient
+    // as well. We also want a fresh lease file on every start.
+    g_ptr_array_add(argv, (gpointer) "-lf");
+    g_ptr_array_add(argv, (gpointer) lease_file_path_.c_str());
 
     // We only want dhclient to operate on the P2P interface an no other
     g_ptr_array_add(argv, (gpointer) interface_name_.c_str());
