@@ -27,8 +27,11 @@
 
 #include <chrono>
 
+#include <boost/filesystem.hpp>
+
 #include <wds/logging.h>
 
+#include "config.h"
 #include "keep_alive.h"
 #include "logger.h"
 #include "miracastservice.h"
@@ -187,6 +190,8 @@ MiracastService::MiracastService() :
     current_state_(kIdle),
     scan_timeout_source_(0),
     supported_roles_({kSource}) {
+
+    CreateRuntimeDirectory();
 }
 
 std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction(const NetworkManager::Ptr &network_manager) {
@@ -203,6 +208,15 @@ std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction(const Net
 MiracastService::~MiracastService() {
     if (scan_timeout_source_ > 0)
         g_source_remove(scan_timeout_source_);
+}
+
+void MiracastService::CreateRuntimeDirectory() {
+    boost::filesystem::path runtime_dir(mcs::kRuntimePath);
+
+    if (boost::filesystem::is_directory(runtime_dir))
+        boost::filesystem::remove_all(runtime_dir);
+
+    boost::filesystem::create_directory(runtime_dir);
 }
 
 void MiracastService::SetDelegate(const std::weak_ptr<MiracastController::Delegate> &delegate) {

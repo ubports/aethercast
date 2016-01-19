@@ -30,6 +30,7 @@
 #include <mcs/keep_alive.h>
 #include <mcs/scoped_gobject.h>
 
+#include <mcs/config.h>
 #include <w11tng/config.h>
 
 #include "dhcpclient.h"
@@ -69,7 +70,7 @@ bool DhcpClient::Start() {
     }
 
     lease_file_path_ = mcs::Utils::Sprintf("%s/dhclient_%s.leases",
-                                    kRuntimePath,
+                                    mcs::kRuntimePath,
                                     boost::filesystem::unique_path().string());
     if (!mcs::Utils::CreateFile(lease_file_path_)) {
         MCS_ERROR("Failed to create database for DHCP leases at %s",

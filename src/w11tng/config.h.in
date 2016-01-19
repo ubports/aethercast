@@ -19,8 +19,6 @@
 #define W11TNG_CONFIG_H_
 
 namespace w11tng {
-constexpr const char* kRuntimePath{"/run/aethercast"};
-constexpr const char* kDhcpPrivateSocketPath{"/run/aethercast/private-dhcp"};
 constexpr const char* kDhcpClientPath{"@DHCP_CLIENT_PATH@"};
 constexpr const char* kDhcpServerPath{"@DHCP_SERVER_PATH@"};
 constexpr const char* kDhcpHelperPath{"@AETHERCAST_DHCP_HELPER_PATH@"};

@@ -23,6 +23,7 @@ set(AETHERCAST_DHCP_HELPER "/usr/sbin/aethercast-dhcp-helper")
 set(DHCP_SERVER_PATH "/usr/sbin/dhcpd")
 set(DHCP_CLIENT_PATH "/sbin/dhclient")
 
+configure_file(mcs/config.h.in mcs/config.h @ONLY)
 configure_file(w11tng/config.h.in w11tng/config.h @ONLY)
 
 set(HEADERS
@@ -33,6 +34,7 @@ set(HEADERS
     mcs/shared_gobject.h
     mcs/keep_alive.h
 
+    mcs/config.h
     w11tng/config.h
 )
 

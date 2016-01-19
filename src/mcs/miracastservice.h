@@ -92,6 +92,7 @@ private:
     void LoadWiFiFirmware();
 
     void Shutdown();
+    void CreateRuntimeDirectory();
 
 private:
     std::weak_ptr<MiracastController::Delegate> delegate_;
