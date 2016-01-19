@@ -516,13 +516,7 @@ void NetworkManager::OnManagerInterfaceAdded(const std::string &path) {
 }
 
 void NetworkManager::OnManagerInterfaceRemoved(const std::string &path) {
-    if (!current_group_iface_)
-        return;
-
-    if (path == current_group_iface_->ObjectPath()) {
-        Disconnect(current_device_);
-        AdvanceDeviceState(current_device_, mcs::kFailure);
-    }
+    MCS_DEBUG("path %s", path);
 }
 
 void NetworkManager::OnManagerInterfaceCreationFailed() {
