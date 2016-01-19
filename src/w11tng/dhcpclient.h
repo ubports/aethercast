@@ -63,6 +63,7 @@ private:
     mcs::IpV4Address local_address_;
     GPid pid_;
     guint process_watch_;
+    std::string lease_file_path_;
 };
 }
 

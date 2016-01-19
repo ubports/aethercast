@@ -23,6 +23,8 @@
 #include <sys/socket.h>
 #include <sys/prctl.h>
 
+#include <boost/filesystem.hpp>
+
 #include <mcs/logger.h>
 #include <mcs/networkutils.h>
 #include <mcs/keep_alive.h>
@@ -64,6 +66,15 @@ bool DhcpClient::Start() {
         // We're only interested in events for the network interface we're
         // operating on.
         netlink_listener_->SetInterfaceFilter(interface_name_);
+    }
+
+    lease_file_path_ = mcs::Utils::Sprintf("%s/aethercast-dhcp-client-leases-%s",
+                                    boost::filesystem::temp_directory_path().string(),
+                                    boost::filesystem::unique_path().string());
+    if (!mcs::Utils::CreateFile(lease_file_path_)) {
+        MCS_ERROR("Failed to create database for DHCP leases at %s",
+                  lease_file_path_);
+        return false;
     }
 
     auto argv = g_ptr_array_new();
@@ -125,6 +136,8 @@ void DhcpClient::Stop() {
 
     if (process_watch_ > 0)
         g_source_remove(process_watch_);
+
+    ::unlink(lease_file_path_.c_str());
 }
 
 void DhcpClient::OnInterfaceAddressChanged(const std::string &interface, const std::string &address) {

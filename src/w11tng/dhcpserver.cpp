@@ -55,7 +55,7 @@ bool DhcpServer::Start() {
     if (pid_ > 0)
         return true;
 
-    lease_file_path_ = mcs::Utils::Sprintf("%s/aethercast-dhcp-leases-%s",
+    lease_file_path_ = mcs::Utils::Sprintf("%s/aethercast-dhcp-server-leases-%s",
                                     boost::filesystem::temp_directory_path().string(),
                                     boost::filesystem::unique_path().string());
     if (!mcs::Utils::CreateFile(lease_file_path_)) {
