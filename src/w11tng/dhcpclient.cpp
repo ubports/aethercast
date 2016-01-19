@@ -81,7 +81,7 @@ bool DhcpClient::Start() {
 
     g_ptr_array_add(argv, (gpointer) kDhcpClientPath);
 
-    // Disable background on lease (let dhcpd not fork)
+    // Disable background on lease (let dhclient not fork)
     g_ptr_array_add(argv, (gpointer) "-d");
     // Don't be verbose
     g_ptr_array_add(argv, (gpointer) "-q");
