@@ -442,4 +442,8 @@ void P2PDeviceStub::SetDeviceConfiguration(const std::string &device_name, const
     wpa_supplicant_interface_p2_pdevice_set_p2_pdevice_config(proxy_.get(), value);
 }
 
+std::string P2PDeviceStub::ObjectPath() const {
+    return std::string(g_dbus_proxy_get_object_path(G_DBUS_PROXY(proxy_.get())));
+}
+
 } // namespace w11tng

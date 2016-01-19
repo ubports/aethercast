@@ -108,6 +108,7 @@ private:
     NetworkDevice::Ptr FindDevice(const std::string &address);
     void Initialize(bool firmware_loading = false);
     void Release();
+    void ReleaseInterface();
     void SetupInterface(const std::string &object_path);
     void AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::NetworkDeviceState state);
 

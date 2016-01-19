@@ -75,6 +75,7 @@ public:
 
     bool Scanning() const { return scan_timeout_source_ > 0; }
     bool Connected() const { return !!proxy_; }
+    std::string ObjectPath() const;
 
     void SetDeviceConfiguration(const std::string &device_name, const std::string &device_type);
 

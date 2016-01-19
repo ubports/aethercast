@@ -105,6 +105,16 @@ void NetworkManager::Initialize(bool firmware_loading) {
     manager_->SetDelegate(sp);
 }
 
+void NetworkManager::Release() {
+    MCS_DEBUG("");
+
+    ReleaseInterface();
+
+    hostname_service_.reset();
+    interface_selector_.reset();
+    manager_.reset();
+}
+
 void NetworkManager::SetupInterface(const std::string &object_path) {
     if (p2p_device_)
         return;
@@ -112,8 +122,18 @@ void NetworkManager::SetupInterface(const std::string &object_path) {
     p2p_device_ = P2PDeviceStub::Create(object_path, shared_from_this());
 }
 
-void NetworkManager::Release() {
+void NetworkManager::ReleaseInterface() {
     MCS_DEBUG("");
+
+    if (current_device_) {
+        AdvanceDeviceState(current_device_, mcs::kDisconnected);
+        current_device_.reset();
+        current_group_device_.reset();
+        current_group_iface_.reset();
+    }
+
+    if (p2p_device_)
+        p2p_device_.reset();
 }
 
 void NetworkManager::SetDelegate(mcs::NetworkManager::Delegate *delegate) {
@@ -528,6 +548,11 @@ void NetworkManager::OnManagerInterfaceAdded(const std::string &path) {
 
 void NetworkManager::OnManagerInterfaceRemoved(const std::string &path) {
     MCS_DEBUG("path %s", path);
+
+    if (p2p_device_->ObjectPath() != path)
+        return;
+
+    ReleaseInterface();
 }
 
 void NetworkManager::OnManagerInterfaceCreationFailed() {
