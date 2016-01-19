@@ -31,6 +31,9 @@
 
 using namespace std::placeholders;
 
+namespace {
+const unsigned int kDBusTimeout = 120;
+
 class PromptSaver {
 public:
     PromptSaver() {
@@ -59,6 +62,7 @@ private:
     int saved_point_;
     char *saved_line_;
 };
+}
 
 namespace mcs {
 namespace client {
@@ -434,9 +438,10 @@ void Application::OnManagerConnected(GObject *object, GAsyncResult *res, gpointe
         return;
     }
 
-    // Use a high enough timeout to make sure we get the end of the scan
-    // method call which has an internal timeout of 240 seconds
-    g_dbus_proxy_set_default_timeout(G_DBUS_PROXY(inst->manager_), 240 * 1000);
+    // Use a high enough timeout to make sure we wait enough for the service to
+    // respond as the connection process can take some time depending on different
+    // factors.
+    g_dbus_proxy_set_default_timeout(G_DBUS_PROXY(inst->manager_), kDBusTimeout * 1000);
 
     aethercast_interface_object_manager_client_new(inst->bus_connection_,
                              G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_NONE,
