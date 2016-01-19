@@ -46,6 +46,7 @@ public:
         virtual void OnDeviceFound(const std::string &path) = 0;
         virtual void OnDeviceLost(const std::string &path) = 0;
 
+        virtual void OnPeerConnectFailed() = 0;
         virtual void OnGroupOwnerNegotiationSuccess(const std::string &peer_path) = 0;
         virtual void OnGroupOwnerNegotiationFailure(const std::string &peer_path) = 0;
         virtual void OnGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role) = 0;

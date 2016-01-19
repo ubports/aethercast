@@ -323,6 +323,10 @@ bool P2PDeviceStub::Connect(const std::string &path) {
         if (!wpa_supplicant_interface_p2_pdevice_call_connect_finish(inst->proxy_.get(), nullptr, res, &error)) {
             MCS_ERROR("Failed to connect with P2P device: %s", error->message);
             g_error_free(error);
+
+            if (auto sp = inst->delegate_.lock())
+                sp->OnPeerConnectFailed();
+
             return;
         }
     }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});

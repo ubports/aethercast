@@ -368,17 +368,28 @@ void NetworkManager::AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::N
         delegate_->OnDeviceStateChanged(device);
 }
 
+void NetworkManager::HandleConnectFailed() {
+    AdvanceDeviceState(current_device_, mcs::kFailure);
+    current_device_.reset();
+    StopConnectTimeout();
+}
+
+void NetworkManager::OnPeerConnectFailed() {
+    if (!current_device_)
+        return;
+
+    MCS_DEBUG("");
+
+    HandleConnectFailed();
+}
+
 void NetworkManager::OnGroupOwnerNegotiationFailure(const std::string &peer_path) {
     if (!current_device_)
         return;
 
     MCS_DEBUG("peer %s", peer_path);
 
-    AdvanceDeviceState(current_device_, mcs::kFailure);
-
-    current_device_.reset();
-
-    StopConnectTimeout();
+    HandleConnectFailed();
 }
 
 void NetworkManager::OnGroupOwnerNegotiationSuccess(const std::string &peer_path) {

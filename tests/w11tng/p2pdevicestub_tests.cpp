@@ -42,6 +42,7 @@ class MockP2PDeviceStubDelegate : public w11tng::P2PDeviceStub::Delegate {
 public:
     MOCK_METHOD1(OnDeviceFound, void(const std::string&));
     MOCK_METHOD1(OnDeviceLost, void(const std::string&));
+    MOCK_METHOD0(OnPeerConnectFailed, void());
     MOCK_METHOD1(OnGroupOwnerNegotiationSuccess, void(const std::string&));
     MOCK_METHOD1(OnGroupOwnerNegotiationFailure, void(const std::string&));
     MOCK_METHOD3(OnGroupStarted, void(const std::string&, const std::string&, const std::string&));

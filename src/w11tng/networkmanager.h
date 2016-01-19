@@ -70,6 +70,7 @@ public:
 
     void OnDeviceFound(const std::string &path) override;
     void OnDeviceLost(const std::string &path) override;
+    void OnPeerConnectFailed() override;
     void OnGroupOwnerNegotiationFailure(const std::string &peer_path) override;
     void OnGroupOwnerNegotiationSuccess(const std::string &peer_path) override;
     void OnGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role) override;
@@ -116,6 +117,8 @@ private:
     std::string SelectHostname();
     std::string SelectDeviceType();
     void SyncDeviceConfiguration();
+
+    void HandleConnectFailed();
 
 private:
     mcs::ScopedGObject<GDBusConnection> connection_;

@@ -326,6 +326,7 @@ void MiracastService::FinishConnectAttempt(mcs::Error error) {
 
 void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback callback) {
     if (current_device_) {
+        MCS_DEBUG("Tried to connect again while we're already trying to connect a device");
         callback(Error::kAlready);
         return;
     }
