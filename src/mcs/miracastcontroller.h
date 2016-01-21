@@ -21,6 +21,7 @@
 #include <chrono>
 #include <memory>
 
+#include "networkmanager.h"
 #include "networkdevice.h"
 #include "non_copyable.h"
 #include "types.h"
@@ -54,7 +55,7 @@ public:
     virtual void Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30}) = 0;
 
     virtual NetworkDeviceState State() const = 0;
-    virtual std::vector<NetworkDeviceRole> SupportedRoles() const = 0;
+    virtual std::vector<NetworkManager::Capability> Capabilities() const = 0;
     virtual bool Scanning() const = 0;
 
 protected:

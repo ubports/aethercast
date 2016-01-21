@@ -27,37 +27,43 @@
 #include <mcs/ip_v4_address.h>
 #include <mcs/non_copyable.h>
 
+#include "processexecutor.h"
+#include "filemonitor.h"
+
 namespace w11tng {
-class DhcpServer : public std::enable_shared_from_this<DhcpServer> {
+class DhcpServer : public std::enable_shared_from_this<DhcpServer>,
+                   public ProcessExecutor::Delegate,
+                   public FileMonitor::Delegate {
 public:
     typedef std::shared_ptr<DhcpServer> Ptr;
 
     class Delegate : private mcs::NonCopyable {
     public:
-        virtual void OnLeaseAdded() = 0;
-
-    protected:
-        Delegate() = default;
+        virtual void OnAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) = 0;
     };
 
-    static Ptr Create(Delegate *delegate, const std::string &interface_name);
+    static Ptr Create(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name);
 
     ~DhcpServer();
 
-    bool Start();
-    void Stop();
-
-    bool Running() const { return pid_ > 0; }
     mcs::IpV4Address LocalAddress() const;
 
-private:
-    DhcpServer(Delegate *delegate, const std::string &interface_name);
+    void OnProcessTerminated() override;
+    void OnFileChanged(const std::string &path) override;
 
 private:
+    DhcpServer(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name);
+
+    void Start();
+
+private:
+    std::weak_ptr<Delegate> delegate_;
     std::string interface_name_;
-    GPid pid_;
     std::string lease_file_path_;
-    guint process_watch_;
+    std::string pid_file_path_;
+    ProcessExecutor::Ptr executor_;
+    FileMonitor::Ptr monitor_;
+    mcs::IpV4Address local_address_;
 };
 }
 #endif

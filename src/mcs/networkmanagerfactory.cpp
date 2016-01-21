@@ -35,6 +35,10 @@ bool NullNetworkManager::Setup() {
     return false;
 }
 
+void NullNetworkManager::Release() {
+    ERROR("Not implemented");
+}
+
 void NullNetworkManager::Scan(const std::chrono::seconds &timeout) {
     ERROR("Not implemented");
 }
@@ -47,10 +51,6 @@ bool NullNetworkManager::Connect(const NetworkDevice::Ptr &device) {
 bool NullNetworkManager::Disconnect(const NetworkDevice::Ptr &device) {
     ERROR("Not implemented");
     return false;
-}
-
-void NullNetworkManager::SetWfdSubElements(const std::list<std::string> &elements) {
-    ERROR("Not implemented");
 }
 
 std::vector<NetworkDevice::Ptr> NullNetworkManager::Devices() const {
@@ -71,6 +71,14 @@ bool NullNetworkManager::Running() const {
 bool NullNetworkManager::Scanning() const {
     ERROR("Not implemented");
     return false;
+}
+
+void NullNetworkManager::SetCapabilities(const std::vector<Capability> &capabilities) {
+    ERROR("Not implemented");
+}
+
+std::vector<NetworkManager::Capability> NullNetworkManager::Capabilities() const {
+    return std::vector<NetworkManager::Capability>{};
 }
 
 NetworkManager::Ptr NetworkManagerFactory::Create(const std::string &type) {

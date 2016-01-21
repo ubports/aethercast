@@ -55,10 +55,7 @@ void MiracastControllerSkeleton::SyncProperties() {
     aethercast_interface_manager_set_state(manager_obj_.get(),
                                            NetworkDevice::StateToStr(State()).c_str());
 
-    // Capabilities are a collection of different things our local adapter
-    // supports. The supported roles are just one part of this.
-    auto roles = SupportedRoles();
-    auto capabilities = DBusHelpers::GenerateCapabilities(roles);
+    auto capabilities = DBusHelpers::GenerateCapabilities(Capabilities());
 
     aethercast_interface_manager_set_capabilities(manager_obj_.get(), capabilities);
 

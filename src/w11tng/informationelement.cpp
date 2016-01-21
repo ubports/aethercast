@@ -32,13 +32,13 @@ Subelement* new_subelement (SubelementId id)
 {
     Subelement* element;
     switch (id) {
-        case DEVICE_INFORMATION:
+        case kDeviceInformation:
             element = (Subelement*)new DeviceInformationSubelement;
             break;
-        case ASSOCIATED_BSSID:
+        case kAssociatedBssid:
             element = (Subelement*)new AssociatedBSSIDSubelement;
             break;
-        case COUPLED_SINK_INFORMATION:
+        case kCoupledSinkInformation:
             element = (Subelement*)new CoupledSinkInformationSubelement;
             break;
         default:
@@ -59,13 +59,13 @@ Subelement* new_subelement (SubelementId id)
 void InformationElement::delete_subelement (Subelement *element)
 {
     switch (element->id) {
-        case DEVICE_INFORMATION:
+        case kDeviceInformation:
             delete ((DeviceInformationSubelement*)element);
             break;
-        case ASSOCIATED_BSSID:
+        case kAssociatedBssid:
             delete ((AssociatedBSSIDSubelement*)element);
             break;
-        case COUPLED_SINK_INFORMATION:
+        case kCoupledSinkInformation:
             delete ((CoupledSinkInformationSubelement*)element);
             break;
         default:
@@ -115,10 +115,10 @@ void InformationElement::add_subelement(Subelement* subelement)
 
 const DeviceType InformationElement::get_device_type() const
 {
-    auto it = subelements_.find (DEVICE_INFORMATION);
+    auto it = subelements_.find (kDeviceInformation);
     if (it == subelements_.end()) {
         /* FIXME : exception ? */
-        return DUAL_ROLE;
+        return kDualRole;
     }
 
     auto dev_info = (DeviceInformationSubelement*)(*it).second;
@@ -127,7 +127,7 @@ const DeviceType InformationElement::get_device_type() const
 
 const int InformationElement::get_rtsp_port() const
 {
-    auto it = subelements_.find (DEVICE_INFORMATION);
+    auto it = subelements_.find (kDeviceInformation);
     if (it == subelements_.end()) {
        /* FIXME : exception ? */
        return -1;

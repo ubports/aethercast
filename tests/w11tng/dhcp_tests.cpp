@@ -30,29 +30,36 @@
 
 namespace {
 class MockDhcpServerDelegate : public w11tng::DhcpServer::Delegate {
-    MOCK_METHOD0(OnLeaseAdded, void());
+public:
+    MOCK_METHOD2(OnAddressAssigned, void(const mcs::IpV4Address &, const mcs::IpV4Address&));
 };
 class MockDhcpClientDelegate : public w11tng::DhcpClient::Delegate {
 public:
-    MOCK_METHOD1(OnAddressAssigned, void(const mcs::IpV4Address &));
+    MOCK_METHOD2(OnAddressAssigned, void(const mcs::IpV4Address &, const mcs::IpV4Address&));
     MOCK_METHOD0(OnNoLease, void());
 };
 }
 
-TEST(DhcpServer, Startup) {
+TEST(Dhcp, AddressAssignment) {
     mcs::testing::VirtualNetwork veth;
 
-    auto server_delegate = std::make_shared<MockDhcpServerDelegate>();
+    boost::filesystem::create_directory("/run/aethercast");
 
-    auto client_delegate = std::make_shared<MockDhcpClientDelegate>();
-    EXPECT_CALL(*client_delegate, OnAddressAssigned(mcs::IpV4Address::from_string("192.168.7.5")))
+    auto server_delegate = std::make_shared<MockDhcpServerDelegate>();
+    EXPECT_CALL(*server_delegate, OnAddressAssigned(mcs::IpV4Address::from_string("192.168.7.1"),
+                                                    mcs::IpV4Address::from_string("192.168.7.5")))
             .Times(1);
 
-    auto server = w11tng::DhcpServer::Create(server_delegate.get(), veth.Endpoint1());
+    auto client_delegate = std::make_shared<MockDhcpClientDelegate>();
+    EXPECT_CALL(*client_delegate, OnAddressAssigned(mcs::IpV4Address::from_string("192.168.7.5"),
+                                                    mcs::IpV4Address::from_string("192.168.7.1")))
+            .Times(1);
+
+    auto server = w11tng::DhcpServer::Create(server_delegate, veth.Endpoint1());
     auto client = w11tng::DhcpClient::Create(client_delegate, veth.Endpoint2());
 
-    server->Start();
-    client->Start();
-
     mcs::testing::RunMainLoop(std::chrono::seconds{5});
+
+    EXPECT_EQ(client->LocalAddress().to_string(), "192.168.7.5");
+    EXPECT_EQ(client->RemoteAddress().to_string(), "192.168.7.1");
 }

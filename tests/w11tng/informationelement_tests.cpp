@@ -21,20 +21,40 @@
 
 #include "w11tng/informationelement.h"
 
-TEST(InformationElement, Serializing) {
+TEST(InformationElement, SourceWithAvailableSession) {
     w11tng::InformationElement ie;
-    auto sub_element = new_subelement(w11tng::DEVICE_INFORMATION);
+    auto sub_element = new_subelement(w11tng::kDeviceInformation);
     auto dev_info = (w11tng::DeviceInformationSubelement*) sub_element;
 
     dev_info->session_management_control_port = htons(7236);
     dev_info->maximum_throughput = htons(50);
-    dev_info->field1.device_type = w11tng::SOURCE;
+    dev_info->field1.device_type = w11tng::kSource;
     dev_info->field1.session_availability = true;
     ie.add_subelement(sub_element);
 
     auto ie_data = ie.serialize();
 
     uint8_t expected_bytes[] = { 0x0, 0x0, 0x6, 0x0, 0x10, 0x1c, 0x44, 0x0, 0x32 };
+
+    EXPECT_EQ(ie_data->length, 9);
+    for (int n = 0; n < ie_data->length; n++)
+        EXPECT_EQ(ie_data->bytes[n], expected_bytes[n]);
+}
+
+TEST(InformationElement, DualRole) {
+    w11tng::InformationElement ie;
+    auto sub_element = new_subelement(w11tng::kDeviceInformation);
+    auto dev_info = (w11tng::DeviceInformationSubelement*) sub_element;
+
+    dev_info->session_management_control_port = htons(7236);
+    dev_info->maximum_throughput = htons(50);
+    dev_info->field1.device_type = w11tng::kDualRole;
+    dev_info->field1.session_availability = true;
+    ie.add_subelement(sub_element);
+
+    auto ie_data = ie.serialize();
+
+    uint8_t expected_bytes[] = { 0x0, 0x0, 0x6, 0x0, 0x13, 0x1c, 0x44, 0x0, 0x32 };
 
     EXPECT_EQ(ie_data->length, 9);
     for (int n = 0; n < ie_data->length; n++)

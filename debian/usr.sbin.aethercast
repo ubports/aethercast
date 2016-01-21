@@ -6,5 +6,6 @@
   # not has support for WiFi Direct and aethercast is using that.
   /etc/aethercast/dhcpd.conf r,
   # In addition aethercast will also point dhcpd to a private
-  # lease file only used per session.
-  /tmp/aethercast-dhcp-leases-* lrw,
+  # lease/pid file
+  /{,var/}run/aethercast/dhcpd.leases* lrw,
+  /{,var/}run/aethercast/dhcpd.pid lrw,

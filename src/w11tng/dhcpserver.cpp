@@ -23,51 +23,57 @@
 
 #include <boost/filesystem.hpp>
 
+#include <mcs/config.h>
 #include <mcs/logger.h>
 #include <mcs/networkutils.h>
 #include <mcs/keep_alive.h>
 
-#include <w11tng/dhcpserver.h>
 #include <w11tng/config.h>
+
+#include "dhcpserver.h"
+#include "dhcpleaseparser.h"
 
 namespace w11tng {
 
-DhcpServer::Ptr DhcpServer::Create(Delegate *delegate, const std::string &interface_name) {
-    return std::shared_ptr<DhcpServer>(new DhcpServer(delegate, interface_name));
+DhcpServer::Ptr DhcpServer::Create(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name) {
+    auto sp = std::shared_ptr<DhcpServer>(new DhcpServer(delegate, interface_name));
+    sp->Start();
+    return sp;
 }
 
-DhcpServer::DhcpServer(Delegate *delegate, const std::string &interface_name) :
-    interface_name_(interface_name),
-    pid_(-1),
-    process_watch_(0) {
+DhcpServer::DhcpServer(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name) :
+    delegate_(delegate),
+    interface_name_(interface_name) {
+
+    lease_file_path_ = mcs::Utils::Sprintf("%s/dhcpd.leases", mcs::kRuntimePath);
+    pid_file_path_ = mcs::Utils::Sprintf("%s/dhcpd.pid", mcs::kRuntimePath);
 }
 
 DhcpServer::~DhcpServer() {
-    Stop();
+    ::unlink(lease_file_path_.c_str());
+    ::unlink(pid_file_path_.c_str());
 }
 
-mcs::IpV4Address DhcpServer::LocalAddress() const {
-    // FIXME this should be stored somewhere else
-    return mcs::IpV4Address::from_string("192.168.7.1");
-}
+void DhcpServer::Start() {
+    if (boost::filesystem::is_regular(pid_file_path_)) {
+        MCS_ERROR("DHCP server already running");
+        return;
+    }
 
-bool DhcpServer::Start() {
-    if (pid_ > 0)
-        return true;
-
-    lease_file_path_ = mcs::Utils::Sprintf("%s/aethercast-dhcp-server-leases-%s",
-                                    boost::filesystem::temp_directory_path().string(),
-                                    boost::filesystem::unique_path().string());
     if (!mcs::Utils::CreateFile(lease_file_path_)) {
         MCS_ERROR("Failed to create database for DHCP leases at %s",
                   lease_file_path_);
-        return false;
+        return;
     }
+
+    monitor_ = FileMonitor::Create(lease_file_path_, shared_from_this());
 
     // FIXME store those defaults somewhere else
     const char *address = "192.168.7.1";
     const char *broadcast = "192.168.7.255";
     unsigned char prefixlen = 24;
+
+    local_address_ = mcs::IpV4Address::from_string(address);
 
     auto interface_index = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
     if (interface_index < 0)
@@ -77,79 +83,39 @@ bool DhcpServer::Start() {
                                     AF_INET, address,
                                     NULL, prefixlen, broadcast) < 0) {
         MCS_ERROR("Failed to assign network address for %s", interface_name_);
-        return false;
+        return;
     }
 
     MCS_DEBUG("Assigned network address %s", address);
 
-    auto argv = g_ptr_array_new();
+    std::vector<std::string> argv = {
+        "-f", "-4",
+        "-d",
+        "-cf", "/etc/aethercast/dhcpd.conf",
+        "-pf", pid_file_path_,
+        "-lf", lease_file_path_,
+        interface_name_
+    };
 
-    g_ptr_array_add(argv, (gpointer) kDhcpServerPath);
-
-    // Disable background on lease (let dhcpd not fork)
-    g_ptr_array_add(argv, (gpointer) "-f");
-
-    // WiFi Direct is only specified for IPv4 so we insist on not using
-    // any IPv6 support.
-    g_ptr_array_add(argv, (gpointer) "-4");
-
-    g_ptr_array_add(argv, (gpointer) "-cf");
-    g_ptr_array_add(argv, (gpointer) "/etc/aethercast/dhcpd.conf");
-
-    g_ptr_array_add(argv, (gpointer) "-lf");
-    g_ptr_array_add(argv, (gpointer) lease_file_path_.c_str());
-
-    // We only want dhcpd to listen on the P2P interface an no other
-    // which it would do if we don't supply an interface here.
-    g_ptr_array_add(argv, (gpointer) interface_name_.c_str());
-
-    g_ptr_array_add(argv, nullptr);
-
-    auto cmdline = g_strjoinv(" ", reinterpret_cast<gchar**>(argv->pdata));
-    MCS_DEBUG("Running dhcp-server with: %s", cmdline);
-    g_free(cmdline);
-
-    GError *error = nullptr;
-    if (!g_spawn_async(nullptr, reinterpret_cast<gchar**>(argv->pdata), nullptr,
-                       GSpawnFlags(G_SPAWN_DO_NOT_REAP_CHILD),
-                       [](gpointer user_data) { prctl(PR_SET_PDEATHSIG, SIGKILL); }, nullptr,
-                       &pid_, &error)) {
-
-        MCS_ERROR("Failed to spawn DHCP server: %s", error->message);
-        g_error_free(error);
-        g_ptr_array_free(argv, TRUE);
-        return false;
-    }
-
-    process_watch_ = g_child_watch_add_full(0, pid_, [](GPid pid, gint status, gpointer user_data) {
-        auto inst = static_cast<mcs::WeakKeepAlive<DhcpServer>*>(user_data)->GetInstance().lock();
-
-        if (!WIFEXITED(status))
-            MCS_WARNING("DHCP server (pid %d) exited with status %d", pid, status);
-        else
-            MCS_DEBUG("DHCP server successfully terminated");
-
-        if (not inst)
-            return;
-
-        inst->pid_ = -1;
-    }, new mcs::WeakKeepAlive<DhcpServer>(shared_from_this()), [](gpointer data) { delete static_cast<mcs::WeakKeepAlive<DhcpServer>*>(data); });
-
-    return true;
+    executor_ = ProcessExecutor::Create(kDhcpServerPath, argv, shared_from_this());
 }
 
-void DhcpServer::Stop() {
-    if (pid_ <= 0)
+void DhcpServer::OnProcessTerminated() {
+}
+
+void DhcpServer::OnFileChanged(const std::string &path) {
+    auto leases = DhcpLeaseParser::FromFile(path);
+    if (leases.size() != 1)
         return;
 
-    ::kill(pid_, SIGTERM);
-    g_spawn_close_pid(pid_);
+    auto actual_lease = leases[0];
 
-    pid_ = -1;
-
-    ::unlink(lease_file_path_.c_str());
-
-    if (process_watch_ > 0)
-        g_source_remove(process_watch_);
+    if (auto sp = delegate_.lock())
+        sp->OnAddressAssigned(local_address_, actual_lease.FixedAddress());
 }
+
+mcs::IpV4Address DhcpServer::LocalAddress() const {
+    return local_address_;
+}
+
 }

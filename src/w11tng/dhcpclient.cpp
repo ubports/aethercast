@@ -34,131 +34,75 @@
 #include <w11tng/config.h>
 
 #include "dhcpclient.h"
+#include "dhcpleaseparser.h"
 
 namespace w11tng {
 
 DhcpClient::Ptr DhcpClient::Create(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name) {
-    return std::shared_ptr<DhcpClient>(new DhcpClient(delegate, interface_name));
+    auto sp = std::shared_ptr<DhcpClient>(new DhcpClient(delegate, interface_name));
+    sp->Start();
+    return sp;
 }
 
 DhcpClient::DhcpClient(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name) :
     delegate_(delegate),
-    interface_name_(interface_name),
-    pid_(-1),
-    process_watch_(0) {
+    interface_name_(interface_name) {
 }
 
 DhcpClient::~DhcpClient() {
-    Stop();
+    ::unlink(lease_file_path_.c_str());
 }
 
 mcs::IpV4Address DhcpClient::LocalAddress() const {
     return local_address_;
 }
 
-bool DhcpClient::Start() {
-    MCS_DEBUG("");
+mcs::IpV4Address DhcpClient::RemoteAddress() const {
+    return remote_address_;
+}
 
-    if (pid_ > 0)
-        return true;
-
-    if (!netlink_listener_) {
-        netlink_listener_ = w11tng::NetlinkListener::Create(shared_from_this());
-        // We're only interested in events for the network interface we're
-        // operating on.
-        netlink_listener_->SetInterfaceFilter(interface_name_);
-    }
-
+void DhcpClient::Start() {
     lease_file_path_ = mcs::Utils::Sprintf("%s/dhclient_%s.leases",
                                     mcs::kRuntimePath,
                                     boost::filesystem::unique_path().string());
     if (!mcs::Utils::CreateFile(lease_file_path_)) {
         MCS_ERROR("Failed to create database for DHCP leases at %s",
                   lease_file_path_);
-        return false;
+        return;
     }
 
-    auto argv = g_ptr_array_new();
+    monitor_ = FileMonitor::Create(lease_file_path_, shared_from_this());
 
-    g_ptr_array_add(argv, (gpointer) kDhcpClientPath);
+    std::vector<std::string> argv = {
+        // Disable background on lease (let dhclient not fork)
+        "-d",
+        // Don't be verbose
+        "-q",
+        // Use the temporary lease file we used above to not interfere
+        // with any other parts in the system which are using dhclient
+        // as well. We also want a fresh lease file on every start.
+        "-lf", lease_file_path_,
+        // We only want dhclient to operate on the P2P interface an no other
+        interface_name_
+    };
 
-    // Disable background on lease (let dhclient not fork)
-    g_ptr_array_add(argv, (gpointer) "-d");
-    // Don't be verbose
-    g_ptr_array_add(argv, (gpointer) "-q");
-
-    g_ptr_array_add(argv, (gpointer) "-v");
-
-    // Use the temporary lease file we used above to not interfere
-    // with any other parts in the system which are using dhclient
-    // as well. We also want a fresh lease file on every start.
-    g_ptr_array_add(argv, (gpointer) "-lf");
-    g_ptr_array_add(argv, (gpointer) lease_file_path_.c_str());
-
-    // We only want dhclient to operate on the P2P interface an no other
-    g_ptr_array_add(argv, (gpointer) interface_name_.c_str());
-
-    g_ptr_array_add(argv, nullptr);
-
-    auto cmdline = g_strjoinv(" ", reinterpret_cast<gchar**>(argv->pdata));
-    MCS_DEBUG("Running dhclient with: %s", cmdline);
-    g_free(cmdline);
-
-    GError *error = nullptr;
-    if (!g_spawn_async(nullptr, reinterpret_cast<gchar**>(argv->pdata), nullptr,
-                       GSpawnFlags(G_SPAWN_DO_NOT_REAP_CHILD),
-                       [](gpointer user_data) { prctl(PR_SET_PDEATHSIG, SIGKILL); },
-                       nullptr, &pid_, &error)) {
-        MCS_ERROR("Failed to spawn DHCP client: %s", error->message);
-        g_error_free(error);
-        g_ptr_array_free(argv, TRUE);
-        return false;
-    }
-
-    process_watch_ = g_child_watch_add_full(0, pid_, [](GPid pid, gint status, gpointer user_data) {
-        auto inst = static_cast<mcs::WeakKeepAlive<DhcpClient>*>(user_data)->GetInstance().lock();
-
-        if (!WIFEXITED(status))
-            MCS_WARNING("DHCP client (pid %d) exited with status %d", pid, status);
-        else
-            MCS_DEBUG("DHCP client (pid %d) successfully terminated", pid);
-
-        if (not inst)
-            return;
-
-        inst->pid_ = -1;
-    }, new mcs::WeakKeepAlive<DhcpClient>(shared_from_this()), [](gpointer data) { delete static_cast<mcs::WeakKeepAlive<DhcpClient>*>(data); });
-
-    return true;
+    executor_ = ProcessExecutor::Create(kDhcpClientPath, argv, shared_from_this());
 }
 
-void DhcpClient::Stop() {
-    if (pid_ <= 0)
-        return;
-
-    ::kill(pid_, SIGTERM);
-    g_spawn_close_pid(pid_);
-
-    pid_ = 0;
-
-    if (process_watch_ > 0)
-        g_source_remove(process_watch_);
-
-    ::unlink(lease_file_path_.c_str());
+void DhcpClient::OnProcessTerminated() {
 }
 
-void DhcpClient::OnInterfaceAddressChanged(const std::string &interface, const std::string &address) {
-    if (interface != interface_name_)
+void DhcpClient::OnFileChanged(const std::string &path) {
+    auto leases = DhcpLeaseParser::FromFile(path);
+    if (leases.size() != 1)
         return;
 
-    auto ipv4_addr = mcs::IpV4Address::from_string(address);
-    if (ipv4_addr == local_address_)
-        return;
+    auto actual_lease = leases[0];
 
-    local_address_ = ipv4_addr;
+    local_address_ = actual_lease.FixedAddress();
+    remote_address_ = actual_lease.Gateway();
 
     if (auto sp = delegate_.lock())
-        sp->OnAddressAssigned(ipv4_addr);
+        sp->OnAddressAssigned(local_address_, remote_address_);
 }
-
-}
+} // namespace w11tng

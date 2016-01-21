@@ -67,7 +67,7 @@ public:
     void Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30});
 
     NetworkDeviceState State() const;
-    std::vector<NetworkDeviceRole> SupportedRoles() const;
+    std::vector<NetworkManager::Capability> Capabilities() const;
     bool Scanning() const;
 
     void OnClientDisconnected();

@@ -50,8 +50,8 @@ NetworkDeviceState ForwardingMiracastController::State() const {
     return fwd_->State();
 }
 
-std::vector<NetworkDeviceRole> ForwardingMiracastController::SupportedRoles() const {
-    return fwd_->SupportedRoles();
+std::vector<NetworkManager::Capability> ForwardingMiracastController::Capabilities() const {
+    return fwd_->Capabilities();
 }
 
 bool ForwardingMiracastController::Scanning() const {

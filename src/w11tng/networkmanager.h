@@ -29,6 +29,7 @@
 #include "dhcpserver.h"
 #include "dhcpclient.h"
 #include "wififirmwareloader.h"
+#include "informationelement.h"
 #include "hostname1stub.h"
 
 namespace w11tng {
@@ -38,6 +39,7 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>,
                        public P2PDeviceStub::Delegate,
                        public NetworkDevice::Delegate,
                        public w11tng::DhcpClient::Delegate,
+                       public w11tng::DhcpServer::Delegate,
                        public w11tng::WiFiFirmwareLoader::Delegate,
                        public w11tng::InterfaceSelector::Delegate,
                        public w11tng::ManagerStub::Delegate,
@@ -54,17 +56,19 @@ public:
     void SetDelegate(mcs::NetworkManager::Delegate * delegate) override;
 
     bool Setup() override;
+    void Release() override;
+
     void Scan(const std::chrono::seconds &timeout) override;
     bool Connect(const mcs::NetworkDevice::Ptr &device) override;
     bool Disconnect(const mcs::NetworkDevice::Ptr &device) override;
-
-    void SetWfdSubElements(const std::list<std::string> &elements) override;
 
     std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
     mcs::IpV4Address LocalAddress() const override;
     bool Running() const override;
     bool Scanning() const override;
 
+    void SetCapabilities(const std::vector<Capability> &capabilities);
+    std::vector<Capability> Capabilities() const;
     void OnP2PDeviceChanged() override;
     void OnP2PDeviceReady() override;
 
@@ -80,7 +84,7 @@ public:
     void OnDeviceChanged(const NetworkDevice::Ptr &device) override;
     void OnDeviceReady(const NetworkDevice::Ptr &device) override;
 
-    void OnAddressAssigned(const mcs::IpV4Address &address) override;
+    void OnAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) override;
     void OnNoLease() override;
 
     void OnFirmwareLoaded() override;
@@ -107,13 +111,16 @@ private:
 
     NetworkDevice::Ptr FindDevice(const std::string &address);
     void Initialize(bool firmware_loading = false);
-    void Release();
+    void ReleaseInternal();
     void ReleaseInterface();
     void SetupInterface(const std::string &object_path);
     void AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::NetworkDeviceState state);
+    void ConfigureFromCapabilities();
 
     void StartConnectTimeout();
     void StopConnectTimeout();
+
+    DeviceType GenerateWfdDeviceType();
 
     std::string SelectHostname();
     std::string SelectDeviceType();
@@ -136,6 +143,8 @@ private:
     guint connect_timeout_;
     w11tng::WiFiFirmwareLoader firmware_loader_;
     std::string dedicated_p2p_interface_;
+    bool session_available_;
+    std::vector<Capability> capabilities_;
     Hostname1Stub::Ptr hostname_service_;
 };
 

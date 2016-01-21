@@ -45,14 +45,24 @@ public:
         Delegate() = default;
     };
 
+    enum class Capability {
+        kSource,
+        kSink
+    };
+
+    static std::string CapabilityToStr(Capability capability);
+
     virtual void SetDelegate(Delegate * delegate) = 0;
 
+    virtual void SetCapabilities(const std::vector<Capability> &capabilities) = 0;
+    virtual std::vector<Capability> Capabilities() const = 0;
+
     virtual bool Setup() = 0;
+    virtual void Release() = 0;
+
     virtual void Scan(const std::chrono::seconds &timeout) = 0;
     virtual bool Connect(const NetworkDevice::Ptr &device) = 0;
     virtual bool Disconnect(const NetworkDevice::Ptr &device) = 0;
-
-    virtual void SetWfdSubElements(const std::list<std::string> &elements) = 0;
 
     virtual std::vector<NetworkDevice::Ptr> Devices() const = 0;
     virtual IpV4Address LocalAddress() const = 0;

@@ -35,7 +35,7 @@ public:
     virtual void Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30}) override;
 
     virtual NetworkDeviceState State() const override;
-    virtual std::vector<NetworkDeviceRole> SupportedRoles() const override;
+    virtual std::vector<NetworkManager::Capability> Capabilities() const override;
     virtual bool Scanning() const override;
 
 private:

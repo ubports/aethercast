@@ -231,8 +231,8 @@ NetworkDeviceState MiracastService::State() const {
     return current_state_;
 }
 
-std::vector<NetworkDeviceRole> MiracastService::SupportedRoles() const {
-    return supported_roles_;
+std::vector<NetworkManager::Capability> MiracastService::Capabilities() const {
+    return network_manager_->Capabilities();
 }
 
 bool MiracastService::Scanning() const {
@@ -328,7 +328,8 @@ gboolean MiracastService::OnIdleTimer(gpointer user_data) {
 }
 
 void MiracastService::StartIdleTimer() {
-    g_timeout_add(kStateIdleTimeout.count(), &MiracastService::OnIdleTimer, new SharedKeepAlive<MiracastService>{shared_from_this()});
+    g_timeout_add(kStateIdleTimeout.count(), &MiracastService::OnIdleTimer,
+                  new SharedKeepAlive<MiracastService>{shared_from_this()});
 }
 
 void MiracastService::FinishConnectAttempt(mcs::Error error) {
@@ -383,6 +384,8 @@ void MiracastService::Scan(const std::chrono::seconds &timeout) {
 void MiracastService::Shutdown() {
     if (current_device_)
         network_manager_->Disconnect(current_device_);
+
+    network_manager_->Release();
 }
 
 } // namespace miracast

@@ -31,24 +31,24 @@
 namespace w11tng {
 
 enum DeviceType {
-    SOURCE,
-    PRIMARY_SINK,
-    SECONDARY_SINK,
-    DUAL_ROLE
+    kSource,
+    kPrimarySink,
+    kSecondarySink,
+    kDualRole
 };
 
 enum SubelementId {
-    DEVICE_INFORMATION,
-    ASSOCIATED_BSSID,
-    AUDIO_FORMATS,
-    VIDEO_FORMATS,
-    FORMATS_3D,
-    CONTENT_PROTECTION,
-    COUPLED_SINK_INFORMATION,
-    EXTENDED_CAPABILITY,
-    LOCAL_IP_ADDRESS,
-    SESSION_INFORMATION,
-    ALTERNATIVE_MAC,
+    kDeviceInformation,
+    kAssociatedBssid,
+    kAudioFormats,
+    kVideoFormats,
+    kFormats3D,
+    kContentProtection,
+    kCoupledSinkInformation,
+    kExtendedCapability,
+    kLocalIPAddress,
+    kSessionInformation,
+    kAlternativeMAC,
 };
 
 // SubelementSize == subelement.length - 3

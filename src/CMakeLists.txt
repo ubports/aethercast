@@ -73,8 +73,11 @@ set(SOURCES
   w11tng/interfacestub.cpp
   w11tng/groupstub.cpp
   w11tng/informationelement.cpp
+  w11tng/dhcpleaseparser.cpp
   w11tng/dhcpclient.cpp
   w11tng/dhcpserver.cpp
+  w11tng/processexecutor.cpp
+  w11tng/filemonitor.cpp
   w11tng/netlinklistener.cpp
   w11tng/wififirmwareloader.cpp
   w11tng/hostname1stub.cpp

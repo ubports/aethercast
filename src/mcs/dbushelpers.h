@@ -23,13 +23,14 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include "networkdevice.h"
+#include "networkmanager.h"
 #include "scoped_gobject.h"
 
 namespace mcs {
 
 struct DBusHelpers {
-    static gchar** GenerateCapabilities(const std::vector<NetworkDeviceRole> roles);
+    static gchar** GenerateCapabilities(const std::vector<NetworkManager::Capability> &capabilities);
+    static gchar** GenerateDeviceCapabilities(const std::vector<NetworkDeviceRole> &roles);
     static void ParseDictionary(GVariant *properties, std::function<void(std::string, GVariant*)> callback, const std::string &key_filter = "");
     static void ParseArray(GVariant *array, std::function<void(GVariant*)> callback);
 };

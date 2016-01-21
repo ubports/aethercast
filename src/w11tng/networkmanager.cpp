@@ -47,7 +47,8 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
 
 NetworkManager::NetworkManager() :
     firmware_loader_("", this),
-    dedicated_p2p_interface_(mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE")) {
+    dedicated_p2p_interface_(mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE")),
+    session_available_(true) {
 }
 
 NetworkManager::~NetworkManager() {
@@ -75,7 +76,7 @@ void NetworkManager::OnServiceLost(GDBusConnection *connection, const gchar *nam
     if (not inst)
         return;
 
-    inst->Release();
+    inst->ReleaseInternal();
 }
 
 void NetworkManager::Initialize(bool firmware_loading) {
@@ -108,6 +109,11 @@ void NetworkManager::Initialize(bool firmware_loading) {
 void NetworkManager::Release() {
     MCS_DEBUG("");
 
+
+    ReleaseInternal();
+}
+
+void NetworkManager::ReleaseInternal() {
     ReleaseInterface();
 
     hostname_service_.reset();
@@ -212,6 +218,9 @@ bool NetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
     if (!p2p_device_ || current_device_)
         return false;
 
+    if (!device)
+        return false;
+
     MCS_DEBUG("address %s", device->Address());
 
     // Lets check here if we really own this device and if yes then we
@@ -304,10 +313,6 @@ bool NetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {
     return true;
 }
 
-void NetworkManager::SetWfdSubElements(const std::list<std::string> &elements) {
-    MCS_WARNING("Not implemeneted");
-}
-
 std::vector<mcs::NetworkDevice::Ptr> NetworkManager::Devices() const {
     std::vector<mcs::NetworkDevice::Ptr> values;
     std::transform(devices_.begin(), devices_.end(),
@@ -384,6 +389,14 @@ void NetworkManager::OnDeviceLost(const std::string &path) {
 
 void NetworkManager::AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::NetworkDeviceState state) {
     device->SetState(state);
+
+    // When we're switching to be connected or disconnected we need to mark the
+    // session as not being available to prevent anyone else to connect with us.
+    if (state == mcs::kConnected || state == mcs::kDisconnected) {
+        session_available_ = (state != mcs::kConnected);
+        ConfigureFromCapabilities();
+    }
+
     if (delegate_)
         delegate_->OnDeviceStateChanged(device);
 }
@@ -473,13 +486,13 @@ void NetworkManager::OnDeviceReady(const NetworkDevice::Ptr &device) {
         delegate_->OnDeviceFound(device);
 }
 
-void NetworkManager::OnAddressAssigned(const mcs::IpV4Address &address) {
+void NetworkManager::OnAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) {
+    MCS_DEBUG("current_device_ %p", current_device_.get());
+
     if (!current_device_ || current_device_->State() != mcs::kConfiguration)
         return;
 
-    MCS_DEBUG("address %s", address);
-
-    current_device_->SetIpV4Address(address);
+    current_device_->SetIpV4Address(remote_address);
 
     StopConnectTimeout();
 
@@ -513,20 +526,66 @@ void NetworkManager::OnInterfaceSelectionDone(const std::string &path) {
     SetupInterface(path);
 }
 
-void NetworkManager::OnManagerReady() {
+void NetworkManager::SetCapabilities(const std::vector<Capability> &capabilities) {
+    if (capabilities == capabilities_)
+        return;
+
+    capabilities_ = capabilities;
+    ConfigureFromCapabilities();
+}
+
+std::vector<NetworkManager::Capability> NetworkManager::Capabilities() const {
+    return capabilities_;
+}
+
+DeviceType NetworkManager::GenerateWfdDeviceType() {
+    DeviceType device_type;
+    bool has_source = false, has_sink = false;
+
+    for (auto capability : capabilities_) {
+        if (capability == Capability::kSource)
+            has_source = true;
+        else if (capability == Capability::kSink)
+            has_sink = true;
+    }
+
+    if (has_sink && !has_source)
+        device_type = DeviceType::kPrimarySink;
+    else if (!has_sink && has_source)
+        device_type = DeviceType::kSource;
+    else if (has_sink && has_source)
+        device_type = DeviceType::kDualRole;
+
+    return device_type;
+}
+
+void NetworkManager::ConfigureFromCapabilities() {
+    if (!manager_)
+        return;
+
     InformationElement ie;
-    auto sub_element = new_subelement(DEVICE_INFORMATION);
+    auto sub_element = new_subelement(kDeviceInformation);
     auto dev_info = (DeviceInformationSubelement*) sub_element;
+
+    auto device_type = GenerateWfdDeviceType();
+
+    MCS_DEBUG("device type %d session availability %d",
+              device_type,
+              session_available_);
 
     dev_info->session_management_control_port = htons(7236);
     dev_info->maximum_throughput = htons(50);
-    dev_info->field1.device_type = SOURCE;
-    dev_info->field1.session_availability = true;
+    dev_info->field1.device_type = device_type;
+    dev_info->field1.session_availability = true; //session_available_;
     ie.add_subelement(sub_element);
 
     auto ie_data = ie.serialize();
 
     manager_->SetWFDIEs(ie_data->bytes, ie_data->length);
+}
+
+void NetworkManager::OnManagerReady() {
+    ConfigureFromCapabilities();
 
     // If we need to create an interface object at wpa first we
     // do that and continue in one of the delegate callbacks from
@@ -570,21 +629,12 @@ void NetworkManager::OnInterfaceReady() {
 
     MCS_DEBUG("interface %s", ifname);
 
-    if (current_device_->Role() == "GO") {
-        dhcp_server_ = w11tng::DhcpServer::Create(nullptr, ifname);
-        dhcp_server_->Start();
+    auto sp = shared_from_this();
 
-        StopConnectTimeout();
-
-        // We don't have anything more to do when we play the owner
-        // role. The core will setup the necessary endpoints and
-        // waits for incoming connections.
-        AdvanceDeviceState(current_device_, mcs::kConnected);
-    }
-    else {
-        dhcp_client_ = w11tng::DhcpClient::Create(shared_from_this(), ifname);
-        dhcp_client_->Start();
-    }
+    if (current_device_->Role() == "GO")
+        dhcp_server_ = w11tng::DhcpServer::Create(sp, ifname);
+    else
+        dhcp_client_ = w11tng::DhcpClient::Create(sp, ifname);
 }
 
 void NetworkManager::OnHostnameChanged() {

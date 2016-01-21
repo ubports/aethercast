@@ -27,17 +27,19 @@
 #include <mcs/ip_v4_address.h>
 #include <mcs/non_copyable.h>
 
-#include "netlinklistener.h"
+#include "processexecutor.h"
+#include "filemonitor.h"
 
 namespace w11tng {
 class DhcpClient : public std::enable_shared_from_this<DhcpClient>,
-                   public w11tng::NetlinkListener::Delegate {
+                   public w11tng::ProcessExecutor::Delegate,
+                   public w11tng::FileMonitor::Delegate {
 public:
     typedef std::shared_ptr<DhcpClient> Ptr;
 
     class Delegate : private mcs::NonCopyable {
     public:
-        virtual void OnAddressAssigned(const mcs::IpV4Address &address) = 0;
+        virtual void OnAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) = 0;
         virtual void OnNoLease() = 0;
 
     protected:
@@ -46,24 +48,26 @@ public:
 
     static Ptr Create(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name);
 
-    DhcpClient(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name);
     ~DhcpClient();
 
-    bool Start();
-    void Stop();
-
+    mcs::IpV4Address RemoteAddress() const;
     mcs::IpV4Address LocalAddress() const;
 
-    void OnInterfaceAddressChanged(const std::string &interface, const std::string &address);
+    void OnProcessTerminated() override;
+    void OnFileChanged(const std::string &path) override;
+
+private:
+    DhcpClient(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name);
+    void Start();
 
 private:
     std::weak_ptr<Delegate> delegate_;
     std::string interface_name_;
-    w11tng::NetlinkListener::Ptr netlink_listener_;
     mcs::IpV4Address local_address_;
-    GPid pid_;
-    guint process_watch_;
+    mcs::IpV4Address remote_address_;
     std::string lease_file_path_;
+    ProcessExecutor::Ptr executor_;
+    FileMonitor::Ptr monitor_;
 };
 }
 

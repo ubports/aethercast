@@ -191,8 +191,6 @@ void P2PDeviceStub::OnGroupRequest(WpaSupplicantInterfaceP2PDevice *device, cons
 
     std::string peer_path(path);
 
-    MCS_DEBUG("peer_path %s", peer_path);
-
     if (auto sp = inst->delegate_.lock())
         sp->OnGroupRequest(peer_path, dev_passwd_id);
 }
