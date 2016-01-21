@@ -487,8 +487,6 @@ void NetworkManager::OnDeviceReady(const NetworkDevice::Ptr &device) {
 }
 
 void NetworkManager::OnAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) {
-    MCS_DEBUG("current_device_ %p", current_device_.get());
-
     if (!current_device_ || current_device_->State() != mcs::kConfiguration)
         return;
 
