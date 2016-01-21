@@ -32,7 +32,7 @@ Package: aethercast
 Architecture: any
 Depends: ${misc:Depends},
          ${shlibs:Depends},
-         dhcpcd5,
+         isc-dhcp-server,
          isc-dhcp-client,
          wpasupplicant
 Description: Display casting service
