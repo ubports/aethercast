@@ -486,9 +486,11 @@ void NetworkManager::OnDeviceReady(const NetworkDevice::Ptr &device) {
         delegate_->OnDeviceFound(device);
 }
 
-void NetworkManager::OnAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) {
+void NetworkManager::OnDhcpAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) {
     if (!current_device_ || current_device_->State() != mcs::kConfiguration)
         return;
+
+    MCS_DEBUG("local %s remote %s", local_address, remote_address);
 
     current_device_->SetIpV4Address(remote_address);
 
@@ -497,7 +499,7 @@ void NetworkManager::OnAddressAssigned(const mcs::IpV4Address &local_address, co
     AdvanceDeviceState(current_device_, mcs::kConnected);
 }
 
-void NetworkManager::OnNoLease() {
+void NetworkManager::OnDhcpTerminated() {
     if (!current_device_ || current_device_->State() != mcs::kConfiguration)
         return;
 

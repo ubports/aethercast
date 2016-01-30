@@ -84,8 +84,8 @@ public:
     void OnDeviceChanged(const NetworkDevice::Ptr &device) override;
     void OnDeviceReady(const NetworkDevice::Ptr &device) override;
 
-    void OnAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) override;
-    void OnNoLease() override;
+    void OnDhcpAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) override;
+    void OnDhcpTerminated();
 
     void OnFirmwareLoaded() override;
     void OnFirmwareUnloaded() override;

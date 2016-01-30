@@ -39,7 +39,8 @@ public:
 
     class Delegate : private mcs::NonCopyable {
     public:
-        virtual void OnAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) = 0;
+        virtual void OnDhcpAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) = 0;
+        virtual void OnDhcpTerminated() = 0;
     };
 
     static Ptr Create(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name);

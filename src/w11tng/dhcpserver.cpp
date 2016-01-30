@@ -107,6 +107,8 @@ void DhcpServer::Start() {
 }
 
 void DhcpServer::OnProcessTerminated() {
+    if (auto sp = delegate_.lock())
+        sp->OnDhcpTerminated();
 }
 
 void DhcpServer::OnFileChanged(const std::string &path) {
@@ -117,7 +119,7 @@ void DhcpServer::OnFileChanged(const std::string &path) {
     auto actual_lease = leases[0];
 
     if (auto sp = delegate_.lock())
-        sp->OnAddressAssigned(local_address_, actual_lease.FixedAddress());
+        sp->OnDhcpAddressAssigned(local_address_, actual_lease.FixedAddress());
 }
 
 mcs::IpV4Address DhcpServer::LocalAddress() const {

@@ -92,6 +92,8 @@ void DhcpClient::Start() {
 }
 
 void DhcpClient::OnProcessTerminated() {
+    if (auto sp = delegate_.lock())
+        sp->OnDhcpTerminated();
 }
 
 void DhcpClient::OnFileChanged(const std::string &path) {
@@ -105,6 +107,6 @@ void DhcpClient::OnFileChanged(const std::string &path) {
     remote_address_ = actual_lease.Gateway();
 
     if (auto sp = delegate_.lock())
-        sp->OnAddressAssigned(local_address_, remote_address_);
+        sp->OnDhcpAddressAssigned(local_address_, remote_address_);
 }
 } // namespace w11tng
