@@ -7,5 +7,5 @@
   /etc/aethercast/dhcpd.conf r,
   # In addition aethercast will also point dhcpd to a private
   # lease/pid file
-  /{,var/}run/aethercast/dhcpd.leases* lrw,
-  /{,var/}run/aethercast/dhcpd.pid lrw,
+  /{,var/}run/aethercast/dhcpd*.leases* lrw,
+  /{,var/}run/aethercast/dhcpd*.pid lrw,
