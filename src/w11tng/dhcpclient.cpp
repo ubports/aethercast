@@ -47,6 +47,11 @@ DhcpClient::Ptr DhcpClient::Create(const std::weak_ptr<Delegate> &delegate, cons
 DhcpClient::DhcpClient(const std::weak_ptr<Delegate> &delegate, const std::string &interface_name) :
     delegate_(delegate),
     interface_name_(interface_name) {
+
+    lease_file_path_ = mcs::Utils::Sprintf("%s/dhclient-%s-%s.leases",
+                                    mcs::kRuntimePath,
+                                    boost::filesystem::unique_path().string(),
+                                    interface_name_);
 }
 
 DhcpClient::~DhcpClient() {
@@ -62,9 +67,6 @@ mcs::IpV4Address DhcpClient::RemoteAddress() const {
 }
 
 void DhcpClient::Start() {
-    lease_file_path_ = mcs::Utils::Sprintf("%s/dhclient_%s.leases",
-                                    mcs::kRuntimePath,
-                                    boost::filesystem::unique_path().string());
     if (!mcs::Utils::CreateFile(lease_file_path_)) {
         MCS_ERROR("Failed to create database for DHCP leases at %s",
                   lease_file_path_);

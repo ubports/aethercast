@@ -45,8 +45,14 @@ DhcpServer::DhcpServer(const std::weak_ptr<Delegate> &delegate, const std::strin
     delegate_(delegate),
     interface_name_(interface_name) {
 
-    lease_file_path_ = mcs::Utils::Sprintf("%s/dhcpd.leases", mcs::kRuntimePath);
-    pid_file_path_ = mcs::Utils::Sprintf("%s/dhcpd.pid", mcs::kRuntimePath);
+    lease_file_path_ = mcs::Utils::Sprintf("%s/dhcpd-%s-%s.leases",
+                                           mcs::kRuntimePath,
+                                           boost::filesystem::unique_path().string(),
+                                           interface_name);
+
+    pid_file_path_ = mcs::Utils::Sprintf("%s/dhcpd-%s.pid",
+                                         mcs::kRuntimePath,
+                                         interface_name_);
 }
 
 DhcpServer::~DhcpServer() {
