@@ -1,0 +1,109 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+    <interface name="fi.w1.wpa_supplicant1">
+        <method name="CreateInterface">
+            <arg name="args" type="a{sv}" direction="in"/>
+            <arg name="path" type="o" direction="out"/>
+        </method>
+        <signal name="InterfaceAdded">
+            <arg name="path" type="o"/>
+            <arg name="properties" type="a{sv}"/>
+        </signal>
+        <signal name="InterfaceRemoved">
+            <arg name="path" type="o"/>
+        </signal>
+        <property name="Interfaces" type="ao" access="read"/>
+        <property name="Capabilities" type="as" access="read"/>
+        <property name="WFDIEs" type="ay" access="readwrite">
+            <annotation name="org.gtk.GDBus.C.ForceGVariant" value="true"/>
+        </property>
+    </interface>
+    <interface name="fi.w1.wpa_supplicant1.Interface">
+        <property name="Capabilities" type="a{sv}" access="read"/>
+        <property name="State" type="s" access="read"/>
+        <property name="Ifname" type="s" access="read"/>
+        <property name="Driver" type="s" access="read"/>
+    </interface>
+    <interface name="fi.w1.wpa_supplicant1.Interface.P2PDevice">
+        <method name="Find">
+            <arg name="args" type="a{sv}" direction="in"/>
+        </method>
+        <method name="StopFind"/>
+        <method name="ExtendedListen">
+            <arg name="args" type="a{sv}" direction="in"/>
+        </method>
+        <method name="Connect">
+            <arg name="args" type="a{sv}" direction="in"/>
+            <arg name="group" type="s" direction="out"/>
+        </method>
+        <method name="Cancel"/>
+        <method name="Disconnect"/>
+        <method name="Flush"/>
+        <signal name="DeviceFound">
+            <arg name="path" type="o"/>
+        </signal>
+        <signal name="DeviceLost">
+            <arg name="path" type="o"/>
+        </signal>
+        <signal name="FindStopped"/>
+        <signal name="GONegotiationSuccess">
+            <arg name="properties" type="a{sv}"/>
+        </signal>
+        <signal name="GONegotiationFailure">
+            <arg name="properties" type="a{sv}"/>
+        </signal>
+        <signal name="GroupStarted">
+            <arg name="properties" type="a{sv}"/>
+        </signal>
+        <signal name="GroupFinished">
+            <arg name="properties" type="a{sv}"/>
+        </signal>
+        <signal name="GroupFormationFailure">
+            <arg name="reason" type="s"/>
+        </signal>
+        <signal name="GONegotiationRequest">
+            <arg name="path" type="o"/>
+            <arg name="dev_passwd_id" type="i"/>
+        </signal>
+        <property name="P2PDeviceConfig" type="a{sv}" access="readwrite"/>
+        <property name="Peers" type="ao" access="read"/>
+    </interface>
+    <interface name="fi.w1.wpa_supplicant1.Peer">
+        <property name="DeviceName" type="s" access="read"/>
+        <property name="Manufacturer" type="s" access="read"/>
+        <property name="ModelName" type="s" access="read"/>
+        <property name="ModelNumber" type="s" access="read"/>
+        <property name="SerialNumber" type="s" access="read"/>
+        <property name="PrimaryDeviceType" type="ay" access="read"/>
+        <property name="config_method" type="q" access="read"/>
+        <property name="level" type="i" access="read"/>
+        <property name="devicecapability" type="y" access="read"/>
+        <property name="groupcapability" type="y" access="read"/>
+        <property name="SecondaryDeviceTypes" type="aay" access="read"/>
+        <property name="VendorExtension" type="aay" access="read"/>
+        <property name="IEs" type="ay" access="read"/>
+        <property name="DeviceAddress" type="ay" access="read">
+            <annotation name="org.gtk.GDBus.C.ForceGVariant" value="true"/>
+        </property>
+        <property name="Groups" type="ao" access="read"/>
+    </interface>
+    <interface name="fi.w1.wpa_supplicant1.Group">
+        <property name="Members" type="s" access="read"/>
+        <property name="Group" type="o" access="read"/>
+        <property name="Role" type="s" access="read"/>
+        <property name="SSID" type="ay" access="read"/>
+        <property name="BSSID" type="ay" access="read"/>
+        <property name="Frequency" type="q" access="read"/>
+        <property name="Passphrase" type="s" access="read"/>
+        <property name="PSK" type="ay" access="read"/>
+        <property name="WPSVendorExtensions" type="aay" access="read"/>
+        <signal name="PeerJoined">
+            <arg name="peer" type="o"/>
+        </signal>
+        <signal name="PeerDisconnected">
+            <arg name="peer" type="o"/>
+        </signal>
+    </interface>
+</node>
+

@@ -5,6 +5,7 @@ Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: Simon Fels <simon.fels@canonical.com>
 Build-Depends: cmake,
                debhelper (>= 9),
+               dbus,
                google-mock,
                libboost-dev,
                libboost-filesystem-dev,
@@ -31,6 +32,8 @@ Package: aethercast
 Architecture: any
 Depends: ${misc:Depends},
          ${shlibs:Depends},
+         isc-dhcp-server,
+         isc-dhcp-client,
          wpasupplicant
 Description: Display casting service
  A management service for remote displays which it can stream the

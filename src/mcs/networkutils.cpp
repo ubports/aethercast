@@ -194,6 +194,27 @@ int NetworkUtils::RetrieveInterfaceIndex(const char *name)
     return ifr.ifr_ifindex;;
 }
 
+std::string NetworkUtils::RetrieveInterfaceName(int index) {
+    if (index < 0)
+        return "";
+
+    auto sock = ::socket(PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+    if (sock < 0)
+        return "";
+
+    struct ifreq ifr = { };
+    ifr.ifr_ifindex = index;
+
+    auto err = ::ioctl(sock, SIOCGIFNAME, &ifr);
+
+    ::close(sock);
+
+    if (err < 0)
+        return "";
+
+    return std::string(ifr.ifr_name);
+}
+
 int NetworkUtils::ResetInterface(int index)
 {
     struct ifreq ifr, addr_ifr;

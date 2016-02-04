@@ -22,6 +22,27 @@
 
 namespace mcs {
 
+// Only here to make unit testing easier for the factory class
+class NullNetworkManager : public mcs::NetworkManager {
+public:
+    void SetDelegate(Delegate * delegate) override;
+
+    bool Setup() override;
+    void Release() override;
+
+    void Scan(const std::chrono::seconds &timeout) override;
+    bool Connect(const NetworkDevice::Ptr &device) override;
+    bool Disconnect(const NetworkDevice::Ptr &device) override;
+
+    std::vector<NetworkDevice::Ptr> Devices() const override;
+    IpV4Address LocalAddress() const override;
+    bool Running() const override;
+    bool Scanning() const override;
+
+    void SetCapabilities(const std::vector<Capability> &capabilities) override;
+    std::vector<Capability> Capabilities() const override;
+};
+
 class NetworkManagerFactory {
 public:
     static NetworkManager::Ptr Create(const std::string &type = "");

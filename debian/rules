@@ -17,3 +17,6 @@ include /usr/share/dpkg/default.mk
 
 %:
 	dh $@ --parallel --fail-missing
+
+override_dh_auto_test:
+	# disable

@@ -19,6 +19,8 @@
 
 #include <glib-object.h>
 
+#include <mcs/logger.h>
+
 namespace mcs {
 // A GObjectDeleter considers T to be a GObject and
 // provides an operator() that decrements the reference

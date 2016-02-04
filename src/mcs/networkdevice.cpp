@@ -17,8 +17,6 @@
 
 #include "networkdevice.h"
 
-#include <w11t/wfddeviceinfo.h>
-
 namespace mcs {
 std::string NetworkDevice::StateToStr(NetworkDeviceState state) {
     switch (state) {
@@ -27,7 +25,9 @@ std::string NetworkDevice::StateToStr(NetworkDeviceState state) {
     case kFailure:
         return "failure";
     case kAssociation:
-        return "connecting";
+        return "association";
+    case kConfiguration:
+        return "configuration";
     case kConnected:
         return "connected";
     case kDisconnected:

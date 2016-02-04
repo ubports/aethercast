@@ -27,8 +27,11 @@
 
 #include <chrono>
 
+#include <boost/filesystem.hpp>
+
 #include <wds/logging.h>
 
+#include "config.h"
 #include "keep_alive.h"
 #include "logger.h"
 #include "miracastservice.h"
@@ -37,12 +40,11 @@
 #include "types.h"
 #include "logging.h"
 
-#include <w11t/wfddeviceinfo.h>
-
 namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.
 const std::uint16_t kMiracastDefaultRtspCtrlPort{7236};
 const std::chrono::milliseconds kStateIdleTimeout{5000};
+const std::chrono::seconds kShutdownGracePreriod{1};
 
 // SafeLog serves as integration point to the wds::LogSystem world.
 template <mcs::Logger::Severity severity>
@@ -93,11 +95,24 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
     }
 
     struct Runtime {
-        static int OnSignalRaised(gpointer user_data) {
+        static gboolean OnSignalRaised(gpointer user_data) {
             auto thiz = static_cast<Runtime*>(user_data);
-            g_main_loop_quit(thiz->ml);
 
-            return 0;
+            // This will bring down everything and the timeout below will give
+            // things a small amount of time to perform their shutdown jobs.
+            thiz->service->Shutdown();
+
+            MCS_DEBUG("Exiting");
+
+            g_timeout_add_seconds(kShutdownGracePreriod.count(), [](gpointer user_data) {
+                auto thiz = static_cast<Runtime*>(user_data);
+                g_main_loop_quit(thiz->ml);
+                return FALSE;
+            }, thiz);
+
+            // A second SIGTERM should really terminate us and also overlay
+            // the grace period for a proper shutdown we're performing.
+            return FALSE;
         }
 
         Runtime() {
@@ -140,11 +155,14 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
             // Become a reaper of all our children
             if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0)
                 g_warning("Failed to make us a subreaper of our children");
+
+            network_manager = mcs::NetworkManagerFactory::Create();
+            service = mcs::MiracastService::Create(network_manager);
+            mcsa = mcs::MiracastControllerSkeleton::create(service);
         }
 
         ~Runtime() {
             g_main_loop_unref(ml);
-            gst_deinit();
         }
 
         void Run() {
@@ -153,11 +171,10 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
 
         GMainLoop *ml = g_main_loop_new(nullptr, FALSE);
         bool is_gst_initialized = gst_init_check(nullptr, nullptr, nullptr);
+        mcs::NetworkManager::Ptr network_manager;
+        mcs::MiracastService::Ptr service;
+        mcs::MiracastControllerSkeleton::Ptr mcsa;
     } rt;
-
-    auto network_manager = mcs::NetworkManagerFactory::Create();
-    auto service = mcs::MiracastService::Create(network_manager);
-    auto mcsa = mcs::MiracastControllerSkeleton::create(service);
 
     rt.Run();
 
@@ -173,6 +190,8 @@ MiracastService::MiracastService() :
     current_state_(kIdle),
     scan_timeout_source_(0),
     supported_roles_({kSource}) {
+
+    CreateRuntimeDirectory();
 }
 
 std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction(const NetworkManager::Ptr &network_manager) {
@@ -191,6 +210,15 @@ MiracastService::~MiracastService() {
         g_source_remove(scan_timeout_source_);
 }
 
+void MiracastService::CreateRuntimeDirectory() {
+    boost::filesystem::path runtime_dir(mcs::kRuntimePath);
+
+    if (boost::filesystem::is_directory(runtime_dir))
+        boost::filesystem::remove_all(runtime_dir);
+
+    boost::filesystem::create_directory(runtime_dir);
+}
+
 void MiracastService::SetDelegate(const std::weak_ptr<MiracastController::Delegate> &delegate) {
     delegate_ = delegate;
 }
@@ -203,8 +231,8 @@ NetworkDeviceState MiracastService::State() const {
     return current_state_;
 }
 
-std::vector<NetworkDeviceRole> MiracastService::SupportedRoles() const {
-    return supported_roles_;
+std::vector<NetworkManager::Capability> MiracastService::Capabilities() const {
+    return network_manager_->Capabilities();
 }
 
 bool MiracastService::Scanning() const {
@@ -273,6 +301,9 @@ void MiracastService::OnDeviceStateChanged(const NetworkDevice::Ptr &device) {
         return;
 
     AdvanceState(device->State());
+
+    if (auto sp = delegate_.lock())
+        sp->OnDeviceChanged(device);
 }
 
 void MiracastService::OnDeviceChanged(const NetworkDevice::Ptr &device) {
@@ -297,7 +328,8 @@ gboolean MiracastService::OnIdleTimer(gpointer user_data) {
 }
 
 void MiracastService::StartIdleTimer() {
-    g_timeout_add(kStateIdleTimeout.count(), &MiracastService::OnIdleTimer, new SharedKeepAlive<MiracastService>{shared_from_this()});
+    g_timeout_add(kStateIdleTimeout.count(), &MiracastService::OnIdleTimer,
+                  new SharedKeepAlive<MiracastService>{shared_from_this()});
 }
 
 void MiracastService::FinishConnectAttempt(mcs::Error error) {
@@ -309,6 +341,7 @@ void MiracastService::FinishConnectAttempt(mcs::Error error) {
 
 void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback callback) {
     if (current_device_) {
+        MCS_DEBUG("Tried to connect again while we're already trying to connect a device");
         callback(Error::kAlready);
         return;
     }
@@ -318,10 +351,10 @@ void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback c
         return;
     }
 
-    DEBUG("Connecting remote device %s", device->Address());
+    DEBUG("address %s", device->Address());
 
     if (!network_manager_->Connect(device)) {
-         DEBUG("FAiled to connect remote device");
+        DEBUG("Failed to connect remote device");
         callback(Error::kFailed);
         return;
     }
@@ -347,4 +380,12 @@ void MiracastService::Disconnect(const NetworkDevice::Ptr &device, ResultCallbac
 void MiracastService::Scan(const std::chrono::seconds &timeout) {
     network_manager_->Scan(timeout);
 }
+
+void MiracastService::Shutdown() {
+    if (current_device_)
+        network_manager_->Disconnect(current_device_);
+
+    network_manager_->Release();
+}
+
 } // namespace miracast

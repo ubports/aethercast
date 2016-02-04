@@ -16,3 +16,13 @@
  */
 
 #include "networkmanager.h"
+
+namespace mcs {
+std::string NetworkManager::CapabilityToStr(Capability capability) {
+    if (capability == Capability::kSink)
+        return "sink";
+    else if (capability == Capability::kSource)
+        return "source";
+    return "";
+}
+} // namespace mcs

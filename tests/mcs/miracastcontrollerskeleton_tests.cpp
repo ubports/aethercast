@@ -30,7 +30,7 @@ struct MockMiracastController : public mcs::MiracastController {
     MOCK_METHOD1(Scan, void(const std::chrono::seconds &));
 
     MOCK_CONST_METHOD0(State, mcs::NetworkDeviceState());
-    MOCK_CONST_METHOD0(SupportedRoles, std::vector<mcs::NetworkDeviceRole>());
+    MOCK_CONST_METHOD0(Capabilities, std::vector<mcs::NetworkManager::Capability>());
     MOCK_CONST_METHOD0(Scanning, bool());
 };
 }
@@ -54,7 +54,7 @@ TEST(MiracastControllerSkeleton, ForwardsCallsToImpl) {
     EXPECT_CALL(*impl, Disconnect(_,_)).Times(1);
     EXPECT_CALL(*impl, Scan(_)).Times(1);
     EXPECT_CALL(*impl, State()).Times(1).WillRepeatedly(Return(mcs::NetworkDeviceState::kConnected));
-    EXPECT_CALL(*impl, SupportedRoles()).Times(1).WillRepeatedly(Return(std::vector<mcs::NetworkDeviceRole>{mcs::NetworkDeviceRole::kSource}));
+    EXPECT_CALL(*impl, Capabilities()).Times(1).WillRepeatedly(Return(std::vector<mcs::NetworkManager::Capability>{mcs::NetworkManager::Capability::kSource}));
     EXPECT_CALL(*impl, Scanning()).Times(1).WillRepeatedly(Return(true));
 
     auto fmc = mcs::MiracastControllerSkeleton::create(impl);
@@ -64,7 +64,7 @@ TEST(MiracastControllerSkeleton, ForwardsCallsToImpl) {
     fmc->Disconnect(mcs::NetworkDevice::Ptr{}, mcs::ResultCallback{});
     fmc->Scan(std::chrono::seconds{10});
     fmc->State();
-    fmc->SupportedRoles();
+    fmc->Capabilities();
     fmc->Scanning();
 
     Mock::AllowLeak(impl.get());

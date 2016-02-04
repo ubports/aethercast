@@ -24,9 +24,7 @@
 namespace mcs {
 std::shared_ptr<MiracastSourceManager> MiracastSourceManager::Create(const IpV4Address &address, unsigned short port) {
     auto sp = std::shared_ptr<MiracastSourceManager>{new MiracastSourceManager{}};
-    DEBUG("Before setup");
     sp->Setup(address, port);
-    DEBUG("After setup");
     return sp;
 }
 
@@ -52,7 +50,7 @@ void MiracastSourceManager::ResetDelegate() {
 }
 
 bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short port) {
-    GError *error;
+    GError *error = nullptr;
 
     if (socket_)
         return false;
@@ -109,6 +107,8 @@ bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short por
 
 gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
     auto inst = static_cast<WeakKeepAlive<MiracastSourceManager>*>(user_data)->GetInstance().lock();
+
+    MCS_DEBUG("");
 
     // The callback context was deleted while the wait for connection was active.
     // Hardly anything we can do about it except for returning early.

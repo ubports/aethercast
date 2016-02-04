@@ -64,7 +64,7 @@ void NetworkDeviceSkeleton::SyncProperties() {
     aethercast_interface_device_set_name(device_iface_.get(), Name().c_str());
     aethercast_interface_device_set_state(device_iface_.get(), NetworkDevice::StateToStr(State()).c_str());
 
-    auto capabilities = DBusHelpers::GenerateCapabilities(SupportedRoles());
+    auto capabilities = DBusHelpers::GenerateDeviceCapabilities(SupportedRoles());
     aethercast_interface_device_set_capabilities(device_iface_.get(), capabilities);
     g_strfreev(capabilities);
 }
