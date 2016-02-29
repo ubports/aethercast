@@ -21,37 +21,13 @@ include_directories(
   ${GST_INCLUDE_DIRS}
 )
 
-add_executable(mirscreencast_to_android_hw_enc
-    mirscreencast_to_android_hw_enc.cpp)
-target_link_libraries(mirscreencast_to_android_hw_enc
-  ${MIRCLIENT_LIBRARIES}
-  ${HYBRIS_MEDIA_LIBRARIES}
-  ${EGL_LIBRARIES}
-  ${GLESV2_LIBRARIES}
-  ${GLIB_LIBRARIES}
-  ${GIO_LIBRARIES}
-  ${GIO-UNIX_LIBRARIES}
-  ${GST_LIBRARIES}
-  aethercast-core
-)
-
 set(MIRSCREENCAST_TO_STREAM_SOURCES
     simplesource.cpp
     mirscreencast_to_stream.cpp)
 
 add_executable(mirscreencast_to_stream
     ${MIRSCREENCAST_TO_STREAM_SOURCES})
-target_link_libraries(mirscreencast_to_stream
-  ${MIRCLIENT_LIBRARIES}
-  ${HYBRIS_MEDIA_LIBRARIES}
-  ${EGL_LIBRARIES}
-  ${GLESV2_LIBRARIES}
-  ${GLIB_LIBRARIES}
-  ${GIO_LIBRARIES}
-  ${GIO-UNIX_LIBRARIES}
-  ${GST_LIBRARIES}
-  aethercast-core
-)
+target_link_libraries(mirscreencast_to_stream aethercast-core)
 
 install(
   TARGETS mirscreencast_to_stream

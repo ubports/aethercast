@@ -67,10 +67,6 @@ int main(int argc, char **argv) {
     int port = 0;
     bool debug = false;
 
-#if 0
-    mcs::InitGstreamerOnceOrThrow();
-#endif
-
     g_unix_signal_add(SIGINT, OnSignalRaised, nullptr);
     g_unix_signal_add(SIGTERM, OnSignalRaised, nullptr);
 
