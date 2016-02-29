@@ -94,6 +94,14 @@ int MiracastSourceClient::GetNextCSeq(int *initial_peer_cseq) const {
     return send_cseq;
 }
 
+int MiracastSourceClient::GetNextCSeq(int *initial_peer_cseq) const {
+    static int send_cseq = 0;
+    ++send_cseq;
+    if (initial_peer_cseq && send_cseq == *initial_peer_cseq)
+        send_cseq *= 2;
+    return send_cseq;
+}
+
 class TimerCallbackData {
 public:
     TimerCallbackData(MiracastSourceClient *delegate) :
