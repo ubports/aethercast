@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
+
 #include <mcs/streaming/mpegtspacketizer.h>
 
 namespace {
@@ -28,14 +30,77 @@ static const uint8_t csd0[] = {
     // PPS
     0x00, 0x00, 0x00, 0x01, 0x68, 0xce, 0x38, 0x80
 };
-static const uint8_t frame0[] = {
+static const uint8_t slice_header[] = {
     // Slice header comes first
     0x00, 0x00, 0x00, 0x01, 0x05, 0x88, 0x84, 0x21, 0xa0,
-    // Macro block header
-    0x0d, 0x00,
-    // Macro block
-    0x01, 0x2, 0x3, 0x4, 0x5, 0x6
 };
+
+mcs::video::Buffer::Ptr CreateFrame(int size) {
+    auto buffer = mcs::video::Buffer::Create(size + sizeof(slice_header));
+    ::memcpy(buffer->Data(), slice_header, sizeof(slice_header));
+    return buffer;
+}
+
+class MPEGTSPacketMatcher {
+public:
+    MPEGTSPacketMatcher(const mcs::video::Buffer::Ptr &buffer) :
+        buffer_(buffer) {
+    }
+
+    MPEGTSPacketMatcher(const MPEGTSPacketMatcher &other) :
+        buffer_(other.buffer_) {
+    }
+
+    void ExpectValid() {
+        EXPECT_EQ(0x47, buffer_->Data()[0]);
+    }
+
+    void ExpectPackets(int count) {
+        // One MPEGTS element has a constant length
+        EXPECT_EQ(kMPEGTSPacketLength * count, buffer_->Length());
+
+        // Split into multiple packets so that those can be process
+        // individually.
+        for (int n = 0; n < count; n++) {
+            auto packet = mcs::video::Buffer::Create(kMPEGTSPacketLength);
+            ::memcpy(packet->Data(), buffer_->Data() + (n * kMPEGTSPacketLength), kMPEGTSPacketLength);
+            packets_.push_back(MPEGTSPacketMatcher(packet));
+        }
+    }
+
+    void ExpectPID(uint16_t expected_pid) {
+        uint16_t pid = ((buffer_->Data()[1] ^ 0x40) << 8) | buffer_->Data()[2];
+        EXPECT_EQ(expected_pid, pid);
+    }
+
+    void ExpectPaddingBytesAndContinuityCounter(uint8_t counter) {
+        EXPECT_EQ(0x30 | counter, buffer_->Data()[3]);
+    }
+
+    void ExpectNoPaddingBytesAndContinuityCounter(uint8_t counter) {
+        EXPECT_EQ(0x10 | counter, buffer_->Data()[3]);
+    }
+
+    void ExpectData(uint8_t *data, size_t length) {
+        // What we have supplied into the packtizer should be now placed at the end of
+        // the element we got back from the packetizer.
+        EXPECT_EQ(0, memcmp(buffer_->Data() + (buffer_->Length() - length),
+                            data, length));
+    }
+
+    void ExpectByte(unsigned int n, uint8_t expected_byte) {
+        EXPECT_EQ(expected_byte, buffer_->Data()[n]);
+    }
+
+    MPEGTSPacketMatcher& At(int n) {
+        return packets_.at(n);
+    }
+
+private:
+    mcs::video::Buffer::Ptr buffer_;
+    std::vector<MPEGTSPacketMatcher> packets_;
+};
+
 }
 
 TEST(MPEGTSPacketizer, AddTrackWithoutAnythingSet) {
@@ -73,21 +138,95 @@ TEST(MPEGTSPacketizer, SubmitAndProcessCodecSpecificData) {
 
     packetizer->Packetize(id, buffer, &out);
 
-    EXPECT_NE(nullptr, out.get());
+    MPEGTSPacketMatcher matcher(out);
 
-    // One MPEGTS element has a constant length
-    EXPECT_EQ(kMPEGTSPacketLength, out->Length());
-    // .. and starts with a special byte
-    EXPECT_EQ(kMPEGTSStartByte, out->Data()[0]);
+    matcher.ExpectPackets(1);
+    matcher.At(0).ExpectPackets(1);
+    matcher.At(0).ExpectValid();
+    matcher.At(0).ExpectPID(0x1011);
+    matcher.At(0).ExpectPaddingBytesAndContinuityCounter(0);
+    matcher.At(0).ExpectData(buffer->Data(), buffer->Length());
 
-    // They encode the header with the
-    uint8_t expected_bytes[] = { 0x47, 0x50, 0x11, 0x30, 0x96, 0x00 };
+    EXPECT_GE(0, out->Timestamp());
+}
 
-    // What we have supplied into the packtizer should be now placed at the end of
-    // the element we got back from the packetizer.
-    EXPECT_EQ(0, memcmp(out->Data() + (out->Length() - buffer->Length()),
-                        buffer->Data(), buffer->Length()));
+TEST(MPEGTSPacketizer, EmitPCRandPATandPMT) {
+    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create();
+    auto id = packetizer->AddTrack(mcs::streaming::MPEGTSPacketizer::TrackFormat{"video/avc"});
 
-    std::cout << "length: " << out->Length() << std::endl;
-    std::cout << mcs::Utils::Hexdump(out->Data(), out->Length()) << std::endl;
+    mcs::video::Buffer::Ptr out;
+    auto buffer = CreateFrame(100);
+
+    packetizer->Packetize(id, buffer, &out, mcs::streaming::Packetizer::kEmitPCR |
+                          mcs::streaming::Packetizer::kEmitPATandPMT);
+
+    MPEGTSPacketMatcher matcher(out);
+
+    // We should have four packets now:
+    // 1. PAT
+    // 2. PMT
+    // 3. PCR
+    // 4. Actual TS packet
+    matcher.ExpectPackets(4);
+
+    matcher.At(0).ExpectValid();
+    matcher.At(0).ExpectPID(0);
+    matcher.At(0).ExpectNoPaddingBytesAndContinuityCounter(1);
+
+    matcher.At(1).ExpectValid();
+    matcher.At(1).ExpectPID(0x100);
+    matcher.At(1).ExpectNoPaddingBytesAndContinuityCounter(1);
+
+    matcher.At(2).ExpectValid();
+    matcher.At(2).ExpectPID(0x1000);
+    // It doesn't really set a continuity counter for the PCR
+    // TS packet so just compare the static value we expect here.
+    matcher.At(2).ExpectByte(3, 0x20);
+
+    matcher.At(3).ExpectValid();
+    matcher.At(3).ExpectPID(0x1011);
+    matcher.At(3).ExpectPaddingBytesAndContinuityCounter(0);
+    matcher.At(3).ExpectData(buffer->Data(), buffer->Length());
+
+    EXPECT_GE(0, out->Timestamp());
+}
+
+TEST(MPEGTSPacketizer, IncreasingContinuityCounter) {
+    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create();
+    auto id = packetizer->AddTrack(mcs::streaming::MPEGTSPacketizer::TrackFormat{"video/avc"});
+
+    // Make sure we looper over 15 here as that is used for the continuity counter
+    // for PAT/PMT and PCR but shouldn't be used here.
+    for (int n = 0; n < 20; n++) {
+        mcs::video::Buffer::Ptr out;
+        auto buffer = CreateFrame(100);
+
+        packetizer->Packetize(id, buffer, &out, mcs::streaming::Packetizer::kEmitPCR |
+                              mcs::streaming::Packetizer::kEmitPATandPMT);
+
+        MPEGTSPacketMatcher matcher(out);
+
+        matcher.ExpectPackets(4);
+
+        matcher.At(0).ExpectValid();
+        matcher.At(0).ExpectPID(0);
+        // Continuity counter starts a 1 and goes up to 15
+        matcher.At(0).ExpectNoPaddingBytesAndContinuityCounter((n + 1) % 16);
+
+        matcher.At(1).ExpectValid();
+        matcher.At(1).ExpectPID(0x100);
+        // Continuity counter starts a 1 and goes up to 15
+        matcher.At(1).ExpectNoPaddingBytesAndContinuityCounter((n + 1) % 16);
+
+        matcher.At(2).ExpectValid();
+        matcher.At(2).ExpectPID(0x1000);
+        // It doesn't really set a continuity counter for the PCR
+        // TS packet so just compare the static value we expect here.
+        matcher.At(2).ExpectByte(3, 0x20);
+
+        matcher.At(3).ExpectValid();
+        matcher.At(3).ExpectPID(0x1011);
+        matcher.At(3).ExpectPaddingBytesAndContinuityCounter(n);
+        matcher.At(3).ExpectData(buffer->Data(), buffer->Length());
+    }
 }
