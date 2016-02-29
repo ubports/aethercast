@@ -681,10 +681,6 @@ void NetworkManager::OnGroupInterfaceReady() {
         dhcp_client_ = w11tng::DhcpClient::Create(sp, ifname);
 }
 
-void NetworkManager::OnInterfaceDriverCommandResult(const std::string &result) {
-    boost::ignore_unused_variable_warning(result);
-}
-
 void NetworkManager::OnHostnameChanged() {
     MCS_DEBUG("");
     SyncDeviceConfiguration();

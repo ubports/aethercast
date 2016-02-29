@@ -64,7 +64,6 @@ public:
 
     void Connect(const NetworkDevice::Ptr &device, ResultCallback callback);
     void Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback);
-
     void DisconnectAll(ResultCallback callback);
 
     mcs::Error Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30});
