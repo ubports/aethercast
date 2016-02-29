@@ -27,15 +27,15 @@ configure_file(mcs/config.h.in mcs/config.h @ONLY)
 configure_file(w11tng/config.h.in w11tng/config.h @ONLY)
 
 set(HEADERS
-    mcs/ip_v4_address.h
-    mcs/keep_alive.h
-    mcs/mac_address.h
-    mcs/types.h
-    mcs/shared_gobject.h
-    mcs/keep_alive.h
+  mcs/ip_v4_address.h
+  mcs/keep_alive.h
+  mcs/mac_address.h
+  mcs/types.h
+  mcs/shared_gobject.h
+  mcs/keep_alive.h
+  mcs/config.h
 
-    mcs/config.h
-    w11tng/config.h
+  w11tng/config.h
 )
 
 set(SOURCES
@@ -83,13 +83,6 @@ set(SOURCES
   w11tng/hostname1stub.cpp
 )
 
-link_directories(
-  ${GLIB_LIBRARY_DIRS}
-  ${GIO_LIBRARY_DIRS}
-  ${GIO-UNIX_LIBRARY_DIRS}
-  ${WDS_LIBRARY_DIRS}
-)
-
 include_directories(
   ${Boost_INCLUDE_DIRS}
   ${GLIB_INCLUDE_DIRS}
@@ -106,12 +99,18 @@ add_library(aethercast-core ${SOURCES} ${HEADERS})
 add_executable(aethercast mcs/main.cpp)
 
 target_link_libraries(aethercast-core
+  ${Boost_LDFLAGS}
   ${Boost_LIBRARIES}
+  ${GLIB_LDFLAGS}
   ${GLIB_LIBRARIES}
+  ${GIO_LDFLAGS}
   ${GIO_LIBRARIES}
+  ${GIO-UNIX_LDFLAGS}
   ${GIO-UNIX_LIBRARIES}
+  ${GST_LDFLAGS}
   ${GST_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
+  ${WDS_LDFLAGS}
   ${WDS_LIBRARIES}
   -ldl
 )
