@@ -24,6 +24,8 @@ namespace mcs {
 class BaseSourceMediaManager : public wds::SourceMediaManager
 {
 public:
+    explicit BaseSourceMediaManager();
+
     void SetSinkRtpPorts(int port1, int port2) override;
     std::pair<int,int> GetSinkRtpPorts() const override;
     int GetLocalRtpPort() const override;
@@ -35,6 +37,7 @@ public:
     bool InitOptimalAudioFormat(const std::vector<wds::AudioCodec>& sink_supported_codecs) override;
     wds::AudioCodec GetOptimalAudioFormat() const override;
     void SendIDRPicture() override;
+    std::string GetSessionId() const override;
 
 protected:
     virtual void Configure() = 0;
@@ -43,6 +46,7 @@ protected:
     int sink_port1_;
     int sink_port2_;
     wds::H264VideoFormat format_;
+    unsigned int session_id_;
 };
 } // namespace mcs
 #endif
