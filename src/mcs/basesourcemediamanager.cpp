@@ -27,10 +27,6 @@ namespace {
 static unsigned int next_session_id = 0;
 }
 
-namespace {
-static unsigned int next_session_id = 0;
-}
-
 namespace mcs {
 BaseSourceMediaManager::BaseSourceMediaManager() :
     session_id_(++next_session_id) {
