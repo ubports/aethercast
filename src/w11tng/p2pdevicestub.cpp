@@ -356,9 +356,6 @@ bool P2PDeviceStub::Connect(const std::string &path) {
     auto builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 
     int32_t intent = 7;
-    if (mcs::Utils::IsEnvSet("GO_INTENT"))
-        intent = std::stoi(mcs::Utils::GetEnvValue("GO_INTENT"));
-
     MCS_DEBUG("Using GO intent %d", intent);
 
     g_variant_builder_add(builder, "{sv}", "peer", g_variant_new_object_path(path.c_str()));

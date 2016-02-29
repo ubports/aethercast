@@ -100,7 +100,6 @@ public:
     void OnManagerInterfaceCreationFailed() override;
 
     void OnInterfaceReady(const std::string &object_path) override;
-    void OnInterfaceDriverCommandResult(const std::string &result) override;
 
     void OnHostnameChanged() override;
 
