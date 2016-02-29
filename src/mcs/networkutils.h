@@ -18,6 +18,8 @@
 #ifndef NETWORKUTILS_H_
 #define NETWORKUTILS_H_
 
+#include <string>
+
 namespace mcs {
 class NetworkUtils
 {
@@ -29,6 +31,7 @@ public:
                              unsigned char prefixlen, const char *broadcast);
     static int ResetInterface(int index);
     static int BytesAvailableToRead(int fd);
+    static int SendDriverPrivateCommand(const std::string &ifname, const std::string &cmd);
 };
 } // namespace mcs
 #endif
