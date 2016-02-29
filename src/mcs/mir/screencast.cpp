@@ -18,7 +18,7 @@
 #include <boost/concept_check.hpp>
 
 #include "mcs/logger.h"
-#include "mcs/mir/streamconnector.h"
+#include "mcs/mir/screencast.h"
 
 namespace {
 static constexpr const char *kMirSocket{"/run/mir_socket"};
@@ -28,7 +28,7 @@ static constexpr const char *kMirConnectionName{"aethercast screencast client"};
 namespace mcs {
 namespace mir {
 
-std::string StreamConnector::DisplayModeToString(const DisplayMode &mode) {
+std::string Screencast::DisplayModeToString(const DisplayMode &mode) {
     switch (mode) {
     case DisplayMode::kExtend:
         return "extend";
@@ -40,11 +40,11 @@ std::string StreamConnector::DisplayModeToString(const DisplayMode &mode) {
     return "unknown";
 }
 
-StreamConnector::Ptr StreamConnector::Create(const StreamConnector::DisplayOutput &output) {
-    return std::shared_ptr<StreamConnector>(new StreamConnector(output));
+Screencast::Ptr Screencast::Create(const Screencast::DisplayOutput &output) {
+    return std::shared_ptr<Screencast>(new Screencast(output));
 }
 
-StreamConnector::StreamConnector(const StreamConnector::DisplayOutput &output) :
+Screencast::Screencast(const Screencast::DisplayOutput &output) :
     output_(output) {
     connection_ = mir_connect_sync(kMirSocket, kMirConnectionName);
     if (!mir_connection_is_valid(connection_)) {
@@ -145,7 +145,7 @@ StreamConnector::StreamConnector(const StreamConnector::DisplayOutput &output) :
     }
 }
 
-StreamConnector::~StreamConnector() {
+Screencast::~Screencast() {
     if (screencast_)
         mir_screencast_release_sync(screencast_);
 
@@ -153,14 +153,14 @@ StreamConnector::~StreamConnector() {
         mir_connection_release(connection_);
 }
 
-void StreamConnector::SwapBuffersSync() {
+void Screencast::SwapBuffersSync() {
     if (!buffer_stream_)
         return;
 
     mir_buffer_stream_swap_buffers_sync(buffer_stream_);
 }
 
-void StreamConnector::SwapBuffers() {
+void Screencast::SwapBuffers() {
     if (!buffer_stream_)
         return;
 
@@ -173,29 +173,29 @@ void StreamConnector::SwapBuffers() {
     }, nullptr);
 }
 
-bool StreamConnector::IsValid() const {
+bool Screencast::IsValid() const {
     return connection_ && screencast_ &&  buffer_stream_;
 }
 
-void* StreamConnector::NativeWindowHandle() const {
+void* Screencast::NativeWindowHandle() const {
     if (!buffer_stream_)
         return nullptr;
 
     return reinterpret_cast<void*>(mir_buffer_stream_get_egl_native_window(buffer_stream_));
 }
 
-void* StreamConnector::NativeDisplayHandle() const {
+void* Screencast::NativeDisplayHandle() const {
     if (!connection_)
         return nullptr;
 
     return mir_connection_get_egl_native_display(connection_);
 }
 
-StreamConnector::DisplayOutput StreamConnector::OutputMode() const {
+Screencast::DisplayOutput Screencast::OutputMode() const {
     return output_;
 }
 
-MirNativeBuffer* StreamConnector::CurrentBuffer() const {
+MirNativeBuffer* Screencast::CurrentBuffer() const {
     MirNativeBuffer *buffer = nullptr;
     mir_buffer_stream_get_current_buffer(buffer_stream_, &buffer);
     return buffer;

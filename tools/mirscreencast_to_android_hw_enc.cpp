@@ -24,7 +24,7 @@
 #include <string>
 
 #include <mcs/logger.h>
-#include <mcs/mir/streamconnector.h>
+#include <mcs/mir/screencast.h>
 #include <mcs/mir/streamrenderer.h>
 #include <mcs/android/h264encoder.h>
 
@@ -32,9 +32,9 @@ int main(int argc, char **argv) {
     (void) argc;
     (void) argv;
 
-    mcs::mir::StreamConnector::DisplayOutput output{mcs::mir::StreamConnector::DisplayMode::kMirror, 0, 0, 0};
+    mcs::mir::Screencast::DisplayOutput output{mcs::mir::Screencast::DisplayMode::kMirror, 0, 0, 0};
 
-    auto connector = mcs::mir::StreamConnector::Create(output);
+    auto connector = mcs::mir::Screencast::Create(output);
     if (!connector->IsValid()) {
         MCS_ERROR("Failed to setup Mir stream connector");
         return -EIO;

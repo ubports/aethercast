@@ -54,9 +54,9 @@ bool SourceMediaManager::Configure() {
     // FIXME we don't support any other mode than extend for now as that means some
     // additional work from mir to still give us properly sized frames we can hand
     // to the encoder.
-    StreamConnector::DisplayOutput output{StreamConnector::DisplayMode::kExtend, rr.width, rr.height};
+    Screencast::DisplayOutput output{Screencast::DisplayMode::kExtend, rr.width, rr.height};
 
-    connector_ = mcs::mir::StreamConnector::Create(output);
+    connector_ = mcs::mir::Screencast::Create(output);
     if (!connector_->IsValid())
         return false;
 

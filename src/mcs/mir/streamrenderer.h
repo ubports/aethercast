@@ -24,7 +24,7 @@
 #include <queue>
 
 #include "mcs/mir/streamrenderer.h"
-#include "mcs/mir/streamconnector.h"
+#include "mcs/mir/screencast.h"
 
 #include "mcs/video/baseencoder.h"
 #include "mcs/video/bufferqueue.h"
@@ -38,7 +38,7 @@ public:
 
     typedef std::shared_ptr<StreamRenderer> Ptr;
 
-    static Ptr Create(const StreamConnector::Ptr &connector, const video::BaseEncoder::Ptr &encoder);
+    static Ptr Create(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder);
 
     ~StreamRenderer();
 
@@ -50,12 +50,12 @@ public:
     void OnBufferFinished(const mcs::video::Buffer::Ptr &buffer);
 
 private:
-    StreamRenderer(const StreamConnector::Ptr &connector, const video::BaseEncoder::Ptr &encoder);
+    StreamRenderer(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder);
 
     void RenderThread();
 
 private:
-    StreamConnector::Ptr connector_;
+    Screencast::Ptr connector_;
     video::BaseEncoder::Ptr encoder_;
     std::thread render_thread_;
     bool running_;

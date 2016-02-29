@@ -27,9 +27,9 @@
 namespace mcs {
 namespace mir {
 
-class StreamConnector {
+class Screencast {
 public:
-    typedef std::shared_ptr<StreamConnector> Ptr;
+    typedef std::shared_ptr<Screencast> Ptr;
 
     enum class DisplayMode {
         kMirror,
@@ -47,7 +47,7 @@ public:
 
     static Ptr Create(const DisplayOutput &output);
 
-    ~StreamConnector();
+    ~Screencast();
 
     void SwapBuffers();
     void SwapBuffersSync();
@@ -61,7 +61,7 @@ public:
     MirNativeBuffer* CurrentBuffer() const;
 
 private:
-    StreamConnector(const DisplayOutput &output);
+    Screencast(const DisplayOutput &output);
 
 private:
     MirConnection *connection_;

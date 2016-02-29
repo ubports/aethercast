@@ -33,7 +33,7 @@
 
 #include "mcs/video/statistics.h"
 
-#include "mcs/mir/streamconnector.h"
+#include "mcs/mir/screencast.h"
 #include "mcs/mir/streamrenderer.h"
 
 namespace {
@@ -44,11 +44,11 @@ static constexpr unsigned int kNumBufferSlots{2};
 namespace mcs {
 namespace mir {
 
-StreamRenderer::Ptr StreamRenderer::Create(const StreamConnector::Ptr &connector, const video::BaseEncoder::Ptr &encoder) {
+StreamRenderer::Ptr StreamRenderer::Create(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder) {
     return std::shared_ptr<StreamRenderer>(new StreamRenderer(connector, encoder));
 }
 
-StreamRenderer::StreamRenderer(const StreamConnector::Ptr &connector, const video::BaseEncoder::Ptr &encoder) :
+StreamRenderer::StreamRenderer(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder) :
     connector_(connector),
     encoder_(encoder),
     running_(false),

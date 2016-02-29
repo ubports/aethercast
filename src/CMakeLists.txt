@@ -79,7 +79,7 @@ set(SOURCES
   mcs/streaming/mediasender.cpp
 
   mcs/mir/sourcemediamanager.cpp
-  mcs/mir/streamconnector.cpp
+  mcs/mir/screencast.cpp
   mcs/mir/streamrenderer.cpp
 
   mcs/android/h264encoder.cpp

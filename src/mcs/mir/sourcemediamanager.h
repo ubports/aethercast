@@ -26,7 +26,7 @@
 
 #include "mcs/streaming/mediasender.h"
 
-#include "mcs/mir/streamconnector.h"
+#include "mcs/mir/screencast.h"
 #include "mcs/mir/streamrenderer.h"
 
 namespace mcs {
@@ -68,7 +68,7 @@ private:
     std::string remote_address_;
     State state_;
     mcs::video::BaseEncoder::Ptr encoder_;
-    mcs::mir::StreamConnector::Ptr connector_;
+    mcs::mir::Screencast::Ptr connector_;
     mcs::mir::StreamRenderer::Ptr renderer_;
     mcs::streaming::MediaSender::Ptr sender_;
 };
