@@ -22,7 +22,7 @@
 #include "logging.h"
 
 namespace mcs {
-std::shared_ptr<MiracastSourceManager> MiracastSourceManager::Create(const IpV4Address &address, unsigned short port) {
+std::shared_ptr<MiracastSourceManager> MiracastSourceManager::Create(const mcs::IpV4Address &address, unsigned short port) {
     auto sp = std::shared_ptr<MiracastSourceManager>{new MiracastSourceManager{}};
     sp->Setup(address, port);
     return sp;
@@ -49,7 +49,7 @@ void MiracastSourceManager::ResetDelegate() {
     delegate_.reset();
 }
 
-bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short port) {
+bool MiracastSourceManager::Setup(const mcs::IpV4Address &address, unsigned short port) {
     GError *error = nullptr;
 
     if (socket_)
@@ -97,8 +97,9 @@ bool MiracastSourceManager::Setup(const IpV4Address &address, unsigned short por
 
     g_source_unref(source);
 
-    DEBUG("Successfully setup source on %s:%d and awaiting incoming connection requests",
-          address.to_string(), port);
+    DEBUG("Successfully setup source on %s:%d and awaiting incoming connection requests", address.to_string(), port);
+
+    local_address_ = address;
 
     socket_.swap(socket);
 
@@ -132,7 +133,7 @@ gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  c
         return TRUE;
     }
 
-    inst->active_sink_ = MiracastSourceClient::Create(ScopedGObject<GSocket>{client_socket});
+    inst->active_sink_ = MiracastSourceClient::Create(ScopedGObject<GSocket>{client_socket}, inst->local_address_);
     inst->active_sink_->SetDelegate(inst->shared_from_this());
 
     return TRUE;

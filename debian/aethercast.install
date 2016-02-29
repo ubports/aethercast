@@ -1,1 +1,6 @@
 debian/usr.sbin.aethercast /etc/apparmor.d/dhcpd.d/
+usr/sbin/aethercast
+usr/bin/aethercastctl
+etc/init/aethercast.conf
+etc/aethercast/dhcpd.conf
+etc/dbus-1/system.d/aethercast-dbus.conf

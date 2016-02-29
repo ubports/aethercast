@@ -32,6 +32,7 @@
 #include "networkdevice.h"
 #include "non_copyable.h"
 #include "types.h"
+#include "systemcontroller.h"
 
 namespace mcs {
 class MiracastService : public MiracastController,
@@ -64,7 +65,9 @@ public:
     void Connect(const NetworkDevice::Ptr &device, ResultCallback callback);
     void Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback);
 
-    void Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30});
+    void DisconnectAll(ResultCallback callback);
+
+    mcs::Error Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30});
 
     NetworkDeviceState State() const;
     std::vector<NetworkManager::Capability> Capabilities() const;
@@ -104,6 +107,7 @@ private:
     guint scan_timeout_source_;
     ResultCallback current_scan_callback_;
     std::vector<NetworkDeviceRole> supported_roles_;
+    mcs::SystemController::Ptr system_controller_;
 };
 } // namespace mcs
 #endif

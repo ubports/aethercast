@@ -20,6 +20,9 @@
 #include <cstdint>
 
 #include <sys/prctl.h>
+#include <signal.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include <glib.h>
 #include <glib-unix.h>
@@ -31,6 +34,7 @@
 
 #include <wds/logging.h>
 
+#include "initgstreameronce.h"
 #include "config.h"
 #include "keep_alive.h"
 #include "logger.h"
@@ -45,6 +49,7 @@ namespace {
 const std::uint16_t kMiracastDefaultRtspCtrlPort{7236};
 const std::chrono::milliseconds kStateIdleTimeout{5000};
 const std::chrono::seconds kShutdownGracePreriod{1};
+const std::int16_t kProcessPriorityUrgentDisplay{-8};
 
 // SafeLog serves as integration point to the wds::LogSystem world.
 template <mcs::Logger::Severity severity>
@@ -94,6 +99,9 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
         return 0;
     }
 
+    if (options.debug)
+        mcs::Log().Init(mcs::Logger::Severity::kDebug);
+
     struct Runtime {
         static gboolean OnSignalRaised(gpointer user_data) {
             auto thiz = static_cast<Runtime*>(user_data);
@@ -121,6 +129,9 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
             // emissions.
             g_unix_signal_add(SIGINT, OnSignalRaised, this);
             g_unix_signal_add(SIGTERM, OnSignalRaised, this);
+
+            // Initialize gstreamer.
+            mcs::InitGstreamerOnceOrThrow();
 
             // Redirect all wds logging to our own.
             wds::LogSystem::set_vlog_func(SafeLog<mcs::Logger::Severity::kTrace>);
@@ -155,6 +166,9 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
             // Become a reaper of all our children
             if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0)
                 g_warning("Failed to make us a subreaper of our children");
+
+            // Raise our process priority to be as fast as possible
+            setpriority(PRIO_PROCESS, 0, kProcessPriorityUrgentDisplay);
 
             network_manager = mcs::NetworkManagerFactory::Create();
             service = mcs::MiracastService::Create(network_manager);
@@ -202,6 +216,8 @@ std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction(const Net
         network_manager_->Setup();
     }
 
+    system_controller_ = mcs::SystemController::CreatePlatformDefault();
+
     return shared_from_this();
 }
 
@@ -246,8 +262,6 @@ void MiracastService::OnClientDisconnected() {
 }
 
 void MiracastService::AdvanceState(NetworkDeviceState new_state) {
-    IpV4Address address;
-
     DEBUG("new state %s current state %s",
           mcs::NetworkDevice::StateToStr(new_state),
           mcs::NetworkDevice::StateToStr(current_state_));
@@ -256,13 +270,12 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     case kAssociation:
         break;
 
+    case kConfiguration:
+        break;
+
     case kConnected:
-        address = network_manager_->LocalAddress();
-
-        source_ = MiracastSourceManager::Create(address, kMiracastDefaultRtspCtrlPort);
-
+        source_ = MiracastSourceManager::Create(network_manager_->LocalAddress(), kMiracastDefaultRtspCtrlPort);
         FinishConnectAttempt();
-
         break;
 
     case kFailure:
@@ -271,6 +284,8 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
     case kDisconnected:
         source_.reset();
         current_device_.reset();
+
+        system_controller_->DisplayStateLock()->Release(mcs::DisplayState::On);
 
         StartIdleTimer();
         break;
@@ -358,6 +373,8 @@ void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback c
         callback(Error::kFailed);
         return;
     }
+
+    system_controller_->DisplayStateLock()->Acquire(mcs::DisplayState::On);
 
     current_device_ = device;
     connect_callback_ = callback;

@@ -54,7 +54,7 @@ add_definitions(-DQT_NO_KEYWORDS=1)
 
 include(cmake/FindReadline.cmake)
 
-find_package(Boost COMPONENTS filesystem log system thread)
+find_package(Boost COMPONENTS filesystem log system thread program_options)
 find_package(PkgConfig)
 find_package(Threads)
 
@@ -63,6 +63,9 @@ pkg_check_modules(GIO REQUIRED gio-2.0)
 pkg_check_modules(GIO-UNIX REQUIRED gio-unix-2.0)
 pkg_check_modules(GST REQUIRED gstreamer-1.0)
 pkg_check_modules(WDS REQUIRED wds)
+pkg_check_modules(MIRCLIENT REQUIRED mirclient)
+pkg_check_modules(HYBRIS_MEDIA REQUIRED libmedia)
+pkg_check_modules(ANDROID_HEADERS REQUIRED android-headers)
 
 # Build with system gmock and embedded gtest
 set (GMOCK_INCLUDE_DIR "/usr/include/gmock/include" CACHE PATH "gmock source include directory")
@@ -78,3 +81,4 @@ find_program(GDBUS_CODEGEN_EXECUTABLE NAMES gdbus-codegen)
 add_subdirectory(conf)
 add_subdirectory(src)
 add_subdirectory(tests)
+add_subdirectory(tools)

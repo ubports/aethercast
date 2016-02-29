@@ -23,7 +23,11 @@
 #include <string>
 #include <vector>
 
+#define MCS_STR_VALUE(str) #str
+
 namespace mcs {
+typedef int64_t TimestampNs;
+typedef int64_t TimestampUs;
 struct Utils
 {
     // Merely used as a namespace.
@@ -39,9 +43,25 @@ struct Utils
     template<typename... Types>
     static std::string Sprintf(const std::string& fmt_str, Types&&... args);
     // GetEnv - returns a variable value from the environment
-    static std::string GetEnvValue(const std::string &name);
+    static std::string GetEnvValue(const std::string &name, const std::string &default_value = "");
     // CreateFile - create an empty file at the specified path
     static bool CreateFile(const std::string &file_path);
+    // IsEnvSet - check if an environment variable is set or not
+    static bool IsEnvSet(const std::string &name);
+    // GetNowNs - get a timestamp in nanoseconds
+    static uint64_t GetNowNs();
+    // GetNowUs - get a timestamp in microseconds
+    static uint64_t GetNowUs();
+    // Hexdump - dump a byte array as string
+    static std::string Hexdump(const uint8_t *data, uint32_t size);
+    // SetThreadName - set the name thread this is running in
+    static void SetThreadName(const std::string &name);
+
+    // CreateUniquePtrWithDeleter - create a std::unique_ptr with a custom deleter
+    template <typename Owned, typename Deleter>
+    inline std::unique_ptr<Owned, Deleter> CreateUniquePtrWithDeleter(Owned* owned, Deleter&& deleter) {
+        return {owned, deleter};
+    }
 };
 
 namespace impl {

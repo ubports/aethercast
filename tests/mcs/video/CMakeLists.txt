@@ -1,0 +1,3 @@
+AETHERCAST_ADD_TEST(h264analyzer_tests h264analyzer_tests.cpp)
+AETHERCAST_ADD_TEST(buffer_tests buffer_tests.cpp)
+AETHERCAST_ADD_TEST(videoformat_tests videoformat_tests.cpp)

@@ -15,12 +15,16 @@
  *
  */
 
+#include <sstream>
+
 #include <gst/gst.h>
 
 #include "logger.h"
 #include "testsourcemediamanager.h"
 #include "utils.h"
 #include "logging.h"
+
+#include "mcs/video/videoformat.h"
 
 namespace mcs {
 std::shared_ptr<TestSourceMediaManager> TestSourceMediaManager::create(const std::string &remote_address) {
@@ -35,13 +39,34 @@ TestSourceMediaManager::~TestSourceMediaManager() {
 }
 
 SharedGObject<GstElement> TestSourceMediaManager::ConstructPipeline(const wds::H264VideoFormat &format) {
-    auto config = Utils::Sprintf("videotestsrc ! videoconvert ! video/x-raw,format=I420 ! x264enc ! mpegtsmux ! rtpmp2tpay ! udpsink name=sink host=%s port=%d",
-                                     remote_address_.c_str(), sink_port1_);
+    auto profile = mcs::video::ExtractH264Profile(format);
+    auto rr = mcs::video::ExtractRateAndResolution(format);
+
+#if 0
+    std::stringstream ss;
+    ss << Utils::Sprintf("videotestsrc ! video/x-raw,format=I420,framerate=%d/1,width=%d,height=%d,pixel-aspect-ratio=1/1 ! ", rr.framerate, rr.width, rr.height);
+    ss << "x264enc tune=zerolatency byte-stream=true ! ";
+    ss << Utils::Sprintf("video/x-h264,profile=%s ! ", profile.c_str());
+    ss << "mpegtsmux ! rtpmp2tpay ! ";
+    ss << Utils::Sprintf("udpsink name=sink host=%s port=%d", remote_address_.c_str(), sink_port1_);
+#else
+    std::stringstream ss;
+    ss << "ximagesrc ! ";
+    ss << Utils::Sprintf("videoconvert ! video/x-raw,format=I420,framerate=%d/1,pixel-aspect-ratio=1/1 ! ", rr.framerate);
+    ss << Utils::Sprintf("videoscale ! video/x-raw,width=%d,height=%d ! ", rr.width, rr.height);
+    ss << "queue2 ! ";
+    ss << "x264enc byte-stream=true tune=zerolatency interlaced=false ! ";
+    ss << Utils::Sprintf("video/x-h264,profile=%s !", profile.c_str());
+    ss << "mpegtsmux ! rtpmp2tpay ! ";
+    ss << Utils::Sprintf("udpsink name=sink host=%s port=%d", remote_address_.c_str(), sink_port1_);
+#endif
+
+    DEBUG("pipeline: %s", ss.str());
 
     GError *error = nullptr;
-    GstElement *pipeline = gst_parse_launch(config.c_str(), &error);
+    GstElement *pipeline = gst_parse_launch(ss.str().c_str(), &error);
     if (error) {
-        WARNING("Failed to setup GStreamer pipeline: %s", error->message);
+        ERROR("Failed to setup GStreamer pipeline: %s", error->message);
         g_error_free(error);
         return nullptr;
     }

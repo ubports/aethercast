@@ -5,6 +5,7 @@ include_directories(
   ${GIO-UNIX_INCLUDE_DIRS}
   ${GST_INCLUDE_DIRS}
   ${WDS_INCLUDE_DIRS}
+  ${MIRCLIENT_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/src/mcs
   ${CMAKE_SOURCE_DIR}/tests
@@ -53,3 +54,4 @@ AETHERCAST_ADD_TEST(scoped_gobject_tests scoped_gobject_tests.cpp)
 
 add_subdirectory(w11tng)
 add_subdirectory(mcs)
+add_subdirectory(wds)

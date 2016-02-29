@@ -60,47 +60,64 @@ gboolean GstSourceMediaManager::OnGstBusEvent(GstBus *bus, GstMessage *message, 
         g_free (debug);
         break;
     default:
-        /* unhandled message */
+        DEBUG("");
         break;
     }
 
     return TRUE;
 }
 
-void GstSourceMediaManager::Configure() {
+bool GstSourceMediaManager::Configure() {
+    DEBUG("");
+
     pipeline_ = ConstructPipeline(format_);
+    if (!pipeline_)
+        return false;
 
     ScopedGObject<GstBus> bus{gst_pipeline_get_bus (GST_PIPELINE(pipeline_.get()))};
     bus_watch_id_ = gst_bus_add_watch(bus.get(), &GstSourceMediaManager::OnGstBusEvent, nullptr);
 
     // Prepare pipeline so we're ready to go as soon as needed
     gst_element_set_state(pipeline_.get(), GST_STATE_READY);
+
+    return true;
 }
 
 void GstSourceMediaManager::Play() {
     if (!pipeline_)
         return;
 
+    DEBUG("");
+
     gst_element_set_state(pipeline_.get(), GST_STATE_PLAYING);
+    gst_element_get_state(pipeline_.get(), nullptr, nullptr, GST_CLOCK_TIME_NONE);
 }
 
 void GstSourceMediaManager::Pause() {
     if (!pipeline_)
         return;
 
+    DEBUG("");
+
     gst_element_set_state(pipeline_.get(), GST_STATE_PAUSED);
+    gst_element_get_state(pipeline_.get(), nullptr, nullptr, GST_CLOCK_TIME_NONE);
 }
 
 void GstSourceMediaManager::Teardown() {
     if (!pipeline_)
         return;
 
+    DEBUG("");
+
     gst_element_set_state(pipeline_.get(), GST_STATE_READY);
+    gst_element_get_state(pipeline_.get(), nullptr, nullptr, GST_CLOCK_TIME_NONE);
 }
 
 bool GstSourceMediaManager::IsPaused() const {
     if (!pipeline_)
         return true;
+
+    DEBUG("");
 
     GstState state;
     gst_element_get_state(pipeline_.get(), &state, nullptr, GST_CLOCK_TIME_NONE);

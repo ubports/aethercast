@@ -31,8 +31,9 @@
 #include <wds/source.h>
 #include <wds/media_manager.h>
 
-#include "non_copyable.h"
-#include "scoped_gobject.h"
+#include "mcs/ip_v4_address.h"
+#include "mcs/non_copyable.h"
+#include "mcs/scoped_gobject.h"
 
 namespace mcs {
 class TimerCallbackData;
@@ -45,7 +46,7 @@ public:
         virtual void OnConnectionClosed() = 0;
     };
 
-    static std::shared_ptr<MiracastSourceClient> Create(ScopedGObject<GSocket>&& socket);
+    static std::shared_ptr<MiracastSourceClient> Create(ScopedGObject<GSocket>&& socket, const mcs::IpV4Address &local_address);
 
     ~MiracastSourceClient();
 
@@ -57,6 +58,7 @@ public:
     std::string GetLocalIPAddress() const override;
     uint CreateTimer(int seconds) override;
     void ReleaseTimer(uint timerId) override;
+    int GetNextCSeq(int* initial_peer_cseq = nullptr) const override;
 
 public:
     static gboolean OnTimeout(gpointer user_data);
@@ -65,7 +67,7 @@ public:
                                      gpointer user_data);
 
 private:
-    MiracastSourceClient(ScopedGObject<GSocket>&& socket);
+    MiracastSourceClient(ScopedGObject<GSocket>&& socket, const mcs::IpV4Address &local_address);
     std::shared_ptr<MiracastSourceClient> FinalizeConstruction();
 
     void DumpRtsp(const std::string &prefix, const std::string &data);
@@ -75,7 +77,7 @@ private:
     std::weak_ptr<Delegate> delegate_;
     ScopedGObject<GSocket> socket_;
     guint socket_source_;
-    std::string local_address_;
+    mcs::IpV4Address local_address_;
     std::vector<guint> timers_;
     std::unique_ptr<wds::Source> source_;
     std::shared_ptr<wds::SourceMediaManager> media_manager_;

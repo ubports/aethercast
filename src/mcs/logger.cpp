@@ -15,6 +15,8 @@
  *
  */
 
+#include <thread>
+
 #include "logger.h"
 
 #define BOOST_LOG_DYN_LINK
@@ -34,7 +36,14 @@ BOOST_LOG_ATTRIBUTE_KEYWORD(Timestamp, "Timestamp", boost::posix_time::ptime)
 }
 
 struct BoostLogLogger : public mcs::Logger {
-    BoostLogLogger() {
+    BoostLogLogger() :
+        initialized_(false) {
+    }
+
+    void Init(const mcs::Logger::Severity &severity = mcs::Logger::Severity::kWarning) override {
+        if (initialized_)
+            return;
+
         boost::log::formatter formatter = boost::log::expressions::stream
             << "[" << attrs::Severity << " "
             << boost::log::expressions::format_date_time< boost::posix_time::ptime >("Timestamp", "%Y-%m-%d %H:%M:%S")
@@ -48,10 +57,16 @@ struct BoostLogLogger : public mcs::Logger {
         boost::log::core::get()->remove_all_sinks();
         auto logger = boost::log::add_console_log(std::cout);
         logger->set_formatter(formatter);
-        // logger->set_filter(attrs::Severity < mcs::Logger::Severity::kInfo);
+
+        // logger->set_filter(attrs::Severity < severity);
+
+        initialized_ = true;
     }
 
     void Log(Severity severity, const std::string& message, const boost::optional<Location> &loc) {
+        if (!initialized_)
+            Init();
+
         if (auto rec = boost::log::trivial::logger::get().open_record()) {
             boost::log::record_ostream out{rec};
             out << boost::log::add_value(attrs::Severity, severity)
@@ -68,6 +83,9 @@ struct BoostLogLogger : public mcs::Logger {
             boost::log::trivial::logger::get().push_record(std::move(rec));
         }
     }
+
+private:
+    bool initialized_;
 };
 
 std::shared_ptr<mcs::Logger>& MutableInstance() {

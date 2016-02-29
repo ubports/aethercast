@@ -27,15 +27,18 @@ configure_file(mcs/config.h.in mcs/config.h @ONLY)
 configure_file(w11tng/config.h.in w11tng/config.h @ONLY)
 
 set(HEADERS
-    mcs/ip_v4_address.h
-    mcs/keep_alive.h
-    mcs/mac_address.h
-    mcs/types.h
-    mcs/shared_gobject.h
-    mcs/keep_alive.h
+  mcs/ip_v4_address.h
+  mcs/keep_alive.h
+  mcs/mac_address.h
+  mcs/types.h
+  mcs/shared_gobject.h
+  mcs/keep_alive.h
+  mcs/config.h
 
-    mcs/config.h
-    w11tng/config.h
+  mcs/streaming/packetizer.h
+  mcs/streaming/transportsender.h
+
+  w11tng/config.h
 )
 
 set(SOURCES
@@ -43,11 +46,11 @@ set(SOURCES
   mcs/networkutils.cpp
   mcs/mediamanagerfactory.cpp
   mcs/basesourcemediamanager.cpp
+  mcs/initgstreameronce.cpp
   mcs/gstsourcemediamanager.cpp
   mcs/testsourcemediamanager.cpp
   mcs/x11sourcemediamanager.cpp
   mcs/logger.cpp
-  mcs/mirsourcemediamanager.cpp
   mcs/forwardingmiracastcontroller.cpp
   mcs/forwardingnetworkdevice.cpp
   mcs/miracastcontroller.cpp
@@ -58,10 +61,34 @@ set(SOURCES
   mcs/networkmanager.cpp
   mcs/networkmanagerfactory.cpp
   mcs/networkdevice.cpp
-
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/aethercastinterface.c
   mcs/dbushelpers.cpp
   mcs/networkdeviceskeleton.cpp
+
+  mcs/video/videoformat.cpp
+  mcs/video/buffer.cpp
+  mcs/video/bufferqueue.cpp
+  mcs/video/utils.cpp
+  mcs/video/utils_from_android.cpp
+  mcs/video/baseencoder.cpp
+  mcs/video/h264analyzer.cpp
+  mcs/video/statistics.cpp
+
+  mcs/streaming/mpegtspacketizer.cpp
+  mcs/streaming/rtpsender.cpp
+  mcs/streaming/mediasender.cpp
+
+  mcs/mir/sourcemediamanager.cpp
+  mcs/mir/streamconnector.cpp
+  mcs/mir/streamrenderer.cpp
+
+  mcs/android/h264encoder.cpp
+
+  mcs/systemcontroller.cpp
+
+  mcs/ubuntu/unity.cpp
+  mcs/ubuntu/systemcontroller.cpp
+  mcs/ubuntu/unitydisplaylock.cpp
 
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/wpasupplicantinterface.c
   w11tng/networkmanager.cpp
@@ -83,13 +110,6 @@ set(SOURCES
   w11tng/hostname1stub.cpp
 )
 
-link_directories(
-  ${GLIB_LIBRARY_DIRS}
-  ${GIO_LIBRARY_DIRS}
-  ${GIO-UNIX_LIBRARY_DIRS}
-  ${WDS_LIBRARY_DIRS}
-)
-
 include_directories(
   ${Boost_INCLUDE_DIRS}
   ${GLIB_INCLUDE_DIRS}
@@ -97,6 +117,11 @@ include_directories(
   ${GIO-UNIX_INCLUDE_DIRS}
   ${GST_INCLUDE_DIRS}
   ${WDS_INCLUDE_DIRS}
+  ${HYBRIS_MEDIA_INCLDUE_DIRS}
+  ${ANDROID_HEADERS_INCLUDE_DIRS}
+  ${MIRCLIENT_INCLUDE_DIRS}
+  ${EGL_INCLUDE_DIRS}
+  ${GLESV2_INCLUDE_DIRS}
   ${CMAKE_CURRENT_BINARY_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}/src/w11tng
 )
@@ -106,13 +131,29 @@ add_library(aethercast-core ${SOURCES} ${HEADERS})
 add_executable(aethercast mcs/main.cpp)
 
 target_link_libraries(aethercast-core
+  ${Boost_LDFLAGS}
   ${Boost_LIBRARIES}
+  ${GLIB_LDFLAGS}
   ${GLIB_LIBRARIES}
+  ${GIO_LDFLAGS}
   ${GIO_LIBRARIES}
+  ${GIO-UNIX_LDFLAGS}
   ${GIO-UNIX_LIBRARIES}
+  ${GST_LDFLAGS}
   ${GST_LIBRARIES}
+  ${GST_APP_LDFLAGS}
+  ${GST_APP_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
+  ${WDS_LDFLAGS}
   ${WDS_LIBRARIES}
+  ${HYBRIS_MEDIA_LDFLAGS}
+  ${HYBRIS_MEDIA_LIBRARIES}
+  ${MIRCLIENT_LDFLAGS}
+  ${MIRCLIENT_LIBRARIES}
+  ${EGL_LDFLAGS}
+  ${EGL_LIBRARIES}
+  ${GLESV2_LDFLAGS}
+  ${GLESV2_LIBRARIES}
   -ldl
 )
 
