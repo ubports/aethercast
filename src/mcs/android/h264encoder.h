@@ -29,15 +29,18 @@
 #include "mcs/video/baseencoder.h"
 #include "mcs/video/bufferqueue.h"
 
+#include "mcs/android/mediaapi.h"
+
 namespace mcs {
 namespace android {
+
 class H264Encoder : public video::BaseEncoder {
 public:
     typedef std::shared_ptr<H264Encoder> Ptr;
 
     static BaseEncoder::Config DefaultConfiguration();
 
-    static Ptr Create();
+    static Ptr Create(const MediaAPI::Ptr &api = MediaAPI::CreateDefault());
 
     ~H264Encoder();
 
@@ -56,7 +59,7 @@ public:
     void SendIDRFrame() override;
 
 private:
-    H264Encoder();
+    H264Encoder(const MediaAPI::Ptr &api);
 
     void WorkerThread();
 
@@ -79,6 +82,7 @@ private:
     };
 
 private:
+    MediaAPI::Ptr api_;
     BaseEncoder::Config config_;
     MediaMessageWrapper *format_;
     MediaSourceWrapper *source_;
@@ -90,6 +94,7 @@ private:
     mcs::TimestampUs start_time_;
     uint32_t frame_count_;
 };
+
 } // namespace android
 } // namespace mcs
 

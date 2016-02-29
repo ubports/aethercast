@@ -82,6 +82,7 @@ set(SOURCES
   mcs/mir/screencast.cpp
   mcs/mir/streamrenderer.cpp
 
+  mcs/android/mediaapi.cpp
   mcs/android/h264encoder.cpp
 
   mcs/systemcontroller.cpp
