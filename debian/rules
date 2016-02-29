@@ -20,3 +20,7 @@ include /usr/share/dpkg/default.mk
 
 override_dh_auto_test:
 	# disable
+
+override_dh_install:
+	dh_install
+	dh_apparmor -paethercast --profile-name=usr.sbin.dhcpd
