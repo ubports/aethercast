@@ -105,7 +105,6 @@ set(SOURCES
   w11tng/dhcpserver.cpp
   w11tng/processexecutor.cpp
   w11tng/filemonitor.cpp
-  w11tng/netlinklistener.cpp
   w11tng/wififirmwareloader.cpp
   w11tng/hostname1stub.cpp
 )
