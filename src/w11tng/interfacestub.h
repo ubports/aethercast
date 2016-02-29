@@ -39,7 +39,7 @@ public:
 
     class Delegate : public mcs::NonCopyable {
     public:
-        virtual void OnInterfaceReady() = 0;
+        virtual void OnInterfaceReady(const std::string &object_path) = 0;
     };
 
     static Ptr Create(const std::string &object_path);

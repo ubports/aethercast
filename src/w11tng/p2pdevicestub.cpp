@@ -25,6 +25,40 @@
 
 namespace w11tng {
 
+std::string P2PDeviceStub::StatusToString(Status status) {
+    switch (status) {
+    case Status::SucccesAcceptedByUser:
+    case Status::Success:
+        return "Success";
+    case Status::InformationIsCurrentlyUnavailable:
+        return "Information is currently unavailable";
+    case Status::IncompatibleParameters:
+        return "Incompatible parameters";
+    case Status::LimitReached:
+        return "Limit reached";
+    case Status::InvalidParameter:
+        return "Invalid parameter";
+    case Status::UnableToAccommodateRequest:
+        return "Unable to accommodate request";
+    case Status::ProtcolErrorOrDisruptiveBehavior:
+        return "Protocol error or disruptive behavior";
+    case Status::NoCommonChannel:
+        return "No common channels";
+    case Status::UnknownP2PGroup:
+        return "Unknown P2P group";
+    case Status::BothGOIntent15:
+        return "Both P2P devices indicated an intent of 15 in group owner negotiation";
+    case Status::IncompatibleProvisioningMethod:
+        return "Incompatible provisioning method";
+    case Status::RejectByUser:
+        return "Rejected by user";
+    default:
+        break;
+    }
+
+    return "Failed: unknown error";
+}
+
 P2PDeviceStub::Ptr P2PDeviceStub::Create(const std::string &object_path, const std::weak_ptr<P2PDeviceStub::Delegate> &delegate) {
     return std::shared_ptr<P2PDeviceStub>(new P2PDeviceStub(delegate))->FinalizeConstruction(object_path);
 }
@@ -110,17 +144,32 @@ void P2PDeviceStub::OnGONegotiationSuccess(WpaSupplicantInterfaceP2PDevice *devi
     auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
 
     std::string peer_path;
+    GroupOwnerNegotiationResult result;
 
     mcs::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
-        if (name == "peer_object")
+        if (name == "status")
+            result.status = static_cast<Status>(g_variant_get_int32(g_variant_get_variant(value)));
+        else if (name == "peer_object")
             peer_path = g_variant_get_string(g_variant_get_variant(value), nullptr);
+        else if (name == "frequency")
+            result.oper_freq = g_variant_get_int32(g_variant_get_variant(value));
+        else if (name == "frequency_list") {
+            auto v = g_variant_get_variant(value);
+            for (int n = 0; n < g_variant_n_children(v); n++) {
+                Frequency freq = 0;
+                g_variant_get_child(v, n, "i", &freq);
+                result.frequencies.insert(freq);
+            }
+        }
+        else if (name == "wps_method")
+            result.wps_method = g_variant_get_string(g_variant_get_variant(value), nullptr);
     });
 
     if (peer_path.length() == 0)
         return;
 
     if (auto sp = inst->delegate_.lock())
-        sp->OnGroupOwnerNegotiationSuccess(peer_path);
+        sp->OnGroupOwnerNegotiationSuccess(peer_path, result);
 }
 
 void P2PDeviceStub::OnGONegotiationFailure(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data) {
@@ -129,20 +178,20 @@ void P2PDeviceStub::OnGONegotiationFailure(WpaSupplicantInterfaceP2PDevice *devi
     auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
 
     std::string peer_path;
-    int status = 0;
+    GroupOwnerNegotiationResult result;
 
     mcs::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
         if (name == "peer_object")
             peer_path = g_variant_get_string(g_variant_get_variant(value), nullptr);
         else if (name == "status")
-            status = g_variant_get_int32(g_variant_get_variant(value));
+            result.status = static_cast<Status>(g_variant_get_int32(g_variant_get_variant(value)));
     });
 
     if (peer_path.length() == 0)
         return;
 
     if (auto sp = inst->delegate_.lock())
-        sp->OnGroupOwnerNegotiationFailure(peer_path);
+        sp->OnGroupOwnerNegotiationFailure(peer_path, result);
 }
 
 void P2PDeviceStub::OnGroupStarted(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data) {
@@ -306,9 +355,16 @@ bool P2PDeviceStub::Connect(const std::string &path) {
 
     auto builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 
+    int32_t intent = 7;
+    if (mcs::Utils::IsEnvSet("GO_INTENT"))
+        intent = std::stoi(mcs::Utils::GetEnvValue("GO_INTENT"));
+
+    MCS_DEBUG("Using GO intent %d", intent);
+
     g_variant_builder_add(builder, "{sv}", "peer", g_variant_new_object_path(path.c_str()));
     // We support only WPS PBC for now
     g_variant_builder_add(builder, "{sv}", "wps_method", g_variant_new_string("pbc"));
+    g_variant_builder_add(builder, "{sv}", "go_intent", g_variant_new_int32(intent));
 
     auto arguments = g_variant_builder_end(builder);
 

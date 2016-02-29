@@ -47,7 +47,9 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>,
                        public w11tng::Hostname1Stub::Delegate {
 public:
     static constexpr const char *kBusName{"fi.w1.wpa_supplicant1"};
-    static constexpr unsigned int kConnectTimeout = 100;
+    // We take two minutes as timeout here which corresponds to what wpa
+    // takes for the group formation.
+    static constexpr unsigned int kConnectTimeout = 120;
 
     static mcs::NetworkManager::Ptr Create();
 
@@ -75,8 +77,8 @@ public:
     void OnDeviceFound(const std::string &path) override;
     void OnDeviceLost(const std::string &path) override;
     void OnPeerConnectFailed() override;
-    void OnGroupOwnerNegotiationFailure(const std::string &peer_path) override;
-    void OnGroupOwnerNegotiationSuccess(const std::string &peer_path) override;
+    void OnGroupOwnerNegotiationFailure(const std::string &peer_path, const P2PDeviceStub::GroupOwnerNegotiationResult &result) override;
+    void OnGroupOwnerNegotiationSuccess(const std::string &peer_path, const P2PDeviceStub::GroupOwnerNegotiationResult &result) override;
     void OnGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role) override;
     void OnGroupFinished(const std::string &group_path, const std::string &interface_path) override;
     void OnGroupRequest(const std::string &peer_path, int dev_passwd_id) override;
@@ -97,7 +99,8 @@ public:
     void OnManagerInterfaceRemoved(const std::string &path) override;
     void OnManagerInterfaceCreationFailed() override;
 
-    void OnInterfaceReady() override;
+    void OnInterfaceReady(const std::string &object_path) override;
+    void OnInterfaceDriverCommandResult(const std::string &result) override;
 
     void OnHostnameChanged() override;
 
@@ -128,10 +131,22 @@ private:
 
     void HandleConnectFailed();
 
+    void OnGroupInterfaceReady();
+    void OnManagementInterfaceReady();
+
+    enum class MiracastMode : int {
+        Off = 0,
+        Source = 1,
+        Sink = 2
+    };
+
+    std::string BuildMiracastModeCommand(MiracastMode mode);
+
 private:
     mcs::ScopedGObject<GDBusConnection> connection_;
     mcs::NetworkManager::Delegate *delegate_;
     std::shared_ptr<ManagerStub> manager_;
+    std::shared_ptr<InterfaceStub> mgmt_interface_;
     std::shared_ptr<P2PDeviceStub> p2p_device_;
     std::unordered_map<std::string,w11tng::NetworkDevice::Ptr> devices_;
     NetworkDevice::Ptr current_device_;

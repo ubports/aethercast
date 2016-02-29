@@ -21,6 +21,7 @@
 #include <chrono>
 #include <memory>
 #include <unordered_map>
+#include <set>
 
 #include <mcs/non_copyable.h>
 
@@ -41,14 +42,43 @@ class P2PDeviceStub : public std::enable_shared_from_this<P2PDeviceStub>{
 public:
     static constexpr const char *kBusName{"fi.w1.wpa_supplicant1"};
 
+    typedef int Frequency;
+    typedef std::set<Frequency> FrequencyList;
+
+    enum class Status {
+        Success = 0,
+        InformationIsCurrentlyUnavailable = 1,
+        IncompatibleParameters = 2,
+        LimitReached = 3,
+        InvalidParameter = 4,
+        UnableToAccommodateRequest = 5,
+        ProtcolErrorOrDisruptiveBehavior = 6,
+        NoCommonChannel = 7,
+        UnknownP2PGroup = 8,
+        BothGOIntent15 = 9,
+        IncompatibleProvisioningMethod = 10,
+        RejectByUser = 11,
+        SucccesAcceptedByUser = 12,
+        Unknown = 0xff
+    };
+
+    static std::string StatusToString(Status status);
+
+    struct GroupOwnerNegotiationResult {
+        Status status;
+        Frequency oper_freq;
+        FrequencyList frequencies;
+        std::string wps_method;
+    };
+
     class Delegate : public mcs::NonCopyable {
     public:
         virtual void OnDeviceFound(const std::string &path) = 0;
         virtual void OnDeviceLost(const std::string &path) = 0;
 
         virtual void OnPeerConnectFailed() = 0;
-        virtual void OnGroupOwnerNegotiationSuccess(const std::string &peer_path) = 0;
-        virtual void OnGroupOwnerNegotiationFailure(const std::string &peer_path) = 0;
+        virtual void OnGroupOwnerNegotiationSuccess(const std::string &peer_path, const GroupOwnerNegotiationResult &result) = 0;
+        virtual void OnGroupOwnerNegotiationFailure(const std::string &peer_path, const GroupOwnerNegotiationResult &result) = 0;
         virtual void OnGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role) = 0;
         virtual void OnGroupFinished(const std::string &group_path, const std::string &interface_path) = 0;
         virtual void OnGroupRequest(const std::string &peer_path, int dev_passwd_id) = 0;

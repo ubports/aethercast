@@ -43,7 +43,8 @@ public:
 
 class MockInterfaceStubDelegate : public w11tng::InterfaceStub::Delegate {
 public:
-    MOCK_METHOD0(OnInterfaceReady, void());
+    MOCK_METHOD1(OnInterfaceReady, void(const std::string&));
+    MOCK_METHOD1(OnInterfaceDriverCommandResult, void(const std::string&));
 };
 }
 
@@ -53,7 +54,7 @@ TEST_F(InterfaceStubFixture, ConstructionAndProperties) {
 
     auto delegate = std::make_shared<MockInterfaceStubDelegate>();
 
-    EXPECT_CALL(*delegate, OnInterfaceReady()).Times(1);
+    EXPECT_CALL(*delegate, OnInterfaceReady(::testing::_)).Times(1);
 
     auto stub = w11tng::InterfaceStub::Create("/interface_1");
     EXPECT_TRUE(!!stub);

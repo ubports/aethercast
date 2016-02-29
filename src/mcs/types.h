@@ -27,6 +27,7 @@ enum class Error {
     kFailed,
     kAlready,
     kParamInvalid,
+    kInvalidState,
     kUnknown
 };
 
@@ -40,6 +41,8 @@ static std::string ErrorToString(const Error &error) {
         return "Operation already in progress";
     case Error::kParamInvalid:
         return "Invalid parameters";
+    case Error::kInvalidState:
+        return "Invalid state";
     case Error::kUnknown:
     default:
         break;

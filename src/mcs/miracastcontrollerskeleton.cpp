@@ -119,6 +119,10 @@ void MiracastControllerSkeleton::OnNameAcquired(GDBusConnection *connection, con
                      G_CALLBACK(&MiracastControllerSkeleton::OnHandleScan), new WeakKeepAlive<MiracastControllerSkeleton>(inst),
                      [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(data); }, GConnectFlags(0));
 
+    g_signal_connect_data(inst->manager_obj_.get(), "handle-disconnect-all",
+                     G_CALLBACK(&MiracastControllerSkeleton::OnHandleDisconnectAll), new WeakKeepAlive<MiracastControllerSkeleton>(inst),
+                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(data); }, GConnectFlags(0));
+
     inst->SyncProperties();
 
     g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(inst->manager_obj_.get()),
@@ -142,9 +146,39 @@ gboolean MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *sk
 
     INFO("Scanning for remote devices");
 
-    inst->Scan();
+    auto error = inst->Scan();
+    if (error != mcs::Error::kNone) {
+        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "%s", mcs::ErrorToString(error).c_str());
+        return TRUE;
+    }
 
     g_dbus_method_invocation_return_value(invocation, nullptr);
+
+    return TRUE;
+}
+
+gboolean MiracastControllerSkeleton::OnHandleDisconnectAll(AethercastInterfaceManager *skeleton,
+                                                           GDBusMethodInvocation *invocation, gpointer user_data) {
+    boost::ignore_unused_variable_warning(skeleton);
+    auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
+
+    if (not inst) {
+        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");
+        return TRUE;
+    }
+
+    g_object_ref(invocation);
+    auto inv = make_shared_gobject(invocation);
+
+    inst->DisconnectAll([inv](mcs::Error error) {
+        if (error != Error::kNone) {
+            g_dbus_method_invocation_return_error(inv.get(), G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                  "%s", mcs::ErrorToString(error).c_str());
+            return;
+        }
+
+        g_dbus_method_invocation_return_value(inv.get(), nullptr);
+    });
 
     return TRUE;
 }

@@ -80,6 +80,8 @@ void DhcpClient::Start() {
         "-d",
         // Don't be verbose
         "-q",
+        // Force us to be IPv4 no matter what the default is
+        "-4",
         // Use the temporary lease file we used above to not interfere
         // with any other parts in the system which are using dhclient
         // as well. We also want a fresh lease file on every start.

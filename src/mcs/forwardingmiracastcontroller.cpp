@@ -42,8 +42,12 @@ void ForwardingMiracastController::Disconnect(const NetworkDevice::Ptr &device, 
     fwd_->Disconnect(device, callback);
 }
 
-void ForwardingMiracastController::Scan(const std::chrono::seconds &timeout) {
-    fwd_->Scan(timeout);
+void ForwardingMiracastController::DisconnectAll(ResultCallback callback) {
+    fwd_->DisconnectAll(callback);
+}
+
+mcs::Error ForwardingMiracastController::Scan(const std::chrono::seconds &timeout) {
+    return fwd_->Scan(timeout);
 }
 
 NetworkDeviceState ForwardingMiracastController::State() const {

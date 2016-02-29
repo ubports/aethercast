@@ -43,8 +43,8 @@ public:
     MOCK_METHOD1(OnDeviceFound, void(const std::string&));
     MOCK_METHOD1(OnDeviceLost, void(const std::string&));
     MOCK_METHOD0(OnPeerConnectFailed, void());
-    MOCK_METHOD1(OnGroupOwnerNegotiationSuccess, void(const std::string&));
-    MOCK_METHOD1(OnGroupOwnerNegotiationFailure, void(const std::string&));
+    MOCK_METHOD2(OnGroupOwnerNegotiationSuccess, void(const std::string&, const w11tng::P2PDeviceStub::GroupOwnerNegotiationResult&));
+    MOCK_METHOD2(OnGroupOwnerNegotiationFailure, void(const std::string&, const w11tng::P2PDeviceStub::GroupOwnerNegotiationResult &));
     MOCK_METHOD3(OnGroupStarted, void(const std::string&, const std::string&, const std::string&));
     MOCK_METHOD2(OnGroupFinished, void(const std::string&, const std::string&));
     MOCK_METHOD2(OnGroupRequest, void(const std::string&, int));
@@ -132,9 +132,9 @@ TEST_F(P2PDeviceStubFixture, AllOtherSignalsSuccessfullySent) {
 
     EXPECT_CALL(*delegate, OnP2PDeviceChanged()).Times(::testing::AtLeast(1));
     EXPECT_CALL(*delegate, OnP2PDeviceReady()).Times(1);
-    EXPECT_CALL(*delegate, OnGroupOwnerNegotiationSuccess(std::string("/peer_1")))
+    EXPECT_CALL(*delegate, OnGroupOwnerNegotiationSuccess(std::string("/peer_1"), ::testing::_))
             .Times(1);
-    EXPECT_CALL(*delegate, OnGroupOwnerNegotiationFailure(std::string("/peer_1")))
+    EXPECT_CALL(*delegate, OnGroupOwnerNegotiationFailure(std::string("/peer_1"), ::testing::_))
             .Times(1);
     EXPECT_CALL(*delegate, OnGroupStarted(std::string("/peer_1"), std::string("/interface_1"), std::string("GO")))
             .Times(1);

@@ -18,9 +18,11 @@
 #include <boost/concept_check.hpp>
 
 #include <algorithm>
+#include <sstream>
 
 #include <mcs/logger.h>
 #include <mcs/keep_alive.h>
+#include <mcs/networkutils.h>
 
 #include "networkmanager.h"
 #include "informationelement.h"
@@ -125,6 +127,9 @@ void NetworkManager::SetupInterface(const std::string &object_path) {
     if (p2p_device_)
         return;
 
+    mgmt_interface_ = InterfaceStub::Create(object_path);
+    mgmt_interface_->SetDelegate(shared_from_this());
+
     p2p_device_ = P2PDeviceStub::Create(object_path, shared_from_this());
 }
 
@@ -140,6 +145,9 @@ void NetworkManager::ReleaseInterface() {
 
     if (p2p_device_)
         p2p_device_.reset();
+
+    if (mgmt_interface_)
+        mgmt_interface_.reset();
 }
 
 void NetworkManager::SetDelegate(mcs::NetworkManager::Delegate *delegate) {
@@ -181,13 +189,13 @@ void NetworkManager::StartConnectTimeout() {
         if (not inst)
             return FALSE;
 
-        MCS_WARNING("Connect timeout happened");
+        MCS_WARNING("Reached a timeout while trying to connect with remote %s", inst->current_device_->Address());
 
         inst->connect_timeout_ = 0;
 
         // If the device is either already connected or trying to get an address
         // over DHCP we don't do anything. DHCP process will fail on its own after
-        // some time and we will react on this.
+        // some time and we will react on
         if (inst->current_device_->State() == mcs::kConnected ||
             inst->current_device_->State() == mcs::kConfiguration)
             return FALSE;
@@ -195,6 +203,7 @@ void NetworkManager::StartConnectTimeout() {
         inst->p2p_device_->Cancel();
 
         inst->AdvanceDeviceState(inst->current_device_, mcs::kFailure);
+
         inst->current_device_.reset();
 
         // We don't have an active group if we're not in connected or configuration
@@ -390,6 +399,12 @@ void NetworkManager::OnDeviceLost(const std::string &path) {
 void NetworkManager::AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::NetworkDeviceState state) {
     device->SetState(state);
 
+    if (state == mcs::kDisconnected) {
+        mcs::NetworkUtils::SendDriverPrivateCommand(mgmt_interface_->Ifname(),
+                                                    BuildMiracastModeCommand(MiracastMode::Off));
+        MCS_DEBUG("Disabled WiFi driver miracast mode");
+    }
+
     // When we're switching to be connected or disconnected we need to mark the
     // session as not being available to prevent anyone else to connect with us.
     if (state == mcs::kConnected || state == mcs::kDisconnected) {
@@ -416,20 +431,30 @@ void NetworkManager::OnPeerConnectFailed() {
     HandleConnectFailed();
 }
 
-void NetworkManager::OnGroupOwnerNegotiationFailure(const std::string &peer_path) {
+void NetworkManager::OnGroupOwnerNegotiationFailure(const std::string &peer_path, const P2PDeviceStub::GroupOwnerNegotiationResult &result) {
     if (!current_device_)
         return;
 
-    MCS_DEBUG("peer %s", peer_path);
+    MCS_DEBUG("Connecting with peer %s failed: %s", peer_path, P2PDeviceStub::StatusToString(result.status));
 
     HandleConnectFailed();
 }
 
-void NetworkManager::OnGroupOwnerNegotiationSuccess(const std::string &peer_path) {
+void NetworkManager::OnGroupOwnerNegotiationSuccess(const std::string &peer_path, const P2PDeviceStub::GroupOwnerNegotiationResult &result) {
     if (!current_device_)
         return;
 
-    MCS_DEBUG("peer %s", peer_path);
+    std::stringstream frequencies;
+    int n = 0;
+    for (auto freq : result.frequencies) {
+        frequencies << mcs::Utils::Sprintf("%d", freq);
+        if (n < result.frequencies.size() - 1)
+            frequencies << ",";
+    }
+
+    MCS_DEBUG("peer %s selected oper freq %d wps_method %s",
+              peer_path, result.oper_freq, result.wps_method);
+    MCS_DEBUG("intersect freqs [%s]", frequencies.str());
 }
 
 void NetworkManager::OnGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role) {
@@ -576,7 +601,7 @@ void NetworkManager::ConfigureFromCapabilities() {
     dev_info->session_management_control_port = htons(7236);
     dev_info->maximum_throughput = htons(50);
     dev_info->field1.device_type = device_type;
-    dev_info->field1.session_availability = true; //session_available_;
+    dev_info->field1.session_availability = session_available_;
     ie.add_subelement(sub_element);
 
     auto ie_data = ie.serialize();
@@ -621,13 +646,32 @@ void NetworkManager::OnManagerInterfaceCreationFailed() {
     interface_selector_->Process(manager_->Interfaces());
 }
 
-void NetworkManager::OnInterfaceReady() {
+void NetworkManager::OnInterfaceReady(const std::string &object_path) {
+    if (current_group_iface_ && object_path == current_group_iface_->ObjectPath())
+        OnGroupInterfaceReady();
+    else if (object_path == mgmt_interface_->ObjectPath())
+        OnManagementInterfaceReady();
+}
+
+void NetworkManager::OnManagementInterfaceReady() {
+}
+
+std::string NetworkManager::BuildMiracastModeCommand(MiracastMode mode) {
+    return mcs::Utils::Sprintf("MIRACAST %d", static_cast<int>(mode));
+}
+
+void NetworkManager::OnGroupInterfaceReady() {
     if (!current_device_ || current_device_->State() != mcs::kConfiguration)
         return;
 
     auto ifname = current_group_iface_->Ifname();
 
-    MCS_DEBUG("interface %s", ifname);
+    // Android WiFi drivers have a special mode build in when they should
+    // perform well for Miracast which we enable here. If the command is
+    // not available this is a no-op.
+    if (mcs::NetworkUtils::SendDriverPrivateCommand(mgmt_interface_->Ifname(),
+                                                    BuildMiracastModeCommand(MiracastMode::Source)) < 0)
+        MCS_WARNING("Failed to activate miracast mode of WiFi driver");
 
     auto sp = shared_from_this();
 
@@ -635,6 +679,10 @@ void NetworkManager::OnInterfaceReady() {
         dhcp_server_ = w11tng::DhcpServer::Create(sp, ifname);
     else
         dhcp_client_ = w11tng::DhcpClient::Create(sp, ifname);
+}
+
+void NetworkManager::OnInterfaceDriverCommandResult(const std::string &result) {
+    boost::ignore_unused_variable_warning(result);
 }
 
 void NetworkManager::OnHostnameChanged() {
