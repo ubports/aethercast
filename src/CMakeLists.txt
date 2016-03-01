@@ -35,6 +35,9 @@ set(HEADERS
   mcs/keep_alive.h
   mcs/config.h
 
+  mcs/common/executable.h
+  mcs/common/executor.h
+
   mcs/streaming/packetizer.h
   mcs/streaming/transportsender.h
 
@@ -64,6 +67,8 @@ set(SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/aethercastinterface.c
   mcs/dbushelpers.cpp
   mcs/networkdeviceskeleton.cpp
+
+  mcs/common/threadedexecutor.cpp
 
   mcs/video/videoformat.cpp
   mcs/video/buffer.cpp
