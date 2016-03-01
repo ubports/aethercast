@@ -123,7 +123,7 @@ video::BaseEncoder::Config H264Encoder::DefaultConfiguration() {
     return config;
 }
 
-H264Encoder::Ptr H264Encoder::Create(const MediaAPI::Ptr &api) {
+video::BaseEncoder::Ptr H264Encoder::Create(const MediaAPI::Ptr &api) {
     return std::shared_ptr<H264Encoder>(new H264Encoder(api));
 }
 
@@ -131,6 +131,7 @@ H264Encoder::H264Encoder(const MediaAPI::Ptr &api) :
     api_(api),
     format_(nullptr),
     encoder_(nullptr),
+    source_format_(nullptr),
     running_(false),
     input_queue_(mcs::video::BufferQueue::Create()),
     start_time_(-1ll),
@@ -148,6 +149,9 @@ H264Encoder::~H264Encoder() {
 
     if (format_)
         api_->MediaMessage_Release(format_);
+
+    if (source_format_)
+        api_->MediaMetaData_Release(source_format_);
 }
 
 bool H264Encoder::IsValid() const {
@@ -209,11 +213,18 @@ bool H264Encoder::Configure(const Config &config) {
     source_ = api_->MediaSource_Create();
     if (!source_) {
         MCS_ERROR("Failed to create media input source for encoder");
-        media_message_release(format);
+        api_->MediaMessage_Release(format);
         return false;
     }
 
     auto source_format = api_->MediaMetaData_Create();
+    if (!source_format) {
+        MCS_ERROR("Failed to create media meta data for encoder source");
+        api_->MediaMessage_Release(format);
+        api_->MediaSource_Release(source_);
+        source_ = nullptr;
+        return false;
+    }
 
     // Notice that we're passing video/raw as mime type here which is quite
     // important to let the encoder do the right thing with the incoming data
@@ -253,31 +264,37 @@ bool H264Encoder::Configure(const Config &config) {
     encoder_ = api_->MediaCodecSource_Create(format, source_, 0);
     if (!encoder_) {
         MCS_ERROR("Failed to create encoder instance");
+        api_->MediaMetaData_Release(source_format);
+        api_->MediaMessage_Release(format);
+        api_->MediaSource_Release(source_);
+        source_ = nullptr;
         return false;
     }
 
     config_ = config;
     format_ = format;
+    source_format_ = source_format;
 
     MCS_DEBUG("Configured encoder succesfully");
 
     return true;
 }
 
-void H264Encoder::Start() {
+bool H264Encoder::Start() {
     if (!encoder_ || running_)
-        return;
+        return false;
 
     if (!api_->MediaCodecSource_Start(encoder_)) {
         MCS_ERROR("Failed to start encoder");
-        return;
+        return false;
     }
 
     worker_thread_ = std::thread(&H264Encoder::WorkerThread, this);
-
     running_ = true;
 
     MCS_DEBUG("Started encoder");
+
+    return true;
 }
 
 int H264Encoder::OnSourceStart(MediaMetaDataWrapper *meta, void *user_data) {
@@ -430,18 +447,23 @@ void H264Encoder::WorkerThread() {
     }
 }
 
-void H264Encoder::Stop() {
+bool H264Encoder::Stop() {
     if (!encoder_ || !running_)
-        return;
+        return false;
 
     if (!api_->MediaCodecSource_Stop(encoder_))
-        return;
+        return false;
 
     running_ = false;
     worker_thread_.join();
+
+    return true;
 }
 
 void H264Encoder::QueueBuffer(const video::Buffer::Ptr &buffer) {
+    if (!running_)
+        return;
+
     input_queue_->Push(buffer);
 }
 

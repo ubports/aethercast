@@ -1,0 +1,1 @@
+AETHERCAST_ADD_TEST(h264encoder_tests h264encoder_tests.cpp)

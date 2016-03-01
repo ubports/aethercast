@@ -25,6 +25,7 @@
 
 #include "mcs/non_copyable.h"
 #include "mcs/utils.h"
+#include "mcs/common/threadpolicy.h"
 
 #include "mcs/video/baseencoder.h"
 #include "mcs/video/bufferqueue.h"
@@ -40,7 +41,7 @@ public:
 
     static BaseEncoder::Config DefaultConfiguration();
 
-    static Ptr Create(const MediaAPI::Ptr &api = MediaAPI::CreateDefault());
+    static BaseEncoder::Ptr Create(const MediaAPI::Ptr &api = MediaAPI::CreateDefault());
 
     ~H264Encoder();
 
@@ -48,11 +49,12 @@ public:
 
     bool Configure(const BaseEncoder::Config &config);
 
-    void Start() override;
-    void Stop() override;
+    bool Start() override;
+    bool Stop() override;
 
     void QueueBuffer(const mcs::video::Buffer::Ptr &buffer) override;
 
+    bool Running() const override { return running_; }
     void* NativeWindowHandle() const override;
     BaseEncoder::Config Configuration() const override;
 
@@ -87,6 +89,7 @@ private:
     MediaMessageWrapper *format_;
     MediaSourceWrapper *source_;
     MediaCodecSourceWrapper *encoder_;
+    MediaMetaDataWrapper *source_format_;
     bool running_;
     std::thread worker_thread_;
     mcs::video::BufferQueue::Ptr input_queue_;

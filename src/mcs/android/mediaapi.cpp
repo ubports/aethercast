@@ -62,10 +62,6 @@ public:
         return media_codec_source_release(source);
     }
 
-    MediaMetaDataWrapper* MediaCodecSource_GetFormat(MediaCodecSourceWrapper *source) override {
-        return media_codec_source_get_format(source);
-    }
-
     MediaNativeWindowHandle* MediaCodecSource_GetNativeWindowHandle(MediaCodecSourceWrapper *source) override {
         return media_codec_source_get_native_window_handle(source);
     }

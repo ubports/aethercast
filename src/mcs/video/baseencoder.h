@@ -89,14 +89,16 @@ public:
 
     virtual bool Configure(const Config &config) = 0;
 
-    virtual void Start() = 0;
-    virtual void Stop() = 0;
+    virtual bool Start() = 0;
+    virtual bool Stop() = 0;
 
     virtual void QueueBuffer(const mcs::video::Buffer::Ptr &buffer) = 0;
 
     virtual void* NativeWindowHandle() const = 0;
 
     virtual Config Configuration() const = 0;
+
+    virtual bool Running() const = 0;
 
     virtual void SendIDRFrame() = 0;
 

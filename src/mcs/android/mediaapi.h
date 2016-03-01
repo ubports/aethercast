@@ -47,7 +47,6 @@ public:
 
     virtual MediaCodecSourceWrapper* MediaCodecSource_Create(MediaMessageWrapper *format, MediaSourceWrapper *source, int flags) = 0;
     virtual void MediaCodecSource_Release(MediaCodecSourceWrapper *source) = 0;
-    virtual MediaMetaDataWrapper* MediaCodecSource_GetFormat(MediaCodecSourceWrapper *source) = 0;
     virtual MediaNativeWindowHandle* MediaCodecSource_GetNativeWindowHandle(MediaCodecSourceWrapper *source) = 0;
     virtual bool MediaCodecSource_Start(MediaCodecSourceWrapper *source) = 0;
     virtual bool MediaCodecSource_Stop(MediaCodecSourceWrapper *source) = 0;
