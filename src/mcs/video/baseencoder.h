@@ -61,7 +61,7 @@ public:
         unsigned int width;
         unsigned int height;
         unsigned int bitrate;
-        unsigned int framerate;
+        int framerate;
 
         // H.264 specifics
         unsigned int profile;
