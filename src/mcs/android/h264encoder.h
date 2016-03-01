@@ -25,7 +25,6 @@
 
 #include "mcs/non_copyable.h"
 #include "mcs/utils.h"
-#include "mcs/common/threadpolicy.h"
 
 #include "mcs/video/baseencoder.h"
 #include "mcs/video/bufferqueue.h"
