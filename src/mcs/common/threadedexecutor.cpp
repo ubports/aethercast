@@ -53,6 +53,9 @@ bool ThreadedExecutor::Start() {
     if (running_)
         return false;
 
+    if (!executable_->Start())
+        return false;
+
     running_ = true;
     thread_ = std::thread(&ThreadedExecutor::ThreadWorker, this);
 
@@ -61,6 +64,9 @@ bool ThreadedExecutor::Start() {
 
 bool ThreadedExecutor::Stop() {
     if (!running_)
+        return false;
+
+    if (!executable_->Stop())
         return false;
 
     running_ = false;

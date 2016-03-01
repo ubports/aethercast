@@ -25,12 +25,21 @@ using namespace ::testing;
 namespace {
 class MockExecutable : public mcs::common::Executable {
 public:
+    MOCK_METHOD0(Stop, bool());
+    MOCK_METHOD0(Start, bool());
     MOCK_METHOD0(Execute, bool());
 };
 }
 
 TEST(ThreadedExecutor, CorrectStartAndStopBehaviour) {
     auto executable = std::make_shared<MockExecutable>();
+
+    EXPECT_CALL(*executable, Start())
+            .Times(1)
+            .WillRepeatedly(Return(true));
+    EXPECT_CALL(*executable, Stop())
+            .Times(1)
+            .WillRepeatedly(Return(true));
 
     EXPECT_CALL(*executable, Execute())
             .Times(AtLeast(0))
@@ -52,6 +61,13 @@ TEST(ThreadedExecutor, CorrectlyExecutes) {
 
     unsigned int count = 0;
     bool running = true;
+
+    EXPECT_CALL(*executable, Start())
+            .Times(1)
+            .WillRepeatedly(Return(true));
+    EXPECT_CALL(*executable, Stop())
+            .Times(1)
+            .WillRepeatedly(Return(true));
 
     EXPECT_CALL(*executable, Execute())
             .Times(AtLeast(10))

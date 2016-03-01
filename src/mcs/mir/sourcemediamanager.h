@@ -22,6 +22,8 @@
 
 #include "mcs/basesourcemediamanager.h"
 
+#include "mcs/common/executor.h"
+
 #include "mcs/video/baseencoder.h"
 
 #include "mcs/streaming/mediasender.h"
@@ -68,6 +70,7 @@ private:
     std::string remote_address_;
     State state_;
     mcs::video::BaseEncoder::Ptr encoder_;
+    mcs::common::Executor::Ptr encoder_executor_;
     mcs::mir::Screencast::Ptr connector_;
     mcs::mir::StreamRenderer::Ptr renderer_;
     mcs::streaming::MediaSender::Ptr sender_;

@@ -21,12 +21,15 @@
 #include <memory>
 
 #include "mcs/non_copyable.h"
+
+#include "mcs/common/executable.h"
+
 #include "mcs/video/buffer.h"
 
 namespace mcs {
 namespace video {
 
-class BaseEncoder {
+class BaseEncoder : public common::Executable {
 public:
     typedef std::shared_ptr<BaseEncoder> Ptr;
 
@@ -88,9 +91,6 @@ public:
     virtual bool IsValid() const = 0;
 
     virtual bool Configure(const Config &config) = 0;
-
-    virtual bool Start() = 0;
-    virtual bool Stop() = 0;
 
     virtual void QueueBuffer(const mcs::video::Buffer::Ptr &buffer) = 0;
 

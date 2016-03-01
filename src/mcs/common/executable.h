@@ -29,6 +29,9 @@ public:
 
     virtual ~Executable() { }
 
+    virtual bool Start() = 0;
+    virtual bool Stop() = 0;
+
     // Run one iteration and then return. Returning true means executor
     // should continue to execute otherwise false means it should stop.
     virtual bool Execute() = 0;

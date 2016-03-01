@@ -26,6 +26,8 @@
 #include "mcs/non_copyable.h"
 #include "mcs/utils.h"
 
+#include "mcs/common/executable.h"
+
 #include "mcs/video/baseencoder.h"
 #include "mcs/video/bufferqueue.h"
 
@@ -48,9 +50,6 @@ public:
 
     bool Configure(const BaseEncoder::Config &config);
 
-    bool Start() override;
-    bool Stop() override;
-
     void QueueBuffer(const mcs::video::Buffer::Ptr &buffer) override;
 
     bool Running() const override { return running_; }
@@ -59,10 +58,13 @@ public:
 
     void SendIDRFrame() override;
 
+    // From mcs::common::Executable
+    bool Start() override;
+    bool Stop() override;
+    bool Execute() override;
+
 private:
     H264Encoder(const MediaAPI::Ptr &api);
-
-    void WorkerThread();
 
     bool DoesBufferContainCodecConfig(MediaBufferWrapper *buffer);
 
@@ -90,7 +92,6 @@ private:
     MediaCodecSourceWrapper *encoder_;
     MediaMetaDataWrapper *source_format_;
     bool running_;
-    std::thread worker_thread_;
     mcs::video::BufferQueue::Ptr input_queue_;
     std::vector<BufferItem> pending_buffers_;
     mcs::TimestampUs start_time_;

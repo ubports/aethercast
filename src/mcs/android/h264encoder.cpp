@@ -289,7 +289,6 @@ bool H264Encoder::Start() {
         return false;
     }
 
-    worker_thread_ = std::thread(&H264Encoder::WorkerThread, this);
     running_ = true;
 
     MCS_DEBUG("Started encoder");
@@ -417,34 +416,30 @@ bool H264Encoder::DoesBufferContainCodecConfig(MediaBufferWrapper *buffer) {
     return static_cast<bool>(is_codec_config);
 }
 
-void H264Encoder::WorkerThread() {
-    mcs::Utils::SetThreadName(kEncoderThreadName);
-
-    MCS_DEBUG("Encoder worker thread is running");
-
-    while (running_) {
-        MediaBufferWrapper *buffer = nullptr;
-        if (!api_->MediaCodecSource_Read(encoder_, &buffer)) {
-            MCS_ERROR("Failed to read a new buffer from encoder");
-            return;
-        }
-
-        auto mbuf = MediaSourceBuffer::Create(buffer, api_);
-
-        if (mbuf->Timestamp() > 0) {
-            int64_t now = mcs::Utils::GetNowUs();
-            int64_t diff = (now - mbuf->Timestamp()) / 1000ll;
-            video::Statistics::Instance()->RecordEncoderBufferOut(diff);
-        }
-
-        if (DoesBufferContainCodecConfig(buffer)) {
-            if (auto sp = delegate_.lock())
-                sp->OnBufferWithCodecConfig(mbuf);
-        }
-
-        if (auto sp = delegate_.lock())
-            sp->OnBufferAvailable(mbuf);
+bool H264Encoder::Execute() {
+    MediaBufferWrapper *buffer = nullptr;
+    if (!api_->MediaCodecSource_Read(encoder_, &buffer)) {
+        MCS_ERROR("Failed to read a new buffer from encoder");
+        return false;
     }
+
+    auto mbuf = MediaSourceBuffer::Create(buffer, api_);
+
+    if (mbuf->Timestamp() > 0) {
+        int64_t now = mcs::Utils::GetNowUs();
+        int64_t diff = (now - mbuf->Timestamp()) / 1000ll;
+        video::Statistics::Instance()->RecordEncoderBufferOut(diff);
+    }
+
+    if (DoesBufferContainCodecConfig(buffer)) {
+        if (auto sp = delegate_.lock())
+            sp->OnBufferWithCodecConfig(mbuf);
+    }
+
+    if (auto sp = delegate_.lock())
+        sp->OnBufferAvailable(mbuf);
+
+    return true;
 }
 
 bool H264Encoder::Stop() {
@@ -455,7 +450,6 @@ bool H264Encoder::Stop() {
         return false;
 
     running_ = false;
-    worker_thread_.join();
 
     return true;
 }

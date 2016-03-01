@@ -17,6 +17,8 @@
 
 #include "mcs/logger.h"
 
+#include "mcs/common/threadedexecutor.h"
+
 #include "mcs/video/statistics.h"
 #include "mcs/video/videoformat.h"
 
@@ -76,7 +78,7 @@ bool SourceMediaManager::Configure() {
     if (!encoder_->Configure(config))
         return false;
 
-    encoder_->Start();
+    encoder_executor_ = mcs::common::ThreadedExecutor::Create(encoder_, "Encoder");
 
     renderer_ = mcs::mir::StreamRenderer::Create(connector_, encoder_);
     renderer_->SetDimensions(rr.width, rr.height);
@@ -92,13 +94,13 @@ bool SourceMediaManager::Configure() {
 
 void SourceMediaManager::StartPipeline() {
     sender_->Start();
-    encoder_->Start();
+    encoder_executor_->Start();
     renderer_->StartThreaded();
 }
 
 void SourceMediaManager::StopPipeline() {
     renderer_->Stop();
-    encoder_->Stop();
+    encoder_executor_->Stop();
     sender_->Stop();
 }
 
