@@ -8,6 +8,8 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "release")
 endif()
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic -Wno-variadic-macros -Wextra -fPIC")
 
 # By default, all symbols are visible in the library. We strip out things we don't
@@ -50,8 +52,6 @@ endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_definitions(-DQT_NO_KEYWORDS=1)
-
 include(cmake/FindReadline.cmake)
 
 find_package(Boost COMPONENTS filesystem log system thread program_options)
@@ -66,6 +66,23 @@ pkg_check_modules(WDS REQUIRED wds)
 pkg_check_modules(MIRCLIENT REQUIRED mirclient)
 pkg_check_modules(HYBRIS_MEDIA REQUIRED libmedia)
 pkg_check_modules(ANDROID_HEADERS REQUIRED android-headers)
+
+include(cmake/EnableCoverageReport.cmake)
+
+#####################################################################
+# Enable code coverage calculation with gcov/gcovr/lcov
+# Usage:
+#  * Switch build type to coverage (use ccmake or cmake-gui)
+#  * Invoke make, make test, make coverage
+#  * Find html report in subdir coveragereport
+#  * Find xml report feasible for jenkins in coverage.xml
+#####################################################################
+IF(CMAKE_BUILD_TYPE MATCHES [cC][oO][vV][eE][rR][aA][gG][eE])
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftest-coverage -fprofile-arcs" )
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ftest-coverage -fprofile-arcs" )
+  SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -ftest-coverage -fprofile-arcs" )
+  SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -ftest-coverage -fprofile-arcs" )
+ENDIF(CMAKE_BUILD_TYPE MATCHES [cC][oO][vV][eE][rR][aA][gG][eE])
 
 # Build with system gmock and embedded gtest
 set (GMOCK_INCLUDE_DIR "/usr/include/gmock/include" CACHE PATH "gmock source include directory")
@@ -82,3 +99,5 @@ add_subdirectory(conf)
 add_subdirectory(src)
 add_subdirectory(tests)
 add_subdirectory(tools)
+
+enable_coverage_report(service)
