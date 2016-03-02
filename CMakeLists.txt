@@ -50,8 +50,6 @@ endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_definitions(-DQT_NO_KEYWORDS=1)
-
 include(cmake/FindReadline.cmake)
 
 find_package(Boost COMPONENTS filesystem log system thread)
