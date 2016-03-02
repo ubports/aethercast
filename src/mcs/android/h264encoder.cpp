@@ -131,6 +131,7 @@ H264Encoder::H264Encoder(const MediaAPI::Ptr &api) :
     api_(api),
     format_(nullptr),
     encoder_(nullptr),
+    source_(nullptr),
     source_format_(nullptr),
     running_(false),
     input_queue_(mcs::video::BufferQueue::Create()),
@@ -325,6 +326,9 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
     // We let the media buffer allocate the memory here to let it keep
     // the ownership and release the memory once its destroyed.
     auto buffer = api_->MediaBuffer_Create(size);
+    if (!buffer)
+        return nullptr;
+
     auto data = api_->MediaBuffer_GetData(buffer);
 
     // We're passing the buffer handle directly as part of the buffer data
@@ -354,8 +358,13 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
 int H264Encoder::OnSourceRead(MediaBufferWrapper **buffer, void *user_data) {
     auto thiz = static_cast<H264Encoder*>(user_data);
 
-    auto input_buffer = thiz->input_queue_->Next();
+    if (!thiz->running_)
+        return kAndroidMediaErrorBase;
 
+    if (!buffer)
+        return kAndroidMediaErrorBase;
+
+    auto input_buffer = thiz->input_queue_->Next();
 
     auto next_buffer = thiz->PackBuffer(input_buffer, input_buffer->Timestamp());
 
@@ -417,6 +426,11 @@ bool H264Encoder::DoesBufferContainCodecConfig(MediaBufferWrapper *buffer) {
 }
 
 bool H264Encoder::Execute() {
+    if (!running_) {
+        MCS_ERROR("Tried to execute encoder while not started");
+        return false;
+    }
+
     MediaBufferWrapper *buffer = nullptr;
     if (!api_->MediaCodecSource_Read(encoder_, &buffer)) {
         MCS_ERROR("Failed to read a new buffer from encoder");

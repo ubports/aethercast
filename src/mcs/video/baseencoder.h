@@ -80,7 +80,6 @@ public:
     public:
         virtual void OnBufferAvailable(const mcs::video::Buffer::Ptr &buffer) = 0;
         virtual void OnBufferWithCodecConfig(const mcs::video::Buffer::Ptr &buffer) = 0;
-
         virtual void OnBufferReturned() { }
     };
 
