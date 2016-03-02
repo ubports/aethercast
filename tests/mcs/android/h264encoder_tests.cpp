@@ -22,8 +22,6 @@
 using namespace ::testing;
 
 namespace {
-static const char *kH264MimeType{"video/avc"};
-static const char *kRawMimeType{"video/raw"};
 // From frameworks/native/include/media/openmax/OMX_IVCommon.h
 const int32_t kOMXColorFormatAndroidOpaque = 0x7F000789;
 const int32_t kOMXVideoIntraRefreshCyclic = 0;
