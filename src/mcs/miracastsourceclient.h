@@ -57,6 +57,7 @@ public:
     std::string GetLocalIPAddress() const override;
     uint CreateTimer(int seconds) override;
     void ReleaseTimer(uint timerId) override;
+    int GetNextCSeq(int* initial_peer_cseq = nullptr) const override;
 
 public:
     static gboolean OnTimeout(gpointer user_data);

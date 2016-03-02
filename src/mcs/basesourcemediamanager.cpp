@@ -20,7 +20,15 @@
 #include "basesourcemediamanager.h"
 #include "logger.h"
 
+namespace {
+static unsigned int next_session_id = 0;
+}
+
 namespace mcs {
+BaseSourceMediaManager::BaseSourceMediaManager() :
+    session_id_(++next_session_id) {
+}
+
 wds::SessionType BaseSourceMediaManager::GetSessionType() const {
     return wds::VideoSession;
 }
@@ -101,5 +109,9 @@ wds::AudioCodec BaseSourceMediaManager::GetOptimalAudioFormat() const {
 
 void BaseSourceMediaManager::SendIDRPicture() {
     WARNING("Unimplemented IDR picture request");
+}
+
+std::string BaseSourceMediaManager::GetSessionId() const {
+    return std::to_string(session_id_);
 }
 } // namespace mcs

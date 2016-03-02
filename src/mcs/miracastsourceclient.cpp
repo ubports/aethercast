@@ -33,6 +33,10 @@
 #include "utils.h"
 #include "logging.h"
 
+namespace {
+static int send_cseq = 0;
+}
+
 namespace mcs {
 std::shared_ptr<MiracastSourceClient> MiracastSourceClient::Create(ScopedGObject<GSocket>&& socket) {
     std::shared_ptr<MiracastSourceClient> sp{new MiracastSourceClient{std::move(socket)}};
@@ -83,6 +87,13 @@ void MiracastSourceClient::SendRTSPData(const std::string &data) {
 
 std::string MiracastSourceClient::GetLocalIPAddress() const {
     return local_address_;
+}
+
+int MiracastSourceClient::GetNextCSeq(int *initial_peer_cseq) const {
+    ++send_cseq;
+    if (initial_peer_cseq && send_cseq == *initial_peer_cseq)
+        send_cseq *= 2;
+    return send_cseq;
 }
 
 class TimerCallbackData {
