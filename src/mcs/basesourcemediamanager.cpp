@@ -133,6 +133,6 @@ void BaseSourceMediaManager::SendIDRPicture() {
 }
 
 std::string BaseSourceMediaManager::GetSessionId() const {
-    return mcs::Utils::Sprintf("%d", session_id_);
+    return std::to_string(session_id_);
 }
 } // namespace mcs
