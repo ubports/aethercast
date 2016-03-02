@@ -75,8 +75,10 @@ bool SourceMediaManager::Configure() {
     config.level_idc = level;
     config.constraint_set = constraint;
 
-    if (!encoder_->Configure(config))
+    if (!encoder_->Configure(config)) {
+        MCS_ERROR("Failed to configure encoder");
         return false;
+    }
 
     encoder_executor_ = mcs::common::ThreadedExecutor::Create(encoder_, "Encoder");
 

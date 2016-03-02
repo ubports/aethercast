@@ -285,12 +285,16 @@ bool H264Encoder::Start() {
     if (!encoder_ || running_)
         return false;
 
+    // We have to set us to running before we start the media
+    // codec source as that will directly call OnSourceRead
+    // which will fail if running_ isn't set to true.
+    running_ = true;
+
     if (!api_->MediaCodecSource_Start(encoder_)) {
         MCS_ERROR("Failed to start encoder");
+        running_ = false;
         return false;
     }
-
-    running_ = true;
 
     MCS_DEBUG("Started encoder");
 
