@@ -96,4 +96,9 @@ add_subdirectory(conf)
 add_subdirectory(src)
 add_subdirectory(tests)
 
-enable_coverage_report(service)
+set(COVERAGE_IGNORE_FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/*
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/*
+)
+
+enable_coverage_report(service FILTER ${COVERAGE_IGNORE_FILES})
