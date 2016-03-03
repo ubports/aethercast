@@ -46,8 +46,6 @@ public:
 
     ~H264Encoder();
 
-    bool IsValid() const override;
-
     bool Configure(const BaseEncoder::Config &config);
 
     void QueueBuffer(const mcs::video::Buffer::Ptr &buffer) override;

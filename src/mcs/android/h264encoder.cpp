@@ -73,16 +73,10 @@ public:
     }
 
     virtual uint32_t Length() const {
-        if (!buffer_)
-            return 0;
-
         return api_->MediaBuffer_GetSize(buffer_);
     }
 
     virtual uint8_t* Data() {
-        if (!buffer_)
-            return nullptr;
-
         return static_cast<uint8_t*>(api_->MediaBuffer_GetData(buffer_));
     }
 
@@ -153,10 +147,6 @@ H264Encoder::~H264Encoder() {
 
     if (source_format_)
         api_->MediaMetaData_Release(source_format_);
-}
-
-bool H264Encoder::IsValid() const {
-    return true;
 }
 
 bool H264Encoder::Configure(const Config &config) {

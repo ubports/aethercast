@@ -337,6 +337,9 @@ TEST(H264Encoder, CorrectConfiguration) {
     config.width = 1280;
     config.height = 720;
     config.framerate = 30;
+    config.profile_idc = 1;
+    config.level_idc = 2;
+    config.constraint_set = 3;
 
     auto format_message = new DummyMediaMessageWrapper;
 
@@ -376,6 +379,12 @@ TEST(H264Encoder, CorrectConfiguration) {
     EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("i-frame-interval"), config.i_frame_interval))
             .Times(1);
     EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("prepend-sps-pps-to-idr-frames"), 1))
+            .Times(1);
+    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("profile-idc"), 1))
+            .Times(1);
+    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("level-idc"), 2))
+            .Times(1);
+    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("constraint-set"), 3))
             .Times(1);
 
     auto meta_data = new DummyMediaMetaDataWrapper;
@@ -439,6 +448,12 @@ TEST(H264Encoder, CorrectConfiguration) {
     auto encoder = mcs::android::H264Encoder::Create(api);
 
     EXPECT_TRUE(encoder->Configure(config));
+
+    // We can configure the encoder only once
+    EXPECT_FALSE(encoder->Configure(config));
+
+    auto stored_config = encoder->Configuration();
+    EXPECT_EQ(config, stored_config);
 }
 
 TEST_F(H264EncoderFixture, CorrectStartAndStopBehavior) {
@@ -465,6 +480,48 @@ TEST_F(H264EncoderFixture, CorrectStartAndStopBehavior) {
     EXPECT_FALSE(encoder->Stop());
 }
 
+TEST_F(H264EncoderFixture, StartFailsCorrectly) {
+    auto api = std::make_shared<MockMediaAPI>();
+
+    auto config = mcs::android::H264Encoder::DefaultConfiguration();
+
+    ExpectValidConfiguration(config, api);
+
+    auto encoder = mcs::android::H264Encoder::Create(api);
+
+    EXPECT_TRUE(encoder->Configure(config));
+
+    EXPECT_CALL(*api, MediaCodecSource_Start(_))
+            .Times(1)
+            .WillRepeatedly(Return(false));
+
+    EXPECT_FALSE(encoder->Start());
+}
+
+TEST_F(H264EncoderFixture, StopFailsCorrectly) {
+    auto api = std::make_shared<MockMediaAPI>();
+
+    auto config = mcs::android::H264Encoder::DefaultConfiguration();
+
+    ExpectValidConfiguration(config, api);
+
+    auto encoder = mcs::android::H264Encoder::Create(api);
+
+    EXPECT_TRUE(encoder->Configure(config));
+
+    EXPECT_CALL(*api, MediaCodecSource_Start(_))
+            .Times(1)
+            .WillRepeatedly(Return(true));
+    EXPECT_CALL(*api, MediaCodecSource_Stop(_))
+            // Will be called twice as the d'tor also calls Stop to
+            // ensure the encoder is stopped correctly on cleanup.
+            .Times(2)
+            .WillRepeatedly(Return(false));
+
+    EXPECT_TRUE(encoder->Start());
+    EXPECT_FALSE(encoder->Stop());
+}
+
 TEST_F(H264EncoderFixture, ReturnsCorrectNativeWindowHandle) {
     auto api = std::make_shared<MockMediaAPI>();
 
@@ -473,6 +530,8 @@ TEST_F(H264EncoderFixture, ReturnsCorrectNativeWindowHandle) {
     ExpectValidConfiguration(config, api);
 
     auto encoder = mcs::android::H264Encoder::Create(api);
+
+    EXPECT_EQ(nullptr, encoder->NativeWindowHandle());
 
     EXPECT_TRUE(encoder->Configure(config));
 
@@ -493,6 +552,8 @@ TEST_F(H264EncoderFixture, RequestIDRFrame) {
     ExpectValidConfiguration(config, api);
 
     auto encoder = mcs::android::H264Encoder::Create(api);
+
+    encoder->SendIDRFrame();
 
     EXPECT_TRUE(encoder->Configure(config));
 
@@ -586,6 +647,17 @@ TEST_F(H264EncoderFixture, SourceReadFailsForInvalidState) {
     EXPECT_GE(0, source_read_callback(nullptr, source_read_callback_data));
     EXPECT_TRUE(encoder->Start());
     EXPECT_GE(0, source_read_callback(nullptr, source_read_callback_data));
+}
+
+TEST_F(H264EncoderFixture, QueueBufferDoesNotCrashWhenInactive) {
+    auto api = std::make_shared<MockMediaAPI>();
+
+    auto config = mcs::android::H264Encoder::DefaultConfiguration();
+
+    auto encoder = mcs::android::H264Encoder::Create(api);
+
+    auto buffer = mcs::video::Buffer::Create(nullptr);
+    encoder->QueueBuffer(buffer);
 }
 
 TEST_F(H264EncoderFixture, ExecuteFailForInvalidState) {

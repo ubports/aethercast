@@ -48,17 +48,18 @@ public:
             i_frame_interval(0) {
         }
 
-        Config(const Config &other) :
-            width(other.width),
-            height(other.height),
-            bitrate(other.bitrate),
-            framerate(other.framerate),
-            profile(other.profile),
-            level(other.level),
-            profile_idc(other.profile_idc),
-            level_idc(other.level_idc),
-            constraint_set(other.constraint_set),
-            i_frame_interval(other.i_frame_interval) {
+        bool operator==(const Config& other) const {
+            return width == other.width &&
+                    height == other.height &&
+                    bitrate == other.bitrate &&
+                    framerate == other.framerate &&
+                    profile == other.profile &&
+                    level == other.level &&
+                    profile_idc == other.profile_idc &&
+                    level_idc == other.level_idc &&
+                    constraint_set == other.constraint_set &&
+                    i_frame_interval == other.i_frame_interval &&
+                    intra_refresh_mode == other.intra_refresh_mode;
         }
 
         unsigned int width;
@@ -86,8 +87,6 @@ public:
     virtual ~BaseEncoder() { }
 
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
-
-    virtual bool IsValid() const = 0;
 
     virtual bool Configure(const Config &config) = 0;
 
