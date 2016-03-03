@@ -21,7 +21,8 @@ Build-Depends: cmake,
                libgtest-dev,
                libreadline-dev,
                libreadline6-dev,
-               libwds-dev
+               libwds-dev,
+               pkg-config
 Standards-Version: 3.9.4
 Homepage: http://launchpad.net/aethercast
 # If you aren't a member of ~phablet-team but need to upload packaging changes,

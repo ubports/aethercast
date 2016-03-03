@@ -33,6 +33,10 @@
 #include "utils.h"
 #include "logging.h"
 
+namespace {
+static int send_cseq = 0;
+}
+
 namespace mcs {
 std::shared_ptr<MiracastSourceClient> MiracastSourceClient::Create(ScopedGObject<GSocket>&& socket) {
     std::shared_ptr<MiracastSourceClient> sp{new MiracastSourceClient{std::move(socket)}};
@@ -86,7 +90,6 @@ std::string MiracastSourceClient::GetLocalIPAddress() const {
 }
 
 int MiracastSourceClient::GetNextCSeq(int *initial_peer_cseq) const {
-    static int send_cseq = 0;
     ++send_cseq;
     if (initial_peer_cseq && send_cseq == *initial_peer_cseq)
         send_cseq *= 2;
