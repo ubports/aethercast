@@ -39,6 +39,11 @@ public:
     MOCK_METHOD0(OnBufferReturned, void());
 };
 
+class MockBufferDelegate : public mcs::video::Buffer::Delegate {
+public:
+    MOCK_METHOD1(OnBufferFinished, void(const mcs::video::Buffer::Ptr&));
+};
+
 class MockMediaAPI : public mcs::android::MediaAPI {
 public:
     typedef std::shared_ptr<MockMediaAPI> Ptr;
@@ -563,7 +568,7 @@ TEST_F(H264EncoderFixture, RequestIDRFrame) {
     encoder->SendIDRFrame();
 }
 
-TEST_F(H264EncoderFixture, ReturnsPackedBufferOnSourceRead) {
+TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
     auto api = std::make_shared<MockMediaAPI>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
@@ -583,11 +588,14 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferOnSourceRead) {
     auto anwb = new ANativeWindowBuffer;
     anwb->handle = new native_handle_t;
 
-    auto buffer = mcs::video::Buffer::Create(anwb);
-    auto now = mcs::Utils::GetNowUs();
-    buffer->SetTimestamp(now);
+    auto buffer_delegate = std::make_shared<MockBufferDelegate>();
 
-    encoder->QueueBuffer(buffer);
+    auto input_buffer = mcs::video::Buffer::Create(anwb);
+    input_buffer->SetDelegate(buffer_delegate);
+    auto now = mcs::Utils::GetNowUs();
+    input_buffer->SetTimestamp(now);
+
+    encoder->QueueBuffer(input_buffer);
 
     MediaBufferWrapper *output_buffer = nullptr;
     auto mbuf = new DummyMediaBufferWrapper;
@@ -612,12 +620,31 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferOnSourceRead) {
             .WillRepeatedly(Return(42));
     EXPECT_CALL(*api, MediaMetaData_SetInt64(_, 42, now));
 
-    EXPECT_CALL(*api, MediaBuffer_SetReturnCallback(mbuf, _, _))
+    MediaBufferReturnCallback return_callback;
+    void *return_callback_data = nullptr;
+
+    EXPECT_CALL(*api, MediaBuffer_SetReturnCallback(mbuf, NotNull(), NotNull()))
+            .Times(1)
+            .WillRepeatedly(DoAll(SaveArg<1>(&return_callback),
+                                  SaveArg<2>(&return_callback_data)));
+
+
+    EXPECT_CALL(*api, MediaBuffer_SetReturnCallback(mbuf, nullptr, nullptr))
             .Times(1);
 
     EXPECT_EQ(0, source_read_callback(&output_buffer, source_read_callback_data));
 
     EXPECT_EQ(mbuf, output_buffer);
+
+    EXPECT_CALL(*buffer_delegate, OnBufferFinished(input_buffer))
+            .Times(1);
+
+    EXPECT_CALL(*api, MediaBuffer_Release(output_buffer));
+
+    return_callback(output_buffer, return_callback_data);
+
+    // Doesn't crash or fail badly when no real buffer is returned
+    return_callback(nullptr, return_callback_data);
 
     EXPECT_TRUE(encoder->Stop());
 
