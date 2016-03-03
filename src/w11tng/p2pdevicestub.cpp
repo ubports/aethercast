@@ -272,6 +272,9 @@ void P2PDeviceStub::StartFindTimeout() {
         inst->scan_timeout_source_ = 0;
         inst->StopFind();
 
+        if (auto sp = inst->delegate_.lock())
+            sp->OnP2PDeviceChanged();
+
         return FALSE;
     }, new mcs::WeakKeepAlive<P2PDeviceStub>{shared_from_this()});
 }
