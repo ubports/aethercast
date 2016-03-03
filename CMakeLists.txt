@@ -8,6 +8,8 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "release")
 endif()
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic -Wno-variadic-macros -Wextra -fPIC")
 
 # By default, all symbols are visible in the library. We strip out things we don't
@@ -50,8 +52,6 @@ endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_definitions(-DQT_NO_KEYWORDS=1)
-
 include(cmake/FindReadline.cmake)
 
 find_package(Boost COMPONENTS filesystem log system thread)
@@ -63,6 +63,23 @@ pkg_check_modules(GIO REQUIRED gio-2.0)
 pkg_check_modules(GIO-UNIX REQUIRED gio-unix-2.0)
 pkg_check_modules(GST REQUIRED gstreamer-1.0)
 pkg_check_modules(WDS REQUIRED wds)
+
+include(cmake/EnableCoverageReport.cmake)
+
+#####################################################################
+# Enable code coverage calculation with gcov/gcovr/lcov
+# Usage:
+#  * Switch build type to coverage (use ccmake or cmake-gui)
+#  * Invoke make, make test, make coverage
+#  * Find html report in subdir coveragereport
+#  * Find xml report feasible for jenkins in coverage.xml
+#####################################################################
+IF(CMAKE_BUILD_TYPE MATCHES [cC][oO][vV][eE][rR][aA][gG][eE])
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftest-coverage -fprofile-arcs" )
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ftest-coverage -fprofile-arcs" )
+  SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -ftest-coverage -fprofile-arcs" )
+  SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -ftest-coverage -fprofile-arcs" )
+ENDIF(CMAKE_BUILD_TYPE MATCHES [cC][oO][vV][eE][rR][aA][gG][eE])
 
 # Build with system gmock and embedded gtest
 set (GMOCK_INCLUDE_DIR "/usr/include/gmock/include" CACHE PATH "gmock source include directory")
@@ -78,3 +95,10 @@ find_program(GDBUS_CODEGEN_EXECUTABLE NAMES gdbus-codegen)
 add_subdirectory(conf)
 add_subdirectory(src)
 add_subdirectory(tests)
+
+set(COVERAGE_IGNORE_FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/*
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/*
+)
+
+enable_coverage_report(service FILTER ${COVERAGE_IGNORE_FILES})
