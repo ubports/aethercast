@@ -149,16 +149,10 @@ public:
 
         EXPECT_CALL(*api, MediaSource_SetFormat(source, meta_data))
                 .Times(1);
-        EXPECT_CALL(*api, MediaSource_SetStartCallback(source, _, _))
-                .Times(1);
-        EXPECT_CALL(*api, MediaSource_SetStopCallback(source, _, _))
-                .Times(1);
         EXPECT_CALL(*api, MediaSource_SetReadCallback(source, _, _))
                 .Times(1)
                 .WillRepeatedly(DoAll(SaveArg<1>(&source_read_callback),
                                       SaveArg<2>(&source_read_callback_data)));
-        EXPECT_CALL(*api, MediaSource_SetPauseCallback(source, _, _))
-                .Times(1);
 
         auto codec_source = new DummyMediaCodecSource;
 
@@ -317,13 +311,7 @@ TEST(H264Encoder, MediaCodecSourceCreationFails) {
 
     EXPECT_CALL(*api, MediaSource_SetFormat(source, meta_data))
             .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetStartCallback(source, _, _))
-            .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetStopCallback(source, _, _))
-            .Times(1);
     EXPECT_CALL(*api, MediaSource_SetReadCallback(source, _, _))
-            .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetPauseCallback(source, _, _))
             .Times(1);
 
     EXPECT_CALL(*api, MediaCodecSource_Create(message, source, _))
@@ -432,13 +420,7 @@ TEST(H264Encoder, CorrectConfiguration) {
             .WillOnce(Invoke([](MediaSourceWrapper *source) { delete source; }));
     EXPECT_CALL(*api, MediaSource_SetFormat(source, meta_data))
             .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetStartCallback(source, _, NotNull()))
-            .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetStopCallback(source, _, NotNull()))
-            .Times(1);
     EXPECT_CALL(*api, MediaSource_SetReadCallback(source, _, NotNull()))
-            .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetPauseCallback(source, _, NotNull()))
             .Times(1);
 
     auto codec_source = new DummyMediaCodecSource;
@@ -639,7 +621,8 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
     EXPECT_CALL(*buffer_delegate, OnBufferFinished(input_buffer))
             .Times(1);
 
-    EXPECT_CALL(*api, MediaBuffer_Release(output_buffer));
+    EXPECT_CALL(*api, MediaBuffer_Release(output_buffer))
+            .Times(1);
 
     return_callback(output_buffer, return_callback_data);
 
@@ -774,6 +757,66 @@ TEST_F(H264EncoderFixture, ExecuteProvidesBuffers) {
             .Times(1);
     EXPECT_CALL(*encoder_delegate, OnBufferWithCodecConfig(_))
             .Times(0);
+
+    EXPECT_TRUE(encoder->Execute());
+
+    EXPECT_TRUE(encoder->Stop());
+}
+
+TEST_F(H264EncoderFixture, HandsBuffersWithCodecSpecificDataBack) {
+    auto api = std::make_shared<MockMediaAPI>();
+
+    auto encoder_delegate = std::make_shared<MockEncoderDelegate>();
+
+    auto config = mcs::android::H264Encoder::DefaultConfiguration();
+
+    ExpectValidConfiguration(config, api);
+    ExpectValidStartAndStop(api);
+
+    auto encoder = mcs::android::H264Encoder::Create(api);
+    encoder->SetDelegate(encoder_delegate);
+
+    EXPECT_TRUE(encoder->Configure(config));
+    EXPECT_TRUE(encoder->Start());
+
+    auto input_buffer = new DummyMediaBufferWrapper;
+    mcs::TimestampUs input_buffer_timestamp = 23ll;
+
+    EXPECT_CALL(*api, MediaCodecSource_Read(_, _))
+            .Times(1)
+            .WillRepeatedly(DoAll(SetArgPointee<1>(input_buffer), Return(true)));
+
+    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_TIME))
+            .Times(1)
+            .WillRepeatedly(Return(1));
+    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_IS_CODEC_CONFIG))
+            .Times(1)
+            .WillRepeatedly(Return(2));
+
+    auto meta_data = new DummyMediaMetaDataWrapper;
+
+    EXPECT_CALL(*api, MediaBuffer_GetMetaData(input_buffer))
+            .Times(2)
+            .WillRepeatedly(Return(meta_data));
+
+    EXPECT_CALL(*api, MediaMetaData_FindInt64(meta_data, 1, _))
+            .Times(1)
+            .WillRepeatedly(DoAll(SetArgPointee<2>(input_buffer_timestamp), Return(true)));
+    EXPECT_CALL(*api, MediaMetaData_FindInt32(meta_data, 2, _))
+            .Times(1)
+            .WillRepeatedly(DoAll(SetArgPointee<2>(1 /* marks this as a buffer with CSD */), Return(true)));
+
+    EXPECT_CALL(*api, MediaBuffer_GetRefCount(input_buffer))
+            .Times(1)
+            .WillRepeatedly(Return(0));
+
+    EXPECT_CALL(*api, MediaBuffer_Destroy(input_buffer))
+            .Times(1);
+
+    EXPECT_CALL(*encoder_delegate, OnBufferWithCodecConfig(_))
+            .Times(1);
+    EXPECT_CALL(*encoder_delegate, OnBufferAvailable(_))
+            .Times(1);
 
     EXPECT_TRUE(encoder->Execute());
 

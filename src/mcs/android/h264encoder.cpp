@@ -247,10 +247,7 @@ bool H264Encoder::Configure(const Config &config) {
 
     api_->MediaSource_SetFormat(source_, source_format);
 
-    api_->MediaSource_SetStartCallback(source_, &H264Encoder::OnSourceStart, this);
-    api_->MediaSource_SetStopCallback(source_, &H264Encoder::OnSourceStop, this);
     api_->MediaSource_SetReadCallback(source_, &H264Encoder::OnSourceRead, this);
-    api_->MediaSource_SetPauseCallback(source_, &H264Encoder::OnSourcePause, this);
 
     encoder_ = api_->MediaCodecSource_Create(format, source_, 0);
     if (!encoder_) {
@@ -289,22 +286,6 @@ bool H264Encoder::Start() {
     MCS_DEBUG("Started encoder");
 
     return true;
-}
-
-int H264Encoder::OnSourceStart(MediaMetaDataWrapper *meta, void *user_data) {
-    auto thiz = static_cast<H264Encoder*>(user_data);
-
-    MCS_DEBUG("");
-
-    return 0;
-}
-
-int H264Encoder::OnSourceStop(void *user_data) {
-    auto thiz = static_cast<H264Encoder*>(user_data);
-
-    MCS_DEBUG("");
-
-    return 0;
 }
 
 MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input_buffer, const mcs::TimestampUs &timestamp) {
@@ -366,14 +347,6 @@ int H264Encoder::OnSourceRead(MediaBufferWrapper **buffer, void *user_data) {
         return kAndroidMediaErrorEndOfStream;
 
     *buffer = next_buffer;
-
-    return 0;
-}
-
-int H264Encoder::OnSourcePause(void *user_data) {
-    auto thiz = static_cast<H264Encoder*>(user_data);
-
-    MCS_DEBUG("");
 
     return 0;
 }
