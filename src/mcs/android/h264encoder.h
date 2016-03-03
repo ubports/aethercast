@@ -29,6 +29,7 @@
 #include "mcs/common/executable.h"
 
 #include "mcs/video/baseencoder.h"
+#include "mcs/video/encoderreport.h"
 #include "mcs/video/bufferqueue.h"
 
 #include "mcs/android/mediaapi.h"
@@ -42,7 +43,8 @@ public:
 
     static BaseEncoder::Config DefaultConfiguration();
 
-    static BaseEncoder::Ptr Create(const MediaAPI::Ptr &api = MediaAPI::CreateDefault());
+    static BaseEncoder::Ptr Create(const video::EncoderReport::Ptr &report,
+                                   const MediaAPI::Ptr &api = MediaAPI::CreateDefault());
 
     ~H264Encoder();
 
@@ -62,7 +64,7 @@ public:
     bool Execute() override;
 
 private:
-    H264Encoder(const MediaAPI::Ptr &api);
+    H264Encoder(const video::EncoderReport::Ptr &report, const MediaAPI::Ptr &api);
 
     bool DoesBufferContainCodecConfig(MediaBufferWrapper *buffer);
 
@@ -83,6 +85,7 @@ private:
     };
 
 private:
+    video::EncoderReport::Ptr report_;
     MediaAPI::Ptr api_;
     BaseEncoder::Config config_;
     MediaMessageWrapper *format_;

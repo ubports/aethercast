@@ -117,11 +117,12 @@ video::BaseEncoder::Config H264Encoder::DefaultConfiguration() {
     return config;
 }
 
-video::BaseEncoder::Ptr H264Encoder::Create(const MediaAPI::Ptr &api) {
-    return std::shared_ptr<H264Encoder>(new H264Encoder(api));
+video::BaseEncoder::Ptr H264Encoder::Create(const video::EncoderReport::Ptr &report, const MediaAPI::Ptr &api) {
+    return std::shared_ptr<H264Encoder>(new H264Encoder(report, api));
 }
 
-H264Encoder::H264Encoder(const MediaAPI::Ptr &api) :
+H264Encoder::H264Encoder(const video::EncoderReport::Ptr &report, const MediaAPI::Ptr &api) :
+    report_(report),
     api_(api),
     format_(nullptr),
     encoder_(nullptr),
@@ -286,7 +287,7 @@ bool H264Encoder::Start() {
         return false;
     }
 
-    MCS_DEBUG("Started encoder");
+    report_->Started();
 
     return true;
 }
@@ -375,6 +376,8 @@ int H264Encoder::OnSourceRead(MediaBufferWrapper **buffer, void *user_data) {
 
     *buffer = next_buffer;
 
+    thiz->report_->BeganFrame();
+
     return 0;
 }
 
@@ -431,13 +434,9 @@ bool H264Encoder::Execute() {
         return false;
     }
 
-    auto mbuf = MediaSourceBuffer::Create(buffer, api_);
+    report_->FinishedFrame();
 
-    if (mbuf->Timestamp() > 0) {
-        int64_t now = mcs::Utils::GetNowUs();
-        int64_t diff = (now - mbuf->Timestamp()) / 1000ll;
-        video::Statistics::Instance()->RecordEncoderBufferOut(diff);
-    }
+    auto mbuf = MediaSourceBuffer::Create(buffer, api_);
 
     if (DoesBufferContainCodecConfig(buffer)) {
         if (auto sp = delegate_.lock())
@@ -459,6 +458,8 @@ bool H264Encoder::Stop() {
 
     running_ = false;
 
+    report_->Stopped();
+
     return true;
 }
 
@@ -467,6 +468,8 @@ void H264Encoder::QueueBuffer(const video::Buffer::Ptr &buffer) {
         return;
 
     input_queue_->Push(buffer);
+
+    report_->ReceivedInputBuffer();
 }
 
 void* H264Encoder::NativeWindowHandle() const {

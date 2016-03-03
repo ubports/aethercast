@@ -19,6 +19,8 @@
 
 #include "mcs/common/threadedexecutor.h"
 
+#include "mcs/report/reportfactory.h"
+
 #include "mcs/video/statistics.h"
 #include "mcs/video/videoformat.h"
 
@@ -49,6 +51,7 @@ SourceMediaManager::~SourceMediaManager() {
 }
 
 bool SourceMediaManager::Configure() {
+    auto report_factory = report::ReportFactory::Create();
     auto rr = mcs::video::ExtractRateAndResolution(format_);
 
     MCS_DEBUG("dimensions: %dx%d@%d", rr.width, rr.height, rr.framerate);
@@ -62,7 +65,7 @@ bool SourceMediaManager::Configure() {
     if (!connector_->IsValid())
         return false;
 
-    encoder_ = mcs::android::H264Encoder::Create();
+    encoder_ = mcs::android::H264Encoder::Create(report_factory->CreateEncoderReport());
 
     int profile = 0, level = 0, constraint = 0;
     mcs::video::ExtractProfileLevel(format_, &profile, &level, &constraint);

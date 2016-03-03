@@ -19,6 +19,8 @@
 
 #include <system/window.h>
 
+#include "mcs/report/reportfactory.h"
+
 #include "mcs/android/h264encoder.h"
 
 using namespace ::testing;
@@ -209,7 +211,7 @@ TEST(H264Encoder, MediaMessageCreationFails) {
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     EXPECT_FALSE(encoder->Configure(config));
 }
@@ -235,7 +237,7 @@ TEST(H264Encoder, MediaSourceCreationFails) {
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     EXPECT_FALSE(encoder->Configure(config));
 }
@@ -269,7 +271,7 @@ TEST(H264Encoder, MediaMetaDataCreationFails) {
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     EXPECT_FALSE(encoder->Configure(config));
 }
@@ -330,7 +332,7 @@ TEST(H264Encoder, MediaCodecSourceCreationFails) {
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     EXPECT_FALSE(encoder->Configure(config));
 }
@@ -450,7 +452,7 @@ TEST(H264Encoder, CorrectConfiguration) {
             .Times(1)
             .WillOnce(Invoke([](MediaCodecSourceWrapper *source) { delete source; }));
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     EXPECT_TRUE(encoder->Configure(config));
 
@@ -468,7 +470,7 @@ TEST_F(H264EncoderFixture, CorrectStartAndStopBehavior) {
 
     ExpectValidConfiguration(config, api);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     ExpectValidStartAndStop(api);
 
@@ -492,7 +494,7 @@ TEST_F(H264EncoderFixture, StartFailsCorrectly) {
 
     ExpectValidConfiguration(config, api);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     EXPECT_TRUE(encoder->Configure(config));
 
@@ -510,7 +512,7 @@ TEST_F(H264EncoderFixture, StopFailsCorrectly) {
 
     ExpectValidConfiguration(config, api);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     EXPECT_TRUE(encoder->Configure(config));
 
@@ -534,7 +536,7 @@ TEST_F(H264EncoderFixture, ReturnsCorrectNativeWindowHandle) {
 
     ExpectValidConfiguration(config, api);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     EXPECT_EQ(nullptr, encoder->NativeWindowHandle());
 
@@ -556,7 +558,7 @@ TEST_F(H264EncoderFixture, RequestIDRFrame) {
 
     ExpectValidConfiguration(config, api);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     encoder->SendIDRFrame();
 
@@ -575,7 +577,7 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
 
     ExpectValidConfiguration(config, api);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     EXPECT_TRUE(encoder->Configure(config));
     EXPECT_NE(nullptr, source_read_callback);
@@ -660,7 +662,7 @@ TEST_F(H264EncoderFixture, SourceReadFailsForInvalidState) {
 
     ExpectValidConfiguration(config, api);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     ExpectValidStartAndStop(api);
 
@@ -682,7 +684,7 @@ TEST_F(H264EncoderFixture, QueueBufferDoesNotCrashWhenInactive) {
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     auto buffer = mcs::video::Buffer::Create(nullptr);
     encoder->QueueBuffer(buffer);
@@ -693,7 +695,7 @@ TEST_F(H264EncoderFixture, ExecuteFailForInvalidState) {
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     EXPECT_FALSE(encoder->Execute());
 }
@@ -706,7 +708,7 @@ TEST_F(H264EncoderFixture, ExecuteFailsForFailedSourceRead) {
     ExpectValidConfiguration(config, api);
     ExpectValidStartAndStop(api);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
 
     EXPECT_TRUE(encoder->Configure(config));
 
@@ -731,7 +733,7 @@ TEST_F(H264EncoderFixture, ExecuteProvidesBuffers) {
     ExpectValidConfiguration(config, api);
     ExpectValidStartAndStop(api);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
     encoder->SetDelegate(encoder_delegate);
 
     EXPECT_TRUE(encoder->Configure(config));
@@ -791,7 +793,7 @@ TEST_F(H264EncoderFixture, HandsBuffersWithCodecSpecificDataBack) {
     ExpectValidConfiguration(config, api);
     ExpectValidStartAndStop(api);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create(mcs::report::ReportFactory::Create()->CreateEncoderReport(), api);
     encoder->SetDelegate(encoder_delegate);
 
     EXPECT_TRUE(encoder->Configure(config));

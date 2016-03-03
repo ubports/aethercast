@@ -38,6 +38,8 @@ set(HEADERS
   mcs/common/executable.h
   mcs/common/executor.h
 
+  mcs/video/encoderreport.h
+
   mcs/streaming/packetizer.h
   mcs/streaming/transportsender.h
 
@@ -69,6 +71,18 @@ set(SOURCES
   mcs/networkdeviceskeleton.cpp
 
   mcs/common/threadedexecutor.cpp
+
+  mcs/report/reportfactory.cpp
+  mcs/report/reportfactory.h
+
+  mcs/report/logging/loggingreportfactory.cpp
+  mcs/report/logging/encoderreport.h
+  mcs/report/logging/encoderreport.cpp
+  mcs/report/logging/loggingreportfactory.h
+  mcs/report/null/nullreportfactory.h
+  mcs/report/null/nullreportfactory.cpp
+  mcs/report/null/encoderreport.h
+  mcs/report/null/encoderreport.cpp
 
   mcs/video/videoformat.cpp
   mcs/video/buffer.cpp
