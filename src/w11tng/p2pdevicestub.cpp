@@ -264,21 +264,25 @@ void P2PDeviceStub::ConnectSignals() {
 
 void P2PDeviceStub::StartFindTimeout() {
     scan_timeout_source_ = g_timeout_add_seconds(scan_timeout_.count(), [](gpointer user_data) {
-        auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
+        auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
 
-        inst->StopFindTimeout();
+        if (not inst)
+            return FALSE;
+
+        inst->scan_timeout_source_ = 0;
+        inst->StopFind();
 
         return FALSE;
-    }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
+    }, new mcs::WeakKeepAlive<P2PDeviceStub>{shared_from_this()});
 }
 
 void P2PDeviceStub::StopFindTimeout() {
     if (scan_timeout_source_ == 0)
         return;
 
+    g_source_remove(scan_timeout_source_);
     scan_timeout_source_ = 0;
     scan_timeout_ = std::chrono::seconds{0};
-    StopFind();
 
     if (auto sp = delegate_.lock())
         sp->OnP2PDeviceChanged();
@@ -339,7 +343,6 @@ void P2PDeviceStub::StopFind() {
             g_error_free(error);
             return;
         }
-
     }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
 
     StopFindTimeout();
