@@ -70,6 +70,9 @@ private:
 
 private:
     static int OnSourceRead(MediaBufferWrapper **buffer, void *user_data);
+    static int OnSourceStart(MediaMetaDataWrapper *meta, void *user_data);
+    static int OnSourceStop(void *user_data);
+    static int OnSourcePause(void *user_data);
 
     static void OnBufferReturned(MediaBufferWrapper *buffer, void *user_data);
 

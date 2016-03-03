@@ -149,6 +149,12 @@ public:
 
         EXPECT_CALL(*api, MediaSource_SetFormat(source, meta_data))
                 .Times(1);
+        EXPECT_CALL(*api, MediaSource_SetStartCallback(source, _, _))
+                .Times(1);
+        EXPECT_CALL(*api, MediaSource_SetStopCallback(source, _, _))
+                .Times(1);
+        EXPECT_CALL(*api, MediaSource_SetPauseCallback(source, _, _))
+                .Times(1);
         EXPECT_CALL(*api, MediaSource_SetReadCallback(source, _, _))
                 .Times(1)
                 .WillRepeatedly(DoAll(SaveArg<1>(&source_read_callback),
@@ -311,6 +317,12 @@ TEST(H264Encoder, MediaCodecSourceCreationFails) {
 
     EXPECT_CALL(*api, MediaSource_SetFormat(source, meta_data))
             .Times(1);
+    EXPECT_CALL(*api, MediaSource_SetStartCallback(source, _, _))
+            .Times(1);
+    EXPECT_CALL(*api, MediaSource_SetStopCallback(source, _, _))
+            .Times(1);
+    EXPECT_CALL(*api, MediaSource_SetPauseCallback(source, _, _))
+            .Times(1);
     EXPECT_CALL(*api, MediaSource_SetReadCallback(source, _, _))
             .Times(1);
 
@@ -419,6 +431,12 @@ TEST(H264Encoder, CorrectConfiguration) {
             .Times(1)
             .WillOnce(Invoke([](MediaSourceWrapper *source) { delete source; }));
     EXPECT_CALL(*api, MediaSource_SetFormat(source, meta_data))
+            .Times(1);
+    EXPECT_CALL(*api, MediaSource_SetStartCallback(source, _, _))
+            .Times(1);
+    EXPECT_CALL(*api, MediaSource_SetStopCallback(source, _, _))
+            .Times(1);
+    EXPECT_CALL(*api, MediaSource_SetPauseCallback(source, _, _))
             .Times(1);
     EXPECT_CALL(*api, MediaSource_SetReadCallback(source, _, NotNull()))
             .Times(1);
