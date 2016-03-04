@@ -15,7 +15,6 @@
  *
  */
 
-
 #include <sys/ioctl.h>
 #include <asm/types.h>
 #include <sys/socket.h>
@@ -287,7 +286,6 @@ typedef struct {
 
 int NetworkUtils::SendDriverPrivateCommand(const std::string &ifname, const std::string &cmd) {
     struct ifreq ifr;
-    int ret = 0, s;
     android_wifi_priv_cmd priv_cmd;
     char buf[kDriverCommandReplySize];
     size_t buf_len = kDriverCommandReplySize;
@@ -308,11 +306,11 @@ int NetworkUtils::SendDriverPrivateCommand(const std::string &ifname, const std:
     priv_cmd.total_len = buf_len;
     ifr.ifr_data = &priv_cmd;
 
-    s = ::socket(PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+    const int s = ::socket(PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
     if (s < 0)
         return -EIO;
 
-    ret = ::ioctl(s, SIOCDEVPRIVATE + 1, &ifr);
+    const int ret = ::ioctl(s, SIOCDEVPRIVATE + 1, &ifr);
     ::close(s);
     return ret;
 }

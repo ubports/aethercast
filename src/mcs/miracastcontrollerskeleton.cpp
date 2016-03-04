@@ -146,7 +146,7 @@ gboolean MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *sk
 
     INFO("Scanning for remote devices");
 
-    auto error = inst->Scan();
+    const auto error = inst->Scan();
     if (error != mcs::Error::kNone) {
         g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "%s", mcs::ErrorToString(error).c_str());
         return TRUE;
@@ -160,7 +160,7 @@ gboolean MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *sk
 gboolean MiracastControllerSkeleton::OnHandleDisconnectAll(AethercastInterfaceManager *skeleton,
                                                            GDBusMethodInvocation *invocation, gpointer user_data) {
     boost::ignore_unused_variable_warning(skeleton);
-    auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
+    const auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
 
     if (not inst) {
         g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");

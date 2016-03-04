@@ -46,29 +46,55 @@ public:
     typedef std::set<Frequency> FrequencyList;
 
     enum class Status {
-        Success = 0,
-        InformationIsCurrentlyUnavailable = 1,
-        IncompatibleParameters = 2,
-        LimitReached = 3,
-        InvalidParameter = 4,
-        UnableToAccommodateRequest = 5,
-        ProtcolErrorOrDisruptiveBehavior = 6,
-        NoCommonChannel = 7,
-        UnknownP2PGroup = 8,
-        BothGOIntent15 = 9,
-        IncompatibleProvisioningMethod = 10,
-        RejectByUser = 11,
-        SucccesAcceptedByUser = 12,
-        Unknown = 0xff
+        kSuccess = 0,
+        kInformationIsCurrentlyUnavailable = 1,
+        kIncompatibleParameters = 2,
+        kLimitReached = 3,
+        kInvalidParameter = 4,
+        kUnableToAccommodateRequest = 5,
+        kProtcolErrorOrDisruptiveBehavior = 6,
+        kNoCommonChannel = 7,
+        kUnknownP2PGroup = 8,
+        kBothGOIntent15 = 9,
+        kIncompatibleProvisioningMethod = 10,
+        kRejectByUser = 11,
+        kSucccesAcceptedByUser = 12,
+        kUnknown = 0xff
     };
 
     static std::string StatusToString(Status status);
 
+    enum class Property {
+        kStatus,
+        kPeerObject,
+        kFrequency,
+        kFrequencyList,
+        kWpsMethod
+    };
+
+    static std::string PropertyToString(Property property);
+
+    enum class WpsMethod {
+        kPbc,
+        kPin
+    };
+
+    static WpsMethod WpsMethodFromString(const std::string &wps_method);
+    static std::string WpsMethodToString(WpsMethod wps_method);
+
     struct GroupOwnerNegotiationResult {
+        GroupOwnerNegotiationResult() { }
+        GroupOwnerNegotiationResult(const GroupOwnerNegotiationResult &other) :
+            status(other.status),
+            oper_freq(other.oper_freq),
+            frequencies(other.frequencies),
+            wps_method(other.wps_method) {
+        }
+
         Status status;
         Frequency oper_freq;
         FrequencyList frequencies;
-        std::string wps_method;
+        WpsMethod wps_method;
     };
 
     class Delegate : public mcs::NonCopyable {
@@ -97,7 +123,7 @@ public:
 
     void Find(const std::chrono::seconds &timeout);
     void StopFind();
-    bool Connect(const std::string &path);
+    bool Connect(const std::string &path, const std::int32_t intent);
     bool Disconnect();
     bool DisconnectSync();
     void Flush();
