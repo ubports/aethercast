@@ -21,6 +21,8 @@
 
 #include "mcs/android/h264encoder.h"
 
+#include "mockmedia.h"
+
 using namespace ::testing;
 
 namespace {
@@ -44,52 +46,6 @@ public:
     MOCK_METHOD1(OnBufferFinished, void(const mcs::video::Buffer::Ptr&));
 };
 
-class MockMediaAPI : public mcs::android::MediaAPI {
-public:
-    typedef std::shared_ptr<MockMediaAPI> Ptr;
-
-    MOCK_METHOD0(MediaSource_Create, MediaSourceWrapper*(void));
-    MOCK_METHOD1(MediaSource_Release, void(MediaSourceWrapper*));
-    MOCK_METHOD2(MediaSource_SetFormat, void(MediaSourceWrapper*, MediaMetaDataWrapper *meta));
-    MOCK_METHOD3(MediaSource_SetStartCallback, void(MediaSourceWrapper*, MediaSourceStartCallback, void*));
-    MOCK_METHOD3(MediaSource_SetStopCallback, void(MediaSourceWrapper*, MediaSourceStopCallback, void*));
-    MOCK_METHOD3(MediaSource_SetReadCallback, void(MediaSourceWrapper*, MediaSourceReadCallback, void*));
-    MOCK_METHOD3(MediaSource_SetPauseCallback, void(MediaSourceWrapper*, MediaSourcePauseCallback, void*));
-
-    MOCK_METHOD3(MediaCodecSource_Create, MediaCodecSourceWrapper*(MediaMessageWrapper*, MediaSourceWrapper*, int));
-    MOCK_METHOD1(MediaCodecSource_Release, void(MediaCodecSourceWrapper*));
-    MOCK_METHOD1(MediaCodecSource_GetNativeWindowHandle, MediaNativeWindowHandle*(MediaCodecSourceWrapper*));
-    MOCK_METHOD1(MediaCodecSource_Start, bool(MediaCodecSourceWrapper*));
-    MOCK_METHOD1(MediaCodecSource_Stop, bool(MediaCodecSourceWrapper*));
-    MOCK_METHOD1(MediaCodecSource_Pause, bool(MediaCodecSourceWrapper*));
-    MOCK_METHOD2(MediaCodecSource_Read, bool(MediaCodecSourceWrapper*, MediaBufferWrapper**));
-    MOCK_METHOD1(MediaCodecSource_RequestIDRFrame, bool(MediaCodecSourceWrapper*));
-
-    MOCK_METHOD0(MediaMessage_Create, MediaMessageWrapper*());
-    MOCK_METHOD1(MediaMessage_Release, void(MediaMessageWrapper*));
-    MOCK_METHOD3(MediaMessage_SetInt32, void(MediaMessageWrapper*, const char*, int32_t));
-    MOCK_METHOD4(MediaMessage_SetString, void(MediaMessageWrapper*, const char*, const char*, ssize_t));
-
-    MOCK_METHOD0(MediaMetaData_Create, MediaMetaDataWrapper*());
-    MOCK_METHOD1(MediaMetaData_Release, void(MediaMetaDataWrapper*));
-    MOCK_METHOD3(MediaMetaData_SetCString, bool(MediaMetaDataWrapper*, uint32_t, const char*));
-    MOCK_METHOD3(MediaMetaData_SetInt32, bool(MediaMetaDataWrapper*, uint32_t, int32_t));
-    MOCK_METHOD3(MediaMetaData_SetInt64, bool(MediaMetaDataWrapper*, uint32_t, int64_t));
-    MOCK_METHOD3(MediaMetaData_FindInt32, bool(MediaMetaDataWrapper*, uint32_t, int32_t*));
-    MOCK_METHOD3(MediaMetaData_FindInt64, bool(MediaMetaDataWrapper*, uint32_t, int64_t*));
-    MOCK_METHOD1(MediaMetaData_GetKeyId, uint32_t(int));
-
-    MOCK_METHOD1(MediaBuffer_Create, MediaBufferWrapper*(size_t));
-    MOCK_METHOD1(MediaBuffer_Destroy, void(MediaBufferWrapper*));
-    MOCK_METHOD1(MediaBuffer_Release, void(MediaBufferWrapper*));
-    MOCK_METHOD1(MediaBuffer_Ref, void(MediaBufferWrapper*));
-    MOCK_METHOD1(MediaBuffer_GetRefCount, int(MediaBufferWrapper*));
-    MOCK_METHOD1(MediaBuffer_GetData, void*(MediaBufferWrapper*));
-    MOCK_METHOD1(MediaBuffer_GetSize, size_t(MediaBufferWrapper*));
-    MOCK_METHOD1(MediaBuffer_GetMetaData, MediaMetaDataWrapper*(MediaBufferWrapper*));
-    MOCK_METHOD3(MediaBuffer_SetReturnCallback, void(MediaBufferWrapper*, MediaBufferReturnCallback, void*));
-};
-
 struct DummyMediaMessageWrapper {
 };
 
@@ -107,75 +63,75 @@ struct DummyMediaBufferWrapper {
 
 class H264EncoderFixture : public ::testing::Test {
 public:
-    void ExpectValidConfiguration(const mcs::video::BaseEncoder::Config &config, const MockMediaAPI::Ptr &api) {
+    void ExpectValidConfiguration(const mcs::video::BaseEncoder::Config &config, const mcs::test::android::MockMedia::Ptr &mock) {
         auto message = new DummyMediaMessageWrapper;
 
-        EXPECT_CALL(*api, MediaMessage_Create())
+        EXPECT_CALL(*mock, media_message_create())
                 .Times(1)
                 .WillRepeatedly(Return(message));
-        EXPECT_CALL(*api, MediaMessage_Release(message))
+        EXPECT_CALL(*mock, media_message_release(message))
                 .Times(1)
                 .WillOnce(Invoke([](MediaMessageWrapper *msg) { delete msg; }));
-        EXPECT_CALL(*api, MediaMessage_SetString(message, _, _, _))
+        EXPECT_CALL(*mock, media_message_set_string(message, _, _, _))
                 .Times(AtLeast(0));
-        EXPECT_CALL(*api, MediaMessage_SetInt32(message, _, _))
+        EXPECT_CALL(*mock, media_message_set_int32(message, _, _))
                 .Times(AtLeast(0));
 
         auto source = new DummyMediaSourceWrapper;
 
-        EXPECT_CALL(*api, MediaSource_Create())
+        EXPECT_CALL(*mock, media_source_create())
                 .Times(1)
                 .WillRepeatedly(Return(source));
-        EXPECT_CALL(*api, MediaSource_Release(source))
+        EXPECT_CALL(*mock, media_source_release(source))
                 .Times(1)
                 .WillOnce(Invoke([](MediaSourceWrapper *source) { delete source; }));
 
         auto meta_data = new DummyMediaMetaDataWrapper;
 
-        EXPECT_CALL(*api, MediaMetaData_Create())
+        EXPECT_CALL(*mock, media_meta_data_create())
                 .Times(1)
                 .WillRepeatedly(Return(meta_data));
-        EXPECT_CALL(*api, MediaMetaData_Release(meta_data))
+        EXPECT_CALL(*mock, media_meta_data_release(meta_data))
                 .Times(1)
                 .WillOnce(Invoke([](MediaMetaDataWrapper *meta) { delete meta; }));
-        EXPECT_CALL(*api, MediaMetaData_SetCString(meta_data, _, _))
+        EXPECT_CALL(*mock, media_meta_data_set_cstring(meta_data, _, _))
                 .Times(AtLeast(0));
-        EXPECT_CALL(*api, MediaMetaData_SetInt32(meta_data, _, _))
+        EXPECT_CALL(*mock, media_meta_data_set_int32(meta_data, _, _))
                 .Times(AtLeast(0));
 
-        EXPECT_CALL(*api, MediaMetaData_GetKeyId(_))
+        EXPECT_CALL(*mock, media_meta_data_get_key_id(_))
                 .Times(AtLeast(0))
                 .WillRepeatedly(Return(0));
 
-        EXPECT_CALL(*api, MediaSource_SetFormat(source, meta_data))
+        EXPECT_CALL(*mock, media_source_set_format(source, meta_data))
                 .Times(1);
-        EXPECT_CALL(*api, MediaSource_SetStartCallback(source, _, _))
+        EXPECT_CALL(*mock, media_source_set_start_callback(source, _, _))
                 .Times(1);
-        EXPECT_CALL(*api, MediaSource_SetStopCallback(source, _, _))
+        EXPECT_CALL(*mock, media_source_set_stop_callback(source, _, _))
                 .Times(1);
-        EXPECT_CALL(*api, MediaSource_SetPauseCallback(source, _, _))
+        EXPECT_CALL(*mock, media_source_set_pause_callback(source, _, _))
                 .Times(1);
-        EXPECT_CALL(*api, MediaSource_SetReadCallback(source, _, _))
+        EXPECT_CALL(*mock, media_source_set_read_callback(source, _, _))
                 .Times(1)
                 .WillRepeatedly(DoAll(SaveArg<1>(&source_read_callback),
                                       SaveArg<2>(&source_read_callback_data)));
 
         auto codec_source = new DummyMediaCodecSource;
 
-        EXPECT_CALL(*api, MediaCodecSource_Create(message, source, _))
+        EXPECT_CALL(*mock, media_codec_source_create(message, source, _))
                 .Times(1)
                 .WillRepeatedly(Return(codec_source));
-        EXPECT_CALL(*api, MediaCodecSource_Release(codec_source))
+        EXPECT_CALL(*mock, media_codec_source_release(codec_source))
                 .Times(1)
                 .WillOnce(Invoke([](MediaCodecSourceWrapper *source) { delete source; }));
     }
 
-    void ExpectValidStartAndStop(const MockMediaAPI::Ptr &api) {
-        EXPECT_CALL(*api, MediaCodecSource_Start(_))
+    void ExpectValidStartAndStop(const mcs::test::android::MockMedia::Ptr &mock) {
+        EXPECT_CALL(*mock, media_codec_source_start(_))
                 .Times(1)
                 .WillRepeatedly(Return(true));
 
-        EXPECT_CALL(*api, MediaCodecSource_Stop(_))
+        EXPECT_CALL(*mock, media_codec_source_stop(_))
                 .Times(1)
                 .WillRepeatedly(Return(true));
     }
@@ -201,142 +157,142 @@ TEST(H264Encoder, ValidDefaultConfiguration) {
 }
 
 TEST(H264Encoder, MediaMessageCreationFails) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    EXPECT_CALL(*api, MediaMessage_Create())
+    EXPECT_CALL(*mock, media_message_create())
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     EXPECT_FALSE(encoder->Configure(config));
 }
 
 TEST(H264Encoder, MediaSourceCreationFails) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
     auto message = new DummyMediaMessageWrapper;
 
-    EXPECT_CALL(*api, MediaMessage_Create())
+    EXPECT_CALL(*mock, media_message_create())
             .Times(1)
             .WillRepeatedly(Return(message));
-    EXPECT_CALL(*api, MediaMessage_Release(message))
+    EXPECT_CALL(*mock, media_message_release(message))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetString(message, _, _, _))
+    EXPECT_CALL(*mock, media_message_set_string(message, _, _, _))
             .Times(AtLeast(0));
-    EXPECT_CALL(*api, MediaMessage_SetInt32(message, _, _))
+    EXPECT_CALL(*mock, media_message_set_int32(message, _, _))
             .Times(AtLeast(0));
 
-    EXPECT_CALL(*api, MediaSource_Create())
+    EXPECT_CALL(*mock, media_source_create())
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     EXPECT_FALSE(encoder->Configure(config));
 }
 
 TEST(H264Encoder, MediaMetaDataCreationFails) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
     auto message = new DummyMediaMessageWrapper;
 
-    EXPECT_CALL(*api, MediaMessage_Create())
+    EXPECT_CALL(*mock, media_message_create())
             .Times(1)
             .WillRepeatedly(Return(message));
-    EXPECT_CALL(*api, MediaMessage_Release(message))
+    EXPECT_CALL(*mock, media_message_release(message))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetString(message, _, _, _))
+    EXPECT_CALL(*mock, media_message_set_string(message, _, _, _))
             .Times(AtLeast(0));
-    EXPECT_CALL(*api, MediaMessage_SetInt32(message, _, _))
+    EXPECT_CALL(*mock, media_message_set_int32(message, _, _))
             .Times(AtLeast(0));
 
     auto source = new DummyMediaSourceWrapper;
 
-    EXPECT_CALL(*api, MediaSource_Create())
+    EXPECT_CALL(*mock, media_source_create())
             .Times(1)
             .WillRepeatedly(Return(source));
-    EXPECT_CALL(*api, MediaSource_Release(source))
+    EXPECT_CALL(*mock, media_source_release(source))
             .Times(1);
 
-    EXPECT_CALL(*api, MediaMetaData_Create())
+    EXPECT_CALL(*mock, media_meta_data_create())
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     EXPECT_FALSE(encoder->Configure(config));
 }
 
 TEST(H264Encoder, MediaCodecSourceCreationFails) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
     auto message = new DummyMediaMessageWrapper;
 
-    EXPECT_CALL(*api, MediaMessage_Create())
+    EXPECT_CALL(*mock, media_message_create())
             .Times(1)
             .WillRepeatedly(Return(message));
-    EXPECT_CALL(*api, MediaMessage_Release(message))
+    EXPECT_CALL(*mock, media_message_release(message))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetString(message, _, _, _))
+    EXPECT_CALL(*mock, media_message_set_string(message, _, _, _))
             .Times(AtLeast(0));
-    EXPECT_CALL(*api, MediaMessage_SetInt32(message, _, _))
+    EXPECT_CALL(*mock, media_message_set_int32(message, _, _))
             .Times(AtLeast(0));
 
     auto source = new DummyMediaSourceWrapper;
 
-    EXPECT_CALL(*api, MediaSource_Create())
+    EXPECT_CALL(*mock, media_source_create())
             .Times(1)
             .WillRepeatedly(Return(source));
-    EXPECT_CALL(*api, MediaSource_Release(source))
+    EXPECT_CALL(*mock, media_source_release(source))
             .Times(1);
 
     auto meta_data = new DummyMediaMetaDataWrapper;
 
-    EXPECT_CALL(*api, MediaMetaData_Create())
+    EXPECT_CALL(*mock, media_meta_data_create())
             .Times(1)
             .WillRepeatedly(Return(meta_data));
-    EXPECT_CALL(*api, MediaMetaData_Release(meta_data))
+    EXPECT_CALL(*mock, media_meta_data_release(meta_data))
             .Times(1);
-    EXPECT_CALL(*api, MediaMetaData_SetCString(meta_data, _, _))
+    EXPECT_CALL(*mock, media_meta_data_set_cstring(meta_data, _, _))
             .Times(AtLeast(0));
-    EXPECT_CALL(*api, MediaMetaData_SetInt32(meta_data, _, _))
+    EXPECT_CALL(*mock, media_meta_data_set_int32(meta_data, _, _))
             .Times(AtLeast(0));
 
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(_))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(_))
             .Times(AtLeast(0))
             .WillRepeatedly(Return(0));
 
-    EXPECT_CALL(*api, MediaSource_SetFormat(source, meta_data))
+    EXPECT_CALL(*mock, media_source_set_format(source, meta_data))
             .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetStartCallback(source, _, _))
+    EXPECT_CALL(*mock, media_source_set_start_callback(source, _, _))
             .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetStopCallback(source, _, _))
+    EXPECT_CALL(*mock, media_source_set_stop_callback(source, _, _))
             .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetPauseCallback(source, _, _))
+    EXPECT_CALL(*mock, media_source_set_pause_callback(source, _, _))
             .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetReadCallback(source, _, _))
+    EXPECT_CALL(*mock, media_source_set_read_callback(source, _, _))
             .Times(1);
 
-    EXPECT_CALL(*api, MediaCodecSource_Create(message, source, _))
+    EXPECT_CALL(*mock, media_codec_source_create(message, source, _))
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     EXPECT_FALSE(encoder->Configure(config));
 }
 
 TEST(H264Encoder, CorrectConfiguration) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
     config.width = 1280;
@@ -348,109 +304,109 @@ TEST(H264Encoder, CorrectConfiguration) {
 
     auto format_message = new DummyMediaMessageWrapper;
 
-    EXPECT_CALL(*api, MediaMessage_Create())
+    EXPECT_CALL(*mock, media_message_create())
             .Times(1)
             .WillRepeatedly(Return(format_message));
-    EXPECT_CALL(*api, MediaMessage_Release(format_message))
+    EXPECT_CALL(*mock, media_message_release(format_message))
             .Times(1)
             .WillOnce(Invoke([](MediaMessageWrapper *msg) { delete msg; }));
 
-    EXPECT_CALL(*api, MediaMessage_SetString(format_message, StrEq("mime"), StrEq("video/avc"), 0))
+    EXPECT_CALL(*mock, media_message_set_string(format_message, StrEq("mime"), StrEq("video/avc"), 0))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("store-metadata-in-buffers"), 1))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("store-metadata-in-buffers"), 1))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("store-metadata-in-buffers-output"), 0))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("store-metadata-in-buffers-output"), 0))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("width"), config.width))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("width"), config.width))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("height"), config.height))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("height"), config.height))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("stride"), config.width))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("stride"), config.width))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("slice-height"), config.width))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("slice-height"), config.width))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("color-format"), kOMXColorFormatAndroidOpaque))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("color-format"), kOMXColorFormatAndroidOpaque))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("bitrate"), config.bitrate))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("bitrate"), config.bitrate))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("bitrate-mode"), kOMXVideoControlRateConstant))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("bitrate-mode"), kOMXVideoControlRateConstant))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("frame-rate"), config.framerate))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("frame-rate"), config.framerate))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("intra-refresh-mode"), config.intra_refresh_mode))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("intra-refresh-mode"), config.intra_refresh_mode))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("intra-refresh-CIR-mbs"), 360))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("intra-refresh-CIR-mbs"), 360))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("i-frame-interval"), config.i_frame_interval))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("i-frame-interval"), config.i_frame_interval))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("prepend-sps-pps-to-idr-frames"), 1))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("prepend-sps-pps-to-idr-frames"), 1))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("profile-idc"), 1))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("profile-idc"), 1))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("level-idc"), 2))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("level-idc"), 2))
             .Times(1);
-    EXPECT_CALL(*api, MediaMessage_SetInt32(format_message, StrEq("constraint-set"), 3))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("constraint-set"), 3))
             .Times(1);
 
     auto meta_data = new DummyMediaMetaDataWrapper;
 
-    EXPECT_CALL(*api, MediaMetaData_Create())
+    EXPECT_CALL(*mock, media_meta_data_create())
             .Times(1)
             .WillRepeatedly(Return(meta_data));
-    EXPECT_CALL(*api, MediaMetaData_Release(meta_data))
+    EXPECT_CALL(*mock, media_meta_data_release(meta_data))
             .Times(1)
             .WillRepeatedly(Invoke([](MediaMetaDataWrapper *meta) { delete meta; }));
-    EXPECT_CALL(*api, MediaMetaData_SetCString(meta_data, _, _))
+    EXPECT_CALL(*mock, media_meta_data_set_cstring(meta_data, _, _))
             .Times(1);
-    EXPECT_CALL(*api, MediaMetaData_SetInt32(meta_data, _, _))
+    EXPECT_CALL(*mock, media_meta_data_set_int32(meta_data, _, _))
             .Times(6);
 
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(_))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(_))
             .Times(0);
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_MIME))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_MIME))
             .Times(1);
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_COLOR_FORMAT))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_COLOR_FORMAT))
             .Times(1);
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_WIDTH))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_WIDTH))
             .Times(1);
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_HEIGHT))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_HEIGHT))
             .Times(1);
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_STRIDE))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_STRIDE))
             .Times(1);
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_SLICE_HEIGHT))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_SLICE_HEIGHT))
             .Times(1);
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_FRAMERATE))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_FRAMERATE))
             .Times(1);
 
     auto source = new DummyMediaSourceWrapper;
 
-    EXPECT_CALL(*api, MediaSource_Create())
+    EXPECT_CALL(*mock, media_source_create())
             .Times(1)
             .WillRepeatedly(Return(source));
-    EXPECT_CALL(*api, MediaSource_Release(source))
+    EXPECT_CALL(*mock, media_source_release(source))
             .Times(1)
             .WillOnce(Invoke([](MediaSourceWrapper *source) { delete source; }));
-    EXPECT_CALL(*api, MediaSource_SetFormat(source, meta_data))
+    EXPECT_CALL(*mock, media_source_set_format(source, meta_data))
             .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetStartCallback(source, _, _))
+    EXPECT_CALL(*mock, media_source_set_start_callback(source, _, _))
             .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetStopCallback(source, _, _))
+    EXPECT_CALL(*mock, media_source_set_stop_callback(source, _, _))
             .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetPauseCallback(source, _, _))
+    EXPECT_CALL(*mock, media_source_set_pause_callback(source, _, _))
             .Times(1);
-    EXPECT_CALL(*api, MediaSource_SetReadCallback(source, _, NotNull()))
+    EXPECT_CALL(*mock, media_source_set_read_callback(source, _, NotNull()))
             .Times(1);
 
     auto codec_source = new DummyMediaCodecSource;
 
-    EXPECT_CALL(*api, MediaCodecSource_Create(NotNull(), NotNull(), _))
+    EXPECT_CALL(*mock, media_codec_source_create(NotNull(), NotNull(), _))
             .Times(1)
             .WillRepeatedly(Return(codec_source));
-    EXPECT_CALL(*api, MediaCodecSource_Release(codec_source))
+    EXPECT_CALL(*mock, media_codec_source_release(codec_source))
             .Times(1)
             .WillOnce(Invoke([](MediaCodecSourceWrapper *source) { delete source; }));
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     EXPECT_TRUE(encoder->Configure(config));
 
@@ -462,15 +418,15 @@ TEST(H264Encoder, CorrectConfiguration) {
 }
 
 TEST_F(H264EncoderFixture, CorrectStartAndStopBehavior) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    ExpectValidConfiguration(config, api);
+    ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
-    ExpectValidStartAndStop(api);
+    ExpectValidStartAndStop(mock);
 
     EXPECT_FALSE(encoder->Start());
     EXPECT_FALSE(encoder->Stop());
@@ -486,17 +442,17 @@ TEST_F(H264EncoderFixture, CorrectStartAndStopBehavior) {
 }
 
 TEST_F(H264EncoderFixture, StartFailsCorrectly) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    ExpectValidConfiguration(config, api);
+    ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     EXPECT_TRUE(encoder->Configure(config));
 
-    EXPECT_CALL(*api, MediaCodecSource_Start(_))
+    EXPECT_CALL(*mock, media_codec_source_start(_))
             .Times(1)
             .WillRepeatedly(Return(false));
 
@@ -504,20 +460,20 @@ TEST_F(H264EncoderFixture, StartFailsCorrectly) {
 }
 
 TEST_F(H264EncoderFixture, StopFailsCorrectly) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    ExpectValidConfiguration(config, api);
+    ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     EXPECT_TRUE(encoder->Configure(config));
 
-    EXPECT_CALL(*api, MediaCodecSource_Start(_))
+    EXPECT_CALL(*mock, media_codec_source_start(_))
             .Times(1)
             .WillRepeatedly(Return(true));
-    EXPECT_CALL(*api, MediaCodecSource_Stop(_))
+    EXPECT_CALL(*mock, media_codec_source_stop(_))
             // Will be called twice as the d'tor also calls Stop to
             // ensure the encoder is stopped correctly on cleanup.
             .Times(2)
@@ -528,13 +484,13 @@ TEST_F(H264EncoderFixture, StopFailsCorrectly) {
 }
 
 TEST_F(H264EncoderFixture, ReturnsCorrectNativeWindowHandle) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    ExpectValidConfiguration(config, api);
+    ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     EXPECT_EQ(nullptr, encoder->NativeWindowHandle());
 
@@ -542,7 +498,7 @@ TEST_F(H264EncoderFixture, ReturnsCorrectNativeWindowHandle) {
 
     auto expected_handle = reinterpret_cast<void*>(1);
 
-    EXPECT_CALL(*api, MediaCodecSource_GetNativeWindowHandle(_))
+    EXPECT_CALL(*mock, media_codec_source_get_native_window_handle(_))
             .Times(1)
             .WillRepeatedly(Return(expected_handle));
 
@@ -550,38 +506,38 @@ TEST_F(H264EncoderFixture, ReturnsCorrectNativeWindowHandle) {
 }
 
 TEST_F(H264EncoderFixture, RequestIDRFrame) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    ExpectValidConfiguration(config, api);
+    ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     encoder->SendIDRFrame();
 
     EXPECT_TRUE(encoder->Configure(config));
 
-    EXPECT_CALL(*api, MediaCodecSource_RequestIDRFrame(_))
+    EXPECT_CALL(*mock, media_codec_source_request_idr_frame(_))
             .Times(1);
 
     encoder->SendIDRFrame();
 }
 
 TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    ExpectValidConfiguration(config, api);
+    ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     EXPECT_TRUE(encoder->Configure(config));
     EXPECT_NE(nullptr, source_read_callback);
     EXPECT_NE(nullptr, source_read_callback_data);
 
-    ExpectValidStartAndStop(api);
+    ExpectValidStartAndStop(mock);
 
     EXPECT_TRUE(encoder->Start());
 
@@ -602,34 +558,34 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
     size_t mbuf_size = sizeof(buffer_handle_t) + 4;
     auto mbuf_data = new uint8_t[mbuf_size];
 
-    EXPECT_CALL(*api, MediaBuffer_Create(mbuf_size))
+    EXPECT_CALL(*mock, media_buffer_create(mbuf_size))
             .Times(1)
             .WillRepeatedly(Return(mbuf));
 
-    EXPECT_CALL(*api, MediaBuffer_GetData(mbuf))
+    EXPECT_CALL(*mock, media_buffer_get_data(mbuf))
             .Times(1)
             .WillRepeatedly(Return(mbuf_data));
 
-    EXPECT_CALL(*api, MediaBuffer_Ref(mbuf))
+    EXPECT_CALL(*mock, media_buffer_ref(mbuf))
             .Times(1);
 
-    EXPECT_CALL(*api, MediaBuffer_GetMetaData(mbuf))
+    EXPECT_CALL(*mock, media_buffer_get_meta_data(mbuf))
             .Times(1);
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_TIME))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME))
             .Times(1)
             .WillRepeatedly(Return(42));
-    EXPECT_CALL(*api, MediaMetaData_SetInt64(_, 42, now));
+    EXPECT_CALL(*mock, media_meta_data_set_int64(_, 42, now));
 
     MediaBufferReturnCallback return_callback;
     void *return_callback_data = nullptr;
 
-    EXPECT_CALL(*api, MediaBuffer_SetReturnCallback(mbuf, NotNull(), NotNull()))
+    EXPECT_CALL(*mock, media_buffer_set_return_callback(mbuf, NotNull(), NotNull()))
             .Times(1)
             .WillRepeatedly(DoAll(SaveArg<1>(&return_callback),
                                   SaveArg<2>(&return_callback_data)));
 
 
-    EXPECT_CALL(*api, MediaBuffer_SetReturnCallback(mbuf, nullptr, nullptr))
+    EXPECT_CALL(*mock, media_buffer_set_return_callback(mbuf, nullptr, nullptr))
             .Times(1);
 
     EXPECT_EQ(0, source_read_callback(&output_buffer, source_read_callback_data));
@@ -639,7 +595,7 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
     EXPECT_CALL(*buffer_delegate, OnBufferFinished(input_buffer))
             .Times(1);
 
-    EXPECT_CALL(*api, MediaBuffer_Release(output_buffer))
+    EXPECT_CALL(*mock, media_buffer_release(output_buffer))
             .Times(1);
 
     return_callback(output_buffer, return_callback_data);
@@ -654,15 +610,15 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
 }
 
 TEST_F(H264EncoderFixture, SourceReadFailsForInvalidState) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    ExpectValidConfiguration(config, api);
+    ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
-    ExpectValidStartAndStop(api);
+    ExpectValidStartAndStop(mock);
 
     EXPECT_TRUE(encoder->Configure(config));
     EXPECT_NE(nullptr, source_read_callback);
@@ -678,41 +634,41 @@ TEST_F(H264EncoderFixture, SourceReadFailsForInvalidState) {
 }
 
 TEST_F(H264EncoderFixture, QueueBufferDoesNotCrashWhenInactive) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     auto buffer = mcs::video::Buffer::Create(nullptr);
     encoder->QueueBuffer(buffer);
 }
 
 TEST_F(H264EncoderFixture, ExecuteFailForInvalidState) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     EXPECT_FALSE(encoder->Execute());
 }
 
 TEST_F(H264EncoderFixture, ExecuteFailsForFailedSourceRead) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    ExpectValidConfiguration(config, api);
-    ExpectValidStartAndStop(api);
+    ExpectValidConfiguration(config, mock);
+    ExpectValidStartAndStop(mock);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
 
     EXPECT_TRUE(encoder->Configure(config));
 
     EXPECT_TRUE(encoder->Start());
 
-    EXPECT_CALL(*api, MediaCodecSource_Read(_, _))
+    EXPECT_CALL(*mock, media_codec_source_read(_, _))
             .Times(1)
             .WillRepeatedly(Return(false));
 
@@ -722,16 +678,16 @@ TEST_F(H264EncoderFixture, ExecuteFailsForFailedSourceRead) {
 }
 
 TEST_F(H264EncoderFixture, ExecuteProvidesBuffers) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto encoder_delegate = std::make_shared<MockEncoderDelegate>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    ExpectValidConfiguration(config, api);
-    ExpectValidStartAndStop(api);
+    ExpectValidConfiguration(config, mock);
+    ExpectValidStartAndStop(mock);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
     encoder->SetDelegate(encoder_delegate);
 
     EXPECT_TRUE(encoder->Configure(config));
@@ -740,35 +696,35 @@ TEST_F(H264EncoderFixture, ExecuteProvidesBuffers) {
     auto input_buffer = new DummyMediaBufferWrapper;
     mcs::TimestampUs input_buffer_timestamp = 23ll;
 
-    EXPECT_CALL(*api, MediaCodecSource_Read(_, _))
+    EXPECT_CALL(*mock, media_codec_source_read(_, _))
             .Times(1)
             .WillRepeatedly(DoAll(SetArgPointee<1>(input_buffer), Return(true)));
 
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_TIME))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME))
             .Times(1)
             .WillRepeatedly(Return(1));
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_IS_CODEC_CONFIG))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_IS_CODEC_CONFIG))
             .Times(1)
             .WillRepeatedly(Return(2));
 
     auto meta_data = new DummyMediaMetaDataWrapper;
 
-    EXPECT_CALL(*api, MediaBuffer_GetMetaData(input_buffer))
+    EXPECT_CALL(*mock, media_buffer_get_meta_data(input_buffer))
             .Times(2)
             .WillRepeatedly(Return(meta_data));
 
-    EXPECT_CALL(*api, MediaMetaData_FindInt64(meta_data, 1, _))
+    EXPECT_CALL(*mock, media_meta_data_find_int64(meta_data, 1, _))
             .Times(1)
             .WillRepeatedly(DoAll(SetArgPointee<2>(input_buffer_timestamp), Return(true)));
-    EXPECT_CALL(*api, MediaMetaData_FindInt32(meta_data, 2, _))
+    EXPECT_CALL(*mock, media_meta_data_find_int32(meta_data, 2, _))
             .Times(1)
             .WillRepeatedly(DoAll(SetArgPointee<2>(0), Return(true)));
 
-    EXPECT_CALL(*api, MediaBuffer_GetRefCount(input_buffer))
+    EXPECT_CALL(*mock, media_buffer_get_refcount(input_buffer))
             .Times(1)
             .WillRepeatedly(Return(0));
 
-    EXPECT_CALL(*api, MediaBuffer_Destroy(input_buffer))
+    EXPECT_CALL(*mock, media_buffer_destroy(input_buffer))
             .Times(1);
 
     EXPECT_CALL(*encoder_delegate, OnBufferAvailable(_))
@@ -782,16 +738,16 @@ TEST_F(H264EncoderFixture, ExecuteProvidesBuffers) {
 }
 
 TEST_F(H264EncoderFixture, HandsBuffersWithCodecSpecificDataBack) {
-    auto api = std::make_shared<MockMediaAPI>();
+    auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto encoder_delegate = std::make_shared<MockEncoderDelegate>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
-    ExpectValidConfiguration(config, api);
-    ExpectValidStartAndStop(api);
+    ExpectValidConfiguration(config, mock);
+    ExpectValidStartAndStop(mock);
 
-    auto encoder = mcs::android::H264Encoder::Create(api);
+    auto encoder = mcs::android::H264Encoder::Create();
     encoder->SetDelegate(encoder_delegate);
 
     EXPECT_TRUE(encoder->Configure(config));
@@ -800,35 +756,35 @@ TEST_F(H264EncoderFixture, HandsBuffersWithCodecSpecificDataBack) {
     auto input_buffer = new DummyMediaBufferWrapper;
     mcs::TimestampUs input_buffer_timestamp = 23ll;
 
-    EXPECT_CALL(*api, MediaCodecSource_Read(_, _))
+    EXPECT_CALL(*mock, media_codec_source_read(_, _))
             .Times(1)
             .WillRepeatedly(DoAll(SetArgPointee<1>(input_buffer), Return(true)));
 
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_TIME))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME))
             .Times(1)
             .WillRepeatedly(Return(1));
-    EXPECT_CALL(*api, MediaMetaData_GetKeyId(MEDIA_META_DATA_KEY_IS_CODEC_CONFIG))
+    EXPECT_CALL(*mock, media_meta_data_get_key_id(MEDIA_META_DATA_KEY_IS_CODEC_CONFIG))
             .Times(1)
             .WillRepeatedly(Return(2));
 
     auto meta_data = new DummyMediaMetaDataWrapper;
 
-    EXPECT_CALL(*api, MediaBuffer_GetMetaData(input_buffer))
+    EXPECT_CALL(*mock, media_buffer_get_meta_data(input_buffer))
             .Times(2)
             .WillRepeatedly(Return(meta_data));
 
-    EXPECT_CALL(*api, MediaMetaData_FindInt64(meta_data, 1, _))
+    EXPECT_CALL(*mock, media_meta_data_find_int64(meta_data, 1, _))
             .Times(1)
             .WillRepeatedly(DoAll(SetArgPointee<2>(input_buffer_timestamp), Return(true)));
-    EXPECT_CALL(*api, MediaMetaData_FindInt32(meta_data, 2, _))
+    EXPECT_CALL(*mock, media_meta_data_find_int32(meta_data, 2, _))
             .Times(1)
             .WillRepeatedly(DoAll(SetArgPointee<2>(1 /* marks this as a buffer with CSD */), Return(true)));
 
-    EXPECT_CALL(*api, MediaBuffer_GetRefCount(input_buffer))
+    EXPECT_CALL(*mock, media_buffer_get_refcount(input_buffer))
             .Times(1)
             .WillRepeatedly(Return(0));
 
-    EXPECT_CALL(*api, MediaBuffer_Destroy(input_buffer))
+    EXPECT_CALL(*mock, media_buffer_destroy(input_buffer))
             .Times(1);
 
     EXPECT_CALL(*encoder_delegate, OnBufferWithCodecConfig(_))

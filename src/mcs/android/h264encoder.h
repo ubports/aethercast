@@ -31,8 +31,6 @@
 #include "mcs/video/baseencoder.h"
 #include "mcs/video/bufferqueue.h"
 
-#include "mcs/android/mediaapi.h"
-
 namespace mcs {
 namespace android {
 
@@ -42,7 +40,7 @@ public:
 
     static BaseEncoder::Config DefaultConfiguration();
 
-    static BaseEncoder::Ptr Create(const MediaAPI::Ptr &api = MediaAPI::CreateDefault());
+    static BaseEncoder::Ptr Create();
 
     ~H264Encoder();
 
@@ -62,7 +60,7 @@ public:
     bool Execute() override;
 
 private:
-    H264Encoder(const MediaAPI::Ptr &api);
+    H264Encoder();
 
     bool DoesBufferContainCodecConfig(MediaBufferWrapper *buffer);
 
@@ -83,7 +81,6 @@ private:
     };
 
 private:
-    MediaAPI::Ptr api_;
     BaseEncoder::Config config_;
     MediaMessageWrapper *format_;
     MediaSourceWrapper *source_;
