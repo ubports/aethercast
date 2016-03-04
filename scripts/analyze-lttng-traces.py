@@ -35,8 +35,9 @@ def analyze_trace(path):
         end = buffer["aethercast_encoder:finished_frame"]
         encoding_times.append(((end - start) / 1000000))
 
-    print("Encoding time mean: %f ms stdev: %f ms" %
-          (statistics.mean(encoding_times), statistics.stdev(encoding_times)))
+    print("Encoding time max: %f ms min: %f ms mean: %f ms stdev: %f ms" %
+          (max(encoding_times), min(encoding_times),
+           statistics.mean(encoding_times), statistics.stdev(encoding_times)))
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
