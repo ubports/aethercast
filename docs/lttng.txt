@@ -1,0 +1,28 @@
+Tracing with LTTng
+==================
+
+Aethercast has support for LTTng tracepoints for various events. You can
+record tracepoints from aethercast with the following commands:
+
+ $ lttng create aethercast-session -o /tmp/aethercast-session
+ $ lttng enable-event -u -a
+ $ lttng start
+ $ AETHERCAST_REPORT_TYPE=lttng aethercast
+ $ lttng stop
+ $ lttng destroy aethercast-session
+
+To allow tracepoints to be used at runtime after you have set the
+AETHERCAST_REPORT_TYPE environment variable you need to make sure
+the shared library libaethercast-lttng.so is properly installed
+on your system.
+
+On Ubuntu you can archive this by installing the aethercast-tools
+package:
+
+ $ apt-get install aethercast-tools
+
+You can then analzye the results then with your tool of choice. See
+the LTTng homepage at http://lttng.org/ for a list of possible tools
+The easiest way is by using babeltrace.
+
+ $ babeltrace /tmp/aethercast-session/<trace-subdir>
