@@ -26,7 +26,6 @@
 #include "mcs/streaming/rtpsender.h"
 
 namespace {
-FILE *dump_file = nullptr;
 static constexpr const char *kMediaSenderThreadName{"MediaSender"};
 }
 
@@ -58,15 +57,9 @@ MediaSender::MediaSender(const Packetizer::Ptr &packetizer, const TransportSende
     format.mime = "video/avc";
 
     video_track_ = packetizer_->AddTrack(format);
-
-    if (mcs::Utils::IsEnvSet("AETHERCAST_MPEGTS_DUMP"))
-        dump_file = ::fopen(mcs::Utils::GetEnvValue("AETHERCAST_MPEGTS_DUMP").c_str(), "w");
 }
 
 MediaSender::~MediaSender() {
-    if (dump_file)
-        ::fclose(dump_file);
-
     Stop();
 }
 
@@ -125,9 +118,6 @@ void MediaSender::ProcessBuffer(const mcs::video::Buffer::Ptr &buffer) {
         MCS_ERROR("MPEGTS packetizing failed");
         return;
     }
-
-    if (dump_file)
-        ::fwrite(packets->Data(), 1, packets->Length(), dump_file);
 
     packets->SetTimestamp(buffer->Timestamp());
     sender_->Queue(packets);

@@ -84,8 +84,8 @@ private:
     BaseEncoder::Config config_;
     MediaMessageWrapper *format_;
     MediaSourceWrapper *source_;
-    MediaCodecSourceWrapper *encoder_;
     MediaMetaDataWrapper *source_format_;
+    MediaCodecSourceWrapper *encoder_;
     bool running_;
     mcs::video::BufferQueue::Ptr input_queue_;
     std::vector<BufferItem> pending_buffers_;

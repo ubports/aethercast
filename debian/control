@@ -44,9 +44,9 @@ Depends: ${misc:Depends},
          isc-dhcp-client,
          wpasupplicant
 Description: Display casting service
- A management service for remote displays which it can stream the
- current screen content to. It will support multiple approaches
- for this like Miracast.
+ A management service that streams current device screen content
+ to a remote display. This service supports several different
+ protocols such as Miracast.
 
 Package: aethercast-tools
 Architecture: i386 amd64 armhf
@@ -56,9 +56,9 @@ Depends: ${misc:Depends},
          isc-dhcp-client,
          wpasupplicant
 Description: Tools for the display casting service
-  A management service for remote displays which it can stream the
- current screen content to. It will support multiple approaches
- for this like Miracast.
+ A management service that streams current device screen content
+ to a remote display. This service supports several different
+ protocols such as Miracast.
  .
- This package contains small utilities helping to work with the
- display streaming stack.
+ This package contains small utilities that assist in working with
+ the display streaming stack.

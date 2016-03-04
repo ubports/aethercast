@@ -636,8 +636,6 @@ TEST_F(H264EncoderFixture, SourceReadFailsForInvalidState) {
 TEST_F(H264EncoderFixture, QueueBufferDoesNotCrashWhenInactive) {
     auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
-    auto config = mcs::android::H264Encoder::DefaultConfiguration();
-
     auto encoder = mcs::android::H264Encoder::Create();
 
     auto buffer = mcs::video::Buffer::Create(nullptr);
@@ -646,8 +644,6 @@ TEST_F(H264EncoderFixture, QueueBufferDoesNotCrashWhenInactive) {
 
 TEST_F(H264EncoderFixture, ExecuteFailForInvalidState) {
     auto mock = std::make_shared<mcs::test::android::MockMedia>();
-
-    auto config = mcs::android::H264Encoder::DefaultConfiguration();
 
     auto encoder = mcs::android::H264Encoder::Create();
 

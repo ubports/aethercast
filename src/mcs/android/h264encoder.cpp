@@ -15,28 +15,39 @@
  *
  */
 
+// Ignore all warnings coming from the external Android headers as
+// we don't control them and also don't want to get any warnings
+// from them which will only polute our build output.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-w"
 #include <system/window.h>
+#pragma GCC diagnostic pop
+
+#include <boost/concept_check.hpp>
 
 #include "mcs/logger.h"
+#include "mcs/keep_alive.h"
 
 #include "mcs/video/statistics.h"
 
 #include "mcs/android/h264encoder.h"
 
 namespace {
-static const char *kEncoderThreadName{"H264Encoder"};
-static const char *kH264MimeType{"video/avc"};
-static const char *kRawMimeType{"video/raw"};
+static constexpr const char *kEncoderThreadName{"H264Encoder"};
+static constexpr const char *kH264MimeType{"video/avc"};
+static constexpr const char *kRawMimeType{"video/raw"};
 // From frameworks/native/include/media/openmax/OMX_IVCommon.h
-const int32_t kOMXColorFormatAndroidOpaque = 0x7F000789;
-const int32_t kOMXVideoIntraRefreshCyclic = 0;
+static constexpr int32_t kOMXColorFormatAndroidOpaque = 0x7F000789;
+static constexpr int32_t kOMXVideoIntraRefreshCyclic = 0;
 // From frameworks/native/include/media/openmax/OMX_Video.h
-const int32_t kOMXVideoControlRateConstant = 2;
+static constexpr int32_t kOMXVideoControlRateConstant = 2;
 // From frameworks/native/include/media/hardware/MetadataBufferType.h
-const uint32_t kMetadataBufferTypeGrallocSource = 1;
+static constexpr uint32_t kMetadataBufferTypeGrallocSource = 1;
 // From frameworks/av/include/media/stagefright/MediaErrors.h
 enum AndroidMediaError {
     kAndroidMediaErrorBase = -1000,
+    kAndroidMediaErrorNotConnected = kAndroidMediaErrorBase - 1,
+    kAndroidMediaErrorBufferTooSmall = kAndroidMediaErrorBase - 9,
     kAndroidMediaErrorEndOfStream = kAndroidMediaErrorBase - 11,
 };
 }
@@ -53,7 +64,7 @@ public:
         if (!buffer_)
             return;
 
-        auto ref_count = media_buffer_get_refcount(buffer_);
+        const auto ref_count = media_buffer_get_refcount(buffer_);
 
         // If someone has set a reference on the buffer we just have to
         // release it here and the other one will take care about actually
@@ -66,7 +77,7 @@ public:
     }
 
     static MediaSourceBuffer::Ptr Create(MediaBufferWrapper *buffer) {
-        auto sp = std::shared_ptr<MediaSourceBuffer>(new MediaSourceBuffer);
+        const auto sp = std::shared_ptr<MediaSourceBuffer>(new MediaSourceBuffer);
         sp->buffer_ = buffer;
         sp->ExtractTimestamp();
         return sp;
@@ -89,7 +100,7 @@ private:
     }
 
     void ExtractTimestamp() {
-        auto meta_data = media_buffer_get_meta_data(buffer_);
+        const auto meta_data = media_buffer_get_meta_data(buffer_);
         if (!meta_data)
             return;
 
@@ -121,9 +132,9 @@ video::BaseEncoder::Ptr H264Encoder::Create() {
 
 H264Encoder::H264Encoder() :
     format_(nullptr),
-    encoder_(nullptr),
     source_(nullptr),
     source_format_(nullptr),
+    encoder_(nullptr),
     running_(false),
     input_queue_(mcs::video::BufferQueue::Create()),
     start_time_(-1ll),
@@ -289,7 +300,8 @@ bool H264Encoder::Start() {
 }
 
 int H264Encoder::OnSourceStart(MediaMetaDataWrapper *meta, void *user_data) {
-    auto thiz = static_cast<H264Encoder*>(user_data);
+    boost::ignore_unused_variable_warning(meta);
+    boost::ignore_unused_variable_warning(user_data);
 
     MCS_DEBUG("");
 
@@ -297,7 +309,7 @@ int H264Encoder::OnSourceStart(MediaMetaDataWrapper *meta, void *user_data) {
 }
 
 int H264Encoder::OnSourceStop(void *user_data) {
-    auto thiz = static_cast<H264Encoder*>(user_data);
+    boost::ignore_unused_variable_warning(user_data);
 
     MCS_DEBUG("");
 
@@ -305,7 +317,7 @@ int H264Encoder::OnSourceStop(void *user_data) {
 }
 
 int H264Encoder::OnSourcePause(void *user_data) {
-    auto thiz = static_cast<H264Encoder*>(user_data);
+    boost::ignore_unused_variable_warning(user_data);
 
     MCS_DEBUG("");
 
@@ -357,11 +369,11 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
 int H264Encoder::OnSourceRead(MediaBufferWrapper **buffer, void *user_data) {
     auto thiz = static_cast<H264Encoder*>(user_data);
 
-    if (!thiz->running_)
-        return kAndroidMediaErrorBase;
+    if (!thiz || !thiz->running_)
+        return kAndroidMediaErrorNotConnected;
 
     if (!buffer)
-        return kAndroidMediaErrorBase;
+        return kAndroidMediaErrorBufferTooSmall;
 
     auto input_buffer = thiz->input_queue_->Next();
 
@@ -377,6 +389,9 @@ int H264Encoder::OnSourceRead(MediaBufferWrapper **buffer, void *user_data) {
 
 void H264Encoder::OnBufferReturned(MediaBufferWrapper *buffer, void *user_data) {
     auto thiz = static_cast<H264Encoder*>(user_data);
+
+    if (!thiz)
+        return;
 
     // Find the right pending buffer matching the returned one
     auto iter = thiz->pending_buffers_.begin();
