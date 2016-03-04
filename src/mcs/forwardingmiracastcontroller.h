@@ -32,7 +32,9 @@ public:
     virtual void Connect(const NetworkDevice::Ptr &device, ResultCallback callback) override;
     virtual void Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback) override;
 
-    virtual void Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30}) override;
+    virtual void DisconnectAll(ResultCallback callback) override;
+
+    virtual mcs::Error Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30}) override;
 
     virtual NetworkDeviceState State() const override;
     virtual std::vector<NetworkManager::Capability> Capabilities() const override;

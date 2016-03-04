@@ -52,7 +52,9 @@ public:
     virtual void Connect(const NetworkDevice::Ptr &device, ResultCallback callback) = 0;
     virtual void Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback) = 0;
 
-    virtual void Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30}) = 0;
+    virtual void DisconnectAll(ResultCallback callback) = 0;
+
+    virtual mcs::Error Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30}) = 0;
 
     virtual NetworkDeviceState State() const = 0;
     virtual std::vector<NetworkManager::Capability> Capabilities() const = 0;

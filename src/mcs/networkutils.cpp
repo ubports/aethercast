@@ -16,22 +16,35 @@
  */
 
 #include <sys/ioctl.h>
-#include <net/if.h>
 #include <asm/types.h>
-#include <linux/netlink.h>
-#include <linux/rtnetlink.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <errno.h>
 #include <memory.h>
+#include <stdlib.h>
+#include <errno.h>
+
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+
+// Hacks necessary to be able to include wireless.h
+#ifndef __user
+#define __user
+#endif
+
+#include <linux/if.h>
+#include <linux/wireless.h>
 
 #include <glib.h>
 
 #include "logger.h"
 #include "networkutils.h"
 #include "logger.h"
+
+namespace {
+static constexpr size_t kDriverCommandReplySize{1024};
 
 #define NLMSG_TAIL(nmsg)				\
     ((struct rtattr *) (((uint8_t*) (nmsg)) +	\
@@ -55,6 +68,7 @@ int __rtnl_addattr_l(struct nlmsghdr *n, size_t max_length,
     n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(length);
 
     return 0;
+}
 }
 
 namespace mcs {
@@ -259,4 +273,46 @@ int NetworkUtils::BytesAvailableToRead(int fd) {
         available = (int64_t) nbytes;
     return available;
 }
+
+typedef struct {
+#ifdef SUPPORT_64BIT
+    u64 bufaddr;
+#else
+    char *bufaddr;
+#endif
+    int used_len;
+    int total_len;
+} android_wifi_priv_cmd;
+
+int NetworkUtils::SendDriverPrivateCommand(const std::string &ifname, const std::string &cmd) {
+    struct ifreq ifr;
+    android_wifi_priv_cmd priv_cmd;
+    char buf[kDriverCommandReplySize];
+    size_t buf_len = kDriverCommandReplySize;
+
+    ::memset(buf, 0, sizeof(buf));
+    ::memcpy(buf, cmd.c_str(), cmd.length() + 1);
+    ::memset(&ifr, 0, sizeof(ifr));
+    ::memset(&priv_cmd, 0, sizeof(priv_cmd));
+
+    ::strncpy(ifr.ifr_name, ifname.c_str(), IFNAMSIZ);
+
+#ifdef SUPPORT_64BIT
+    priv_cmd.bufaddr = (u64)(uintptr_t) buf;
+#else
+    priv_cmd.bufaddr = buf;
+#endif
+    priv_cmd.used_len = buf_len;
+    priv_cmd.total_len = buf_len;
+    ifr.ifr_data = &priv_cmd;
+
+    const int s = ::socket(PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+    if (s < 0)
+        return -EIO;
+
+    const int ret = ::ioctl(s, SIOCDEVPRIVATE + 1, &ifr);
+    ::close(s);
+    return ret;
+}
+
 } // namespace mcs

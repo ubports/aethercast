@@ -26,8 +26,9 @@ struct MockMiracastController : public mcs::MiracastController {
 
     MOCK_METHOD2(Connect, void(const mcs::NetworkDevice::Ptr &, mcs::ResultCallback));
     MOCK_METHOD2(Disconnect, void(const mcs::NetworkDevice::Ptr &, mcs::ResultCallback));
+    MOCK_METHOD1(DisconnectAll, void(mcs::ResultCallback));
 
-    MOCK_METHOD1(Scan, void(const std::chrono::seconds &));
+    MOCK_METHOD1(Scan, mcs::Error(const std::chrono::seconds &));
 
     MOCK_CONST_METHOD0(State, mcs::NetworkDeviceState());
     MOCK_CONST_METHOD0(Capabilities, std::vector<mcs::NetworkManager::Capability>());
@@ -48,7 +49,8 @@ TEST(ForwardingMiracastController, ForwardsCallsToImpl) {
     EXPECT_CALL(*impl, ResetDelegate()).Times(1);
     EXPECT_CALL(*impl, Connect(_,_)).Times(1);
     EXPECT_CALL(*impl, Disconnect(_,_)).Times(1);
-    EXPECT_CALL(*impl, Scan(_)).Times(1);
+    EXPECT_CALL(*impl, DisconnectAll(_)).Times(1);
+    EXPECT_CALL(*impl, Scan(_)).Times(1).WillRepeatedly(Return(mcs::Error::kNone));
     EXPECT_CALL(*impl, State()).Times(1).WillRepeatedly(Return(mcs::NetworkDeviceState::kConnected));
     EXPECT_CALL(*impl, Capabilities()).Times(1).WillRepeatedly(Return(std::vector<mcs::NetworkManager::Capability>{mcs::NetworkManager::Capability::kSource}));
     EXPECT_CALL(*impl, Scanning()).Times(1).WillRepeatedly(Return(true));
@@ -58,6 +60,7 @@ TEST(ForwardingMiracastController, ForwardsCallsToImpl) {
     fmc.ResetDelegate();
     fmc.Connect(mcs::NetworkDevice::Ptr{}, mcs::ResultCallback{});
     fmc.Disconnect(mcs::NetworkDevice::Ptr{}, mcs::ResultCallback{});
+    fmc.DisconnectAll(mcs::ResultCallback{});
     fmc.Scan(std::chrono::seconds{10});
     fmc.State();
     fmc.Capabilities();

@@ -53,6 +53,9 @@ DhcpServer::DhcpServer(const std::weak_ptr<Delegate> &delegate, const std::strin
     pid_file_path_ = mcs::Utils::Sprintf("%s/dhcpd-%s.pid",
                                          mcs::kRuntimePath,
                                          interface_name_);
+
+
+    local_address_ = mcs::IpV4Address::from_string("192.168.7.1");
 }
 
 DhcpServer::~DhcpServer() {
@@ -75,24 +78,21 @@ void DhcpServer::Start() {
     monitor_ = FileMonitor::Create(lease_file_path_, shared_from_this());
 
     // FIXME store those defaults somewhere else
-    const char *address = "192.168.7.1";
     const char *broadcast = "192.168.7.255";
     unsigned char prefixlen = 24;
-
-    local_address_ = mcs::IpV4Address::from_string(address);
 
     auto interface_index = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
     if (interface_index < 0)
         MCS_ERROR("Failed to determine index of network interface: %s", interface_name_);
 
     if (mcs::NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, interface_index,
-                                    AF_INET, address,
+                                    AF_INET, local_address_.to_string().c_str(),
                                     NULL, prefixlen, broadcast) < 0) {
         MCS_ERROR("Failed to assign network address for %s", interface_name_);
         return;
     }
 
-    MCS_DEBUG("Assigned network address %s", address);
+    MCS_DEBUG("Assigned network address %s", local_address_.to_string());
 
     std::vector<std::string> argv = {
         "-f", "-4",

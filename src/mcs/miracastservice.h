@@ -63,8 +63,9 @@ public:
 
     void Connect(const NetworkDevice::Ptr &device, ResultCallback callback);
     void Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback);
+    void DisconnectAll(ResultCallback callback);
 
-    void Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30});
+    mcs::Error Scan(const std::chrono::seconds &timeout = std::chrono::seconds{30});
 
     NetworkDeviceState State() const;
     std::vector<NetworkManager::Capability> Capabilities() const;

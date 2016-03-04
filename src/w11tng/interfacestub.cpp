@@ -55,7 +55,7 @@ InterfaceStub::Ptr InterfaceStub::FinalizeConstruction(const std::string &object
         }
 
         if (auto sp = inst->delegate_.lock())
-            sp->OnInterfaceReady();
+            sp->OnInterfaceReady(inst->ObjectPath());
 
     }, new mcs::SharedKeepAlive<InterfaceStub>{shared_from_this()});
 

@@ -25,6 +25,77 @@
 
 namespace w11tng {
 
+std::string P2PDeviceStub::StatusToString(Status status) {
+    switch (status) {
+    case Status::kSucccesAcceptedByUser:
+    case Status::kSuccess:
+        return "Success";
+    case Status::kInformationIsCurrentlyUnavailable:
+        return "Information is currently unavailable";
+    case Status::kIncompatibleParameters:
+        return "Incompatible parameters";
+    case Status::kLimitReached:
+        return "Limit reached";
+    case Status::kInvalidParameter:
+        return "Invalid parameter";
+    case Status::kUnableToAccommodateRequest:
+        return "Unable to accommodate request";
+    case Status::kProtcolErrorOrDisruptiveBehavior:
+        return "Protocol error or disruptive behavior";
+    case Status::kNoCommonChannel:
+        return "No common channels";
+    case Status::kUnknownP2PGroup:
+        return "Unknown P2P group";
+    case Status::kBothGOIntent15:
+        return "Both P2P devices indicated an intent of 15 in group owner negotiation";
+    case Status::kIncompatibleProvisioningMethod:
+        return "Incompatible provisioning method";
+    case Status::kRejectByUser:
+        return "Rejected by user";
+    default:
+        break;
+    }
+
+    return "Failed: unknown error";
+}
+
+std::string P2PDeviceStub::PropertyToString(Property property) {
+    switch (property) {
+    case Property::kPeerObject:
+        return "peer_object";
+    case Property::kStatus:
+        return "status";
+    case Property::kFrequency:
+        return "frequency";
+    case Property::kFrequencyList:
+        return "frequency_list";
+    case Property::kWpsMethod:
+        return "wps_method";
+    default:
+        break;
+    }
+    return "unknown";
+}
+
+P2PDeviceStub::WpsMethod P2PDeviceStub::WpsMethodFromString(const std::string &wps_method) {
+    if (wps_method == "pin")
+        return WpsMethod::kPin;
+    // In all other cases we directly fallback to PBC
+    return WpsMethod::kPbc;
+}
+
+std::string P2PDeviceStub::WpsMethodToString(WpsMethod wps_method) {
+    switch (wps_method) {
+    case WpsMethod::kPbc:
+        return "pbc";
+    case WpsMethod::kPin:
+        return "pin";
+    default:
+        break;
+    }
+    return "";
+}
+
 P2PDeviceStub::Ptr P2PDeviceStub::Create(const std::string &object_path, const std::weak_ptr<P2PDeviceStub::Delegate> &delegate) {
     return std::shared_ptr<P2PDeviceStub>(new P2PDeviceStub(delegate))->FinalizeConstruction(object_path);
 }
@@ -110,17 +181,44 @@ void P2PDeviceStub::OnGONegotiationSuccess(WpaSupplicantInterfaceP2PDevice *devi
     auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
 
     std::string peer_path;
+    GroupOwnerNegotiationResult result;
 
     mcs::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
-        if (name == "peer_object")
-            peer_path = g_variant_get_string(g_variant_get_variant(value), nullptr);
+        if (name == PropertyToString(Property::kStatus)) {
+            const auto v = g_variant_get_variant(value);
+            if (g_variant_is_of_type(v, G_VARIANT_TYPE("i")))
+                result.status = static_cast<Status>(g_variant_get_int32(v));
+        }
+        else if (name == PropertyToString(Property::kPeerObject)) {
+            const auto v = g_variant_get_variant(value);
+            if (g_variant_is_of_type(v, G_VARIANT_TYPE("s")))
+                peer_path = g_variant_get_string(v, nullptr);
+        }
+        else if (name == PropertyToString(Property::kFrequency)) {
+            const auto v = g_variant_get_variant(value);
+            if (g_variant_is_of_type(v, G_VARIANT_TYPE("i")))
+                result.oper_freq = g_variant_get_int32(v);
+        }
+        else if (name == PropertyToString(Property::kFrequencyList)) {
+            const auto v = g_variant_get_variant(value);
+            for (int n = 0; n < g_variant_n_children(v); n++) {
+                Frequency freq = 0;
+                g_variant_get_child(v, n, "i", &freq);
+                result.frequencies.insert(freq);
+            }
+        }
+        else if (name == PropertyToString(Property::kWpsMethod)) {
+            const auto v = g_variant_get_variant(value);
+            if (g_variant_is_of_type(v, G_VARIANT_TYPE("s")))
+                result.wps_method = WpsMethodFromString(g_variant_get_string(v, nullptr));
+        }
     });
 
     if (peer_path.length() == 0)
         return;
 
     if (auto sp = inst->delegate_.lock())
-        sp->OnGroupOwnerNegotiationSuccess(peer_path);
+        sp->OnGroupOwnerNegotiationSuccess(peer_path, result);
 }
 
 void P2PDeviceStub::OnGONegotiationFailure(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data) {
@@ -129,20 +227,20 @@ void P2PDeviceStub::OnGONegotiationFailure(WpaSupplicantInterfaceP2PDevice *devi
     auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
 
     std::string peer_path;
-    int status = 0;
+    GroupOwnerNegotiationResult result;
 
     mcs::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
         if (name == "peer_object")
             peer_path = g_variant_get_string(g_variant_get_variant(value), nullptr);
         else if (name == "status")
-            status = g_variant_get_int32(g_variant_get_variant(value));
+            result.status = static_cast<Status>(g_variant_get_int32(g_variant_get_variant(value)));
     });
 
     if (peer_path.length() == 0)
         return;
 
     if (auto sp = inst->delegate_.lock())
-        sp->OnGroupOwnerNegotiationFailure(peer_path);
+        sp->OnGroupOwnerNegotiationFailure(peer_path, result);
 }
 
 void P2PDeviceStub::OnGroupStarted(WpaSupplicantInterfaceP2PDevice *device, GVariant *properties, gpointer user_data) {
@@ -215,21 +313,28 @@ void P2PDeviceStub::ConnectSignals() {
 
 void P2PDeviceStub::StartFindTimeout() {
     scan_timeout_source_ = g_timeout_add_seconds(scan_timeout_.count(), [](gpointer user_data) {
-        auto inst = static_cast<mcs::SharedKeepAlive<P2PDeviceStub>*>(user_data)->ShouldDie();
+        auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceStub>*>(user_data)->GetInstance().lock();
 
-        inst->StopFindTimeout();
+        if (not inst)
+            return FALSE;
+
+        inst->scan_timeout_source_ = 0;
+        inst->StopFind();
+
+        if (auto sp = inst->delegate_.lock())
+            sp->OnP2PDeviceChanged();
 
         return FALSE;
-    }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
+    }, new mcs::WeakKeepAlive<P2PDeviceStub>{shared_from_this()});
 }
 
 void P2PDeviceStub::StopFindTimeout() {
     if (scan_timeout_source_ == 0)
         return;
 
+    g_source_remove(scan_timeout_source_);
     scan_timeout_source_ = 0;
     scan_timeout_ = std::chrono::seconds{0};
-    StopFind();
 
     if (auto sp = delegate_.lock())
         sp->OnP2PDeviceChanged();
@@ -290,13 +395,12 @@ void P2PDeviceStub::StopFind() {
             g_error_free(error);
             return;
         }
-
     }, new mcs::SharedKeepAlive<P2PDeviceStub>{shared_from_this()});
 
     StopFindTimeout();
 }
 
-bool P2PDeviceStub::Connect(const std::string &path) {
+bool P2PDeviceStub::Connect(const std::string &path, const std::int32_t intent) {
     MCS_DEBUG("");
 
     if (!proxy_ || path.length() == 0)
@@ -306,9 +410,12 @@ bool P2PDeviceStub::Connect(const std::string &path) {
 
     auto builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
 
+    MCS_DEBUG("Using GO intent %d", intent);
+
     g_variant_builder_add(builder, "{sv}", "peer", g_variant_new_object_path(path.c_str()));
     // We support only WPS PBC for now
-    g_variant_builder_add(builder, "{sv}", "wps_method", g_variant_new_string("pbc"));
+    g_variant_builder_add(builder, "{sv}", "wps_method", g_variant_new_string(WpsMethodToString(WpsMethod::kPbc).c_str()));
+    g_variant_builder_add(builder, "{sv}", "go_intent", g_variant_new_int32(intent));
 
     auto arguments = g_variant_builder_end(builder);
 

@@ -26,6 +26,8 @@ extern "C" {
 
 #include "baseskeleton.h"
 
+#include "w11tng/p2pdevicestub.h"
+
 namespace w11tng {
 namespace testing {
 
@@ -48,7 +50,9 @@ public:
 
     void EmitDeviceFound(const std::string &path);
     void EmitDeviceLost(const std::string &path);
-    void EmitGroupOwnerNegotiationSuccess(const std::string &path);
+    void EmitGroupOwnerNegotiationSuccess(const std::string &path, const P2PDeviceStub::Status status,
+                                          const P2PDeviceStub::Frequency freq, const P2PDeviceStub::FrequencyList &freqs,
+                                          const P2PDeviceStub::WpsMethod wps_method);
     void EmitGroupOwnerNegotiationFailure(const std::string &path);
     void EmitGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role);
     void EmitGroupFinished(const std::string &group_path, const std::string &interface_path);

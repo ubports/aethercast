@@ -41,7 +41,7 @@ public:
 };
 }
 
-TEST(Dhcp, AddressAssignment) {
+TEST(Dhcp, DISABLED_AddressAssignment) {
     mcs::testing::VirtualNetwork veth;
 
     boost::filesystem::create_directory("/run/aethercast");

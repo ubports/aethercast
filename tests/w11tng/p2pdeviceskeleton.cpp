@@ -16,9 +16,10 @@
  */
 
 #include <memory>
+#include <iostream>
 
-#include <mcs/keep_alive.h>
-#include <mcs/logger.h>
+#include "mcs/keep_alive.h"
+#include "mcs/logger.h"
 
 #include "p2pdeviceskeleton.h"
 
@@ -94,10 +95,23 @@ void P2PDeviceSkeleton::EmitDeviceLost(const std::string &path) {
     wpa_supplicant_interface_p2_pdevice_emit_device_lost(skeleton_.get(), path.c_str());
 }
 
-void P2PDeviceSkeleton::EmitGroupOwnerNegotiationSuccess(const std::string &path) {
+void P2PDeviceSkeleton::EmitGroupOwnerNegotiationSuccess(const std::string &path, const P2PDeviceStub::Status status,
+                                                         const P2PDeviceStub::Frequency freq, const P2PDeviceStub::FrequencyList &freqs,
+                                                         const P2PDeviceStub::WpsMethod wps_method) {
     auto builder = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
     g_variant_builder_add(builder, "{sv}", "peer_object", g_variant_new_string(path.c_str()));
+    g_variant_builder_add(builder, "{sv}", "status", g_variant_new_int32(static_cast<gint32>(status)));
+    g_variant_builder_add(builder, "{sv}", "frequency", g_variant_new_int32(freq));
+
+    auto freq_builder = g_variant_builder_new(G_VARIANT_TYPE("ai"));
+    for (auto freq : freqs)
+        g_variant_builder_add(freq_builder, "i", freq);
+
+    g_variant_builder_add(builder, "{sv}", "frequency_list", g_variant_builder_end(freq_builder));
+    g_variant_builder_add(builder, "{sv}", "wps_method", g_variant_new_string(P2PDeviceStub::WpsMethodToString(wps_method).c_str()));
+
     auto value = g_variant_builder_end(builder);
+
     wpa_supplicant_interface_p2_pdevice_emit_gonegotiation_success(skeleton_.get(), value);
 }
 
