@@ -27,24 +27,24 @@ namespace mcs {
 namespace report {
 namespace lttng {
 
-void EncoderReport::BeganFrame() {
-    mcs_tracepoint(aethercast_encoder, began_frame, 0);
-}
-
-void EncoderReport::FinishedFrame() {
-    mcs_tracepoint(aethercast_encoder, finished_frame, 0);
-}
-
-void EncoderReport::ReceivedInputBuffer() {
-    mcs_tracepoint(aethercast_encoder, received_input_buffer, 0);
-}
-
 void EncoderReport::Started() {
     mcs_tracepoint(aethercast_encoder, started, 0);
 }
 
 void EncoderReport::Stopped() {
     mcs_tracepoint(aethercast_encoder, stopped, 0);
+}
+
+void EncoderReport::BeganFrame(const mcs::TimestampUs timestamp) {
+    mcs_tracepoint(aethercast_encoder, began_frame, timestamp);
+}
+
+void EncoderReport::FinishedFrame(const mcs::TimestampUs timestamp) {
+    mcs_tracepoint(aethercast_encoder, finished_frame, timestamp);
+}
+
+void EncoderReport::ReceivedInputBuffer(const mcs::TimestampUs timestamp) {
+    mcs_tracepoint(aethercast_encoder, received_input_buffer, timestamp);
 }
 
 } // namespace logging

@@ -373,7 +373,7 @@ int H264Encoder::OnSourceRead(MediaBufferWrapper **buffer, void *user_data) {
 
     *buffer = next_buffer;
 
-    thiz->report_->BeganFrame();
+    thiz->report_->BeganFrame(input_buffer->Timestamp());
 
     return 0;
 }
@@ -431,9 +431,9 @@ bool H264Encoder::Execute() {
         return false;
     }
 
-    report_->FinishedFrame();
-
     auto mbuf = MediaSourceBuffer::Create(buffer);
+
+    report_->FinishedFrame(mbuf->Timestamp());
 
     if (DoesBufferContainCodecConfig(buffer)) {
         if (auto sp = delegate_.lock())
@@ -466,7 +466,7 @@ void H264Encoder::QueueBuffer(const video::Buffer::Ptr &buffer) {
 
     input_queue_->Push(buffer);
 
-    report_->ReceivedInputBuffer();
+    report_->ReceivedInputBuffer(buffer->Timestamp());
 }
 
 void* H264Encoder::NativeWindowHandle() const {

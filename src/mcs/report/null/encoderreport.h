@@ -21,6 +21,7 @@
 #include <memory>
 
 #include "mcs/non_copyable.h"
+
 #include "mcs/video/encoderreport.h"
 
 namespace mcs {
@@ -31,9 +32,9 @@ class EncoderReport : public video::EncoderReport {
 public:
     void Started();
     void Stopped();
-    void BeganFrame();
-    void FinishedFrame();
-    void ReceivedInputBuffer();
+    void BeganFrame(const mcs::TimestampUs timestamp);
+    void FinishedFrame(const mcs::TimestampUs timestamp);
+    void ReceivedInputBuffer(const mcs::TimestampUs timestamp);
 };
 
 } // namespace null

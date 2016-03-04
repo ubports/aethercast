@@ -22,6 +22,8 @@
 
 #include "mcs/non_copyable.h"
 
+#include "mcs/utils.h"
+
 namespace mcs {
 namespace video {
 
@@ -31,9 +33,9 @@ public:
 
     virtual void Started() = 0;
     virtual void Stopped() = 0;
-    virtual void BeganFrame() = 0;
-    virtual void FinishedFrame() = 0;
-    virtual void ReceivedInputBuffer() = 0;
+    virtual void BeganFrame(const mcs::TimestampUs timestamp) = 0;
+    virtual void FinishedFrame(const mcs::TimestampUs timestamp) = 0;
+    virtual void ReceivedInputBuffer(const mcs::TimestampUs timestamp) = 0;
 };
 
 } // namespace video

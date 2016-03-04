@@ -23,24 +23,24 @@ namespace mcs {
 namespace report {
 namespace logging {
 
-void EncoderReport::BeganFrame() {
-    MCS_TRACE("");
-}
-
-void EncoderReport::FinishedFrame() {
-    MCS_TRACE("");
-}
-
-void EncoderReport::ReceivedInputBuffer() {
-    MCS_TRACE("");
-}
-
 void EncoderReport::Started() {
     MCS_TRACE("");
 }
 
 void EncoderReport::Stopped() {
     MCS_TRACE("");
+}
+
+void EncoderReport::BeganFrame(const mcs::TimestampUs timestamp) {
+    MCS_TRACE("timestamp %lld", timestamp);
+}
+
+void EncoderReport::FinishedFrame(const mcs::TimestampUs timestamp) {
+    MCS_TRACE("timestamp %lld", timestamp);
+}
+
+void EncoderReport::ReceivedInputBuffer(const mcs::TimestampUs timestamp) {
+    MCS_TRACE("timestamp %lld", timestamp);
 }
 
 } // namespace logging

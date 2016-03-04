@@ -15,25 +15,30 @@
  *
  */
 
+#include <boost/concept_check.hpp>
+
 #include "mcs/report/null/encoderreport.h"
 
 namespace mcs {
 namespace report {
 namespace null {
 
-void EncoderReport::BeganFrame() {
-}
-
-void EncoderReport::FinishedFrame() {
-}
-
-void EncoderReport::ReceivedInputBuffer() {
-}
-
 void EncoderReport::Started() {
 }
 
 void EncoderReport::Stopped() {
+}
+
+void EncoderReport::BeganFrame(const mcs::TimestampUs timestamp) {
+    boost::ignore_unused_variable_warning(timestamp);
+}
+
+void EncoderReport::FinishedFrame(const mcs::TimestampUs timestamp) {
+    boost::ignore_unused_variable_warning(timestamp);
+}
+
+void EncoderReport::ReceivedInputBuffer(const mcs::TimestampUs timestamp) {
+    boost::ignore_unused_variable_warning(timestamp);
 }
 
 } // namespace null

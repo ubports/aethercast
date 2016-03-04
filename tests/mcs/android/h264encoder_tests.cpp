@@ -572,7 +572,7 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
     auto now = mcs::Utils::GetNowUs();
     input_buffer->SetTimestamp(now);
 
-    EXPECT_CALL(*mock_report, ReceivedInputBuffer())
+    EXPECT_CALL(*mock_report, ReceivedInputBuffer(_))
             .Times(1);
 
     encoder->QueueBuffer(input_buffer);
@@ -612,7 +612,7 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
     EXPECT_CALL(*mock, media_buffer_set_return_callback(mbuf, nullptr, nullptr))
             .Times(1);
 
-    EXPECT_CALL(*mock_report, BeganFrame())
+    EXPECT_CALL(*mock_report, BeganFrame(_))
             .Times(1);
 
     EXPECT_EQ(0, source_read_callback(&output_buffer, source_read_callback_data));
@@ -759,7 +759,7 @@ TEST_F(H264EncoderFixture, ExecuteProvidesBuffers) {
     EXPECT_CALL(*encoder_delegate, OnBufferWithCodecConfig(_))
             .Times(0);
 
-    EXPECT_CALL(*mock_report, FinishedFrame())
+    EXPECT_CALL(*mock_report, FinishedFrame(_))
             .Times(1);
 
     EXPECT_TRUE(encoder->Execute());
@@ -822,7 +822,7 @@ TEST_F(H264EncoderFixture, HandsBuffersWithCodecSpecificDataBack) {
     EXPECT_CALL(*encoder_delegate, OnBufferAvailable(_))
             .Times(1);
 
-    EXPECT_CALL(*mock_report, FinishedFrame())
+    EXPECT_CALL(*mock_report, FinishedFrame(_))
             .Times(1);
 
     EXPECT_TRUE(encoder->Execute());

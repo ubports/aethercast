@@ -32,9 +32,33 @@ MCS_LTTNG_VOID_TRACE_CLASS(aethercast_encoder)
 
 ENCODER_TRACE_POINT(started)
 ENCODER_TRACE_POINT(stopped)
-ENCODER_TRACE_POINT(began_frame)
-ENCODER_TRACE_POINT(finished_frame)
-ENCODER_TRACE_POINT(received_input_buffer)
+
+TRACEPOINT_EVENT(
+    TRACEPOINT_PROVIDER,
+    began_frame,
+    TP_ARGS(int, timestamp),
+    TP_FIELDS(
+        ctf_integer(int, timestamp, timestamp)
+    )
+)
+
+TRACEPOINT_EVENT(
+    TRACEPOINT_PROVIDER,
+    finished_frame,
+    TP_ARGS(int, timestamp),
+    TP_FIELDS(
+        ctf_integer(int, timestamp, timestamp)
+    )
+)
+
+TRACEPOINT_EVENT(
+    TRACEPOINT_PROVIDER,
+    received_input_buffer,
+    TP_ARGS(int, timestamp),
+    TP_FIELDS(
+        ctf_integer(int, timestamp, timestamp)
+    )
+)
 
 #undef ENCODER_TRACE_POINT
 
