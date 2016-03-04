@@ -15,26 +15,28 @@
  *
  */
 
-#include "mcs/utils.h"
+#ifndef MCS_REPORT_LTTNG_TRACEPOINTPROVIDER_H_
+#define MCS_REPORT_LTTNG_TRACEPOINTPROVIDER_H_
 
-#include "mcs/report/reportfactory.h"
-#include "mcs/report/null/nullreportfactory.h"
-#include "mcs/report/logging/loggingreportfactory.h"
-#include "mcs/report/lttng/lttngreportfactory.h"
+#include <memory>
+
+#include "mcs/non_copyable.h"
 
 namespace mcs {
 namespace report {
+namespace lttng {
 
-std::unique_ptr<ReportFactory> ReportFactory::Create() {
-    std::string type = mcs::Utils::GetEnvValue("AETHERCAST_REPORT_TYPE");
+class TracepointProvider : public mcs::NonCopyable {
+public:
+    TracepointProvider();
+    virtual ~TracepointProvider();
 
-    if (type == "log")
-        return std::make_unique<LoggingReportFactory>();
-    else if (type == "lttng")
-        return std::make_unique<LttngReportFactory>();
+private:
+    void *lib_;
+};
 
-    return std::make_unique<NullReportFactory>();
-}
-
+} // namespace lttng
 } // namespace report
 } // namespace mcs
+
+#endif

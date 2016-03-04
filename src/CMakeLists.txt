@@ -38,6 +38,9 @@ set(HEADERS
   mcs/common/executable.h
   mcs/common/executor.h
 
+  mcs/report/lttng/utils.h
+  mcs/report/lttng/encoderreport_tp.h
+
   mcs/video/encoderreport.h
 
   mcs/streaming/packetizer.h
@@ -75,14 +78,13 @@ set(SOURCES
   mcs/report/reportfactory.cpp
   mcs/report/reportfactory.h
 
-  mcs/report/logging/loggingreportfactory.cpp
-  mcs/report/logging/encoderreport.h
-  mcs/report/logging/encoderreport.cpp
-  mcs/report/logging/loggingreportfactory.h
-  mcs/report/null/nullreportfactory.h
   mcs/report/null/nullreportfactory.cpp
-  mcs/report/null/encoderreport.h
   mcs/report/null/encoderreport.cpp
+  mcs/report/logging/loggingreportfactory.cpp
+  mcs/report/logging/encoderreport.cpp
+  mcs/report/lttng/lttngreportfactory.cpp
+  mcs/report/lttng/tracepointprovider.cpp
+  mcs/report/lttng/encoderreport.cpp
 
   mcs/video/videoformat.cpp
   mcs/video/buffer.cpp
@@ -144,7 +146,19 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/src/w11tng
 )
 
+
 add_library(aethercast-core ${SOURCES} ${HEADERS})
+target_compile_definitions(aethercast-core PUBLIC
+    "-DAETHERCAST_TRACEPOINT_LIB_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/${AETHERCAST_TRACEPOINT_LIB_INSTALL_DIR}\"")
+
+add_library(aethercast-lttng SHARED mcs/report/lttng/tracepoints.c)
+target_link_libraries(aethercast-lttng
+    ${LTTNG_UST_LIBRARIES}
+)
+
+install(TARGETS aethercast-lttng
+  LIBRARY DESTINATION ${AETHERCAST_TRACEPOINT_LIB_INSTALL_DIR}
+)
 
 add_executable(aethercast mcs/main.cpp)
 

@@ -15,26 +15,24 @@
  *
  */
 
-#include "mcs/utils.h"
+#ifndef MCS_REPORT_LTTNGREPORTFACTORY_H_
+#define MCS_REPORT_LTTNGREPORTFACTORY_H_
+
+#include <memory>
+
+#include "mcs/non_copyable.h"
 
 #include "mcs/report/reportfactory.h"
-#include "mcs/report/null/nullreportfactory.h"
-#include "mcs/report/logging/loggingreportfactory.h"
-#include "mcs/report/lttng/lttngreportfactory.h"
 
 namespace mcs {
 namespace report {
 
-std::unique_ptr<ReportFactory> ReportFactory::Create() {
-    std::string type = mcs::Utils::GetEnvValue("AETHERCAST_REPORT_TYPE");
-
-    if (type == "log")
-        return std::make_unique<LoggingReportFactory>();
-    else if (type == "lttng")
-        return std::make_unique<LttngReportFactory>();
-
-    return std::make_unique<NullReportFactory>();
-}
+class LttngReportFactory : public ReportFactory {
+public:
+    std::shared_ptr<video::EncoderReport> CreateEncoderReport();
+};
 
 } // namespace report
 } // namespace mcs
+
+#endif
