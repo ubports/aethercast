@@ -27,6 +27,13 @@
 #include "networkmanager.h"
 #include "informationelement.h"
 
+namespace {
+// We take two minutes as timeout here which corresponds to what wpa
+// takes for the group formation.
+static const std::chrono::seconds kConnectTimeout{120};
+static constexpr std::int32_t kSourceGoIntent = 7;
+}
+
 namespace w11tng {
 
 mcs::NetworkManager::Ptr NetworkManager::Create() {
@@ -184,7 +191,7 @@ NetworkDevice::Ptr NetworkManager::FindDevice(const std::string &address) {
 void NetworkManager::StartConnectTimeout() {
     MCS_DEBUG("");
 
-    connect_timeout_ = g_timeout_add_seconds(kConnectTimeout, [](gpointer user_data) {
+    connect_timeout_ = g_timeout_add_seconds(kConnectTimeout.count(), [](gpointer user_data) {
         auto inst = static_cast<mcs::SharedKeepAlive<NetworkManager>*>(user_data)->ShouldDie();
         if (not inst)
             return FALSE;
@@ -244,7 +251,7 @@ bool NetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
 
     p2p_device_->StopFind();
 
-    if (!p2p_device_->Connect(d->ObjectPath()))
+    if (!p2p_device_->Connect(d->ObjectPath(), kSourceGoIntent))
         return false;
 
     current_device_->SetState(mcs::kAssociation);
@@ -400,9 +407,11 @@ void NetworkManager::AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::N
     device->SetState(state);
 
     if (state == mcs::kDisconnected) {
-        mcs::NetworkUtils::SendDriverPrivateCommand(mgmt_interface_->Ifname(),
-                                                    BuildMiracastModeCommand(MiracastMode::Off));
-        MCS_DEBUG("Disabled WiFi driver miracast mode");
+        if (mcs::NetworkUtils::SendDriverPrivateCommand(mgmt_interface_->Ifname(),
+                                                        BuildMiracastModeCommand(MiracastMode::kOff)) < 0)
+            MCS_DEBUG("Failed to disable WiFi driver miracast mode (not supported?)");
+        else
+            MCS_DEBUG("Disabled WiFi driver miracast mode");
     }
 
     // When we're switching to be connected or disconnected we need to mark the
@@ -447,13 +456,14 @@ void NetworkManager::OnGroupOwnerNegotiationSuccess(const std::string &peer_path
     std::stringstream frequencies;
     int n = 0;
     for (auto freq : result.frequencies) {
-        frequencies << mcs::Utils::Sprintf("%d", freq);
+        frequencies << std::to_string(freq);
         if (n < result.frequencies.size() - 1)
             frequencies << ",";
+        n++;
     }
 
     MCS_DEBUG("peer %s selected oper freq %d wps_method %s",
-              peer_path, result.oper_freq, result.wps_method);
+              peer_path, result.oper_freq, P2PDeviceStub::WpsMethodToString(result.wps_method));
     MCS_DEBUG("intersect freqs [%s]", frequencies.str());
 }
 
@@ -670,8 +680,10 @@ void NetworkManager::OnGroupInterfaceReady() {
     // perform well for Miracast which we enable here. If the command is
     // not available this is a no-op.
     if (mcs::NetworkUtils::SendDriverPrivateCommand(mgmt_interface_->Ifname(),
-                                                    BuildMiracastModeCommand(MiracastMode::Source)) < 0)
-        MCS_WARNING("Failed to activate miracast mode of WiFi driver");
+                                                    BuildMiracastModeCommand(MiracastMode::kSource)) < 0)
+        MCS_WARNING("Failed to activate miracast mode of WiFi driver (not supported?)");
+    else
+        MCS_DEBUG("Enabled WiFi driver miracast mode");
 
     auto sp = shared_from_this();
 

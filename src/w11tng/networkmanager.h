@@ -47,9 +47,6 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>,
                        public w11tng::Hostname1Stub::Delegate {
 public:
     static constexpr const char *kBusName{"fi.w1.wpa_supplicant1"};
-    // We take two minutes as timeout here which corresponds to what wpa
-    // takes for the group formation.
-    static constexpr unsigned int kConnectTimeout = 120;
 
     static mcs::NetworkManager::Ptr Create();
 
@@ -134,9 +131,9 @@ private:
     void OnManagementInterfaceReady();
 
     enum class MiracastMode : int {
-        Off = 0,
-        Source = 1,
-        Sink = 2
+        kOff = 0,
+        kSource = 1,
+        kSink = 2
     };
 
     std::string BuildMiracastModeCommand(MiracastMode mode);

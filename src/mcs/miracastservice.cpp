@@ -383,7 +383,7 @@ void MiracastService::DisconnectAll(ResultCallback callback) {
 
 mcs::Error MiracastService::Scan(const std::chrono::seconds &timeout) {
     if (current_device_)
-        return mcs::Error::kInvalidState;
+        return mcs::Error::kNoDeviceConnected;
 
     network_manager_->Scan(timeout);
 

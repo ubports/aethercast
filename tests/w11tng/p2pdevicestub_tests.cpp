@@ -28,8 +28,10 @@
 
 #include "p2pdeviceskeleton.h"
 
+using namespace ::testing;
+
 namespace {
-class P2PDeviceStubFixture : public ::testing::Test,
+class P2PDeviceStubFixture : public Test,
                         public mcs::testing::DBusFixture,
                         public mcs::testing::DBusNameOwner {
 public:
@@ -57,6 +59,24 @@ public:
     MOCK_METHOD0(OnFind, void());
     MOCK_METHOD0(OnStopFind, void());
 };
+}
+
+TEST(P2PDeviceStub, CorrectPropertyNames) {
+    EXPECT_EQ("peer_object", w11tng::P2PDeviceStub::PropertyToString(w11tng::P2PDeviceStub::Property::kPeerObject));
+    EXPECT_EQ("status", w11tng::P2PDeviceStub::PropertyToString(w11tng::P2PDeviceStub::Property::kStatus));
+    EXPECT_EQ("frequency", w11tng::P2PDeviceStub::PropertyToString(w11tng::P2PDeviceStub::Property::kFrequency));
+    EXPECT_EQ("frequency_list", w11tng::P2PDeviceStub::PropertyToString(w11tng::P2PDeviceStub::Property::kFrequencyList));
+    EXPECT_EQ("wps_method", w11tng::P2PDeviceStub::PropertyToString(w11tng::P2PDeviceStub::Property::kWpsMethod));
+}
+
+TEST(P2PDeviceStub, CorrectWpsMethodNames) {
+    // Fallback is always PBC
+    EXPECT_EQ(w11tng::P2PDeviceStub::WpsMethod::kPbc, w11tng::P2PDeviceStub::WpsMethodFromString("11"));
+    EXPECT_EQ(w11tng::P2PDeviceStub::WpsMethod::kPbc, w11tng::P2PDeviceStub::WpsMethodFromString("pbc"));
+    EXPECT_EQ(w11tng::P2PDeviceStub::WpsMethod::kPin, w11tng::P2PDeviceStub::WpsMethodFromString("pin"));
+
+    EXPECT_EQ("pbc", w11tng::P2PDeviceStub::WpsMethodToString(w11tng::P2PDeviceStub::WpsMethod::kPbc));
+    EXPECT_EQ("pin", w11tng::P2PDeviceStub::WpsMethodToString(w11tng::P2PDeviceStub::WpsMethod::kPin));
 }
 
 TEST_F(P2PDeviceStubFixture, ConstructionAndSetup) {
@@ -130,11 +150,15 @@ TEST_F(P2PDeviceStubFixture, DeviceLost) {
 TEST_F(P2PDeviceStubFixture, AllOtherSignalsSuccessfullySent) {
     auto delegate = std::make_shared<MockP2PDeviceStubDelegate>();
 
-    EXPECT_CALL(*delegate, OnP2PDeviceChanged()).Times(::testing::AtLeast(1));
+    w11tng::P2PDeviceStub::GroupOwnerNegotiationResult go_negotiation_success_result;
+    ::memset(&go_negotiation_success_result, 0, sizeof(go_negotiation_success_result));
+
+    EXPECT_CALL(*delegate, OnP2PDeviceChanged()).Times(AtLeast(1));
     EXPECT_CALL(*delegate, OnP2PDeviceReady()).Times(1);
-    EXPECT_CALL(*delegate, OnGroupOwnerNegotiationSuccess(std::string("/peer_1"), ::testing::_))
-            .Times(1);
-    EXPECT_CALL(*delegate, OnGroupOwnerNegotiationFailure(std::string("/peer_1"), ::testing::_))
+    EXPECT_CALL(*delegate, OnGroupOwnerNegotiationSuccess(std::string("/peer_1"), _))
+            .Times(1)
+            .WillRepeatedly(SaveArg<1>(&go_negotiation_success_result));
+    EXPECT_CALL(*delegate, OnGroupOwnerNegotiationFailure(std::string("/peer_1"), _))
             .Times(1);
     EXPECT_CALL(*delegate, OnGroupStarted(std::string("/peer_1"), std::string("/interface_1"), std::string("GO")))
             .Times(1);
@@ -152,13 +176,21 @@ TEST_F(P2PDeviceStubFixture, AllOtherSignalsSuccessfullySent) {
 
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
 
-    skeleton->EmitGroupOwnerNegotiationSuccess("/peer_1");
+    const auto freqs = w11tng::P2PDeviceStub::FrequencyList{1,2,3};
+
+    skeleton->EmitGroupOwnerNegotiationSuccess("/peer_1", w11tng::P2PDeviceStub::Status::kSuccess,
+                                               1337, freqs, w11tng::P2PDeviceStub::WpsMethod::kPin);
     skeleton->EmitGroupOwnerNegotiationFailure("/peer_1");
     skeleton->EmitGroupStarted("/peer_1", "/interface_1", "GO");
     skeleton->EmitGroupFinished("/peer_1", "/interface_1");
     skeleton->EmitGroupRequest("/peer_1", 1337);
 
     mcs::testing::RunMainLoop(std::chrono::seconds{1});
+
+    EXPECT_EQ(w11tng::P2PDeviceStub::Status::kSuccess, go_negotiation_success_result.status);
+    EXPECT_EQ(1337, go_negotiation_success_result.oper_freq);
+    EXPECT_EQ(freqs, go_negotiation_success_result.frequencies);
+    EXPECT_EQ(w11tng::P2PDeviceStub::WpsMethod::kPin, go_negotiation_success_result.wps_method);
 }
 
 TEST_F(P2PDeviceStubFixture, FindAndTimeoutHandling) {
