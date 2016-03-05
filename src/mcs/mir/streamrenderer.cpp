@@ -105,7 +105,7 @@ void StreamRenderer::RenderThread() {
         buffer->SetDelegate(shared_from_this());
 
         frame_count++;
-        int64_t time_now_us = mcs::Utils::GetNowUs();
+        const int64_t time_now_us = mcs::Utils::GetNowUs();
         if (start_time_us + 1000000ll <= time_now_us) {
             video::Statistics::Instance()->RecordRendererFramesPerSecond(frame_count);
             frame_count = 0;

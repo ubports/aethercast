@@ -136,7 +136,7 @@ Screencast::Screencast(const Screencast::DisplayOutput &output) :
         return;
     }
 
-    auto platform_type = mir_buffer_stream_get_platform_type(buffer_stream_);
+    const auto platform_type = mir_buffer_stream_get_platform_type(buffer_stream_);
     if (platform_type != mir_platform_type_android) {
         MCS_ERROR("Not running with android platform: This is not supported.");
         mir_buffer_stream_release_sync(buffer_stream_);

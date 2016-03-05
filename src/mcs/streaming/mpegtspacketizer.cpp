@@ -150,7 +150,7 @@ void MPEGTSPacketizer::Track::Finalize() {
 
     {
         // AVC video descriptor (40)
-        auto descriptor = mcs::video::Buffer::Create(6);
+        const auto descriptor = mcs::video::Buffer::Create(6);
         uint8_t *data = descriptor->Data();
         data[0] = 40;  // descriptor_tag
         data[1] = 4;  // descriptor_length

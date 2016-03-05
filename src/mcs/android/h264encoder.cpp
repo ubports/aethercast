@@ -190,7 +190,7 @@ bool H264Encoder::Configure(const Config &config) {
     // completely update a whole video frame. If the frame rate is 30,
     // it takes about 333 ms in the best case (if next frame is not an IDR)
     // to recover from a lost/corrupted packet.
-    int32_t mbs = (((config.width + 15) / 16) * ((config.height + 15) / 16) * 10) / 100;
+    const int32_t mbs = (((config.width + 15) / 16) * ((config.height + 15) / 16) * 10) / 100;
     media_message_set_int32(format, "intra-refresh-CIR-mbs", mbs);
 
     if (config.i_frame_interval > 0)
@@ -330,7 +330,7 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
         return nullptr;
     }
 
-    auto anwb = reinterpret_cast<ANativeWindowBuffer*>(input_buffer->NativeHandle());
+    const auto anwb = reinterpret_cast<ANativeWindowBuffer*>(input_buffer->NativeHandle());
 
     size_t size = sizeof(buffer_handle_t) + 4;
 
@@ -358,7 +358,7 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
     media_buffer_ref(buffer);
 
     auto meta = media_buffer_get_meta_data(buffer);
-    auto key_time = media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME);
+    const auto key_time = media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME);
     media_meta_data_set_int64(meta, key_time, timestamp);
 
     pending_buffers_.push_back(BufferItem{input_buffer, buffer});
@@ -446,8 +446,8 @@ bool H264Encoder::Execute() {
     auto mbuf = MediaSourceBuffer::Create(buffer);
 
     if (mbuf->Timestamp() > 0) {
-        int64_t now = mcs::Utils::GetNowUs();
-        int64_t diff = (now - mbuf->Timestamp()) / 1000ll;
+        const int64_t now = mcs::Utils::GetNowUs();
+        const int64_t diff = (now - mbuf->Timestamp()) / 1000ll;
         video::Statistics::Instance()->RecordEncoderBufferOut(diff);
     }
 
