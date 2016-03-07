@@ -101,6 +101,9 @@ public:
     virtual void SendIDRFrame() = 0;
 
 protected:
+    BaseEncoder() = default;
+
+protected:
     std::weak_ptr<Delegate> delegate_;
 };
 

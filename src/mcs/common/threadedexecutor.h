@@ -18,6 +18,7 @@
 #ifndef MCS_COMMON_THREADEDEXECUTOR_H_
 #define MCS_COMMON_THREADEDEXECUTOR_H_
 
+#include <atomic>
 #include <memory>
 #include <thread>
 
@@ -47,7 +48,7 @@ private:
 private:
     Executable::Ptr executable_;
     std::string name_;
-    bool running_;
+    std::atomic<bool> running_;
     std::thread thread_;
 };
 

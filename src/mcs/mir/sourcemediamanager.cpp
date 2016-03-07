@@ -58,7 +58,7 @@ bool SourceMediaManager::Configure() {
     // to the encoder.
     Screencast::DisplayOutput output{Screencast::DisplayMode::kExtend, rr.width, rr.height};
 
-    connector_ = mcs::mir::Screencast::Create(output);
+    connector_ = std::make_shared<mcs::mir::Screencast>(output);
     if (!connector_->IsValid())
         return false;
 

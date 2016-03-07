@@ -43,6 +43,14 @@ static constexpr int32_t kOMXVideoIntraRefreshCyclic = 0;
 static constexpr int32_t kOMXVideoControlRateConstant = 2;
 // From frameworks/native/include/media/hardware/MetadataBufferType.h
 static constexpr uint32_t kMetadataBufferTypeGrallocSource = 1;
+// Supplying -1 as framerate means the encoder decides on which framerate
+// it provides.
+static constexpr int32_t kAnyFramerate = -1;
+// Default is a bitrate of 5 MBit/s
+static constexpr int32_t kDefaultBitrate = 5000000;
+// By default send an I frame every 15 seconds which is the
+// same Android currently configures in its WiFi Display code path.
+static constexpr std::chrono::seconds kDefaultIFrameInterval{15};
 // From frameworks/av/include/media/stagefright/MediaErrors.h
 enum AndroidMediaError {
     kAndroidMediaErrorBase = -1000,
@@ -50,6 +58,26 @@ enum AndroidMediaError {
     kAndroidMediaErrorBufferTooSmall = kAndroidMediaErrorBase - 9,
     kAndroidMediaErrorEndOfStream = kAndroidMediaErrorBase - 11,
 };
+// Constants for all the fields we're putting into the AMessage
+// structure to configure the MediaCodec instance for our needs.
+static constexpr const char *kFormatKeyMime{"mime"};
+static constexpr const char *kFormatKeyStoreMetaDataInBuffers{"store-metadata-in-buffers"};
+static constexpr const char *kFormatKeyStoreMetaDataInBuffersOutput{"store-metadata-in-buffers-output"};
+static constexpr const char *kFormatKeyWidth{"width"};
+static constexpr const char *kFormatKeyHeight{"height"};
+static constexpr const char *kFormatKeyStride{"stride"};
+static constexpr const char *kFormatKeySliceHeight{"slice-height"};
+static constexpr const char *kFormatKeyColorFormat{"color-format"};
+static constexpr const char *kFormatKeyBitrate{"bitrate"};
+static constexpr const char *kFormatKeyBitrateMode{"bitrate-mode"};
+static constexpr const char *kFormatKeyFramerate{"frame-rate"};
+static constexpr const char *kFormatKeyIntraRefreshMode{"intra-refresh-mode"};
+static constexpr const char *kFormatKeyIntraRefreshCIRMbs{"intra-refresh-CIR-mbs"};
+static constexpr const char *kFormatKeyIFrameInterval{"i-frame-interval"};
+static constexpr const char *kFormatKeyProfileIdc{"profile-idc"};
+static constexpr const char *kFormatKeyLevelIdc{"level-idc"};
+static constexpr const char *kFormatKeyConstraintSet{"constraint-set"};
+static constexpr const char *kFormatKeyPrependSpsPpstoIdrFrames{"prepend-sps-pps-to-idr-frames"};
 }
 
 namespace mcs {
@@ -96,9 +124,6 @@ public:
     }
 
 private:
-    MediaSourceBuffer() {
-    }
-
     void ExtractTimestamp() {
         const auto meta_data = media_buffer_get_meta_data(buffer_);
         if (!meta_data)
@@ -117,11 +142,9 @@ private:
 
 video::BaseEncoder::Config H264Encoder::DefaultConfiguration() {
     Config config;
-    // Supplying -1 as framerate means the encoder decides on what it
-    // can provide.
-    config.framerate = -1;
-    config.bitrate = 5000000;
-    config.i_frame_interval = 15;
+    config.framerate = kAnyFramerate;
+    config.bitrate = kDefaultBitrate;
+    config.i_frame_interval = kDefaultIFrameInterval.count();
     config.intra_refresh_mode = kOMXVideoIntraRefreshCyclic;
     return config;
 }
@@ -167,23 +190,23 @@ bool H264Encoder::Configure(const Config &config) {
     if (!format)
         return false;
 
-    media_message_set_string(format, "mime", kH264MimeType, 0);
+    media_message_set_string(format, kFormatKeyMime, kH264MimeType, 0);
 
-    media_message_set_int32(format, "store-metadata-in-buffers", true);
-    media_message_set_int32(format, "store-metadata-in-buffers-output", false);
+    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffers, true);
+    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffersOutput, false);
 
-    media_message_set_int32(format, "width", config.width);
-    media_message_set_int32(format, "height", config.height);
-    media_message_set_int32(format, "stride", config.width);
-    media_message_set_int32(format, "slice-height", config.width);
+    media_message_set_int32(format, kFormatKeyWidth, config.width);
+    media_message_set_int32(format, kFormatKeyHeight, config.height);
+    media_message_set_int32(format, kFormatKeyStride, config.width);
+    media_message_set_int32(format, kFormatKeySliceHeight, config.width);
 
-    media_message_set_int32(format, "color-format", kOMXColorFormatAndroidOpaque);
+    media_message_set_int32(format, kFormatKeyColorFormat, kOMXColorFormatAndroidOpaque);
 
-    media_message_set_int32(format, "bitrate", config.bitrate);
-    media_message_set_int32(format, "bitrate-mode", kOMXVideoControlRateConstant);
-    media_message_set_int32(format, "frame-rate", config.framerate);
+    media_message_set_int32(format, kFormatKeyBitrate, config.bitrate);
+    media_message_set_int32(format, kFormatKeyBitrateMode, kOMXVideoControlRateConstant);
+    media_message_set_int32(format, kFormatKeyFramerate, config.framerate);
 
-    media_message_set_int32(format, "intra-refresh-mode", 0);
+    media_message_set_int32(format, kFormatKeyIntraRefreshMode, 0);
 
     // Update macroblocks in a cyclic fashion with 10% of all MBs within
     // frame gets updated at one time. It takes about 10 frames to
@@ -191,23 +214,23 @@ bool H264Encoder::Configure(const Config &config) {
     // it takes about 333 ms in the best case (if next frame is not an IDR)
     // to recover from a lost/corrupted packet.
     const int32_t mbs = (((config.width + 15) / 16) * ((config.height + 15) / 16) * 10) / 100;
-    media_message_set_int32(format, "intra-refresh-CIR-mbs", mbs);
+    media_message_set_int32(format, kFormatKeyIntraRefreshCIRMbs, mbs);
 
     if (config.i_frame_interval > 0)
-        media_message_set_int32(format, "i-frame-interval", config.i_frame_interval);
+        media_message_set_int32(format, kFormatKeyIFrameInterval, config.i_frame_interval);
 
     if (config.profile_idc > 0)
-        media_message_set_int32(format, "profile-idc", config.profile_idc);
+        media_message_set_int32(format, kFormatKeyProfileIdc, config.profile_idc);
 
     if (config.level_idc > 0)
-        media_message_set_int32(format, "level-idc", config.level_idc);
+        media_message_set_int32(format, kFormatKeyLevelIdc, config.level_idc);
 
     if (config.constraint_set > 0)
-        media_message_set_int32(format, "constraint-set", config.constraint_set);
+        media_message_set_int32(format, kFormatKeyConstraintSet, config.constraint_set);
 
     // FIXME we need to find a way to check if the encoder supports prepending
     // SPS/PPS to the buffers it is producing or if we have to manually do that
-    media_message_set_int32(format, "prepend-sps-pps-to-idr-frames", 1);
+    media_message_set_int32(format, kFormatKeyPrependSpsPpstoIdrFrames, 1);
 
     source_ = media_source_create();
     if (!source_) {
@@ -348,8 +371,8 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
     // frameworks/av/media/libstagefright/SurfaceMediaSource.cpp for more
     // details about this.
     uint32_t type = kMetadataBufferTypeGrallocSource;
-    memcpy(data, &type, 4);
-    memcpy(data + 4, &anwb->handle, sizeof(buffer_handle_t));
+    memcpy(data, &type, sizeof(type));
+    memcpy(data + sizeof(type), &anwb->handle, sizeof(buffer_handle_t));
 
     media_buffer_set_return_callback(buffer, &H264Encoder::OnBufferReturned, this);
 

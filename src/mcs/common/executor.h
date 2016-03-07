@@ -20,16 +20,21 @@
 
 #include <memory>
 
+#include "mcs/non_copyable.h"
+
 namespace mcs {
 namespace common {
 
-class Executor {
+class Executor : public mcs::NonCopyable {
 public:
     typedef std::shared_ptr<Executor> Ptr;
 
     virtual bool Start() = 0;
     virtual bool Stop() = 0;
     virtual bool Running() const = 0;
+
+protected:
+    Executor() = default;
 };
 
 } // namespace common

@@ -50,26 +50,24 @@ void ThreadedExecutor::ThreadWorker() {
 }
 
 bool ThreadedExecutor::Start() {
-    if (running_)
+    if (running_.exchange(true))
         return false;
 
     if (!executable_->Start())
         return false;
 
-    running_ = true;
     thread_ = std::thread(&ThreadedExecutor::ThreadWorker, this);
 
     return true;
 }
 
 bool ThreadedExecutor::Stop() {
-    if (!running_)
+    if (!running_.exchange(false))
         return false;
 
     if (!executable_->Stop())
-        return false;
+        MCS_ERROR("Failed to stop exutable");
 
-    running_ = false;
     thread_.join();
 
     return true;

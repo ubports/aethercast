@@ -40,12 +40,13 @@ std::string Screencast::DisplayModeToString(const DisplayMode &mode) {
     return "unknown";
 }
 
-Screencast::Ptr Screencast::Create(const Screencast::DisplayOutput &output) {
-    return std::shared_ptr<Screencast>(new Screencast(output));
-}
-
 Screencast::Screencast(const Screencast::DisplayOutput &output) :
     output_(output) {
+
+    // TODO(morphis): Refactor this to set we don't leave a partially
+    // initialized object floating around. We should either fail with
+    // an exception here or do initialization differently.
+
     connection_ = mir_connect_sync(kMirSocket, kMirConnectionName);
     if (!mir_connection_is_valid(connection_)) {
         MCS_ERROR("Failed to connect to Mir server: %s",
