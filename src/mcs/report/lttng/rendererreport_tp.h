@@ -16,13 +16,13 @@
  */
 
 #undef TRACEPOINT_PROVIDER
-#define TRACEPOINT_PROVIDER aethercast_encoder
+#define TRACEPOINT_PROVIDER aethercast_renderer
 
 #undef TRACEPOINT_INCLUDE
-#define TRACEPOINT_INCLUDE "mcs/report/lttng/encoderreport_tp.h"
+#define TRACEPOINT_INCLUDE "mcs/report/lttng/rendererreport_tp.h"
 
-#if !defined(MCS_REPORT_LTTNG_ENCODERREPORT_TP_H_) || defined(TRACEPOINT_HEADER_MULTI_READ)
-#define MCS_REPORT_LTTNG_ENCODERREPORT_TP_H_
+#if !defined(MCS_REPORT_LTTNG_RENDERERREPORT_TP_H_) || defined(TRACEPOINT_HEADER_MULTI_READ)
+#define MCS_REPORT_LTTNG_RENDERERREPORT_TP_H_
 
 #include "mcs/report/lttng/utils.h"
 
@@ -30,30 +30,11 @@ MCS_LTTNG_VOID_TRACE_CLASS(TRACEPOINT_PROVIDER)
 
 #define ENCODER_TRACE_POINT(name) MCS_LTTNG_VOID_TRACE_POINT(TRACEPOINT_PROVIDER, name)
 
-ENCODER_TRACE_POINT(started)
-ENCODER_TRACE_POINT(stopped)
-
-TRACEPOINT_EVENT(
-    TRACEPOINT_PROVIDER,
-    began_frame,
-    TP_ARGS(int, timestamp),
-    TP_FIELDS(
-        ctf_integer(int, timestamp, timestamp)
-    )
-)
+ENCODER_TRACE_POINT(began_frame)
 
 TRACEPOINT_EVENT(
     TRACEPOINT_PROVIDER,
     finished_frame,
-    TP_ARGS(int, timestamp),
-    TP_FIELDS(
-        ctf_integer(int, timestamp, timestamp)
-    )
-)
-
-TRACEPOINT_EVENT(
-    TRACEPOINT_PROVIDER,
-    received_input_buffer,
     TP_ARGS(int, timestamp),
     TP_FIELDS(
         ctf_integer(int, timestamp, timestamp)

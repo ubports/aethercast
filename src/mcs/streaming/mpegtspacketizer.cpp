@@ -201,11 +201,12 @@ void MPEGTSPacketizer::Track::Finalize() {
     finalized_ = true;
 }
 
-Packetizer::Ptr MPEGTSPacketizer::Create() {
-    return std::shared_ptr<Packetizer>(new MPEGTSPacketizer);
+Packetizer::Ptr MPEGTSPacketizer::Create(const video::PacketizerReport::Ptr &report) {
+    return std::shared_ptr<Packetizer>(new MPEGTSPacketizer(report));
 }
 
-MPEGTSPacketizer::MPEGTSPacketizer() :
+MPEGTSPacketizer::MPEGTSPacketizer(const mcs::video::PacketizerReport::Ptr &report) :
+    report_(report),
     pat_continuity_counter_(0),
     pmt_continuity_counter_(0) {
     InitCrcTable();
@@ -793,6 +794,8 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
         MCS_FATAL("Invalid packet start position");
 
     *packets = buffer;
+
+    report_->PacketizedFrame(buffer->Timestamp());
 
     return true;
 }

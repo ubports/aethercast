@@ -25,6 +25,9 @@
 namespace mcs {
 namespace video {
 class EncoderReport;
+class RendererReport;
+class PacketizerReport;
+class SenderReport;
 } // namespace video
 
 namespace report {
@@ -34,6 +37,9 @@ public:
     static std::unique_ptr<ReportFactory> Create();
 
     virtual std::shared_ptr<video::EncoderReport> CreateEncoderReport() = 0;
+    virtual std::shared_ptr<video::RendererReport> CreateRendererReport() = 0;
+    virtual std::shared_ptr<video::PacketizerReport> CreatePacketizerReport() = 0;
+    virtual std::shared_ptr<video::SenderReport> CreateSenderReport() = 0;
 };
 
 } // namespace report

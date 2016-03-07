@@ -40,8 +40,14 @@ set(HEADERS
 
   mcs/report/lttng/utils.h
   mcs/report/lttng/encoderreport_tp.h
+  mcs/report/lttng/rendererreport_tp.h
+  mcs/report/lttng/packetizerreport_tp.h
+  mcs/report/lttng/senderreport_tp.h
 
   mcs/video/encoderreport.h
+  mcs/video/rendererreport.h
+  mcs/video/packetizerreport.h
+  mcs/video/senderreport.h
 
   mcs/streaming/packetizer.h
   mcs/streaming/transportsender.h
@@ -80,11 +86,20 @@ set(SOURCES
 
   mcs/report/null/nullreportfactory.cpp
   mcs/report/null/encoderreport.cpp
+  mcs/report/null/rendererreport.cpp
+  mcs/report/null/packetizerreport.cpp
+  mcs/report/null/senderreport.cpp
   mcs/report/logging/loggingreportfactory.cpp
   mcs/report/logging/encoderreport.cpp
+  mcs/report/logging/rendererreport.cpp
+  mcs/report/logging/packetizerreport.cpp
+  mcs/report/logging/senderreport.cpp
   mcs/report/lttng/lttngreportfactory.cpp
   mcs/report/lttng/tracepointprovider.cpp
   mcs/report/lttng/encoderreport.cpp
+  mcs/report/lttng/rendererreport.cpp
+  mcs/report/lttng/packetizerreport.cpp
+  mcs/report/lttng/senderreport.cpp
 
   mcs/video/videoformat.cpp
   mcs/video/buffer.cpp

@@ -30,6 +30,9 @@ namespace report {
 class NullReportFactory : public ReportFactory {
 public:
     std::shared_ptr<video::EncoderReport> CreateEncoderReport();
+    std::shared_ptr<video::RendererReport> CreateRendererReport();
+    std::shared_ptr<video::PacketizerReport> CreatePacketizerReport();
+    std::shared_ptr<video::SenderReport> CreateSenderReport();
 };
 
 } // namespace report

@@ -28,6 +28,7 @@
 
 #include "mcs/video/baseencoder.h"
 #include "mcs/video/bufferqueue.h"
+#include "mcs/video/rendererreport.h"
 
 namespace mcs {
 namespace mir {
@@ -38,7 +39,8 @@ public:
 
     typedef std::shared_ptr<StreamRenderer> Ptr;
 
-    static Ptr Create(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder);
+    static Ptr Create(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder,
+                      const video::RendererReport::Ptr &report);
 
     ~StreamRenderer();
 
@@ -50,11 +52,13 @@ public:
     void OnBufferFinished(const mcs::video::Buffer::Ptr &buffer);
 
 private:
-    StreamRenderer(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder);
+    StreamRenderer(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder,
+                   const video::RendererReport::Ptr  &report);
 
     void RenderThread();
 
 private:
+    video::RendererReport::Ptr report_;
     Screencast::Ptr connector_;
     video::BaseEncoder::Ptr encoder_;
     std::thread render_thread_;

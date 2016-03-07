@@ -15,27 +15,24 @@
  *
  */
 
-#ifndef MCS_REPORT_LTTNGREPORTFACTORY_H_
-#define MCS_REPORT_LTTNGREPORTFACTORY_H_
+#include "mcs/report/lttng/rendererreport.h"
 
-#include <memory>
-
-#include "mcs/non_copyable.h"
-
-#include "mcs/report/reportfactory.h"
+#define TRACEPOINT_DEFINE
+#define TRACEPOINT_PROBE_DYNAMIC_LINKAGE
+#include "mcs/report/lttng/rendererreport_tp.h"
 
 namespace mcs {
 namespace report {
+namespace lttng {
 
-class LttngReportFactory : public ReportFactory {
-public:
-    std::shared_ptr<video::EncoderReport> CreateEncoderReport();
-    std::shared_ptr<video::RendererReport> CreateRendererReport();
-    std::shared_ptr<video::PacketizerReport> CreatePacketizerReport();
-    std::shared_ptr<video::SenderReport> CreateSenderReport();
-};
+void RendererReport::BeganFrame() {
+    mcs_tracepoint(aethercast_renderer, began_frame, 0);
+}
 
+void RendererReport::FinishedFrame(const TimestampUs timestamp) {
+    mcs_tracepoint(aethercast_renderer, finished_frame, timestamp);
+}
+
+} // namespace lttng
 } // namespace report
 } // namespace mcs
-
-#endif

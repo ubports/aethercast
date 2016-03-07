@@ -17,12 +17,27 @@
 
 #include "mcs/report/lttng/lttngreportfactory.h"
 #include "mcs/report/lttng/encoderreport.h"
+#include "mcs/report/lttng/rendererreport.h"
+#include "mcs/report/lttng/packetizerreport.h"
+#include "mcs/report/lttng/senderreport.h"
 
 namespace mcs {
 namespace report {
 
 std::shared_ptr<video::EncoderReport> LttngReportFactory::CreateEncoderReport() {
     return std::make_shared<lttng::EncoderReport>();
+}
+
+std::shared_ptr<video::RendererReport> LttngReportFactory::CreateRendererReport() {
+    return std::make_shared<lttng::RendererReport>();
+}
+
+std::shared_ptr<video::PacketizerReport> LttngReportFactory::CreatePacketizerReport() {
+    return std::make_shared<lttng::PacketizerReport>();
+}
+
+std::shared_ptr<video::SenderReport> LttngReportFactory::CreateSenderReport() {
+    return std::make_shared<lttng::SenderReport>();
 }
 
 } // namespace report

@@ -17,12 +17,27 @@
 
 #include "mcs/report/logging/loggingreportfactory.h"
 #include "mcs/report/logging/encoderreport.h"
+#include "mcs/report/logging/rendererreport.h"
+#include "mcs/report/logging/packetizerreport.h"
+#include "mcs/report/logging/senderreport.h"
 
 namespace mcs {
 namespace report {
 
 std::shared_ptr<video::EncoderReport> LoggingReportFactory::CreateEncoderReport() {
     return std::make_shared<logging::EncoderReport>();
+}
+
+std::shared_ptr<video::RendererReport> LoggingReportFactory::CreateRendererReport() {
+    return std::make_shared<logging::RendererReport>();
+}
+
+std::shared_ptr<video::PacketizerReport> LoggingReportFactory::CreatePacketizerReport() {
+    return std::make_shared<logging::PacketizerReport>();
+}
+
+std::shared_ptr<video::SenderReport> LoggingReportFactory::CreateSenderReport() {
+    return std::make_shared<logging::SenderReport>();
 }
 
 } // namespace report

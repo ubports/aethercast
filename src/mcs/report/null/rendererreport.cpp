@@ -15,27 +15,18 @@
  *
  */
 
-#ifndef MCS_REPORT_LTTNGREPORTFACTORY_H_
-#define MCS_REPORT_LTTNGREPORTFACTORY_H_
-
-#include <memory>
-
-#include "mcs/non_copyable.h"
-
-#include "mcs/report/reportfactory.h"
+#include "mcs/report/null/rendererreport.h"
 
 namespace mcs {
 namespace report {
+namespace null {
 
-class LttngReportFactory : public ReportFactory {
-public:
-    std::shared_ptr<video::EncoderReport> CreateEncoderReport();
-    std::shared_ptr<video::RendererReport> CreateRendererReport();
-    std::shared_ptr<video::PacketizerReport> CreatePacketizerReport();
-    std::shared_ptr<video::SenderReport> CreateSenderReport();
-};
+void RendererReport::BeganFrame() {
+}
 
+void RendererReport::FinishedFrame(const TimestampUs timestamp) {
+}
+
+} // namespace null
 } // namespace report
 } // namespace mcs
-
-#endif

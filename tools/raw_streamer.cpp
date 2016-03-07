@@ -30,6 +30,8 @@
 
 #include <mcs/logger.h>
 
+#include <mcs/report/reportfactory.h>
+
 #include <mcs/streaming/mpegtspacketizer.h>
 #include <mcs/streaming/rtpsender.h>
 
@@ -51,8 +53,10 @@ int main(int argc, char **argv) {
         return -EINVAL;
     }
 
-    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create();
-    auto sender = mcs::streaming::RTPSender::Create("192.168.178.1", 5000);
+    auto report_factory = mcs::report::ReportFactory::Create();
+
+    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create(report_factory->CreatePacketizerReport());
+    auto sender = mcs::streaming::RTPSender::Create("192.168.178.1", 5000, report_factory->CreateSenderReport());
 
     if (!sender)
         return -EIO;

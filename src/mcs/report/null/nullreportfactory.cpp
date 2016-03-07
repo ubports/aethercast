@@ -17,12 +17,27 @@
 
 #include "mcs/report/null/nullreportfactory.h"
 #include "mcs/report/null/encoderreport.h"
+#include "mcs/report/null/rendererreport.h"
+#include "mcs/report/null/packetizerreport.h"
+#include "mcs/report/null/senderreport.h"
 
 namespace mcs {
 namespace report {
 
 std::shared_ptr<video::EncoderReport> NullReportFactory::CreateEncoderReport() {
     return std::make_shared<null::EncoderReport>();
+}
+
+std::shared_ptr<video::RendererReport> NullReportFactory::CreateRendererReport() {
+    return std::make_shared<null::RendererReport>();
+}
+
+std::shared_ptr<video::PacketizerReport> NullReportFactory::CreatePacketizerReport() {
+    return std::make_shared<null::PacketizerReport>();
+}
+
+std::shared_ptr<video::SenderReport> NullReportFactory::CreateSenderReport() {
+    return std::make_shared<null::SenderReport>();
 }
 
 } // namespace report

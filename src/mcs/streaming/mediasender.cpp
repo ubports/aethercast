@@ -93,17 +93,6 @@ void MediaSender::Stop() {
 void MediaSender::ProcessBuffer(const mcs::video::Buffer::Ptr &buffer) {
     mcs::video::Buffer::Ptr packets;
 
-    static int64_t start_time_us = mcs::Utils::GetNowUs();
-    static unsigned int buffer_count = 0;
-
-    buffer_count++;
-    int64_t time_now_us = mcs::Utils::GetNowUs();
-    if (start_time_us + 1000000ll <= time_now_us) {
-        video::Statistics::Instance()->RecordSenderBufferPerSecond(buffer_count);
-        buffer_count = 0;
-        start_time_us = time_now_us;
-    }
-
     // FIXME: By default we're expecting the encoder to insert SPS and PPS
     // with each IDR frame but we need to handle also the case where the
     // encoder is not capable of doing this.
@@ -129,7 +118,6 @@ void MediaSender::ProcessBuffer(const mcs::video::Buffer::Ptr &buffer) {
     if (dump_file)
         ::fwrite(packets->Data(), 1, packets->Length(), dump_file);
 
-    packets->SetTimestamp(buffer->Timestamp());
     sender_->Queue(packets);
 }
 

@@ -15,8 +15,6 @@
  *
  */
 
-#include "mcs/logger.h"
-
 #include "mcs/report/lttng/encoderreport.h"
 
 #define TRACEPOINT_DEFINE
