@@ -26,7 +26,6 @@
 #include "mcs/streaming/rtpsender.h"
 
 namespace {
-FILE *dump_file = nullptr;
 static constexpr const char *kMediaSenderThreadName{"MediaSender"};
 }
 
@@ -58,15 +57,9 @@ MediaSender::MediaSender(const Packetizer::Ptr &packetizer, const TransportSende
     format.mime = "video/avc";
 
     video_track_ = packetizer_->AddTrack(format);
-
-    if (mcs::Utils::IsEnvSet("AETHERCAST_MPEGTS_DUMP"))
-        dump_file = ::fopen(mcs::Utils::GetEnvValue("AETHERCAST_MPEGTS_DUMP").c_str(), "w");
 }
 
 MediaSender::~MediaSender() {
-    if (dump_file)
-        ::fclose(dump_file);
-
     Stop();
 }
 
@@ -95,12 +88,9 @@ void MediaSender::ProcessBuffer(const mcs::video::Buffer::Ptr &buffer) {
 
     // FIXME: By default we're expecting the encoder to insert SPS and PPS
     // with each IDR frame but we need to handle also the case where the
-    // encoder is not capable of doing this.
-#if 0
-    int flags = Packetizer::kPrependSPSandPPStoIDRFrames;
-#else
+    // encoder is not capable of doing this. For that we simply have to set
+    // flags to Packetizer::kPrependSPSandPPStoIDRFrames.
     int flags = 0;
-#endif
 
     // Per spec we need to emit PAT/PMT and PCR updates atleast every 100ms
     int64_t time_us = mcs::Utils::GetNowUs();
@@ -115,9 +105,7 @@ void MediaSender::ProcessBuffer(const mcs::video::Buffer::Ptr &buffer) {
         return;
     }
 
-    if (dump_file)
-        ::fwrite(packets->Data(), 1, packets->Length(), dump_file);
-
+    packets->SetTimestamp(buffer->Timestamp());
     sender_->Queue(packets);
 }
 

@@ -99,8 +99,10 @@ bool BaseSourceMediaManager::InitOptimalVideoFormat(const wds::NativeVideoFormat
     if (format_.rate_resolution == wds::CEA1280x720p60)
         format_.rate_resolution = wds::CEA1280x720p30;
 
-    if (!success)
-        MCS_WARNING("Failed to select proper video format");
+    if (!success) {
+        MCS_ERROR("Failed to select proper video format");
+        return false;
+    }
 
     DEBUG("Found optimal video format:");
     mcs::video::DumpVideoFormat(format_);

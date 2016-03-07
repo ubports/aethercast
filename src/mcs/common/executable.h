@@ -20,14 +20,14 @@
 
 #include <memory>
 
+#include "mcs/non_copyable.h"
+
 namespace mcs {
 namespace common {
 
-class Executable {
+class Executable : public mcs::NonCopyable {
 public:
     typedef std::shared_ptr<Executable> Ptr;
-
-    virtual ~Executable() { }
 
     virtual bool Start() = 0;
     virtual bool Stop() = 0;
@@ -35,6 +35,9 @@ public:
     // Run one iteration and then return. Returning true means executor
     // should continue to execute otherwise false means it should stop.
     virtual bool Execute() = 0;
+
+protected:
+    Executable() = default;
 };
 
 } // namespace common

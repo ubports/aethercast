@@ -15,8 +15,6 @@
  *
  */
 
-#include <memory>
-
 #include <gmock/gmock.h>
 
 #include <system/window.h>
@@ -490,7 +488,6 @@ TEST_F(H264EncoderFixture, StopFailsCorrectly) {
     EXPECT_CALL(*mock, media_codec_source_start(_))
             .Times(1)
             .WillRepeatedly(Return(true));
-
     EXPECT_CALL(*mock, media_codec_source_stop(_))
             // Will be called twice as the d'tor also calls Stop to
             // ensure the encoder is stopped correctly on cleanup.

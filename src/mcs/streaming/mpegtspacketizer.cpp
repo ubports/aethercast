@@ -32,8 +32,21 @@
 #include "mcs/streaming/mpegtspacketizer.h"
 
 namespace {
-const unsigned int kPIDofPMT = 0x100;
-const unsigned int kPIDofPCR = 0x1000;
+static constexpr uint8_t kH264NALPrefix[] = { 0x00, 0x00, 0x00, 0x01 };
+
+// One byte for each profile, level and constraint
+static constexpr uint32_t kCSDSize{3};
+
+// See WiFi Display spec version 1.1 chapter D.4.2 PAT/PMT
+static constexpr unsigned int kPIDofPMT{0x100};
+static constexpr unsigned int kPIDofPCR{0x1000};
+static constexpr unsigned int kVideoPIDStart{0x1011};
+
+static constexpr unsigned int kH264StreamType{0x1b};
+static constexpr unsigned int kVideoStreamIdStart{0xe0};
+static constexpr unsigned int kVideoStreamIdStop{0xef};
+static constexpr unsigned int kAVCVideoDescriptorTag{40};
+static constexpr unsigned int kAVCTimingAndHRDDescriptor{42};
 }
 
 namespace mcs {
@@ -45,17 +58,12 @@ struct MPEGTSPacketizer::Track {
     static Ptr Create(const TrackFormat &format, unsigned int pid,
                       unsigned int stream_type, unsigned int stream_id);
 
-    unsigned int PID() const { return pid_; }
-    unsigned int StreamType() const { return stream_type_; }
-    unsigned int StreamId() const { return stream_id_; }
-    TrackFormat Format() const { return format_; }
-
     unsigned int NextContinuityCounter();
 
-    bool IsAudio() const { return mcs::Utils::StringStartsWith(format_.mime, "audio/"); }
-    bool IsVideo() const { return mcs::Utils::StringStartsWith(format_.mime, "video/"); }
+    bool IsAudio() const { return mcs::Utils::StringStartsWith(format.mime, "audio/"); }
+    bool IsVideo() const { return mcs::Utils::StringStartsWith(format.mime, "video/"); }
 
-    bool IsH264() const { return format_.mime == "video/avc"; }
+    bool IsH264() const { return format.mime == "video/avc"; }
 
     void SubmitCSD(const mcs::video::Buffer::Ptr &buffer);
 
@@ -63,21 +71,17 @@ struct MPEGTSPacketizer::Track {
 
     void Finalize();
 
-    std::vector<mcs::video::Buffer::Ptr> Descriptors() const { return descriptors_; }
-
-private:
     Track(const TrackFormat &format, unsigned int pid,
           unsigned int stream_type, unsigned int stream_id);
 
-private:
-    TrackFormat format_;
-    unsigned int pid_;
-    unsigned int stream_type_;
-    unsigned int stream_id_;
-    unsigned int continuity_counter_;
-    bool finalized_;
-    std::vector<mcs::video::Buffer::Ptr> csd_;
-    std::vector<mcs::video::Buffer::Ptr> descriptors_;
+    TrackFormat format;
+    unsigned int pid;
+    unsigned int stream_type;
+    unsigned int stream_id;
+    unsigned int continuity_counter;
+    bool finalized;
+    std::vector<mcs::video::Buffer::Ptr> csd;
+    std::vector<mcs::video::Buffer::Ptr> descriptors;
 };
 
 MPEGTSPacketizer::Track::Ptr MPEGTSPacketizer::Track::Create(const TrackFormat &format, unsigned int pid,
@@ -87,18 +91,18 @@ MPEGTSPacketizer::Track::Ptr MPEGTSPacketizer::Track::Create(const TrackFormat &
 
 MPEGTSPacketizer::Track::Track(const TrackFormat &format, unsigned int pid,
                                unsigned int stream_type, unsigned int stream_id) :
-    format_(format),
-    pid_(pid),
-    stream_type_(stream_type),
-    stream_id_(stream_id),
-    continuity_counter_(0),
-    finalized_(false) {
+    format(format),
+    pid(pid),
+    stream_type(stream_type),
+    stream_id(stream_id),
+    continuity_counter(0),
+    finalized(false) {
 }
 
 unsigned int MPEGTSPacketizer::Track::NextContinuityCounter() {
-    unsigned int prev = continuity_counter_;
-    if (++continuity_counter_ == 16)
-        continuity_counter_ = 0;
+    unsigned int prev = continuity_counter;
+    if (++continuity_counter == 16)
+        continuity_counter = 0;
     return prev;
 }
 
@@ -113,25 +117,25 @@ void MPEGTSPacketizer::Track::SubmitCSD(const video::Buffer::Ptr &buffer) {
     size_t nal_size;
 
     while (mcs::video::GetNextNALUnit(&data, &size, &nal_start, &nal_size, true)) {
-        auto csd = mcs::video::Buffer::Create(nal_size + 4);
+        auto current = mcs::video::Buffer::Create(nal_size + sizeof(kH264NALPrefix));
 
-        ::memcpy(csd->Data(), "\x00\x00\x00\x01", 4);
-        ::memcpy(csd->Data() + 4, nal_start, nal_size);
+        ::memcpy(current->Data(), kH264NALPrefix, sizeof(kH264NALPrefix));
+        ::memcpy(current->Data() + sizeof(kH264NALPrefix), nal_start, nal_size);
 
-        csd_.push_back(csd);
+        csd.push_back(current);
     }
 }
 
 mcs::video::Buffer::Ptr MPEGTSPacketizer::Track::PrependCSD(const mcs::video::Buffer::Ptr &buffer) const {
     size_t size = 0;
-    for (auto csd : csd_)
-        size += csd->Length();
+    for (auto current : csd)
+        size += current->Length();
 
     auto new_buffer = mcs::video::Buffer::Create(buffer->Length() + size);
     size_t offset = 0;
-    for (auto csd : csd_) {
-        ::memcpy(new_buffer->Data() + offset, csd->Data(), csd->Length());
-        offset += csd->Length();
+    for (auto current : csd) {
+        ::memcpy(new_buffer->Data() + offset, current->Data(), current->Length());
+        offset += current->Length();
     }
 
     ::memcpy(new_buffer->Data() + offset, buffer->Data(), buffer->Length());
@@ -140,7 +144,7 @@ mcs::video::Buffer::Ptr MPEGTSPacketizer::Track::PrependCSD(const mcs::video::Bu
 }
 
 void MPEGTSPacketizer::Track::Finalize() {
-    if (finalized_)
+    if (finalized)
         return;
 
     if(!IsH264())
@@ -150,43 +154,43 @@ void MPEGTSPacketizer::Track::Finalize() {
 
     {
         // AVC video descriptor (40)
-        auto descriptor = mcs::video::Buffer::Create(6);
+        const auto descriptor = mcs::video::Buffer::Create(6);
         uint8_t *data = descriptor->Data();
-        data[0] = 40;  // descriptor_tag
+        data[0] = kAVCVideoDescriptorTag;  // descriptor_tag
         data[1] = 4;  // descriptor_length
 
-        if (csd_.size() > 0) {
+        if (csd.size() > 0) {
             // Seems to be a conventation that the first NAL we get
             // submitted as part of the codec-specific data is the
             // SPS we want here.
-            auto sps = csd_.at(0);
+            auto sps = csd.at(0);
             // We skip the first four bytes (NAL preamble) and then
-            // just copy profile/constraint/level settings
-            memcpy(&data[2], sps->Data() + 4, 3);
+            // just copy profile/constraint/level settings (one byte
+            // each).
+            memcpy(&data[2], sps->Data() + sizeof(kH264NALPrefix), kCSDSize);
         }
         else {
-            data[2] = format_.profile_idc;    // profile_idc
-            data[3] = format_.constraint_set; // constraint_set*
-            data[4] = format_.level_idc;      // level_idc
+            data[2] = format.profile_idc;    // profile_idc
+            data[3] = format.constraint_set; // constraint_set*
+            data[4] = format.level_idc;      // level_idc
         }
 
         // AVC_still_present=0, AVC_24_hour_picture_flag=0, reserved
         data[5] = 0x3f;
 
-        descriptors_.push_back(descriptor);
+        descriptors.push_back(descriptor);
     }
     {
         // AVC timing and HRD descriptor (42)
 
         auto descriptor = mcs::video::Buffer::Create(4);
         uint8_t *data = descriptor->Data();
-        data[0] = 42;  // descriptor_tag
+        data[0] = kAVCTimingAndHRDDescriptor;  // descriptor_tag
         data[1] = 2;  // descriptor_length
 
         // hrd_management_valid_flag = 0
         // reserved = 111111b
         // picture_and_timing_info_present = 0
-
         data[2] = 0x7e;
 
         // fixed_frame_rate_flag = 0
@@ -195,18 +199,17 @@ void MPEGTSPacketizer::Track::Finalize() {
         // reserved = 11111b
         data[3] = 0x1f;
 
-        descriptors_.push_back(descriptor);
+        descriptors.push_back(descriptor);
     }
 
-    finalized_ = true;
+    finalized = true;
 }
 
-Packetizer::Ptr MPEGTSPacketizer::Create(const video::PacketizerReport::Ptr &report) {
-    return std::shared_ptr<Packetizer>(new MPEGTSPacketizer(report));
+Packetizer::Ptr MPEGTSPacketizer::Create() {
+    return std::shared_ptr<Packetizer>(new MPEGTSPacketizer);
 }
 
-MPEGTSPacketizer::MPEGTSPacketizer(const mcs::video::PacketizerReport::Ptr &report) :
-    report_(report),
+MPEGTSPacketizer::MPEGTSPacketizer() :
     pat_continuity_counter_(0),
     pmt_continuity_counter_(0) {
     InitCrcTable();
@@ -229,16 +232,16 @@ MPEGTSPacketizer::TrackId MPEGTSPacketizer::AddTrack(const TrackFormat &format) 
     }
 
     // First PID as per WiFi Display spec
-    unsigned int pid_start = 0x1011;
-    unsigned int stream_type = 0x1b;
-    unsigned int stream_id_start = 0xe0;
-    unsigned int stream_id_stop = 0xef;
+    unsigned int pid_start = kVideoPIDStart;
+    unsigned int stream_type = kH264StreamType;
+    unsigned int stream_id_start = kVideoStreamIdStart;
+    unsigned int stream_id_stop = kVideoStreamIdStop;
 
     unsigned int num_same_tracks = 0;
     unsigned int pid = pid_start;
 
     for (auto track : tracks_) {
-        if (track->StreamType() == stream_type)
+        if (track->stream_type == stream_type)
             num_same_tracks++;
 
         if (track->IsAudio() || track->IsVideo())
@@ -564,14 +567,12 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
             // Make sure all the decriptors have been added.
             track->Finalize();
 
-            *ptr++ = track->StreamType();
-            *ptr++ = 0xe0 | (track->PID() >> 8);
-            *ptr++ = track->PID() & 0xff;
-
-            auto descriptors = track->Descriptors();
+            *ptr++ = track->stream_type;
+            *ptr++ = 0xe0 | (track->pid >> 8);
+            *ptr++ = track->pid & 0xff;
 
             size_t ES_info_length = 0;
-            for (auto descriptor : descriptors)
+            for (auto descriptor : track->descriptors)
                 ES_info_length += descriptor->Length();
 
             if (ES_info_length > 0xfff)
@@ -580,7 +581,7 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
             *ptr++ = 0xf0 | (ES_info_length >> 8);
             *ptr++ = (ES_info_length & 0xff);
 
-            for (auto descriptor : descriptors) {
+            for (auto descriptor : track->descriptors) {
                 memcpy(ptr, descriptor->Data(), descriptor->Length());
                 ptr += descriptor->Length();
             }
@@ -655,7 +656,7 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
         // This really should only happen for video.
         if (!track->IsVideo())
             MCS_FATAL("PES packet length too hight; should only happen for video (track %d mime %s)",
-                      track_index, track->Format().mime);
+                      track_index, track->format.mime);
 
         MCS_WARNING("Reset PES packet length to 0");
 
@@ -682,8 +683,8 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
 
     uint8_t *ptr = packetDataStart;
     *ptr++ = 0x47;
-    *ptr++ = 0x40 | (track->PID() >> 8);
-    *ptr++ = track->PID() & 0xff;
+    *ptr++ = 0x40 | (track->pid >> 8);
+    *ptr++ = track->pid & 0xff;
 
     *ptr++ = (numPaddingBytes > 0 ? 0x30 : 0x10)
                 | track->NextContinuityCounter();
@@ -700,7 +701,7 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
     *ptr++ = 0x00;
     *ptr++ = 0x00;
     *ptr++ = 0x01;
-    *ptr++ = track->StreamId();
+    *ptr++ = track->stream_id;
     *ptr++ = PES_packet_length >> 8;
     *ptr++ = PES_packet_length & 0xff;
     *ptr++ = 0x84;
@@ -766,8 +767,8 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
 
         uint8_t *ptr = packetDataStart;
         *ptr++ = 0x47;
-        *ptr++ = 0x00 | (track->PID() >> 8);
-        *ptr++ = track->PID() & 0xff;
+        *ptr++ = 0x00 | (track->pid >> 8);
+        *ptr++ = track->pid & 0xff;
 
         *ptr++ = (numPaddingBytes > 0 ? 0x30 : 0x10)
                     | track->NextContinuityCounter();

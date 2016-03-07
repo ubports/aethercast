@@ -15,30 +15,69 @@
  *
  */
 
+// Ignore all warnings coming from the external Android headers as
+// we don't control them and also don't want to get any warnings
+// from them which will only polute our build output.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-w"
 #include <system/window.h>
+#pragma GCC diagnostic pop
+
+#include <boost/concept_check.hpp>
 
 #include "mcs/logger.h"
+#include "mcs/keep_alive.h"
 
 #include "mcs/video/statistics.h"
 
 #include "mcs/android/h264encoder.h"
 
 namespace {
-static const char *kEncoderThreadName{"H264Encoder"};
-static const char *kH264MimeType{"video/avc"};
-static const char *kRawMimeType{"video/raw"};
+static constexpr const char *kEncoderThreadName{"H264Encoder"};
+static constexpr const char *kH264MimeType{"video/avc"};
+static constexpr const char *kRawMimeType{"video/raw"};
 // From frameworks/native/include/media/openmax/OMX_IVCommon.h
-const int32_t kOMXColorFormatAndroidOpaque = 0x7F000789;
-const int32_t kOMXVideoIntraRefreshCyclic = 0;
+static constexpr int32_t kOMXColorFormatAndroidOpaque = 0x7F000789;
+static constexpr int32_t kOMXVideoIntraRefreshCyclic = 0;
 // From frameworks/native/include/media/openmax/OMX_Video.h
-const int32_t kOMXVideoControlRateConstant = 2;
+static constexpr int32_t kOMXVideoControlRateConstant = 2;
 // From frameworks/native/include/media/hardware/MetadataBufferType.h
-const uint32_t kMetadataBufferTypeGrallocSource = 1;
+static constexpr uint32_t kMetadataBufferTypeGrallocSource = 1;
+// Supplying -1 as framerate means the encoder decides on which framerate
+// it provides.
+static constexpr int32_t kAnyFramerate = -1;
+// Default is a bitrate of 5 MBit/s
+static constexpr int32_t kDefaultBitrate = 5000000;
+// By default send an I frame every 15 seconds which is the
+// same Android currently configures in its WiFi Display code path.
+static constexpr std::chrono::seconds kDefaultIFrameInterval{15};
 // From frameworks/av/include/media/stagefright/MediaErrors.h
 enum AndroidMediaError {
     kAndroidMediaErrorBase = -1000,
+    kAndroidMediaErrorNotConnected = kAndroidMediaErrorBase - 1,
+    kAndroidMediaErrorBufferTooSmall = kAndroidMediaErrorBase - 9,
     kAndroidMediaErrorEndOfStream = kAndroidMediaErrorBase - 11,
 };
+// Constants for all the fields we're putting into the AMessage
+// structure to configure the MediaCodec instance for our needs.
+static constexpr const char *kFormatKeyMime{"mime"};
+static constexpr const char *kFormatKeyStoreMetaDataInBuffers{"store-metadata-in-buffers"};
+static constexpr const char *kFormatKeyStoreMetaDataInBuffersOutput{"store-metadata-in-buffers-output"};
+static constexpr const char *kFormatKeyWidth{"width"};
+static constexpr const char *kFormatKeyHeight{"height"};
+static constexpr const char *kFormatKeyStride{"stride"};
+static constexpr const char *kFormatKeySliceHeight{"slice-height"};
+static constexpr const char *kFormatKeyColorFormat{"color-format"};
+static constexpr const char *kFormatKeyBitrate{"bitrate"};
+static constexpr const char *kFormatKeyBitrateMode{"bitrate-mode"};
+static constexpr const char *kFormatKeyFramerate{"frame-rate"};
+static constexpr const char *kFormatKeyIntraRefreshMode{"intra-refresh-mode"};
+static constexpr const char *kFormatKeyIntraRefreshCIRMbs{"intra-refresh-CIR-mbs"};
+static constexpr const char *kFormatKeyIFrameInterval{"i-frame-interval"};
+static constexpr const char *kFormatKeyProfileIdc{"profile-idc"};
+static constexpr const char *kFormatKeyLevelIdc{"level-idc"};
+static constexpr const char *kFormatKeyConstraintSet{"constraint-set"};
+static constexpr const char *kFormatKeyPrependSpsPpstoIdrFrames{"prepend-sps-pps-to-idr-frames"};
 }
 
 namespace mcs {
@@ -53,7 +92,7 @@ public:
         if (!buffer_)
             return;
 
-        auto ref_count = media_buffer_get_refcount(buffer_);
+        const auto ref_count = media_buffer_get_refcount(buffer_);
 
         // If someone has set a reference on the buffer we just have to
         // release it here and the other one will take care about actually
@@ -66,7 +105,7 @@ public:
     }
 
     static MediaSourceBuffer::Ptr Create(MediaBufferWrapper *buffer) {
-        auto sp = std::shared_ptr<MediaSourceBuffer>(new MediaSourceBuffer);
+        const auto sp = std::shared_ptr<MediaSourceBuffer>(new MediaSourceBuffer);
         sp->buffer_ = buffer;
         sp->ExtractTimestamp();
         return sp;
@@ -85,11 +124,8 @@ public:
     }
 
 private:
-    MediaSourceBuffer() {
-    }
-
     void ExtractTimestamp() {
-        auto meta_data = media_buffer_get_meta_data(buffer_);
+        const auto meta_data = media_buffer_get_meta_data(buffer_);
         if (!meta_data)
             return;
 
@@ -106,11 +142,9 @@ private:
 
 video::BaseEncoder::Config H264Encoder::DefaultConfiguration() {
     Config config;
-    // Supplying -1 as framerate means the encoder decides on what it
-    // can provide.
-    config.framerate = -1;
-    config.bitrate = 5000000;
-    config.i_frame_interval = 15;
+    config.framerate = kAnyFramerate;
+    config.bitrate = kDefaultBitrate;
+    config.i_frame_interval = kDefaultIFrameInterval.count();
     config.intra_refresh_mode = kOMXVideoIntraRefreshCyclic;
     return config;
 }
@@ -122,9 +156,9 @@ video::BaseEncoder::Ptr H264Encoder::Create(const video::EncoderReport::Ptr &rep
 H264Encoder::H264Encoder(const video::EncoderReport::Ptr &report) :
     report_(report),
     format_(nullptr),
-    encoder_(nullptr),
     source_(nullptr),
     source_format_(nullptr),
+    encoder_(nullptr),
     running_(false),
     input_queue_(mcs::video::BufferQueue::Create()),
     start_time_(-1ll),
@@ -157,47 +191,47 @@ bool H264Encoder::Configure(const Config &config) {
     if (!format)
         return false;
 
-    media_message_set_string(format, "mime", kH264MimeType, 0);
+    media_message_set_string(format, kFormatKeyMime, kH264MimeType, 0);
 
-    media_message_set_int32(format, "store-metadata-in-buffers", true);
-    media_message_set_int32(format, "store-metadata-in-buffers-output", false);
+    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffers, true);
+    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffersOutput, false);
 
-    media_message_set_int32(format, "width", config.width);
-    media_message_set_int32(format, "height", config.height);
-    media_message_set_int32(format, "stride", config.width);
-    media_message_set_int32(format, "slice-height", config.width);
+    media_message_set_int32(format, kFormatKeyWidth, config.width);
+    media_message_set_int32(format, kFormatKeyHeight, config.height);
+    media_message_set_int32(format, kFormatKeyStride, config.width);
+    media_message_set_int32(format, kFormatKeySliceHeight, config.width);
 
-    media_message_set_int32(format, "color-format", kOMXColorFormatAndroidOpaque);
+    media_message_set_int32(format, kFormatKeyColorFormat, kOMXColorFormatAndroidOpaque);
 
-    media_message_set_int32(format, "bitrate", config.bitrate);
-    media_message_set_int32(format, "bitrate-mode", kOMXVideoControlRateConstant);
-    media_message_set_int32(format, "frame-rate", config.framerate);
+    media_message_set_int32(format, kFormatKeyBitrate, config.bitrate);
+    media_message_set_int32(format, kFormatKeyBitrateMode, kOMXVideoControlRateConstant);
+    media_message_set_int32(format, kFormatKeyFramerate, config.framerate);
 
-    media_message_set_int32(format, "intra-refresh-mode", 0);
+    media_message_set_int32(format, kFormatKeyIntraRefreshMode, 0);
 
     // Update macroblocks in a cyclic fashion with 10% of all MBs within
     // frame gets updated at one time. It takes about 10 frames to
     // completely update a whole video frame. If the frame rate is 30,
     // it takes about 333 ms in the best case (if next frame is not an IDR)
     // to recover from a lost/corrupted packet.
-    int32_t mbs = (((config.width + 15) / 16) * ((config.height + 15) / 16) * 10) / 100;
-    media_message_set_int32(format, "intra-refresh-CIR-mbs", mbs);
+    const int32_t mbs = (((config.width + 15) / 16) * ((config.height + 15) / 16) * 10) / 100;
+    media_message_set_int32(format, kFormatKeyIntraRefreshCIRMbs, mbs);
 
     if (config.i_frame_interval > 0)
-        media_message_set_int32(format, "i-frame-interval", config.i_frame_interval);
+        media_message_set_int32(format, kFormatKeyIFrameInterval, config.i_frame_interval);
 
     if (config.profile_idc > 0)
-        media_message_set_int32(format, "profile-idc", config.profile_idc);
+        media_message_set_int32(format, kFormatKeyProfileIdc, config.profile_idc);
 
     if (config.level_idc > 0)
-        media_message_set_int32(format, "level-idc", config.level_idc);
+        media_message_set_int32(format, kFormatKeyLevelIdc, config.level_idc);
 
     if (config.constraint_set > 0)
-        media_message_set_int32(format, "constraint-set", config.constraint_set);
+        media_message_set_int32(format, kFormatKeyConstraintSet, config.constraint_set);
 
     // FIXME we need to find a way to check if the encoder supports prepending
     // SPS/PPS to the buffers it is producing or if we have to manually do that
-    media_message_set_int32(format, "prepend-sps-pps-to-idr-frames", 1);
+    media_message_set_int32(format, kFormatKeyPrependSpsPpstoIdrFrames, 1);
 
     source_ = media_source_create();
     if (!source_) {
@@ -290,7 +324,8 @@ bool H264Encoder::Start() {
 }
 
 int H264Encoder::OnSourceStart(MediaMetaDataWrapper *meta, void *user_data) {
-    auto thiz = static_cast<H264Encoder*>(user_data);
+    boost::ignore_unused_variable_warning(meta);
+    boost::ignore_unused_variable_warning(user_data);
 
     MCS_DEBUG("");
 
@@ -298,7 +333,7 @@ int H264Encoder::OnSourceStart(MediaMetaDataWrapper *meta, void *user_data) {
 }
 
 int H264Encoder::OnSourceStop(void *user_data) {
-    auto thiz = static_cast<H264Encoder*>(user_data);
+    boost::ignore_unused_variable_warning(user_data);
 
     MCS_DEBUG("");
 
@@ -306,7 +341,7 @@ int H264Encoder::OnSourceStop(void *user_data) {
 }
 
 int H264Encoder::OnSourcePause(void *user_data) {
-    auto thiz = static_cast<H264Encoder*>(user_data);
+    boost::ignore_unused_variable_warning(user_data);
 
     MCS_DEBUG("");
 
@@ -319,7 +354,7 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
         return nullptr;
     }
 
-    auto anwb = reinterpret_cast<ANativeWindowBuffer*>(input_buffer->NativeHandle());
+    const auto anwb = reinterpret_cast<ANativeWindowBuffer*>(input_buffer->NativeHandle());
 
     size_t size = sizeof(buffer_handle_t) + 4;
 
@@ -337,8 +372,8 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
     // frameworks/av/media/libstagefright/SurfaceMediaSource.cpp for more
     // details about this.
     uint32_t type = kMetadataBufferTypeGrallocSource;
-    memcpy(data, &type, 4);
-    memcpy(data + 4, &anwb->handle, sizeof(buffer_handle_t));
+    memcpy(data, &type, sizeof(type));
+    memcpy(data + sizeof(type), &anwb->handle, sizeof(buffer_handle_t));
 
     media_buffer_set_return_callback(buffer, &H264Encoder::OnBufferReturned, this);
 
@@ -347,7 +382,7 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
     media_buffer_ref(buffer);
 
     auto meta = media_buffer_get_meta_data(buffer);
-    auto key_time = media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME);
+    const auto key_time = media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME);
     media_meta_data_set_int64(meta, key_time, timestamp);
 
     pending_buffers_.push_back(BufferItem{input_buffer, buffer});
@@ -358,11 +393,11 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
 int H264Encoder::OnSourceRead(MediaBufferWrapper **buffer, void *user_data) {
     auto thiz = static_cast<H264Encoder*>(user_data);
 
-    if (!thiz->running_)
-        return kAndroidMediaErrorBase;
+    if (!thiz || !thiz->running_)
+        return kAndroidMediaErrorNotConnected;
 
     if (!buffer)
-        return kAndroidMediaErrorBase;
+        return kAndroidMediaErrorBufferTooSmall;
 
     auto input_buffer = thiz->input_queue_->Next();
 
@@ -380,6 +415,9 @@ int H264Encoder::OnSourceRead(MediaBufferWrapper **buffer, void *user_data) {
 
 void H264Encoder::OnBufferReturned(MediaBufferWrapper *buffer, void *user_data) {
     auto thiz = static_cast<H264Encoder*>(user_data);
+
+    if (!thiz)
+        return;
 
     // Find the right pending buffer matching the returned one
     auto iter = thiz->pending_buffers_.begin();

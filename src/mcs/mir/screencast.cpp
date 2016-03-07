@@ -40,12 +40,13 @@ std::string Screencast::DisplayModeToString(const DisplayMode &mode) {
     return "unknown";
 }
 
-Screencast::Ptr Screencast::Create(const Screencast::DisplayOutput &output) {
-    return std::shared_ptr<Screencast>(new Screencast(output));
-}
-
 Screencast::Screencast(const Screencast::DisplayOutput &output) :
     output_(output) {
+
+    // TODO(morphis): Refactor this to set we don't leave a partially
+    // initialized object floating around. We should either fail with
+    // an exception here or do initialization differently.
+
     connection_ = mir_connect_sync(kMirSocket, kMirConnectionName);
     if (!mir_connection_is_valid(connection_)) {
         MCS_ERROR("Failed to connect to Mir server: %s",
@@ -136,7 +137,7 @@ Screencast::Screencast(const Screencast::DisplayOutput &output) :
         return;
     }
 
-    auto platform_type = mir_buffer_stream_get_platform_type(buffer_stream_);
+    const auto platform_type = mir_buffer_stream_get_platform_type(buffer_stream_);
     if (platform_type != mir_platform_type_android) {
         MCS_ERROR("Not running with android platform: This is not supported.");
         mir_buffer_stream_release_sync(buffer_stream_);

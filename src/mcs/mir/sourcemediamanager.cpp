@@ -52,6 +52,7 @@ SourceMediaManager::~SourceMediaManager() {
 
 bool SourceMediaManager::Configure() {
     auto report_factory = report::ReportFactory::Create();
+
     auto rr = mcs::video::ExtractRateAndResolution(format_);
 
     MCS_DEBUG("dimensions: %dx%d@%d", rr.width, rr.height, rr.framerate);
@@ -61,7 +62,7 @@ bool SourceMediaManager::Configure() {
     // to the encoder.
     Screencast::DisplayOutput output{Screencast::DisplayMode::kExtend, rr.width, rr.height};
 
-    connector_ = mcs::mir::Screencast::Create(output);
+    connector_ = std::make_shared<mcs::mir::Screencast>(output);
     if (!connector_->IsValid())
         return false;
 

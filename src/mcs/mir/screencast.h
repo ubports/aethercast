@@ -24,10 +24,12 @@
 #include <mir_toolkit/mir_screencast.h>
 #include <mir_toolkit/mir_buffer_stream.h>
 
+#include "mcs/non_copyable.h"
+
 namespace mcs {
 namespace mir {
 
-class Screencast {
+class Screencast : public mcs::NonCopyable {
 public:
     typedef std::shared_ptr<Screencast> Ptr;
 
@@ -45,8 +47,7 @@ public:
         double refresh_rate;
     };
 
-    static Ptr Create(const DisplayOutput &output);
-
+    explicit Screencast(const DisplayOutput &output);
     ~Screencast();
 
     void SwapBuffers();
@@ -60,8 +61,6 @@ public:
     DisplayOutput OutputMode() const;
     MirNativeBuffer* CurrentBuffer() const;
 
-private:
-    Screencast(const DisplayOutput &output);
 
 private:
     MirConnection *connection_;
