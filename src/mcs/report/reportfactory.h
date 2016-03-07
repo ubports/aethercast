@@ -22,24 +22,22 @@
 
 #include "mcs/non_copyable.h"
 
-namespace mcs {
-namespace video {
-class EncoderReport;
-class RendererReport;
-class PacketizerReport;
-class SenderReport;
-} // namespace video
+#include "mcs/video/encoderreport.h"
+#include "mcs/video/rendererreport.h"
+#include "mcs/video/packetizerreport.h"
+#include "mcs/video/senderreport.h"
 
+namespace mcs {
 namespace report {
 
 class ReportFactory : public mcs::NonCopyable {
 public:
     static std::unique_ptr<ReportFactory> Create();
 
-    virtual std::shared_ptr<video::EncoderReport> CreateEncoderReport() = 0;
-    virtual std::shared_ptr<video::RendererReport> CreateRendererReport() = 0;
-    virtual std::shared_ptr<video::PacketizerReport> CreatePacketizerReport() = 0;
-    virtual std::shared_ptr<video::SenderReport> CreateSenderReport() = 0;
+    virtual video::EncoderReport::Ptr CreateEncoderReport() = 0;
+    virtual video::RendererReport::Ptr CreateRendererReport() = 0;
+    virtual video::PacketizerReport::Ptr CreatePacketizerReport() = 0;
+    virtual video::SenderReport::Ptr CreateSenderReport() = 0;
 };
 
 } // namespace report
