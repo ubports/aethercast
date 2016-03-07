@@ -205,11 +205,12 @@ void MPEGTSPacketizer::Track::Finalize() {
     finalized = true;
 }
 
-Packetizer::Ptr MPEGTSPacketizer::Create() {
-    return std::shared_ptr<Packetizer>(new MPEGTSPacketizer);
+Packetizer::Ptr MPEGTSPacketizer::Create(const mcs::video::PacketizerReport::Ptr &report) {
+    return std::shared_ptr<Packetizer>(new MPEGTSPacketizer(report));
 }
 
-MPEGTSPacketizer::MPEGTSPacketizer() :
+MPEGTSPacketizer::MPEGTSPacketizer(const mcs::video::PacketizerReport::Ptr &report) :
+    report_(report),
     pat_continuity_counter_(0),
     pmt_continuity_counter_(0) {
     InitCrcTable();
