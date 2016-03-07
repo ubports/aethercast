@@ -27,17 +27,37 @@ def analyze_trace(path):
 
             buffers[buffer_timestamp] = current_buffer
 
-    encoding_times=[]
+    rendering_times = []
+    encoding_times = []
+    packetizing_times = []
+    sending_times = []
 
     for buffer_timestamp in buffers:
         buffer = buffers[buffer_timestamp]
-        start = buffer["aethercast_encoder:received_input_buffer"]
-        end = buffer["aethercast_encoder:finished_frame"]
-        encoding_times.append(((end - start) / 1000000))
 
-    print("Encoding time max: %f ms min: %f ms mean: %f ms stdev: %f ms" %
-          (max(encoding_times), min(encoding_times),
-           statistics.mean(encoding_times), statistics.stdev(encoding_times)))
+        start = buffer["aethercast_encoder:received_input_buffer"]
+        usec_per_sec = 1000000
+
+        renderer_end = buffer["aethercast_renderer:finished_frame"]
+        rendering_times.append(((renderer_end - start) / usec_per_sec))
+
+        encoder_end = buffer["aethercast_encoder:finished_frame"]
+        encoding_times.append(((encoder_end - start) / usec_per_sec))
+
+        packetizer_end = buffer["aethercast_packetizer:packetized_frame"]
+        packetizing_times.append(((packetizer_end - start) / usec_per_sec))
+
+        sender_end = buffer["aethercast_sender:sent_packet"]
+        sending_times.append(((sender_end - start) / usec_per_sec))
+
+    def dump_statistics(name, data):
+        print("%s time max: %f ms min: %f ms mean: %f ms stdev: %f ms" %
+              (name, max(data), min(data), statistics.mean(data), statistics.stdev(data)))
+
+    dump_statistics("Rendering", rendering_times)
+    dump_statistics("Encoding", encoding_times)
+    dump_statistics("Packetizing", packetizing_times)
+    dump_statistics("Sending", sending_times)
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
