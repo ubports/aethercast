@@ -30,8 +30,6 @@
 
 #include "mcs/logger.h"
 
-#include "mcs/video/statistics.h"
-
 #include "mcs/streaming/rtpsender.h"
 
 namespace {

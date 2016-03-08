@@ -108,7 +108,6 @@ set(SOURCES
   mcs/video/utils_from_android.cpp
   mcs/video/baseencoder.cpp
   mcs/video/h264analyzer.cpp
-  mcs/video/statistics.cpp
 
   mcs/streaming/mpegtspacketizer.cpp
   mcs/streaming/rtpsender.cpp

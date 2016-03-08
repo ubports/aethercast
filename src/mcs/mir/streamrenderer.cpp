@@ -31,8 +31,6 @@
 
 #include "mcs/logger.h"
 
-#include "mcs/video/statistics.h"
-
 #include "mcs/mir/screencast.h"
 #include "mcs/mir/streamrenderer.h"
 

@@ -19,8 +19,6 @@
 
 #include "mcs/logger.h"
 
-#include "mcs/video/statistics.h"
-
 #include "mcs/streaming/mediasender.h"
 #include "mcs/streaming/mpegtspacketizer.h"
 #include "mcs/streaming/rtpsender.h"

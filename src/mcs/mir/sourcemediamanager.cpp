@@ -21,7 +21,6 @@
 
 #include "mcs/report/reportfactory.h"
 
-#include "mcs/video/statistics.h"
 #include "mcs/video/videoformat.h"
 
 #include "mcs/streaming/mpegtspacketizer.h"
@@ -46,8 +45,6 @@ SourceMediaManager::SourceMediaManager(const std::string &remote_address) :
 SourceMediaManager::~SourceMediaManager() {
     if (state_ != State::Stopped)
         StopPipeline();
-
-    mcs::video::Statistics::Instance()->Dump();
 }
 
 bool SourceMediaManager::Configure() {

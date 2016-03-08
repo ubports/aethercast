@@ -28,8 +28,6 @@
 #include "mcs/logger.h"
 #include "mcs/keep_alive.h"
 
-#include "mcs/video/statistics.h"
-
 #include "mcs/android/h264encoder.h"
 
 namespace {

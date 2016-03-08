@@ -33,8 +33,6 @@
 #include <mcs/logger.h>
 #include <mcs/initgstreameronce.h>
 
-#include <mcs/video/statistics.h>
-
 #include "simplesource.h"
 
 static GMainLoop *main_loop = nullptr;
