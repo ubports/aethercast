@@ -26,7 +26,7 @@ namespace logging {
 void RendererReport::BeganFrame() {
 }
 
-void RendererReport::FinishedFrame(const TimestampUs timestamp) {
+void RendererReport::FinishedFrame(const TimestampUs &timestamp) {
     MCS_TRACE("timestamp %lld", timestamp);
 }
 

@@ -33,15 +33,15 @@ void EncoderReport::Stopped() {
     mcs_tracepoint(aethercast_encoder, stopped, 0);
 }
 
-void EncoderReport::BeganFrame(const mcs::TimestampUs timestamp) {
+void EncoderReport::BeganFrame(const mcs::TimestampUs &timestamp) {
     mcs_tracepoint(aethercast_encoder, began_frame, timestamp);
 }
 
-void EncoderReport::FinishedFrame(const mcs::TimestampUs timestamp) {
+void EncoderReport::FinishedFrame(const mcs::TimestampUs &timestamp) {
     mcs_tracepoint(aethercast_encoder, finished_frame, timestamp);
 }
 
-void EncoderReport::ReceivedInputBuffer(const mcs::TimestampUs timestamp) {
+void EncoderReport::ReceivedInputBuffer(const mcs::TimestampUs &timestamp) {
     mcs_tracepoint(aethercast_encoder, received_input_buffer, timestamp);
 }
 

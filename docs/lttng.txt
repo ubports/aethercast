@@ -21,8 +21,8 @@ package:
 
  $ apt-get install aethercast-tools
 
-You can then analzye the results then with your tool of choice. See
-the LTTng homepage at http://lttng.org/ for a list of possible tools
+You can then analzye the results with your tool of choice. See
+the LTTng homepage at http://lttng.org/ for a list of possible tools.
 The easiest way is by using babeltrace.
 
  $ babeltrace /tmp/aethercast-session/<trace-subdir>

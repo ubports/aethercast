@@ -23,7 +23,7 @@ namespace mcs {
 namespace report {
 namespace logging {
 
-void PacketizerReport::PacketizedFrame(const TimestampUs timestamp) {
+void PacketizerReport::PacketizedFrame(const TimestampUs &timestamp) {
     MCS_TRACE("timestamp %lld", timestamp);
 }
 

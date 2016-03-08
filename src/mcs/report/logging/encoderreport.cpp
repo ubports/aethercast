@@ -31,15 +31,15 @@ void EncoderReport::Stopped() {
     MCS_TRACE("");
 }
 
-void EncoderReport::BeganFrame(const mcs::TimestampUs timestamp) {
+void EncoderReport::BeganFrame(const mcs::TimestampUs &timestamp) {
     MCS_TRACE("timestamp %lld", timestamp);
 }
 
-void EncoderReport::FinishedFrame(const mcs::TimestampUs timestamp) {
+void EncoderReport::FinishedFrame(const mcs::TimestampUs &timestamp) {
     MCS_TRACE("timestamp %lld", timestamp);
 }
 
-void EncoderReport::ReceivedInputBuffer(const mcs::TimestampUs timestamp) {
+void EncoderReport::ReceivedInputBuffer(const mcs::TimestampUs &timestamp) {
     MCS_TRACE("timestamp %lld", timestamp);
 }
 

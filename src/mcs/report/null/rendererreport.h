@@ -32,7 +32,7 @@ namespace null {
 class RendererReport : public video::RendererReport {
 public:
      void BeganFrame();
-     void FinishedFrame(const mcs::TimestampUs timestamp);
+     void FinishedFrame(const mcs::TimestampUs &timestamp);
 };
 
 } // namespace null

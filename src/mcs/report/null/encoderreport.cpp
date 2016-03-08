@@ -29,15 +29,15 @@ void EncoderReport::Started() {
 void EncoderReport::Stopped() {
 }
 
-void EncoderReport::BeganFrame(const mcs::TimestampUs timestamp) {
+void EncoderReport::BeganFrame(const mcs::TimestampUs &timestamp) {
     boost::ignore_unused_variable_warning(timestamp);
 }
 
-void EncoderReport::FinishedFrame(const mcs::TimestampUs timestamp) {
+void EncoderReport::FinishedFrame(const mcs::TimestampUs &timestamp) {
     boost::ignore_unused_variable_warning(timestamp);
 }
 
-void EncoderReport::ReceivedInputBuffer(const mcs::TimestampUs timestamp) {
+void EncoderReport::ReceivedInputBuffer(const mcs::TimestampUs &timestamp) {
     boost::ignore_unused_variable_warning(timestamp);
 }
 

@@ -30,9 +30,9 @@ class MockEncoderReport : public video::EncoderReport {
 public:
     MOCK_METHOD0(Started, void());
     MOCK_METHOD0(Stopped, void());
-    MOCK_METHOD1(BeganFrame, void(const mcs::TimestampUs));
-    MOCK_METHOD1(FinishedFrame, void(const mcs::TimestampUs));
-    MOCK_METHOD1(ReceivedInputBuffer, void(const mcs::TimestampUs));
+    MOCK_METHOD1(BeganFrame, void(const mcs::TimestampUs&));
+    MOCK_METHOD1(FinishedFrame, void(const mcs::TimestampUs&));
+    MOCK_METHOD1(ReceivedInputBuffer, void(const mcs::TimestampUs&));
 };
 
 } // namespace android

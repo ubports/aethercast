@@ -24,7 +24,7 @@ namespace null {
 void RendererReport::BeganFrame() {
 }
 
-void RendererReport::FinishedFrame(const TimestampUs timestamp) {
+void RendererReport::FinishedFrame(const TimestampUs &timestamp) {
 }
 
 } // namespace null

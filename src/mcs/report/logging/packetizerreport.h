@@ -31,7 +31,7 @@ namespace logging {
 
 class PacketizerReport : public video::PacketizerReport {
 public:
-     void PacketizedFrame(const mcs::TimestampUs timestamp);
+     void PacketizedFrame(const mcs::TimestampUs &timestamp);
 };
 
 } // namespace logging

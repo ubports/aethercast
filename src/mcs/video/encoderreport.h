@@ -33,9 +33,9 @@ public:
 
     virtual void Started() = 0;
     virtual void Stopped() = 0;
-    virtual void BeganFrame(const mcs::TimestampUs timestamp) = 0;
-    virtual void FinishedFrame(const mcs::TimestampUs timestamp) = 0;
-    virtual void ReceivedInputBuffer(const mcs::TimestampUs timestamp) = 0;
+    virtual void BeganFrame(const mcs::TimestampUs &timestamp) = 0;
+    virtual void FinishedFrame(const mcs::TimestampUs &timestamp) = 0;
+    virtual void ReceivedInputBuffer(const mcs::TimestampUs &timestamp) = 0;
 };
 
 } // namespace video

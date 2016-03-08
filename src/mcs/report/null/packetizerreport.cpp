@@ -21,7 +21,7 @@ namespace mcs {
 namespace report {
 namespace null {
 
-void PacketizerReport::PacketizedFrame(const TimestampUs timestamp) {
+void PacketizerReport::PacketizedFrame(const TimestampUs &timestamp) {
 }
 
 } // namespace null

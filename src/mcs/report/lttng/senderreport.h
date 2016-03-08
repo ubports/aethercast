@@ -31,7 +31,7 @@ namespace lttng {
 
 class SenderReport : public video::SenderReport {
 public:
-    void SentPacket(const mcs::TimestampUs timestamp, size_t size);
+    void SentPacket(const mcs::TimestampUs &timestamp, const size_t &size);
 };
 
 } // namespace lttng

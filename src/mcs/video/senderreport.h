@@ -31,7 +31,7 @@ class SenderReport : public mcs::NonCopyable {
 public:
     typedef std::shared_ptr<SenderReport> Ptr;
 
-    virtual void SentPacket(const mcs::TimestampUs timestamp, size_t size) = 0;
+    virtual void SentPacket(const mcs::TimestampUs &timestamp, const size_t &size) = 0;
 };
 
 } // namespace video

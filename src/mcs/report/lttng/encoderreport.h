@@ -34,9 +34,9 @@ class EncoderReport : public video::EncoderReport {
 public:
     void Started();
     void Stopped();
-    void BeganFrame(const mcs::TimestampUs timestamp);
-    void FinishedFrame(const mcs::TimestampUs timestamp);
-    void ReceivedInputBuffer(const mcs::TimestampUs timestamp);
+    void BeganFrame(const mcs::TimestampUs &timestamp);
+    void FinishedFrame(const mcs::TimestampUs &timestamp);
+    void ReceivedInputBuffer(const mcs::TimestampUs &timestamp);
 
 private:
     TracepointProvider tp_;

@@ -29,7 +29,7 @@ void RendererReport::BeganFrame() {
     mcs_tracepoint(aethercast_renderer, began_frame, 0);
 }
 
-void RendererReport::FinishedFrame(const TimestampUs timestamp) {
+void RendererReport::FinishedFrame(const TimestampUs &timestamp) {
     mcs_tracepoint(aethercast_renderer, finished_frame, timestamp);
 }
 

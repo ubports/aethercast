@@ -32,7 +32,7 @@ public:
     typedef std::shared_ptr<RendererReport> Ptr;
 
     virtual void BeganFrame() = 0;
-    virtual void FinishedFrame(const mcs::TimestampUs timestamp) = 0;
+    virtual void FinishedFrame(const mcs::TimestampUs &timestamp) = 0;
 };
 
 } // namespace video

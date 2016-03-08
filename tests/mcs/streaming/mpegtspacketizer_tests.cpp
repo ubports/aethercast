@@ -105,7 +105,7 @@ private:
 
 class MockPacketizerReport : public mcs::video::PacketizerReport {
 public:
-    MOCK_METHOD1(PacketizedFrame, void(const mcs::TimestampUs));
+    MOCK_METHOD1(PacketizedFrame, void(const mcs::TimestampUs&));
 };
 
 }

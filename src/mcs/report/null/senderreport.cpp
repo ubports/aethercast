@@ -23,7 +23,7 @@ namespace mcs {
 namespace report {
 namespace null {
 
-void SenderReport::SentPacket(const TimestampUs timestamp, size_t size) {
+void SenderReport::SentPacket(const TimestampUs &timestamp, const size_t &size) {
 }
 
 } // namespace null

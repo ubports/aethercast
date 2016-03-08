@@ -31,7 +31,7 @@ class PacketizerReport : public mcs::NonCopyable {
 public:
     typedef std::shared_ptr<PacketizerReport> Ptr;
 
-    virtual void PacketizedFrame(const mcs::TimestampUs timestamp) = 0;
+    virtual void PacketizedFrame(const mcs::TimestampUs &timestamp) = 0;
 };
 
 } // namespace video

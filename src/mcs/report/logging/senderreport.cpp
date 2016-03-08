@@ -23,7 +23,7 @@ namespace mcs {
 namespace report {
 namespace logging {
 
-void SenderReport::SentPacket(const TimestampUs timestamp, size_t size) {
+void SenderReport::SentPacket(const TimestampUs &timestamp, const size_t &size) {
     MCS_TRACE("timestamp %lld size %d", timestamp, size);
 }
 

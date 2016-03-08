@@ -25,7 +25,7 @@ namespace mcs {
 namespace report {
 namespace lttng {
 
-void PacketizerReport::PacketizedFrame(const TimestampUs timestamp) {
+void PacketizerReport::PacketizedFrame(const TimestampUs &timestamp) {
     mcs_tracepoint(aethercast_packetizer, packetized_frame, timestamp);
 }
 
