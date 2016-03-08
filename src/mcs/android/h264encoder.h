@@ -64,7 +64,7 @@ private:
 
     bool DoesBufferContainCodecConfig(MediaBufferWrapper *buffer);
 
-    MediaBufferWrapper* PackBuffer(const mcs::video::Buffer::Ptr &input_buffer, const mcs::TimestampUs &timestamp);
+    MediaBufferWrapper* PackBuffer(const mcs::video::Buffer::Ptr &input_buffer, const mcs::TimestampUs timestamp);
 
 private:
     static int OnSourceRead(MediaBufferWrapper **buffer, void *user_data);

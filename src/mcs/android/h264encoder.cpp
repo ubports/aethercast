@@ -129,7 +129,7 @@ private:
         if (!meta_data)
             return;
 
-        uint32_t key_time = media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME);
+        const uint32_t key_time = media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME);
         int64_t time_us = 0;
         media_meta_data_find_int64(meta_data, key_time, &time_us);
 
@@ -347,7 +347,7 @@ int H264Encoder::OnSourcePause(void *user_data) {
     return 0;
 }
 
-MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input_buffer, const mcs::TimestampUs &timestamp) {
+MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input_buffer, const mcs::TimestampUs timestamp) {
     if (!input_buffer->NativeHandle()) {
         MCS_WARNING("Ignoring buffer without native handle");
         return nullptr;
@@ -355,7 +355,8 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
 
     const auto anwb = reinterpret_cast<ANativeWindowBuffer*>(input_buffer->NativeHandle());
 
-    size_t size = sizeof(buffer_handle_t) + 4;
+    uint32_t type = kMetadataBufferTypeGrallocSource;
+    const size_t size = sizeof(buffer_handle_t) + sizeof(type);
 
     // We let the media buffer allocate the memory here to let it keep
     // the ownership and release the memory once its destroyed.
@@ -370,7 +371,6 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input
     // buffer with the key value we put in front of it. See also
     // frameworks/av/media/libstagefright/SurfaceMediaSource.cpp for more
     // details about this.
-    uint32_t type = kMetadataBufferTypeGrallocSource;
     memcpy(data, &type, sizeof(type));
     memcpy(data + sizeof(type), &anwb->handle, sizeof(buffer_handle_t));
 
@@ -398,9 +398,9 @@ int H264Encoder::OnSourceRead(MediaBufferWrapper **buffer, void *user_data) {
     if (!buffer)
         return kAndroidMediaErrorBufferTooSmall;
 
-    auto input_buffer = thiz->input_queue_->Next();
+    const auto input_buffer = thiz->input_queue_->Next();
 
-    auto next_buffer = thiz->PackBuffer(input_buffer, input_buffer->Timestamp());
+    const auto next_buffer = thiz->PackBuffer(input_buffer, input_buffer->Timestamp());
 
     if (!next_buffer)
         return kAndroidMediaErrorEndOfStream;
