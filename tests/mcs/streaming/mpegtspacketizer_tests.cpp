@@ -15,11 +15,13 @@
  *
  */
 
-#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <chrono>
 
 #include <mcs/streaming/mpegtspacketizer.h>
+
+using namespace ::testing;
 
 namespace {
 static constexpr uint8_t kMPEGTSPacketLength = 188;
@@ -101,22 +103,30 @@ private:
     std::vector<MPEGTSPacketMatcher> packets_;
 };
 
+class MockPacketizerReport : public mcs::video::PacketizerReport {
+public:
+    MOCK_METHOD1(PacketizedFrame, void(const mcs::TimestampUs&));
+};
+
 }
 
 TEST(MPEGTSPacketizer, AddTrackWithoutAnythingSet) {
-    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create();
+    auto report = std::make_shared<MockPacketizerReport>();
+    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create(report);
     auto id = packetizer->AddTrack(mcs::streaming::MPEGTSPacketizer::TrackFormat{});
     EXPECT_EQ(-1, id);
 }
 
 TEST(MPEGTSPacketizer, AddValidTrack) {
-    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create();
+    auto report = std::make_shared<MockPacketizerReport>();
+    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create(report);
     auto id = packetizer->AddTrack(mcs::streaming::MPEGTSPacketizer::TrackFormat{"video/avc"});
     EXPECT_EQ(0, id);
 }
 
 TEST(MPEGTSPacketizer, TryMoreThanOneValidTrack) {
-    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create();
+    auto report = std::make_shared<MockPacketizerReport>();
+    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create(report);
     auto id = packetizer->AddTrack(mcs::streaming::MPEGTSPacketizer::TrackFormat{"video/avc"});
     EXPECT_EQ(0, id);
     for (int i = 0; i < 15; i++) {
@@ -128,11 +138,17 @@ TEST(MPEGTSPacketizer, TryMoreThanOneValidTrack) {
 }
 
 TEST(MPEGTSPacketizer, SubmitAndProcessCodecSpecificData) {
-    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create();
+    auto report = std::make_shared<MockPacketizerReport>();
+    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create(report);
     auto id = packetizer->AddTrack(mcs::streaming::MPEGTSPacketizer::TrackFormat{"video/avc"});
 
+    auto now = mcs::Utils::GetNowUs();
     auto buffer = mcs::video::Buffer::Create(sizeof(csd0));
     ::memcpy(buffer->Data(), csd0, sizeof(csd0));
+    buffer->SetTimestamp(now);
+
+    EXPECT_CALL(*report, PacketizedFrame(buffer->Timestamp()))
+            .Times(1);
 
     mcs::video::Buffer::Ptr out;
 
@@ -147,15 +163,19 @@ TEST(MPEGTSPacketizer, SubmitAndProcessCodecSpecificData) {
     matcher.At(0).ExpectPaddingBytesAndContinuityCounter(0);
     matcher.At(0).ExpectData(buffer->Data(), buffer->Length());
 
-    EXPECT_GE(0, out->Timestamp());
+    EXPECT_GE(now, out->Timestamp());
 }
 
 TEST(MPEGTSPacketizer, EmitPCRandPATandPMT) {
-    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create();
+    auto report = std::make_shared<MockPacketizerReport>();
+    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create(report);
     auto id = packetizer->AddTrack(mcs::streaming::MPEGTSPacketizer::TrackFormat{"video/avc"});
 
     mcs::video::Buffer::Ptr out;
     auto buffer = CreateFrame(100);
+
+    EXPECT_CALL(*report, PacketizedFrame(buffer->Timestamp()))
+            .Times(1);
 
     packetizer->Packetize(id, buffer, &out, mcs::streaming::Packetizer::kEmitPCR |
                           mcs::streaming::Packetizer::kEmitPATandPMT);
@@ -192,8 +212,12 @@ TEST(MPEGTSPacketizer, EmitPCRandPATandPMT) {
 }
 
 TEST(MPEGTSPacketizer, IncreasingContinuityCounter) {
-    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create();
+    auto report = std::make_shared<MockPacketizerReport>();
+    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create(report);
     auto id = packetizer->AddTrack(mcs::streaming::MPEGTSPacketizer::TrackFormat{"video/avc"});
+
+    EXPECT_CALL(*report, PacketizedFrame(_))
+            .Times(20);
 
     // Make sure we looper over 15 here as that is used for the continuity counter
     // for PAT/PMT and PCR but shouldn't be used here.

@@ -31,8 +31,6 @@
 
 #include "mcs/logger.h"
 
-#include "mcs/video/statistics.h"
-
 #include "mcs/mir/screencast.h"
 #include "mcs/mir/streamrenderer.h"
 
@@ -44,11 +42,14 @@ static constexpr unsigned int kNumBufferSlots{2};
 namespace mcs {
 namespace mir {
 
-StreamRenderer::Ptr StreamRenderer::Create(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder) {
-    return std::shared_ptr<StreamRenderer>(new StreamRenderer(connector, encoder));
+StreamRenderer::Ptr StreamRenderer::Create(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder,
+                                           const video::RendererReport::Ptr &report) {
+    return std::shared_ptr<StreamRenderer>(new StreamRenderer(connector, encoder, report));
 }
 
-StreamRenderer::StreamRenderer(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder) :
+StreamRenderer::StreamRenderer(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder,
+                               const video::RendererReport::Ptr &report) :
+    report_(report),
     connector_(connector),
     encoder_(encoder),
     running_(false),
@@ -67,50 +68,24 @@ void StreamRenderer::RenderThread() {
     MCS_DEBUG("Everything successfully setup; Starting recording now %dx%d@%d",
               width_, height_, encoder_->Configuration().framerate);
 
-    bool waiting = false;
-    mcs::TimestampUs wait_slot_time;
-
-    static int64_t start_time_us = mcs::Utils::GetNowUs();
-    static unsigned int frame_count = 0;
     static const mcs::TimestampUs target_iteration_time = (1. / encoder_->Configuration().framerate) * 1000000ll;
 
     while (running_) {
-        if (!waiting)
-            wait_slot_time = mcs::Utils::GetNowUs();
-
         mcs::TimestampUs iteration_start_time = mcs::Utils::GetNowUs();
 
-        if (!input_buffers_->WaitForSlots()) {
-            waiting = true;
+        report_->BeganFrame();
+
+        if (!input_buffers_->WaitForSlots())
             continue;
-        }
-
-        waiting = false;
-
-        int64_t wait_time = (mcs::Utils::GetNowUs() - wait_slot_time) / 1000ll;
-        video::Statistics::Instance()->RecordRendererWait(wait_time);
-
-        mcs::TimestampUs before_swap = mcs::Utils::GetNowUs();
 
         // This will trigger the rendering/compositing process inside mir
         // and will block until that is done and we received a new buffer
         connector_->SwapBuffersSync();
 
-        int64_t swap_time = (mcs::Utils::GetNowUs() - before_swap) / 1000ll;
-        video::Statistics::Instance()->RecordRendererSwapped(swap_time);
-
         auto native_buffer = connector_->CurrentBuffer();
 
         auto buffer = mcs::video::Buffer::Create(native_buffer);
         buffer->SetDelegate(shared_from_this());
-
-        frame_count++;
-        const int64_t time_now_us = mcs::Utils::GetNowUs();
-        if (start_time_us + 1000000ll <= time_now_us) {
-            video::Statistics::Instance()->RecordRendererFramesPerSecond(frame_count);
-            frame_count = 0;
-            start_time_us = time_now_us;
-        }
 
         // FIXME: at optimum we would get the timestamp directly supplied
         // from mir but as long as that isn't available we don't have any
@@ -121,11 +96,10 @@ void StreamRenderer::RenderThread() {
 
         encoder_->QueueBuffer(buffer);
 
-        static mcs::TimestampUs last_queued_time = mcs::Utils::GetNowUs();
-        int64_t renderer_iteration_time = (mcs::Utils::GetNowUs() - last_queued_time) / 1000ll;
-        last_queued_time = mcs::Utils::GetNowUs();
-        video::Statistics::Instance()->RecordRendererIteration(renderer_iteration_time);
+        report_->FinishedFrame(buffer->Timestamp());
 
+        // Calculate how long we have to wait until we can render the next
+        // frame to keep our framerate constant.
         mcs::TimestampUs iteration_time = mcs::Utils::GetNowUs() - iteration_start_time;
         int64_t sleep_time = target_iteration_time - iteration_time;
         if (sleep_time > 0)

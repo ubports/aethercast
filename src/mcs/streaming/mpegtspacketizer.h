@@ -21,6 +21,8 @@
 #include <memory>
 #include <vector>
 
+#include "mcs/video/packetizerreport.h"
+
 #include "mcs/streaming/packetizer.h"
 
 namespace mcs {
@@ -28,7 +30,7 @@ namespace streaming {
 
 class MPEGTSPacketizer : public Packetizer {
 public:
-    static Packetizer::Ptr Create();
+    static Packetizer::Ptr Create(const mcs::video::PacketizerReport::Ptr &report);
 
     ~MPEGTSPacketizer();
 
@@ -40,7 +42,7 @@ public:
                    video::Buffer::Ptr *packets, int flags = 0) override;
 
 private:
-    MPEGTSPacketizer();
+    MPEGTSPacketizer(const mcs::video::PacketizerReport::Ptr &report);
 
 private:
     void InitCrcTable();
@@ -50,6 +52,7 @@ private:
     struct Track;
 
 private:
+    mcs::video::PacketizerReport::Ptr report_;
     unsigned int pat_continuity_counter_;
     unsigned int pmt_continuity_counter_;
     uint32_t crc_table_[256];

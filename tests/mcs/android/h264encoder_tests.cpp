@@ -19,9 +19,12 @@
 
 #include <system/window.h>
 
+#include "mcs/report/reportfactory.h"
+
 #include "mcs/android/h264encoder.h"
 
 #include "mockmedia.h"
+#include "mockencoderreport.h"
 
 using namespace ::testing;
 
@@ -63,6 +66,10 @@ struct DummyMediaBufferWrapper {
 
 class H264EncoderFixture : public ::testing::Test {
 public:
+    H264EncoderFixture() :
+        mock_report(std::make_shared<mcs::test::android::MockEncoderReport>()) {
+    }
+
     void ExpectValidConfiguration(const mcs::video::BaseEncoder::Config &config, const mcs::test::android::MockMedia::Ptr &mock) {
         auto message = new DummyMediaMessageWrapper;
 
@@ -131,17 +138,25 @@ public:
                 .Times(1)
                 .WillRepeatedly(Return(true));
 
+        EXPECT_CALL(*mock_report, Started())
+                .Times(1);
+
         EXPECT_CALL(*mock, media_codec_source_stop(_))
                 .Times(1)
                 .WillRepeatedly(Return(true));
+
+        EXPECT_CALL(*mock_report, Stopped())
+                .Times(1);
     }
+
+    std::shared_ptr<mcs::test::android::MockEncoderReport> mock_report;
 
     MediaSourceReadCallback source_read_callback;
     void *source_read_callback_data;
 };
 }
 
-TEST(H264Encoder, ValidDefaultConfiguration) {
+TEST_F(H264EncoderFixture, ValidDefaultConfiguration) {
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
     EXPECT_EQ(-1, config.framerate);
     EXPECT_EQ(5000000, config.bitrate);
@@ -156,7 +171,7 @@ TEST(H264Encoder, ValidDefaultConfiguration) {
     EXPECT_EQ(0, config.constraint_set);
 }
 
-TEST(H264Encoder, MediaMessageCreationFails) {
+TEST_F(H264EncoderFixture, MediaMessageCreationFails) {
     auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
@@ -165,12 +180,12 @@ TEST(H264Encoder, MediaMessageCreationFails) {
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     EXPECT_FALSE(encoder->Configure(config));
 }
 
-TEST(H264Encoder, MediaSourceCreationFails) {
+TEST_F(H264EncoderFixture, MediaSourceCreationFails) {
     auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
@@ -191,12 +206,12 @@ TEST(H264Encoder, MediaSourceCreationFails) {
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     EXPECT_FALSE(encoder->Configure(config));
 }
 
-TEST(H264Encoder, MediaMetaDataCreationFails) {
+TEST_F(H264EncoderFixture, MediaMetaDataCreationFails) {
     auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
@@ -225,12 +240,12 @@ TEST(H264Encoder, MediaMetaDataCreationFails) {
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     EXPECT_FALSE(encoder->Configure(config));
 }
 
-TEST(H264Encoder, MediaCodecSourceCreationFails) {
+TEST_F(H264EncoderFixture, MediaCodecSourceCreationFails) {
     auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
@@ -286,12 +301,12 @@ TEST(H264Encoder, MediaCodecSourceCreationFails) {
             .Times(1)
             .WillRepeatedly(Return(nullptr));
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     EXPECT_FALSE(encoder->Configure(config));
 }
 
-TEST(H264Encoder, CorrectConfiguration) {
+TEST_F(H264EncoderFixture, CorrectConfiguration) {
     auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
     auto config = mcs::android::H264Encoder::DefaultConfiguration();
@@ -406,7 +421,7 @@ TEST(H264Encoder, CorrectConfiguration) {
             .Times(1)
             .WillOnce(Invoke([](MediaCodecSourceWrapper *source) { delete source; }));
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     EXPECT_TRUE(encoder->Configure(config));
 
@@ -424,7 +439,7 @@ TEST_F(H264EncoderFixture, CorrectStartAndStopBehavior) {
 
     ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     ExpectValidStartAndStop(mock);
 
@@ -448,7 +463,7 @@ TEST_F(H264EncoderFixture, StartFailsCorrectly) {
 
     ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     EXPECT_TRUE(encoder->Configure(config));
 
@@ -466,7 +481,7 @@ TEST_F(H264EncoderFixture, StopFailsCorrectly) {
 
     ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     EXPECT_TRUE(encoder->Configure(config));
 
@@ -479,6 +494,9 @@ TEST_F(H264EncoderFixture, StopFailsCorrectly) {
             .Times(2)
             .WillRepeatedly(Return(false));
 
+    EXPECT_CALL(*mock_report, Started())
+            .Times(1);
+
     EXPECT_TRUE(encoder->Start());
     EXPECT_FALSE(encoder->Stop());
 }
@@ -490,7 +508,7 @@ TEST_F(H264EncoderFixture, ReturnsCorrectNativeWindowHandle) {
 
     ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     EXPECT_EQ(nullptr, encoder->NativeWindowHandle());
 
@@ -512,7 +530,7 @@ TEST_F(H264EncoderFixture, RequestIDRFrame) {
 
     ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     encoder->SendIDRFrame();
 
@@ -531,7 +549,7 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
 
     ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     EXPECT_TRUE(encoder->Configure(config));
     EXPECT_NE(nullptr, source_read_callback);
@@ -550,6 +568,9 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
     input_buffer->SetDelegate(buffer_delegate);
     auto now = mcs::Utils::GetNowUs();
     input_buffer->SetTimestamp(now);
+
+    EXPECT_CALL(*mock_report, ReceivedInputBuffer(_))
+            .Times(1);
 
     encoder->QueueBuffer(input_buffer);
 
@@ -588,6 +609,9 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
     EXPECT_CALL(*mock, media_buffer_set_return_callback(mbuf, nullptr, nullptr))
             .Times(1);
 
+    EXPECT_CALL(*mock_report, BeganFrame(_))
+            .Times(1);
+
     EXPECT_EQ(0, source_read_callback(&output_buffer, source_read_callback_data));
 
     EXPECT_EQ(mbuf, output_buffer);
@@ -616,7 +640,7 @@ TEST_F(H264EncoderFixture, SourceReadFailsForInvalidState) {
 
     ExpectValidConfiguration(config, mock);
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     ExpectValidStartAndStop(mock);
 
@@ -636,7 +660,9 @@ TEST_F(H264EncoderFixture, SourceReadFailsForInvalidState) {
 TEST_F(H264EncoderFixture, QueueBufferDoesNotCrashWhenInactive) {
     auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto config = mcs::android::H264Encoder::DefaultConfiguration();
+
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     auto buffer = mcs::video::Buffer::Create(nullptr);
     encoder->QueueBuffer(buffer);
@@ -645,7 +671,9 @@ TEST_F(H264EncoderFixture, QueueBufferDoesNotCrashWhenInactive) {
 TEST_F(H264EncoderFixture, ExecuteFailForInvalidState) {
     auto mock = std::make_shared<mcs::test::android::MockMedia>();
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto config = mcs::android::H264Encoder::DefaultConfiguration();
+
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     EXPECT_FALSE(encoder->Execute());
 }
@@ -658,7 +686,7 @@ TEST_F(H264EncoderFixture, ExecuteFailsForFailedSourceRead) {
     ExpectValidConfiguration(config, mock);
     ExpectValidStartAndStop(mock);
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
     EXPECT_TRUE(encoder->Configure(config));
 
@@ -683,7 +711,7 @@ TEST_F(H264EncoderFixture, ExecuteProvidesBuffers) {
     ExpectValidConfiguration(config, mock);
     ExpectValidStartAndStop(mock);
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
     encoder->SetDelegate(encoder_delegate);
 
     EXPECT_TRUE(encoder->Configure(config));
@@ -728,6 +756,9 @@ TEST_F(H264EncoderFixture, ExecuteProvidesBuffers) {
     EXPECT_CALL(*encoder_delegate, OnBufferWithCodecConfig(_))
             .Times(0);
 
+    EXPECT_CALL(*mock_report, FinishedFrame(_))
+            .Times(1);
+
     EXPECT_TRUE(encoder->Execute());
 
     EXPECT_TRUE(encoder->Stop());
@@ -743,7 +774,7 @@ TEST_F(H264EncoderFixture, HandsBuffersWithCodecSpecificDataBack) {
     ExpectValidConfiguration(config, mock);
     ExpectValidStartAndStop(mock);
 
-    auto encoder = mcs::android::H264Encoder::Create();
+    auto encoder = mcs::android::H264Encoder::Create(mock_report);
     encoder->SetDelegate(encoder_delegate);
 
     EXPECT_TRUE(encoder->Configure(config));
@@ -786,6 +817,9 @@ TEST_F(H264EncoderFixture, HandsBuffersWithCodecSpecificDataBack) {
     EXPECT_CALL(*encoder_delegate, OnBufferWithCodecConfig(_))
             .Times(1);
     EXPECT_CALL(*encoder_delegate, OnBufferAvailable(_))
+            .Times(1);
+
+    EXPECT_CALL(*mock_report, FinishedFrame(_))
             .Times(1);
 
     EXPECT_TRUE(encoder->Execute());

@@ -28,8 +28,6 @@
 #include "mcs/logger.h"
 #include "mcs/keep_alive.h"
 
-#include "mcs/video/statistics.h"
-
 #include "mcs/android/h264encoder.h"
 
 namespace {
@@ -149,11 +147,12 @@ video::BaseEncoder::Config H264Encoder::DefaultConfiguration() {
     return config;
 }
 
-video::BaseEncoder::Ptr H264Encoder::Create() {
-    return std::shared_ptr<H264Encoder>(new H264Encoder);
+video::BaseEncoder::Ptr H264Encoder::Create(const video::EncoderReport::Ptr &report) {
+    return std::shared_ptr<H264Encoder>(new H264Encoder(report));
 }
 
-H264Encoder::H264Encoder() :
+H264Encoder::H264Encoder(const video::EncoderReport::Ptr &report) :
+    report_(report),
     format_(nullptr),
     source_(nullptr),
     source_format_(nullptr),
@@ -317,7 +316,7 @@ bool H264Encoder::Start() {
         return false;
     }
 
-    MCS_DEBUG("Started encoder");
+    report_->Started();
 
     return true;
 }
@@ -347,7 +346,7 @@ int H264Encoder::OnSourcePause(void *user_data) {
     return 0;
 }
 
-MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input_buffer, const mcs::TimestampUs timestamp) {
+MediaBufferWrapper* H264Encoder::PackBuffer(const mcs::video::Buffer::Ptr &input_buffer, const mcs::TimestampUs &timestamp) {
     if (!input_buffer->NativeHandle()) {
         MCS_WARNING("Ignoring buffer without native handle");
         return nullptr;
@@ -406,6 +405,8 @@ int H264Encoder::OnSourceRead(MediaBufferWrapper **buffer, void *user_data) {
         return kAndroidMediaErrorEndOfStream;
 
     *buffer = next_buffer;
+
+    thiz->report_->BeganFrame(input_buffer->Timestamp());
 
     return 0;
 }
@@ -468,11 +469,7 @@ bool H264Encoder::Execute() {
 
     auto mbuf = MediaSourceBuffer::Create(buffer);
 
-    if (mbuf->Timestamp() > 0) {
-        const int64_t now = mcs::Utils::GetNowUs();
-        const int64_t diff = (now - mbuf->Timestamp()) / 1000ll;
-        video::Statistics::Instance()->RecordEncoderBufferOut(diff);
-    }
+    report_->FinishedFrame(mbuf->Timestamp());
 
     if (DoesBufferContainCodecConfig(buffer)) {
         if (auto sp = delegate_.lock())
@@ -494,6 +491,8 @@ bool H264Encoder::Stop() {
 
     running_ = false;
 
+    report_->Stopped();
+
     return true;
 }
 
@@ -502,6 +501,8 @@ void H264Encoder::QueueBuffer(const video::Buffer::Ptr &buffer) {
         return;
 
     input_queue_->Push(buffer);
+
+    report_->ReceivedInputBuffer(buffer->Timestamp());
 }
 
 void* H264Encoder::NativeWindowHandle() const {

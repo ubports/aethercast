@@ -29,6 +29,7 @@
 #include "mcs/common/executable.h"
 
 #include "mcs/video/baseencoder.h"
+#include "mcs/video/encoderreport.h"
 #include "mcs/video/bufferqueue.h"
 
 namespace mcs {
@@ -40,7 +41,7 @@ public:
 
     static BaseEncoder::Config DefaultConfiguration();
 
-    static BaseEncoder::Ptr Create();
+    static BaseEncoder::Ptr Create(const video::EncoderReport::Ptr &report);
 
     ~H264Encoder();
 
@@ -60,11 +61,11 @@ public:
     bool Execute() override;
 
 private:
-    H264Encoder();
+    H264Encoder(const video::EncoderReport::Ptr &report);
 
     bool DoesBufferContainCodecConfig(MediaBufferWrapper *buffer);
 
-    MediaBufferWrapper* PackBuffer(const mcs::video::Buffer::Ptr &input_buffer, const mcs::TimestampUs timestamp);
+    MediaBufferWrapper* PackBuffer(const mcs::video::Buffer::Ptr &input_buffer, const mcs::TimestampUs &timestamp);
 
 private:
     static int OnSourceRead(MediaBufferWrapper **buffer, void *user_data);
@@ -81,6 +82,7 @@ private:
     };
 
 private:
+    video::EncoderReport::Ptr report_;
     BaseEncoder::Config config_;
     MediaMessageWrapper *format_;
     MediaSourceWrapper *source_;

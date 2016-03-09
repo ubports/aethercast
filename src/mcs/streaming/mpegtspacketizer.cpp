@@ -205,11 +205,12 @@ void MPEGTSPacketizer::Track::Finalize() {
     finalized = true;
 }
 
-Packetizer::Ptr MPEGTSPacketizer::Create() {
-    return std::shared_ptr<Packetizer>(new MPEGTSPacketizer);
+Packetizer::Ptr MPEGTSPacketizer::Create(const mcs::video::PacketizerReport::Ptr &report) {
+    return std::shared_ptr<Packetizer>(new MPEGTSPacketizer(report));
 }
 
-MPEGTSPacketizer::MPEGTSPacketizer() :
+MPEGTSPacketizer::MPEGTSPacketizer(const mcs::video::PacketizerReport::Ptr &report) :
+    report_(report),
     pat_continuity_counter_(0),
     pmt_continuity_counter_(0) {
     InitCrcTable();
@@ -232,13 +233,13 @@ MPEGTSPacketizer::TrackId MPEGTSPacketizer::AddTrack(const TrackFormat &format) 
     }
 
     // First PID as per WiFi Display spec
-    unsigned int pidstart = kVideoPIDStart;
+    unsigned int pid_start = kVideoPIDStart;
     unsigned int stream_type = kH264StreamType;
     unsigned int stream_id_start = kVideoStreamIdStart;
     unsigned int stream_id_stop = kVideoStreamIdStop;
 
     unsigned int num_same_tracks = 0;
-    unsigned int pid = pidstart;
+    unsigned int pid = pid_start;
 
     for (auto track : tracks_) {
         if (track->stream_type == stream_type)
@@ -449,7 +450,7 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
         //   one program follows:
         //   program_number = 0x0001
         //   reserved = b111
-        //   program_map_PID = kpidPMT (13 bits!)
+        //   program_map_PID = kPID_PMT (13 bits!)
         // CRC = 0x????????
 
         if (++pat_continuity_counter_ == 16)
@@ -493,7 +494,7 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
         // transport_error_indicator = b0
         // payload_unit_start_indicator = b1
         // transport_priority = b0
-        // PID = kpidPMT (13 bits)
+        // PID = kPID_PMT (13 bits)
         // transport_scrambling_control = b00
         // adaptation_field_control = b01 (no adaptation field, payload only)
         // continuity_counter = b????
@@ -795,6 +796,8 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
         MCS_FATAL("Invalid packet start position");
 
     *packets = buffer;
+
+    report_->PacketizedFrame(buffer->Timestamp());
 
     return true;
 }

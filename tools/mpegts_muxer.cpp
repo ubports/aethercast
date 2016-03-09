@@ -29,6 +29,7 @@
 #include <string>
 
 #include <mcs/logger.h>
+#include <mcs/report/reportfactory.h>
 #include <mcs/streaming/mpegtspacketizer.h>
 
 namespace {
@@ -55,7 +56,9 @@ int main(int argc, char **argv) {
         return -EINVAL;
     }
 
-    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create();
+    auto report_factory = mcs::report::ReportFactory::Create();
+
+    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create(report_factory->CreatePacketizerReport());
 
     int track_index = packetizer->AddTrack(mcs::streaming::MPEGTSPacketizer::TrackFormat{"video/avc"});
 

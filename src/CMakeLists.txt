@@ -38,6 +38,17 @@ set(HEADERS
   mcs/common/executable.h
   mcs/common/executor.h
 
+  mcs/report/lttng/utils.h
+  mcs/report/lttng/encoderreport_tp.h
+  mcs/report/lttng/rendererreport_tp.h
+  mcs/report/lttng/packetizerreport_tp.h
+  mcs/report/lttng/senderreport_tp.h
+
+  mcs/video/encoderreport.h
+  mcs/video/rendererreport.h
+  mcs/video/packetizerreport.h
+  mcs/video/senderreport.h
+
   mcs/streaming/packetizer.h
   mcs/streaming/transportsender.h
 
@@ -70,6 +81,26 @@ set(SOURCES
 
   mcs/common/threadedexecutor.cpp
 
+  mcs/report/reportfactory.cpp
+  mcs/report/reportfactory.h
+
+  mcs/report/null/nullreportfactory.cpp
+  mcs/report/null/encoderreport.cpp
+  mcs/report/null/rendererreport.cpp
+  mcs/report/null/packetizerreport.cpp
+  mcs/report/null/senderreport.cpp
+  mcs/report/logging/loggingreportfactory.cpp
+  mcs/report/logging/encoderreport.cpp
+  mcs/report/logging/rendererreport.cpp
+  mcs/report/logging/packetizerreport.cpp
+  mcs/report/logging/senderreport.cpp
+  mcs/report/lttng/lttngreportfactory.cpp
+  mcs/report/lttng/tracepointprovider.cpp
+  mcs/report/lttng/encoderreport.cpp
+  mcs/report/lttng/rendererreport.cpp
+  mcs/report/lttng/packetizerreport.cpp
+  mcs/report/lttng/senderreport.cpp
+
   mcs/video/videoformat.cpp
   mcs/video/buffer.cpp
   mcs/video/bufferqueue.cpp
@@ -77,7 +108,6 @@ set(SOURCES
   mcs/video/utils_from_android.cpp
   mcs/video/baseencoder.cpp
   mcs/video/h264analyzer.cpp
-  mcs/video/statistics.cpp
 
   mcs/streaming/mpegtspacketizer.cpp
   mcs/streaming/rtpsender.cpp
@@ -130,7 +160,19 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/src/w11tng
 )
 
+
 add_library(aethercast-core ${SOURCES} ${HEADERS})
+target_compile_definitions(aethercast-core PUBLIC
+    "-DAETHERCAST_TRACEPOINT_LIB_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/${AETHERCAST_TRACEPOINT_LIB_INSTALL_DIR}\"")
+
+add_library(aethercast-lttng SHARED mcs/report/lttng/tracepoints.c)
+target_link_libraries(aethercast-lttng
+    ${LTTNG_UST_LIBRARIES}
+)
+
+install(TARGETS aethercast-lttng
+  LIBRARY DESTINATION ${AETHERCAST_TRACEPOINT_LIB_INSTALL_DIR}
+)
 
 add_executable(aethercast mcs/main.cpp)
 

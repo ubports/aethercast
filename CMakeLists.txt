@@ -1,5 +1,5 @@
 project(aethercast C CXX)
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 2.8.2)
 
 include(CTest)
 
@@ -57,6 +57,7 @@ include(cmake/FindReadline.cmake)
 find_package(Boost COMPONENTS filesystem log system thread program_options)
 find_package(PkgConfig)
 find_package(Threads)
+find_package(LTTngUST REQUIRED)
 
 pkg_check_modules(GLIB REQUIRED glib-2.0)
 pkg_check_modules(GIO REQUIRED gio-2.0)
@@ -91,9 +92,11 @@ set (GTEST_INCLUDE_DIR "${GMOCK_SOURCE_DIR}/gtest/include" CACHE PATH "gtest sou
 
 add_subdirectory(${GMOCK_SOURCE_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC")
 
 find_program(GDBUS_CODEGEN_EXECUTABLE NAMES gdbus-codegen)
+
+set(AETHERCAST_TRACEPOINT_LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/aethercast/tools)
 
 add_subdirectory(conf)
 add_subdirectory(src)

@@ -1,0 +1,1 @@
+AETHERCAST_ADD_TEST(reportfactory_tests reportfactory_tests.cpp)

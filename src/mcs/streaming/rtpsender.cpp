@@ -30,8 +30,6 @@
 
 #include "mcs/logger.h"
 
-#include "mcs/video/statistics.h"
-
 #include "mcs/streaming/rtpsender.h"
 
 namespace {
@@ -63,16 +61,17 @@ int MakeSocketNonBlocking(int socket) {
 namespace mcs {
 namespace streaming {
 
-TransportSender::Ptr RTPSender::Create(const std::string &address, int port) {
-    return std::shared_ptr<RTPSender>(new RTPSender)->FinalizerConstruction(address, port);
+TransportSender::Ptr RTPSender::Create(const std::string &address, int port,
+                                       const video::SenderReport::Ptr &report) {
+    return std::shared_ptr<RTPSender>(new RTPSender(report))->FinalizerConstruction(address, port);
 }
 
-RTPSender::RTPSender() :
+RTPSender::RTPSender(const video::SenderReport::Ptr &report) :
+    report_(report),
     fd_(-1),
     running_(false),
     rtp_sequence_number_(0),
     queue_(video::BufferQueue::Create()),
-    bytes_sent_(0),
     local_port_(0) {
 }
 
@@ -172,12 +171,6 @@ void RTPSender::ThreadLoop() {
             if (!packet)
                 break;
 
-            if (packet->Timestamp() > 0) {
-                int64_t now = mcs::Utils::GetNowUs();
-                int64_t diff = (now - packet->Timestamp()) / 1000ll;
-                video::Statistics::Instance()->RecordRTPBufferSent(diff);
-            }
-
             auto n = ::send(fd_, packet->Data(), packet->Length(), 0);
 
             // If we get an error back which relates to a possible congested
@@ -212,15 +205,7 @@ void RTPSender::ThreadLoop() {
                 break;
             }
 
-            bytes_sent_ += packet->Length();
-
-            static mcs::TimestampUs last_count_time = mcs::Utils::GetNowNs();
-            if (mcs::Utils::GetNowUs() - last_count_time > 1000000ll) {
-                last_count_time = mcs::Utils::GetNowUs();
-                int64_t in_mbit = (bytes_sent_ * 8) / 1000000ll;
-                video::Statistics::Instance()->RecordRTPBandwidth(in_mbit);
-                bytes_sent_ = 0;
-            }
+            report_->SentPacket(packet->Timestamp(), packet->Length());
         }
 
         queue_->Unlock();
@@ -285,10 +270,6 @@ bool RTPSender::Queue(const video::Buffer::Ptr &packets) {
 
     if (packets->Timestamp() == 0)
         return true;
-
-    int64_t now = mcs::Utils::GetNowUs();
-    int64_t diff = (now - packets->Timestamp()) / 1000ll;
-    video::Statistics::Instance()->RecordRTPBufferQueued(diff);
 
     return true;
 }
