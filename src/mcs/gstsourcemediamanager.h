@@ -29,7 +29,7 @@ class GstSourceMediaManager : public std::enable_shared_from_this<GstSourceMedia
                               public BaseSourceMediaManager
 {
 public:
-    ~GstSourceMediaManager();
+    virtual ~GstSourceMediaManager();
 
     void Play() override;
     void Pause() override;
@@ -38,7 +38,7 @@ public:
 
 protected:
     GstSourceMediaManager();
-    void Configure() override;
+    bool Configure() override;
 
     virtual SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) = 0;
 

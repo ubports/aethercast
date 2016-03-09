@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <fstream>
+#include <sstream>
 
 #include <cstring>
 #include <cstdarg>
@@ -42,11 +43,15 @@ std::vector<std::string> Utils::StringSplit(const std::string &text, char sep) {
   return boost::algorithm::split(tokens, text, boost::is_from_range(sep, sep), boost::algorithm::token_compress_on);
 }
 
-std::string Utils::GetEnvValue(const std::string &name) {
+std::string Utils::GetEnvValue(const std::string &name, const std::string &default_value) {
     char *value = getenv(name.c_str());
     if (!value)
-        return std::string("");
+        return default_value;
     return std::string(value);
+}
+
+bool Utils::IsEnvSet(const std::string &name) {
+    return getenv(name.c_str()) != nullptr;
 }
 
 bool Utils::CreateFile(const std::string &file_path) {
@@ -60,4 +65,58 @@ bool Utils::CreateFile(const std::string &file_path) {
     of.close();
     return true;
 }
+
+uint64_t Utils::GetNowNs() {
+   struct timespec ts;
+   memset(&ts, 0, sizeof(ts));
+   clock_gettime(CLOCK_MONOTONIC, &ts);
+   return ts.tv_sec * 1000000000LL + ts.tv_nsec;
+}
+
+uint64_t Utils::GetNowUs() {
+    return GetNowNs() / 1000;
+}
+
+std::string Utils::Hexdump(const uint8_t *data, uint32_t size) {
+    unsigned char buff[17];
+    unsigned char *pc = (unsigned char*) data;
+    std::stringstream buffer;
+
+    if (size == 0 || size < 0) {
+        buffer << "NULL" << std::endl;
+        return buffer.str();
+    }
+
+    int i;
+    for (i = 0; i < size; i++) {
+        if ((i % 16) == 0) {
+            if (i != 0)
+                buffer << mcs::Utils::Sprintf("  %s", buff) << std::endl;
+
+            buffer << mcs::Utils::Sprintf("%02x   ", i);
+        }
+
+        buffer << mcs::Utils::Sprintf(" %02x", static_cast<int>(pc[i]));
+
+        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+            buff[i % 16] = '.';
+        else
+            buff[i % 16] = pc[i];
+        buff[(i % 16) + 1] = '\0';
+    }
+
+    while ((i % 16) != 0) {
+        buffer << "   ";
+        i++;
+    }
+
+    buffer << mcs::Utils::Sprintf("  %s", buff) << std::endl;
+
+    return buffer.str();
+}
+
+void Utils::SetThreadName(const std::string &name) {
+    pthread_setname_np(pthread_self(), name.c_str());
+}
+
 } // namespace mcs

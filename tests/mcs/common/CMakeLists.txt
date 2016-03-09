@@ -1,0 +1,1 @@
+AETHERCAST_ADD_TEST(threadedexecutor_tests threadedexecutor_tests.cpp)

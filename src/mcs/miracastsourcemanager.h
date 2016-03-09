@@ -41,7 +41,7 @@ public:
         Delegate() = default;
     };
 
-    static std::shared_ptr<MiracastSourceManager> Create(const IpV4Address &address, unsigned short port);
+    static std::shared_ptr<MiracastSourceManager> Create(const mcs::IpV4Address &address, unsigned short port);
 
     ~MiracastSourceManager();
 
@@ -56,13 +56,14 @@ private:
 
     MiracastSourceManager();
 
-    bool Setup(const IpV4Address &address, unsigned short port);
+    bool Setup(const mcs::IpV4Address &address, unsigned short port);
 
 private:
     std::weak_ptr<Delegate> delegate_;
     ScopedGObject<GSocket> socket_;
     guint socket_source_;
     std::shared_ptr<MiracastSourceClient> active_sink_;
+    mcs::IpV4Address local_address_;
 };
 } // namespace mcs
 #endif

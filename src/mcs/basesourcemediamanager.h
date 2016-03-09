@@ -28,7 +28,7 @@ public:
 
     void SetSinkRtpPorts(int port1, int port2) override;
     std::pair<int,int> GetSinkRtpPorts() const override;
-    int GetLocalRtpPort() const override;
+    virtual int GetLocalRtpPort() const override;
     wds::SessionType GetSessionType() const override;
 
     bool InitOptimalVideoFormat(const wds::NativeVideoFormat& sink_native_format,
@@ -36,11 +36,12 @@ public:
     wds::H264VideoFormat GetOptimalVideoFormat() const override;
     bool InitOptimalAudioFormat(const std::vector<wds::AudioCodec>& sink_supported_codecs) override;
     wds::AudioCodec GetOptimalAudioFormat() const override;
-    void SendIDRPicture() override;
+    virtual void SendIDRPicture() override;
     std::string GetSessionId() const override;
 
 protected:
-    virtual void Configure() = 0;
+    virtual bool Configure() = 0;
+    virtual std::vector<wds::H264VideoCodec> GetH264VideoCodecs();
 
 protected:
     int sink_port1_;

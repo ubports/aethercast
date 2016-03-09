@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical, Ltd.
+ * Copyright (C) 2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,22 +15,38 @@
  *
  */
 
-#ifndef MIRMEDIAMANAGER_H_
-#define MIRMEDIAMANAGER_H_
+#ifndef MCS_TOOLS_SIMPLESOURCE_H_
+#define MCS_TOOLS_SIMPLESOURCE_H_
 
-#include "gstsourcemediamanager.h"
+#include <string>
+#include <memory>
+
+#include "mcs/basesourcemediamanager.h"
 
 namespace mcs {
-class MirSourceMediaManager : public GstSourceMediaManager {
-public:
-    explicit MirSourceMediaManager(const std::string &remote_address);
-    ~MirSourceMediaManager();
+namespace tools {
 
-protected:
-    SharedGObject<GstElement> ConstructPipeline(const wds::H264VideoFormat &format) override;
+class SimpleSource {
+public:
+    typedef std::shared_ptr<SimpleSource> Ptr;
+
+    static Ptr Create(const std::string &remote_address, int port);
+
+    ~SimpleSource();
+
+    void Start();
+    void Stop();
 
 private:
-    std::string remote_address_;
+    SimpleSource(const std::string &remote_address, int port);
+
+private:
+    std::shared_ptr<BaseSourceMediaManager> media_manager_;
+    std::vector<wds::H264VideoCodec> sink_codecs_;
+    wds::NativeVideoFormat sink_native_format_;
 };
+
+} // namespace tools
 } // namespace mcs
+
 #endif

@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 
 #include <mcs/mediamanagerfactory.h>
-#include <mcs/mirsourcemediamanager.h>
+#include <mcs/mir/sourcemediamanager.h>
 #include <mcs/testsourcemediamanager.h>
 
 struct MediaManagerFactoryFixture : public ::testing::Test {
@@ -34,11 +34,11 @@ TEST_F(MediaManagerFactoryFixture, InvalidType) {
 }
 
 TEST_F(MediaManagerFactoryFixture, DefaultType) {
-    CheckSourceCreation<mcs::MirSourceMediaManager>("");
+    CheckSourceCreation<mcs::mir::SourceMediaManager>("");
 }
 
 TEST_F(MediaManagerFactoryFixture, MirTypeCreation) {
-    CheckSourceCreation<mcs::MirSourceMediaManager>("mir");
+    CheckSourceCreation<mcs::mir::SourceMediaManager>("mir");
     CheckSourceCreation<mcs::NullSourceMediaManager>("mir123");
     CheckSourceCreation<mcs::NullSourceMediaManager>("123mir123");
     CheckSourceCreation<mcs::NullSourceMediaManager>("123mir");

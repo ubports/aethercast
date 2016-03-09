@@ -19,7 +19,7 @@
 
 #include "logger.h"
 #include "mediamanagerfactory.h"
-#include "mirsourcemediamanager.h"
+#include "mir/sourcemediamanager.h"
 #include "x11sourcemediamanager.h"
 #include "testsourcemediamanager.h"
 #include "utils.h"
@@ -41,19 +41,23 @@ void NullSourceMediaManager::Teardown() {
 
 bool NullSourceMediaManager::IsPaused() const {
     WARNING("NullSourceMediaManager: Not implemented");
+    return false;
 }
 
-void NullSourceMediaManager::Configure() {
+bool NullSourceMediaManager::Configure() {
     WARNING("NullSourceMediaManager: Not implemented");
+    return false;
 }
 
 std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const std::string &remote_address) {
     std::string type = Utils::GetEnvValue("MIRACAST_SOURCE_TYPE");
+    if (type.length() == 0)
+        type = "mir";
 
     DEBUG("Creating source media manager of type %s", type.c_str());
 
-    if (type.length() == 0 || type == "mir")
-        return std::make_shared<MirSourceMediaManager>(remote_address);
+    if (type == "mir")
+        return mcs::mir::SourceMediaManager::Create(remote_address);
     else if (type == "x11")
         return X11SourceMediaManager::create(remote_address);
     else if (type == "test")

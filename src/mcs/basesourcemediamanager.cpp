@@ -15,10 +15,13 @@
  *
  */
 
+#include <iostream>
+
 #include <glib.h>
 
-#include "basesourcemediamanager.h"
-#include "logger.h"
+#include "mcs/logger.h"
+#include "mcs/basesourcemediamanager.h"
+#include "mcs/video/videoformat.h"
 
 namespace {
 static unsigned int next_session_id = 0;
@@ -46,24 +49,29 @@ int BaseSourceMediaManager::GetLocalRtpPort() const {
     return sink_port1_;
 }
 
-std::vector<wds::H264VideoCodec> GetH264VideoCodecs() {
+std::vector<wds::H264VideoCodec> BaseSourceMediaManager::GetH264VideoCodecs() {
     static std::vector<wds::H264VideoCodec> codecs;
     if (codecs.empty()) {
         wds::RateAndResolutionsBitmap cea_rr;
         wds::RateAndResolutionsBitmap vesa_rr;
         wds::RateAndResolutionsBitmap hh_rr;
-        wds::RateAndResolution i;
-        // declare that we support all resolutions, CHP and level 4.2
-        // gstreamer should handle all of it :)
-        for (i = wds::CEA640x480p60; i <= wds::CEA1920x1080p24; ++i)
-            cea_rr.set(i);
-        for (i = wds::VESA800x600p30; i <= wds::VESA1920x1200p30; ++i)
-            vesa_rr.set(i);
-        for (i = wds::HH800x480p30; i <= wds::HH848x480p60; ++i)
-            hh_rr.set(i);
 
-        wds::H264VideoCodec codec(wds::CHP, wds::k4_2, cea_rr, vesa_rr, hh_rr);
-        codecs.push_back(codec);
+        // We only support 720p here for now as that is our best performing
+        // resolution with regard of all other bits in the pipeline. Eventually
+        // we will add 60 Hz here too but for now only everything up to 30 Hz.
+        cea_rr.set(wds::CEA1280x720p30);
+        cea_rr.set(wds::CEA1280x720p25);
+        cea_rr.set(wds::CEA1280x720p24);
+
+        // FIXME which profiles and formats we support highly depends on what
+        // android supports. But for now we just consider CBP with level 3.1
+        // as that is the same Android configures its setup with.
+        wds::H264VideoCodec codec1(wds::CBP, wds::k3_1, cea_rr, vesa_rr, hh_rr);
+        codecs.push_back(codec1);
+
+        DEBUG("Video codecs supported by us:");
+        for (auto c : codecs)
+            mcs::video::DumpVideoCodec(c);
     }
 
     return codecs;
@@ -72,19 +80,34 @@ std::vector<wds::H264VideoCodec> GetH264VideoCodecs() {
 bool BaseSourceMediaManager::InitOptimalVideoFormat(const wds::NativeVideoFormat& sink_native_format,
     const std::vector<wds::H264VideoCodec>& sink_supported_codecs) {
 
+    DEBUG("Sink native resolution:");
+    mcs::video::DumpNativeFormat(sink_native_format);
+
+    DEBUG("Sink supports the following codecs:");
+    for (auto sink_codec : sink_supported_codecs) {
+        mcs::video::DumpVideoCodec(sink_codec);
+    }
+
+    bool success = false;
+
     format_ = wds::FindOptimalVideoFormat(sink_native_format,
                                          GetH264VideoCodecs(),
-                                         sink_supported_codecs);
+                                         sink_supported_codecs,
+                                         &success);
 
-    INFO("Found optimal video format");
-    INFO("  profile: %d", format_.profile);
-    INFO("  level: %d", format_.level);
-    INFO("  res type %d", format_.type);
-    INFO("  rate & resolution %d", format_.rate_resolution);
+    // Workaround buggy wds code ..
+    if (format_.rate_resolution == wds::CEA1280x720p60)
+        format_.rate_resolution = wds::CEA1280x720p30;
 
-    Configure();
+    if (!success) {
+        MCS_ERROR("Failed to select proper video format");
+        return false;
+    }
 
-    return true;
+    DEBUG("Found optimal video format:");
+    mcs::video::DumpVideoFormat(format_);
+
+    return Configure();
 }
 
 wds::H264VideoFormat BaseSourceMediaManager::GetOptimalVideoFormat() const {

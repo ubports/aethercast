@@ -32,6 +32,7 @@
 #include "networkdevice.h"
 #include "non_copyable.h"
 #include "types.h"
+#include "systemcontroller.h"
 
 namespace mcs {
 class MiracastService : public MiracastController,
@@ -105,6 +106,7 @@ private:
     guint scan_timeout_source_;
     ResultCallback current_scan_callback_;
     std::vector<NetworkDeviceRole> supported_roles_;
+    mcs::SystemController::Ptr system_controller_;
 };
 } // namespace mcs
 #endif

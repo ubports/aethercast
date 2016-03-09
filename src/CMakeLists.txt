@@ -35,6 +35,12 @@ set(HEADERS
   mcs/keep_alive.h
   mcs/config.h
 
+  mcs/common/executable.h
+  mcs/common/executor.h
+
+  mcs/streaming/packetizer.h
+  mcs/streaming/transportsender.h
+
   w11tng/config.h
 )
 
@@ -43,11 +49,11 @@ set(SOURCES
   mcs/networkutils.cpp
   mcs/mediamanagerfactory.cpp
   mcs/basesourcemediamanager.cpp
+  mcs/initgstreameronce.cpp
   mcs/gstsourcemediamanager.cpp
   mcs/testsourcemediamanager.cpp
   mcs/x11sourcemediamanager.cpp
   mcs/logger.cpp
-  mcs/mirsourcemediamanager.cpp
   mcs/forwardingmiracastcontroller.cpp
   mcs/forwardingnetworkdevice.cpp
   mcs/miracastcontroller.cpp
@@ -58,10 +64,36 @@ set(SOURCES
   mcs/networkmanager.cpp
   mcs/networkmanagerfactory.cpp
   mcs/networkdevice.cpp
-
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/aethercastinterface.c
   mcs/dbushelpers.cpp
   mcs/networkdeviceskeleton.cpp
+
+  mcs/common/threadedexecutor.cpp
+
+  mcs/video/videoformat.cpp
+  mcs/video/buffer.cpp
+  mcs/video/bufferqueue.cpp
+  mcs/video/utils.cpp
+  mcs/video/utils_from_android.cpp
+  mcs/video/baseencoder.cpp
+  mcs/video/h264analyzer.cpp
+  mcs/video/statistics.cpp
+
+  mcs/streaming/mpegtspacketizer.cpp
+  mcs/streaming/rtpsender.cpp
+  mcs/streaming/mediasender.cpp
+
+  mcs/mir/sourcemediamanager.cpp
+  mcs/mir/screencast.cpp
+  mcs/mir/streamrenderer.cpp
+
+  mcs/android/h264encoder.cpp
+
+  mcs/systemcontroller.cpp
+
+  mcs/ubuntu/unity.cpp
+  mcs/ubuntu/systemcontroller.cpp
+  mcs/ubuntu/unitydisplaylock.cpp
 
   ${CMAKE_CURRENT_BINARY_DIR}/mcs/wpasupplicantinterface.c
   w11tng/networkmanager.cpp
@@ -89,6 +121,11 @@ include_directories(
   ${GIO-UNIX_INCLUDE_DIRS}
   ${GST_INCLUDE_DIRS}
   ${WDS_INCLUDE_DIRS}
+  ${HYBRIS_MEDIA_INCLDUE_DIRS}
+  ${ANDROID_HEADERS_INCLUDE_DIRS}
+  ${MIRCLIENT_INCLUDE_DIRS}
+  ${EGL_INCLUDE_DIRS}
+  ${GLESV2_INCLUDE_DIRS}
   ${CMAKE_CURRENT_BINARY_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}/src/w11tng
 )
@@ -108,9 +145,19 @@ target_link_libraries(aethercast-core
   ${GIO-UNIX_LIBRARIES}
   ${GST_LDFLAGS}
   ${GST_LIBRARIES}
+  ${GST_APP_LDFLAGS}
+  ${GST_APP_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${WDS_LDFLAGS}
   ${WDS_LIBRARIES}
+  ${HYBRIS_MEDIA_LDFLAGS}
+  ${HYBRIS_MEDIA_LIBRARIES}
+  ${MIRCLIENT_LDFLAGS}
+  ${MIRCLIENT_LIBRARIES}
+  ${EGL_LDFLAGS}
+  ${EGL_LIBRARIES}
+  ${GLESV2_LDFLAGS}
+  ${GLESV2_LIBRARIES}
   -ldl
 )
 

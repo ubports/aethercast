@@ -3,7 +3,8 @@ Section: utils
 Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: Simon Fels <simon.fels@canonical.com>
-Build-Depends: cmake,
+Build-Depends: android-headers-19 (>= 23),
+               cmake,
                debhelper (>= 9),
                dh-apparmor,
                dbus,
@@ -12,13 +13,17 @@ Build-Depends: cmake,
                libboost-filesystem-dev,
                libboost-log-dev,
                libboost-iostreams-dev,
+               libboost-program-options-dev,
                libboost-system-dev,
 # boost log needs exactly one symbol from boost-thread for resolving
 # thread-specific storage locations.
                libboost-thread-dev,
                libglib2.0-dev,
                libgstreamer1.0-dev,
+               libgstreamer-plugins-base1.0-dev,
                libgtest-dev,
+               libhybris-dev,
+               libmedia-dev,
                libreadline-dev,
                libreadline6-dev,
                libwds-dev,
@@ -31,13 +36,29 @@ Vcs-Bzr: https://code.launchpad.net/aethercast/trunk
 Vcs-Browser: http://bazaar.launchpad.net/aethercast/trunk/files
 
 Package: aethercast
-Architecture: any
+Architecture: i386 amd64 armhf
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         aethercast-tools,
+         isc-dhcp-server,
+         isc-dhcp-client,
+         wpasupplicant
+Description: Display casting service
+ A management service that streams current device screen content
+ to a remote display. This service supports several different
+ protocols such as Miracast.
+
+Package: aethercast-tools
+Architecture: i386 amd64 armhf
 Depends: ${misc:Depends},
          ${shlibs:Depends},
          isc-dhcp-server,
          isc-dhcp-client,
          wpasupplicant
-Description: Display casting service
- A management service for remote displays which it can stream the
- current screen content to. It will support multiple approaches
- for this like Miracast.
+Description: Tools for the display casting service
+ A management service that streams current device screen content
+ to a remote display. This service supports several different
+ protocols such as Miracast.
+ .
+ This package contains small utilities that assist in working with
+ the display streaming stack.

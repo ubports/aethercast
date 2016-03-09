@@ -48,6 +48,8 @@ public:
         std::uint32_t line; // The line in file that resulted in the log message.
     };
 
+    virtual void Init(const mcs::Logger::Severity &severity = mcs::Logger::Severity::kWarning) = 0;
+
     virtual void Log(Severity severity, const std::string &message, const boost::optional<Location>& location) = 0;
 
     virtual void Trace(const std::string& message, const boost::optional<Location>& location = boost::optional<Location>{});
@@ -56,6 +58,7 @@ public:
     virtual void Warning(const std::string& message, const boost::optional<Location>& location = boost::optional<Location>{});
     virtual void Error(const std::string& message, const boost::optional<Location>& location = boost::optional<Location>{});
     virtual void Fatal(const std::string& message, const boost::optional<Location>& location = boost::optional<Location>{});
+
 
     template<typename... T>
     void Tracef(const boost::optional<Location>& location, const std::string& pattern, T&&...args) {

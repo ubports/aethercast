@@ -33,7 +33,7 @@ public:
     bool IsPaused() const override;
 
 protected:
-    void Configure() override;
+    bool Configure() override;
 };
 
 class MediaManagerFactory {

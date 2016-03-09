@@ -25,7 +25,7 @@
 #include "keep_alive.h"
 #include "logger.h"
 #include "miracastsourceclient.h"
-#include "mirsourcemediamanager.h"
+#include "mcs/mir/sourcemediamanager.h"
 #include "testsourcemediamanager.h"
 #include "mediamanagerfactory.h"
 
@@ -38,14 +38,15 @@ static int send_cseq = 0;
 }
 
 namespace mcs {
-std::shared_ptr<MiracastSourceClient> MiracastSourceClient::Create(ScopedGObject<GSocket>&& socket) {
-    std::shared_ptr<MiracastSourceClient> sp{new MiracastSourceClient{std::move(socket)}};
+std::shared_ptr<MiracastSourceClient> MiracastSourceClient::Create(ScopedGObject<GSocket>&& socket, const mcs::IpV4Address &local_address) {
+    std::shared_ptr<MiracastSourceClient> sp{new MiracastSourceClient{std::move(socket), local_address}};
     return sp->FinalizeConstruction();
 }
 
-MiracastSourceClient::MiracastSourceClient(ScopedGObject<GSocket>&& socket) :
+MiracastSourceClient::MiracastSourceClient(ScopedGObject<GSocket>&& socket, const mcs::IpV4Address &local_address) :
     socket_(std::move(socket)),
-    socket_source_(0) {
+    socket_source_(0),
+    local_address_(local_address) {
 }
 
 MiracastSourceClient::~MiracastSourceClient() {
@@ -86,7 +87,7 @@ void MiracastSourceClient::SendRTSPData(const std::string &data) {
 }
 
 std::string MiracastSourceClient::GetLocalIPAddress() const {
-    return local_address_;
+    return local_address_.to_string();
 }
 
 int MiracastSourceClient::GetNextCSeq(int *initial_peer_cseq) const {

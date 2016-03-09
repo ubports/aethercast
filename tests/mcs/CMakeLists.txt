@@ -19,3 +19,7 @@ AETHERCAST_ADD_TEST(networkdevice_tests networkdevice_tests.cpp)
 AETHERCAST_ADD_TEST(networkmanagerfactory_tests networkmanagerfactory_tests.cpp)
 
 add_subdirectory(acceptance_tests)
+add_subdirectory(streaming)
+add_subdirectory(video)
+add_subdirectory(android)
+add_subdirectory(common)
