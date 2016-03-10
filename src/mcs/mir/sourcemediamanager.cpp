@@ -19,6 +19,8 @@
 
 #include "mcs/common/threadedexecutor.h"
 
+#include "mcs/network/udpstream.h"
+
 #include "mcs/report/reportfactory.h"
 
 #include "mcs/video/videoformat.h"
@@ -87,8 +89,8 @@ bool SourceMediaManager::Configure() {
                                                  report_factory->CreateRendererReport());
     renderer_->SetDimensions(rr.width, rr.height);
 
-    auto rtp_sender = mcs::streaming::RTPSender::Create(remote_address_, sink_port1_,
-                                                        report_factory->CreateSenderReport());
+    auto stream = std::make_shared<mcs::network::UdpStream>(mcs::IpV4Address::from_string(remote_address_), sink_port1_);
+    auto rtp_sender = std::make_shared<mcs::streaming::RTPSender>(stream, report_factory->CreateSenderReport());
     auto mpegts_packetizer = mcs::streaming::MPEGTSPacketizer::Create(report_factory->CreatePacketizerReport());
 
     sender_ = mcs::streaming::MediaSender::Create(mpegts_packetizer, rtp_sender, config);

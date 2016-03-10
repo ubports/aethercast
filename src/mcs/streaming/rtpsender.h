@@ -28,6 +28,8 @@
 
 #include "mcs/scoped_gobject.h"
 
+#include "mcs/network/stream.h"
+
 #include "mcs/video/buffer.h"
 #include "mcs/video/bufferqueue.h"
 #include "mcs/video/senderreport.h"
@@ -37,12 +39,9 @@
 namespace mcs {
 namespace streaming {
 
-class RTPSender : public std::enable_shared_from_this<RTPSender>,
-                  public TransportSender {
+class RTPSender : public TransportSender {
 public:
-    static TransportSender::Ptr Create(const std::string &address, int port,
-                                       const video::SenderReport::Ptr &report);
-
+    RTPSender(const network::Stream::Ptr &stream, const video::SenderReport::Ptr &report);
     ~RTPSender();
 
     bool Queue(const mcs::video::Buffer::Ptr &packets) override;
@@ -50,20 +49,16 @@ public:
     int32_t LocalPort() const override;
 
 private:
-    RTPSender(const video::SenderReport::Ptr &report);
-
-    RTPSender::Ptr FinalizerConstruction(const std::string &address, int port);
 
     void ThreadLoop();
 
 private:
+    network::Stream::Ptr stream_;
     video::SenderReport::Ptr report_;
     bool running_;
-    int fd_;
     uint32_t rtp_sequence_number_;
     std::thread worker_thread_;
     mcs::video::BufferQueue::Ptr queue_;
-    int32_t local_port_;
 };
 
 } // namespace streaming

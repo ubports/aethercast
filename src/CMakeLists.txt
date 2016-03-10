@@ -38,6 +38,9 @@ set(HEADERS
   mcs/common/executable.h
   mcs/common/executor.h
 
+  mcs/network/types.h
+  mcs/network/stream.h
+
   mcs/report/lttng/utils.h
   mcs/report/lttng/encoderreport_tp.h
   mcs/report/lttng/rendererreport_tp.h
@@ -80,6 +83,8 @@ set(SOURCES
   mcs/networkdeviceskeleton.cpp
 
   mcs/common/threadedexecutor.cpp
+
+  mcs/network/udpstream.cpp
 
   mcs/report/reportfactory.cpp
   mcs/report/reportfactory.h
