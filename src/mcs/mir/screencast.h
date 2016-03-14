@@ -51,16 +51,11 @@ public:
     ~Screencast();
 
     void SwapBuffers();
-    void SwapBuffersSync();
 
     bool IsValid() const;
 
-    void* NativeWindowHandle() const;
-    void* NativeDisplayHandle() const;
-
     DisplayOutput OutputMode() const;
     MirNativeBuffer* CurrentBuffer() const;
-
 
 private:
     MirConnection *connection_;

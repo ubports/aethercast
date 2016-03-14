@@ -154,42 +154,15 @@ Screencast::~Screencast() {
         mir_connection_release(connection_);
 }
 
-void Screencast::SwapBuffersSync() {
+void Screencast::SwapBuffers() {
     if (!buffer_stream_)
         return;
 
     mir_buffer_stream_swap_buffers_sync(buffer_stream_);
 }
 
-void Screencast::SwapBuffers() {
-    if (!buffer_stream_)
-        return;
-
-    mir_buffer_stream_swap_buffers(buffer_stream_, [](MirBufferStream *stream, void *client_context) {
-        boost::ignore_unused_variable_warning(stream);
-        boost::ignore_unused_variable_warning(client_context);
-
-        MCS_DEBUG("Buffers are swapped now");
-
-    }, nullptr);
-}
-
 bool Screencast::IsValid() const {
     return connection_ && screencast_ &&  buffer_stream_;
-}
-
-void* Screencast::NativeWindowHandle() const {
-    if (!buffer_stream_)
-        return nullptr;
-
-    return reinterpret_cast<void*>(mir_buffer_stream_get_egl_native_window(buffer_stream_));
-}
-
-void* Screencast::NativeDisplayHandle() const {
-    if (!connection_)
-        return nullptr;
-
-    return mir_connection_get_egl_native_display(connection_);
 }
 
 Screencast::DisplayOutput Screencast::OutputMode() const {

@@ -70,7 +70,7 @@ private:
     State state_;
     mcs::video::BaseEncoder::Ptr encoder_;
     mcs::common::Executor::Ptr encoder_executor_;
-    mcs::mir::Screencast::Ptr connector_;
+    mcs::mir::Screencast::Ptr screencast_;
     mcs::mir::StreamRenderer::Ptr renderer_;
     mcs::streaming::MediaSender::Ptr sender_;
     mcs::common::ExecutorPool pipeline_;

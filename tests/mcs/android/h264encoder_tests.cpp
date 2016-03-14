@@ -501,28 +501,6 @@ TEST_F(H264EncoderFixture, StopFailsCorrectly) {
     EXPECT_FALSE(encoder->Stop());
 }
 
-TEST_F(H264EncoderFixture, ReturnsCorrectNativeWindowHandle) {
-    auto mock = std::make_shared<mcs::test::android::MockMedia>();
-
-    auto config = mcs::android::H264Encoder::DefaultConfiguration();
-
-    ExpectValidConfiguration(config, mock);
-
-    auto encoder = mcs::android::H264Encoder::Create(mock_report);
-
-    EXPECT_EQ(nullptr, encoder->NativeWindowHandle());
-
-    EXPECT_TRUE(encoder->Configure(config));
-
-    auto expected_handle = reinterpret_cast<void*>(1);
-
-    EXPECT_CALL(*mock, media_codec_source_get_native_window_handle(_))
-            .Times(1)
-            .WillRepeatedly(Return(expected_handle));
-
-    EXPECT_EQ(expected_handle, encoder->NativeWindowHandle());
-}
-
 TEST_F(H264EncoderFixture, RequestIDRFrame) {
     auto mock = std::make_shared<mcs::test::android::MockMedia>();
 

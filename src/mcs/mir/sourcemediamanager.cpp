@@ -63,8 +63,8 @@ bool SourceMediaManager::Configure() {
     // to the encoder.
     Screencast::DisplayOutput output{Screencast::DisplayMode::kExtend, rr.width, rr.height};
 
-    connector_ = std::make_shared<mcs::mir::Screencast>(output);
-    if (!connector_->IsValid())
+    screencast_ = std::make_shared<mcs::mir::Screencast>(output);
+    if (!screencast_->IsValid())
         return false;
 
     encoder_ = mcs::android::H264Encoder::Create(report_factory->CreateEncoderReport());
@@ -86,7 +86,7 @@ bool SourceMediaManager::Configure() {
     }
 
     renderer_ = std::make_shared<mcs::mir::StreamRenderer>(
-                connector_, encoder_, report_factory->CreateRendererReport());
+                screencast_, encoder_, report_factory->CreateRendererReport());
     renderer_->SetDimensions(rr.width, rr.height);
 
     auto output_stream = std::make_shared<mcs::network::UdpStream>(

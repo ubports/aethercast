@@ -50,7 +50,6 @@ public:
     void QueueBuffer(const mcs::video::Buffer::Ptr &buffer) override;
 
     bool Running() const override { return running_; }
-    void* NativeWindowHandle() const override;
     BaseEncoder::Config Configuration() const override;
 
     void SendIDRFrame() override;

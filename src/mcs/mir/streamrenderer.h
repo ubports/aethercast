@@ -42,7 +42,7 @@ public:
 
     typedef std::shared_ptr<StreamRenderer> Ptr;
 
-    StreamRenderer(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder,
+    StreamRenderer(const Screencast::Ptr &screencast, const video::BaseEncoder::Ptr &encoder,
                    const video::RendererReport::Ptr  &report);
     ~StreamRenderer();
 
@@ -59,7 +59,7 @@ public:
 
 private:
     video::RendererReport::Ptr report_;
-    Screencast::Ptr connector_;
+    Screencast::Ptr screencast_;
     video::BaseEncoder::Ptr encoder_;
     unsigned int width_;
     unsigned int height_;

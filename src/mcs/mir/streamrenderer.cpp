@@ -42,10 +42,10 @@ static constexpr unsigned int kNumBufferSlots{2};
 namespace mcs {
 namespace mir {
 
-StreamRenderer::StreamRenderer(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder,
+StreamRenderer::StreamRenderer(const Screencast::Ptr &screencast, const video::BaseEncoder::Ptr &encoder,
                                const video::RendererReport::Ptr &report) :
     report_(report),
-    connector_(connector),
+    screencast_(screencast),
     encoder_(encoder),
     width_(0),
     height_(0),
@@ -68,9 +68,9 @@ bool StreamRenderer::Execute() {
 
     // This will trigger the rendering/compositing process inside mir
     // and will block until that is done and we received a new buffer
-    connector_->SwapBuffersSync();
+    screencast_->SwapBuffers();
 
-    auto native_buffer = connector_->CurrentBuffer();
+    auto native_buffer = screencast_->CurrentBuffer();
 
     auto buffer = mcs::video::Buffer::Create(native_buffer);
     buffer->SetDelegate(shared_from_this());
@@ -112,7 +112,7 @@ void StreamRenderer::SetDimensions(unsigned int width, unsigned int height) {
 }
 
 bool StreamRenderer::Start() {
-    auto output_mode = connector_->OutputMode();
+    auto output_mode = screencast_->OutputMode();
 
     if (width_ == 0 || height_ == 0) {
         width_ = output_mode.width;

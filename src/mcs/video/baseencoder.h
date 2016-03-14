@@ -92,8 +92,6 @@ public:
 
     virtual void QueueBuffer(const mcs::video::Buffer::Ptr &buffer) = 0;
 
-    virtual void* NativeWindowHandle() const = 0;
-
     virtual Config Configuration() const = 0;
 
     virtual bool Running() const = 0;
