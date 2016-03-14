@@ -29,11 +29,20 @@ namespace mcs {
 namespace mir {
 
 Screencast::Screencast(const video::DisplayOutput &output) :
+    connection_(nullptr),
+    screencast_(nullptr),
+    buffer_stream_(nullptr),
     output_(output) {
 
     // TODO(morphis): Refactor this to set we don't leave a partially
     // initialized object floating around. We should either fail with
     // an exception here or do initialization differently.
+
+    if (output_.mode != video::DisplayOutput::Mode::kExtend) {
+        MCS_ERROR("Unsupported display output mode specified '%s'",
+                  mcs::video::DisplayOutput::ModeToString(output_.mode));
+        return;
+    }
 
     connection_ = mir_connect_sync(kMirSocket, kMirConnectionName);
     if (!mir_connection_is_valid(connection_)) {
@@ -43,6 +52,11 @@ Screencast::Screencast(const video::DisplayOutput &output) :
     }
 
     auto config = mir_connection_create_display_config(connection_);
+    if (!config) {
+        MCS_ERROR("Failed to create display configuration: %s",
+                  mir_connection_get_error_message(connection_));
+        return;
+    }
 
     MirDisplayOutput *active_output = nullptr;
     unsigned int output_index = 0;
@@ -68,27 +82,16 @@ Screencast::Screencast(const video::DisplayOutput &output) :
     params_.height = display_mode->vertical_resolution;
     params_.width = display_mode->horizontal_resolution;
 
-    if (output_.mode == video::DisplayOutput::Mode::kMirror) {
-        params_.region.left = 0;
-        params_.region.top = 0;
-        params_.region.width = params_.width;
-        params_.region.height = params_.height;
+    // If we request a screen region outside the available screen area
+    // mir will create a mir output which is then available for everyone
+    // as just another display.
+    params_.region.left = params_.width;
+    params_.region.top = 0;
+    params_.region.width = output_.width;
+    params_.region.height = output_.height;
 
-        output_.width = params_.width;
-        output_.height = params_.height;
-    }
-    else if (output_.mode == video::DisplayOutput::Mode::kExtend) {
-        // If we request a screen region outside the available screen area
-        // mir will create a mir output which is then available for everyone
-        // as just another display.
-        params_.region.left = params_.width;
-        params_.region.top = 0;
-        params_.region.width = output_.width;
-        params_.region.height = output_.height;
-
-        params_.width = output_.width;
-        params_.height = output_.height;
-    }
+    params_.width = output_.width;
+    params_.height = output_.height;
 
     output_.refresh_rate = display_mode->refresh_rate;
 
@@ -124,14 +127,6 @@ Screencast::Screencast(const video::DisplayOutput &output) :
         MCS_ERROR("Failed to setup Mir buffer stream");
         return;
     }
-
-    const auto platform_type = mir_buffer_stream_get_platform_type(buffer_stream_);
-    if (platform_type != mir_platform_type_android) {
-        MCS_ERROR("Not running with android platform: This is not supported.");
-        mir_buffer_stream_release_sync(buffer_stream_);
-        buffer_stream_ = nullptr;
-        return;
-    }
 }
 
 Screencast::~Screencast() {
@@ -158,6 +153,9 @@ video::DisplayOutput Screencast::OutputMode() const {
 }
 
 void* Screencast::CurrentBuffer() const {
+    if (!buffer_stream_)
+        return nullptr;
+
     MirNativeBuffer *buffer = nullptr;
     mir_buffer_stream_get_current_buffer(buffer_stream_, &buffer);
     return reinterpret_cast<void*>(buffer);
