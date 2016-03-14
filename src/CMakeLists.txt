@@ -60,10 +60,6 @@ set(SOURCES
   mcs/networkutils.cpp
   mcs/mediamanagerfactory.cpp
   mcs/basesourcemediamanager.cpp
-  mcs/initgstreameronce.cpp
-  mcs/gstsourcemediamanager.cpp
-  mcs/testsourcemediamanager.cpp
-  mcs/x11sourcemediamanager.cpp
   mcs/logger.cpp
   mcs/forwardingmiracastcontroller.cpp
   mcs/forwardingnetworkdevice.cpp
@@ -149,7 +145,6 @@ include_directories(
   ${GLIB_INCLUDE_DIRS}
   ${GIO_INCLUDE_DIRS}
   ${GIO-UNIX_INCLUDE_DIRS}
-  ${GST_INCLUDE_DIRS}
   ${WDS_INCLUDE_DIRS}
   ${HYBRIS_MEDIA_INCLDUE_DIRS}
   ${ANDROID_HEADERS_INCLUDE_DIRS}
@@ -185,10 +180,6 @@ target_link_libraries(aethercast-core
   ${GIO_LIBRARIES}
   ${GIO-UNIX_LDFLAGS}
   ${GIO-UNIX_LIBRARIES}
-  ${GST_LDFLAGS}
-  ${GST_LIBRARIES}
-  ${GST_APP_LDFLAGS}
-  ${GST_APP_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${WDS_LDFLAGS}
   ${WDS_LIBRARIES}

@@ -31,7 +31,6 @@
 #include <boost/program_options.hpp>
 
 #include <mcs/logger.h>
-#include <mcs/initgstreameronce.h>
 
 #include "simplesource.h"
 

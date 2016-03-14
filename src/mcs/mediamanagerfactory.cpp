@@ -20,8 +20,6 @@
 #include "logger.h"
 #include "mediamanagerfactory.h"
 #include "mir/sourcemediamanager.h"
-#include "x11sourcemediamanager.h"
-#include "testsourcemediamanager.h"
 #include "utils.h"
 #include "logging.h"
 
@@ -58,10 +56,6 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
 
     if (type == "mir")
         return mcs::mir::SourceMediaManager::Create(remote_address);
-    else if (type == "x11")
-        return X11SourceMediaManager::create(remote_address);
-    else if (type == "test")
-        return TestSourceMediaManager::create(remote_address);
 
     return std::make_shared<NullSourceMediaManager>();
 }

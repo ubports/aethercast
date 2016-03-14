@@ -19,7 +19,6 @@
 
 #include <mcs/mediamanagerfactory.h>
 #include <mcs/mir/sourcemediamanager.h>
-#include <mcs/testsourcemediamanager.h>
 
 struct MediaManagerFactoryFixture : public ::testing::Test {
     template <typename T>
@@ -42,11 +41,4 @@ TEST_F(MediaManagerFactoryFixture, MirTypeCreation) {
     CheckSourceCreation<mcs::NullSourceMediaManager>("mir123");
     CheckSourceCreation<mcs::NullSourceMediaManager>("123mir123");
     CheckSourceCreation<mcs::NullSourceMediaManager>("123mir");
-}
-
-TEST_F(MediaManagerFactoryFixture, TestTypeCreation) {
-    CheckSourceCreation<mcs::TestSourceMediaManager>("test");
-    CheckSourceCreation<mcs::NullSourceMediaManager>("test123");
-    CheckSourceCreation<mcs::NullSourceMediaManager>("123test123");
-    CheckSourceCreation<mcs::NullSourceMediaManager>("123test");
 }
