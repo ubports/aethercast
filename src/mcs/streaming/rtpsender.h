@@ -28,6 +28,8 @@
 
 #include "mcs/scoped_gobject.h"
 
+#include "mcs/common/executable.h"
+
 #include "mcs/network/stream.h"
 
 #include "mcs/video/buffer.h"
@@ -39,25 +41,26 @@
 namespace mcs {
 namespace streaming {
 
-class RTPSender : public TransportSender {
+class RTPSender : public TransportSender,
+                  public common::Executable {
 public:
     RTPSender(const network::Stream::Ptr &stream, const video::SenderReport::Ptr &report);
     ~RTPSender();
 
+    // From mcs::streaming::TransportSender
     bool Queue(const mcs::video::Buffer::Ptr &packets) override;
-
     int32_t LocalPort() const override;
 
-private:
-
-    void ThreadLoop();
+    // From mcs::common::Executable
+    bool Start() override;
+    bool Stop() override;
+    bool Execute() override;
+    std::string Name() const override;
 
 private:
     network::Stream::Ptr stream_;
     video::SenderReport::Ptr report_;
-    bool running_;
     uint32_t rtp_sequence_number_;
-    std::thread worker_thread_;
     mcs::video::BufferQueue::Ptr queue_;
 };
 

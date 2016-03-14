@@ -525,5 +525,9 @@ void H264Encoder::SendIDRFrame() {
     media_codec_source_request_idr_frame(encoder_);
 }
 
+std::string H264Encoder::Name() const {
+    return "H264Encoder";
+}
+
 } // namespace android
 } // namespace mcs

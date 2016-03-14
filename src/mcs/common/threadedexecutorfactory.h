@@ -15,37 +15,17 @@
  *
  */
 
-#ifndef MCS_COMMON_THREADEDEXECUTOR_H_
-#define MCS_COMMON_THREADEDEXECUTOR_H_
+#ifndef MCS_COMMON_THREADEDEXECUTORFACTORY_H_
+#define MCS_COMMON_THREADEDEXECUTORFACTORY_H_
 
-#include <atomic>
-#include <memory>
-#include <thread>
-
-#include "mcs/common/executor.h"
-#include "mcs/common/executable.h"
+#include "mcs/common/executorfactory.h"
 
 namespace mcs {
 namespace common {
 
-class ThreadedExecutor : public Executor {
+class ThreadedExecutorFactory : public ExecutorFactory {
 public:
-    ThreadedExecutor(const Executable::Ptr &executable);
-    ~ThreadedExecutor();
-
-    bool Start() override;
-    bool Stop() override;
-
-    bool Running() const override;
-
-private:
-
-    void ThreadWorker();
-
-private:
-    Executable::Ptr executable_;
-    std::atomic<bool> running_;
-    std::thread thread_;
+    Executor::Ptr Create(const Executable::Ptr &executable) override;
 };
 
 } // namespace common

@@ -47,48 +47,48 @@ namespace streaming {
 RTPSender::RTPSender(const network::Stream::Ptr &stream, const video::SenderReport::Ptr &report) :
     stream_(stream),
     report_(report),
-    running_(false),
     rtp_sequence_number_(0),
     queue_(video::BufferQueue::Create()){
-
-    running_ = true;
-    worker_thread_ = std::thread(&RTPSender::ThreadLoop, this);
 }
 
 RTPSender::~RTPSender() {
-    running_ = false;
-    worker_thread_.join();
 }
 
-void RTPSender::ThreadLoop() {
-    mcs::Utils::SetThreadName(kRTPSenderThreadName);
+bool RTPSender::Start() {
+    return true;
+}
 
-    while (running_) {
-        if (!queue_->WaitToBeFilled())
-            continue;
+bool RTPSender::Stop() {
+    return true;
+}
 
-        if (!stream_->WaitUntilReady())
-            continue;
+bool RTPSender::Execute() {
+    if (!queue_->WaitToBeFilled())
+        return true;
 
-        queue_->Lock();
+    if (!stream_->WaitUntilReady())
+        return true;
 
-        while(true) {
-            auto packet = queue_->PopUnlocked();
-            if (!packet)
-                break;
+    queue_->Lock();
 
-            if (auto error = stream_->Write(packet->Data(), packet->Length()) != network::Stream::Error::kNone) {
-                MCS_ERROR("Failed to send packet to remote");
-                // FIXME possible the remote side disconected. Check and
-                // bring everything down if that is the case.
-                break;
-            }
+    while(true) {
+        auto packet = queue_->PopUnlocked();
+        if (!packet)
+            break;
 
-            report_->SentPacket(packet->Timestamp(), packet->Length());
+        if (auto error = stream_->Write(packet->Data(), packet->Length()) != network::Stream::Error::kNone) {
+            MCS_ERROR("Failed to send packet to remote");
+            // FIXME possible the remote side disconected. Check and
+            // bring everything down if that is the case.
+            return false;
         }
 
-        queue_->Unlock();
+        report_->SentPacket(packet->Timestamp(), packet->Length());
     }
+
+    queue_->Unlock();
+
+    return true;
 }
 
 bool RTPSender::Queue(const video::Buffer::Ptr &packets) {
@@ -155,6 +155,10 @@ bool RTPSender::Queue(const video::Buffer::Ptr &packets) {
 
 int32_t RTPSender::LocalPort() const {
     return stream_->LocalPort();
+}
+
+std::string RTPSender::Name() const {
+    return kRTPSenderThreadName;
 }
 
 } // namespace streaming

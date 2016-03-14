@@ -59,6 +59,7 @@ public:
     bool Start() override;
     bool Stop() override;
     bool Execute() override;
+    std::string Name() const override;
 
 private:
     H264Encoder(const video::EncoderReport::Ptr &report);

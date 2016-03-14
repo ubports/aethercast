@@ -37,6 +37,7 @@ set(HEADERS
 
   mcs/common/executable.h
   mcs/common/executor.h
+  mcs/common/executorfactory.h
 
   mcs/network/types.h
   mcs/network/stream.h
@@ -82,7 +83,9 @@ set(SOURCES
   mcs/dbushelpers.cpp
   mcs/networkdeviceskeleton.cpp
 
+  mcs/common/executorpool.cpp
   mcs/common/threadedexecutor.cpp
+  mcs/common/threadedexecutorfactory.cpp
 
   mcs/network/udpstream.cpp
 

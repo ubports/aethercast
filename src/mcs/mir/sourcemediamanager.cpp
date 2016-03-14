@@ -18,6 +18,7 @@
 #include "mcs/logger.h"
 
 #include "mcs/common/threadedexecutor.h"
+#include "mcs/common/threadedexecutorfactory.h"
 
 #include "mcs/network/udpstream.h"
 
@@ -41,12 +42,13 @@ SourceMediaManager::Ptr SourceMediaManager::Create(const std::string &remote_add
 
 SourceMediaManager::SourceMediaManager(const std::string &remote_address) :
     remote_address_(remote_address),
-    state_(State::Stopped) {
+    state_(State::Stopped),
+    pipeline_(std::make_shared<mcs::common::ThreadedExecutorFactory>(), 4) {
 }
 
 SourceMediaManager::~SourceMediaManager() {
     if (state_ != State::Stopped)
-        StopPipeline();
+        pipeline_.Stop();
 }
 
 bool SourceMediaManager::Configure() {
@@ -83,32 +85,28 @@ bool SourceMediaManager::Configure() {
         return false;
     }
 
-    encoder_executor_ = mcs::common::ThreadedExecutor::Create(encoder_, "Encoder");
-
-    renderer_ = mcs::mir::StreamRenderer::Create(connector_, encoder_,
-                                                 report_factory->CreateRendererReport());
+    renderer_ = std::make_shared<mcs::mir::StreamRenderer>(
+                connector_, encoder_, report_factory->CreateRendererReport());
     renderer_->SetDimensions(rr.width, rr.height);
 
-    auto stream = std::make_shared<mcs::network::UdpStream>(mcs::IpV4Address::from_string(remote_address_), sink_port1_);
-    auto rtp_sender = std::make_shared<mcs::streaming::RTPSender>(stream, report_factory->CreateSenderReport());
-    auto mpegts_packetizer = mcs::streaming::MPEGTSPacketizer::Create(report_factory->CreatePacketizerReport());
+    auto output_stream = std::make_shared<mcs::network::UdpStream>(
+                mcs::IpV4Address::from_string(remote_address_), sink_port1_);
 
-    sender_ = mcs::streaming::MediaSender::Create(mpegts_packetizer, rtp_sender, config);
+    auto rtp_sender = std::make_shared<mcs::streaming::RTPSender>(
+                output_stream, report_factory->CreateSenderReport());
+
+    auto mpegts_packetizer = mcs::streaming::MPEGTSPacketizer::Create(
+                report_factory->CreatePacketizerReport());
+
+    sender_ = std::make_shared<mcs::streaming::MediaSender>(mpegts_packetizer, rtp_sender, config);
     encoder_->SetDelegate(sender_);
 
+    pipeline_.Add(encoder_);
+    pipeline_.Add(renderer_);
+    pipeline_.Add(rtp_sender);
+    pipeline_.Add(sender_);
+
     return true;
-}
-
-void SourceMediaManager::StartPipeline() {
-    sender_->Start();
-    encoder_executor_->Start();
-    renderer_->StartThreaded();
-}
-
-void SourceMediaManager::StopPipeline() {
-    renderer_->Stop();
-    encoder_executor_->Stop();
-    sender_->Stop();
 }
 
 void SourceMediaManager::Play() {
@@ -117,7 +115,7 @@ void SourceMediaManager::Play() {
 
     MCS_DEBUG("");
 
-    StartPipeline();
+    pipeline_.Start();
 
     state_ = State::Playing;
 }
@@ -128,7 +126,7 @@ void SourceMediaManager::Pause() {
 
     MCS_DEBUG("");
 
-    StopPipeline();
+    pipeline_.Stop();
 
     state_ = State::Paused;
 }
@@ -139,7 +137,7 @@ void SourceMediaManager::Teardown() {
 
     MCS_DEBUG("");
 
-    StopPipeline();
+    pipeline_.Stop();
 
     state_ = State::Stopped;
 }

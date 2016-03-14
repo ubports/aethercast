@@ -23,6 +23,8 @@
 #include "mcs/basesourcemediamanager.h"
 
 #include "mcs/common/executor.h"
+#include "mcs/common/threadedexecutor.h"
+#include "mcs/common/executorpool.h"
 
 #include "mcs/video/baseencoder.h"
 
@@ -60,9 +62,6 @@ public:
 private:
     SourceMediaManager(const std::string &remote_address);
 
-    void StartPipeline();
-    void StopPipeline();
-
 protected:
     bool Configure() override;
 
@@ -74,6 +73,7 @@ private:
     mcs::mir::Screencast::Ptr connector_;
     mcs::mir::StreamRenderer::Ptr renderer_;
     mcs::streaming::MediaSender::Ptr sender_;
+    mcs::common::ExecutorPool pipeline_;
 };
 
 } // namespace mir

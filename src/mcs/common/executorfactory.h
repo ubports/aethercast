@@ -15,37 +15,27 @@
  *
  */
 
-#ifndef MCS_COMMON_THREADEDEXECUTOR_H_
-#define MCS_COMMON_THREADEDEXECUTOR_H_
+#ifndef MCS_COMMON_EXECUTORFACTORY_H_
+#define MCS_COMMON_EXECUTORFACTORY_H_
 
-#include <atomic>
 #include <memory>
-#include <thread>
 
-#include "mcs/common/executor.h"
+#include "mcs/non_copyable.h"
+
 #include "mcs/common/executable.h"
+#include "mcs/common/executor.h"
 
 namespace mcs {
 namespace common {
 
-class ThreadedExecutor : public Executor {
+class ExecutorFactory : public mcs::NonCopyable {
 public:
-    ThreadedExecutor(const Executable::Ptr &executable);
-    ~ThreadedExecutor();
+    typedef std::shared_ptr<ExecutorFactory> Ptr;
 
-    bool Start() override;
-    bool Stop() override;
+    virtual Executor::Ptr Create(const Executable::Ptr &executable) = 0;
 
-    bool Running() const override;
-
-private:
-
-    void ThreadWorker();
-
-private:
-    Executable::Ptr executable_;
-    std::atomic<bool> running_;
-    std::thread thread_;
+protected:
+    ExecutorFactory() = default;
 };
 
 } // namespace common

@@ -23,13 +23,9 @@
 namespace mcs {
 namespace common {
 
-Executor::Ptr ThreadedExecutor::Create(const Executable::Ptr &executable, const std::string &name) {
-    return std::shared_ptr<Executor>(new ThreadedExecutor(executable, name));
-}
 
-ThreadedExecutor::ThreadedExecutor(const Executable::Ptr &executable, const std::string &name) :
+ThreadedExecutor::ThreadedExecutor(const Executable::Ptr &executable) :
     executable_(executable),
-    name_(name),
     running_(false) {
 }
 
@@ -38,9 +34,9 @@ ThreadedExecutor::~ThreadedExecutor() {
 }
 
 void ThreadedExecutor::ThreadWorker() {
-    if (name_.length() > 0) {
-        mcs::Utils::SetThreadName(name_);
-        MCS_DEBUG("Started threaded executor %s", name_);
+    if (executable_->Name().length() > 0) {
+        mcs::Utils::SetThreadName(executable_->Name());
+        MCS_DEBUG("Started threaded executor %s", executable_->Name());
     }
 
     while (running_) {
@@ -50,11 +46,13 @@ void ThreadedExecutor::ThreadWorker() {
 }
 
 bool ThreadedExecutor::Start() {
-    if (running_.exchange(true))
+    if (running_)
         return false;
 
     if (!executable_->Start())
         return false;
+
+    running_.exchange(true);
 
     thread_ = std::thread(&ThreadedExecutor::ThreadWorker, this);
 

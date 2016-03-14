@@ -39,10 +39,10 @@ public:
 
 TEST(MediaSender, WitNothingAndNoCrash) {
     auto encoder_config = mcs::video::BaseEncoder::Config{};
-    auto sender = mcs::streaming::MediaSender::Create(nullptr, nullptr, encoder_config);
+    auto sender = std::make_shared<mcs::streaming::MediaSender>(nullptr, nullptr, encoder_config);
 
-    sender->Start();
-    sender->Stop();
+    EXPECT_TRUE(sender->Start());
+    EXPECT_TRUE(sender->Stop());
     EXPECT_EQ(0, sender->LocalRTPPort());
     sender->OnBufferAvailable(mcs::video::Buffer::Create(nullptr));
     sender->OnBufferReturned();
@@ -64,7 +64,7 @@ TEST(MediaSender, CreateCorrectVideoTrack) {
             .Times(1)
             .WillRepeatedly(Return(1));
 
-    auto sender = mcs::streaming::MediaSender::Create(dummy_packetizer, dummy_transport, encoder_config);
+    auto sender = std::make_shared<mcs::streaming::MediaSender>(dummy_packetizer, dummy_transport, encoder_config);
 }
 
 TEST(MediaSender, BufferGetsPacketizedAndSend) {
@@ -87,17 +87,17 @@ TEST(MediaSender, BufferGetsPacketizedAndSend) {
             .Times(1)
             .WillRepeatedly(Return(true));
 
-    auto sender = mcs::streaming::MediaSender::Create(dummy_packetizer, dummy_transport, encoder_config);
+    auto sender = std::make_shared<mcs::streaming::MediaSender>(dummy_packetizer, dummy_transport, encoder_config);
 
-    sender->Start();
+    EXPECT_TRUE(sender->Start());
 
     sender->OnBufferAvailable(buffer);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    EXPECT_TRUE(sender->Execute());
 
     EXPECT_EQ(now, packets->Timestamp());
 
-    sender->Stop();
+    EXPECT_TRUE(sender->Stop());
 }
 
 TEST(MediaSender, BufferPacketizingFails) {
@@ -117,15 +117,15 @@ TEST(MediaSender, BufferPacketizingFails) {
     EXPECT_CALL(*dummy_transport, Queue(_))
             .Times(0);
 
-    auto sender = mcs::streaming::MediaSender::Create(dummy_packetizer, dummy_transport, encoder_config);
+    auto sender = std::make_shared<mcs::streaming::MediaSender>(dummy_packetizer, dummy_transport, encoder_config);
 
-    sender->Start();
+    EXPECT_TRUE(sender->Start());
 
     sender->OnBufferAvailable(buffer);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    EXPECT_TRUE(sender->Execute());
 
-    sender->Stop();
+    EXPECT_TRUE(sender->Stop());
 }
 
 TEST(MediaSender, BufferWithCodecConfig) {
@@ -150,15 +150,15 @@ TEST(MediaSender, BufferWithCodecConfig) {
     EXPECT_CALL(*dummy_transport, Queue(_))
             .Times(0);
 
-    auto sender = mcs::streaming::MediaSender::Create(dummy_packetizer, dummy_transport, encoder_config);
+    auto sender = std::make_shared<mcs::streaming::MediaSender>(dummy_packetizer, dummy_transport, encoder_config);
 
-    sender->Start();
+    EXPECT_TRUE(sender->Start());
 
     sender->OnBufferWithCodecConfig(csd_buffer);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    EXPECT_TRUE(sender->Execute());
 
-    sender->Stop();
+    EXPECT_TRUE(sender->Stop());
 }
 
 TEST(MediaSender, RequestsPCRandPATandPMTEvery100ms) {
@@ -188,20 +188,22 @@ TEST(MediaSender, RequestsPCRandPATandPMTEvery100ms) {
     EXPECT_CALL(*dummy_transport, Queue(_))
             .Times(4);
 
-    auto sender = mcs::streaming::MediaSender::Create(dummy_packetizer, dummy_transport, encoder_config);
+    auto sender = std::make_shared<mcs::streaming::MediaSender>(dummy_packetizer, dummy_transport, encoder_config);
 
-    sender->Start();
+    EXPECT_TRUE(sender->Start());
 
     // As this is the first buffer the sender will ask packetizer to include
     // PCR / PAT and PMT
     sender->OnBufferAvailable(buffer);
 
     std::this_thread::sleep_for(std::chrono::milliseconds{5});
+    EXPECT_TRUE(sender->Execute());
 
     // Second one shouldn't include PCR / PAT and PMT
     sender->OnBufferAvailable(buffer);
 
     std::this_thread::sleep_for(std::chrono::milliseconds{5});
+    EXPECT_TRUE(sender->Execute());
 
     // As 100ms later this will include both PCR / PAT and PMT
     sender->OnBufferAvailable(buffer);
@@ -209,12 +211,14 @@ TEST(MediaSender, RequestsPCRandPATandPMTEvery100ms) {
     // PCR / PAT and PMT will be included every 100ms so wait a bit until the sender
     // will do that.
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    EXPECT_TRUE(sender->Execute());
 
     // As this buffer is send directly after the previous one which include
     // both PCR / PAT and PMT this wont get them attached.
     sender->OnBufferAvailable(buffer);
 
     std::this_thread::sleep_for(std::chrono::milliseconds{5});
+    EXPECT_TRUE(sender->Execute());
 
-    sender->Stop();
+    EXPECT_TRUE(sender->Stop());
 }

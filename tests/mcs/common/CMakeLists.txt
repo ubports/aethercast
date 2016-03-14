@@ -1,1 +1,3 @@
 AETHERCAST_ADD_TEST(threadedexecutor_tests threadedexecutor_tests.cpp)
+AETHERCAST_ADD_TEST(threadedexecutorfactory_tests threadedexecutorfactory_tests.cpp)
+AETHERCAST_ADD_TEST(executorpool_tests executorpool_tests.cpp)

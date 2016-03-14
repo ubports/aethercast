@@ -28,6 +28,10 @@ public:
     MOCK_METHOD0(Stop, bool());
     MOCK_METHOD0(Start, bool());
     MOCK_METHOD0(Execute, bool());
+
+    std::string Name() const override {
+        return "MockExecutable";
+    }
 };
 }
 
@@ -45,7 +49,7 @@ TEST(ThreadedExecutor, CorrectStartAndStopBehaviour) {
             .Times(AtLeast(0))
             .WillRepeatedly(Return(true));
 
-    auto executor = mcs::common::ThreadedExecutor::Create(executable);
+    auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
 
     EXPECT_FALSE(executor->Running());
     EXPECT_FALSE(executor->Stop());
@@ -73,7 +77,7 @@ TEST(ThreadedExecutor, CorrectlyExecutes) {
             .Times(AtLeast(10))
             .WillRepeatedly(DoAll(Invoke([&]() { count++; running = count < 10; }), ReturnPointee(&running)));
 
-    auto executor = mcs::common::ThreadedExecutor::Create(executable, "CorrectlyExecutes");
+    auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
 
     EXPECT_TRUE(executor->Start());
 
@@ -82,4 +86,35 @@ TEST(ThreadedExecutor, CorrectlyExecutes) {
     EXPECT_TRUE(executor->Stop());
 
     EXPECT_EQ(10, count);
+}
+
+TEST(ThreadedExecutor, ExecutableFailsToStart) {
+    auto executable = std::make_shared<MockExecutable>();
+
+    EXPECT_CALL(*executable, Start())
+            .Times(1)
+            .WillOnce(Return(false));
+
+    auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
+
+    EXPECT_FALSE(executor->Start());
+    EXPECT_FALSE(executor->Running());
+}
+
+TEST(ThreadedExecutor, IgnoresFailedStopFromExecutable) {
+    auto executable = std::make_shared<MockExecutable>();
+
+    EXPECT_CALL(*executable, Start())
+            .Times(1)
+            .WillOnce(Return(true));
+
+    EXPECT_CALL(*executable, Stop())
+            .Times(1)
+            .WillOnce(Return(false));
+
+    auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
+
+    EXPECT_TRUE(executor->Start());
+    EXPECT_TRUE(executor->Stop());
+    EXPECT_FALSE(executor->Running());
 }

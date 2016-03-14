@@ -15,37 +15,45 @@
  *
  */
 
-#ifndef MCS_COMMON_THREADEDEXECUTOR_H_
-#define MCS_COMMON_THREADEDEXECUTOR_H_
+#ifndef MCS_COMMON_EXECUTORPOOL_H_
+#define MCS_COMMON_EXECUTORPOOL_H_
 
-#include <atomic>
-#include <memory>
-#include <thread>
+#include <cstddef>
+
+#include <vector>
+
+#include "mcs/non_copyable.h"
 
 #include "mcs/common/executor.h"
+#include "mcs/common/executorfactory.h"
 #include "mcs/common/executable.h"
 
 namespace mcs {
 namespace common {
 
-class ThreadedExecutor : public Executor {
+
+class ExecutorPool : public mcs::NonCopyable {
 public:
-    ThreadedExecutor(const Executable::Ptr &executable);
-    ~ThreadedExecutor();
+    ExecutorPool(const ExecutorFactory::Ptr &factory, const std::uint32_t &size);
+    ~ExecutorPool();
 
-    bool Start() override;
-    bool Stop() override;
+    bool Add(const Executable::Ptr &executable);
 
-    bool Running() const override;
+    bool Start();
+    bool Stop();
 
-private:
-
-    void ThreadWorker();
+    bool Running() const;
 
 private:
-    Executable::Ptr executable_;
-    std::atomic<bool> running_;
-    std::thread thread_;
+    struct Item {
+        Executable::Ptr executable;
+        Executor::Ptr executor;
+    };
+
+    std::uint32_t size_;
+    bool running_;
+    ExecutorFactory::Ptr factory_;
+    std::vector<Item> items_;
 };
 
 } // namespace common
