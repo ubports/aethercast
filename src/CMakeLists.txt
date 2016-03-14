@@ -52,6 +52,7 @@ set(HEADERS
   mcs/video/rendererreport.h
   mcs/video/packetizerreport.h
   mcs/video/senderreport.h
+  mcs/video/bufferproducer.h
 
   mcs/streaming/packetizer.h
   mcs/streaming/transportsender.h
@@ -116,6 +117,7 @@ set(SOURCES
   mcs/video/utils_from_android.cpp
   mcs/video/baseencoder.cpp
   mcs/video/h264analyzer.cpp
+  mcs/video/displayoutput.cpp
 
   mcs/streaming/mpegtspacketizer.cpp
   mcs/streaming/rtpsender.cpp

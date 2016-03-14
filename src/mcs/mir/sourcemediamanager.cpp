@@ -25,6 +25,7 @@
 #include "mcs/report/reportfactory.h"
 
 #include "mcs/video/videoformat.h"
+#include "mcs/video/displayoutput.h"
 
 #include "mcs/streaming/mpegtspacketizer.h"
 #include "mcs/streaming/rtpsender.h"
@@ -58,14 +59,9 @@ bool SourceMediaManager::Configure() {
 
     MCS_DEBUG("dimensions: %dx%d@%d", rr.width, rr.height, rr.framerate);
 
-    // FIXME we don't support any other mode than extend for now as that means some
-    // additional work from mir to still give us properly sized frames we can hand
-    // to the encoder.
-    Screencast::DisplayOutput output{Screencast::DisplayMode::kExtend, rr.width, rr.height};
+    video::DisplayOutput output{video::DisplayOutput::Mode::kExtend, rr.width, rr.height};
 
     screencast_ = std::make_shared<mcs::mir::Screencast>(output);
-    if (!screencast_->IsValid())
-        return false;
 
     encoder_ = mcs::android::H264Encoder::Create(report_factory->CreateEncoderReport());
 

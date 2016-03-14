@@ -30,6 +30,7 @@
 
 #include "mcs/video/baseencoder.h"
 #include "mcs/video/bufferqueue.h"
+#include "mcs/video/bufferproducer.h"
 #include "mcs/video/rendererreport.h"
 
 namespace mcs {
@@ -42,7 +43,8 @@ public:
 
     typedef std::shared_ptr<StreamRenderer> Ptr;
 
-    StreamRenderer(const Screencast::Ptr &screencast, const video::BaseEncoder::Ptr &encoder,
+    StreamRenderer(const video::BufferProducer::Ptr &buffer_producer,
+                   const video::BaseEncoder::Ptr &encoder,
                    const video::RendererReport::Ptr  &report);
     ~StreamRenderer();
 
@@ -59,7 +61,7 @@ public:
 
 private:
     video::RendererReport::Ptr report_;
-    Screencast::Ptr screencast_;
+    video::BufferProducer::Ptr buffer_producer_;
     video::BaseEncoder::Ptr encoder_;
     unsigned int width_;
     unsigned int height_;

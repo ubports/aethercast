@@ -28,19 +28,7 @@ static constexpr const char *kMirConnectionName{"aethercast screencast client"};
 namespace mcs {
 namespace mir {
 
-std::string Screencast::DisplayModeToString(const DisplayMode &mode) {
-    switch (mode) {
-    case DisplayMode::kExtend:
-        return "extend";
-    case DisplayMode::kMirror:
-        return "mirror";
-    default:
-        break;
-    }
-    return "unknown";
-}
-
-Screencast::Screencast(const Screencast::DisplayOutput &output) :
+Screencast::Screencast(const video::DisplayOutput &output) :
     output_(output) {
 
     // TODO(morphis): Refactor this to set we don't leave a partially
@@ -80,7 +68,7 @@ Screencast::Screencast(const Screencast::DisplayOutput &output) :
     params_.height = display_mode->vertical_resolution;
     params_.width = display_mode->horizontal_resolution;
 
-    if (output_.mode == DisplayMode::kMirror) {
+    if (output_.mode == video::DisplayOutput::Mode::kMirror) {
         params_.region.left = 0;
         params_.region.top = 0;
         params_.region.width = params_.width;
@@ -89,7 +77,7 @@ Screencast::Screencast(const Screencast::DisplayOutput &output) :
         output_.width = params_.width;
         output_.height = params_.height;
     }
-    else if (output_.mode == DisplayMode::kExtend) {
+    else if (output_.mode == video::DisplayOutput::Mode::kExtend) {
         // If we request a screen region outside the available screen area
         // mir will create a mir output which is then available for everyone
         // as just another display.
@@ -111,7 +99,7 @@ Screencast::Screencast(const Screencast::DisplayOutput &output) :
              active_output->orientation);
 
     MCS_DEBUG("Setting up screencast [%s %dx%d]",
-              DisplayModeToString(output_.mode),
+              video::DisplayOutput::ModeToString(output_.mode),
               output_.width,
               output_.height);
 
@@ -165,14 +153,14 @@ bool Screencast::IsValid() const {
     return connection_ && screencast_ &&  buffer_stream_;
 }
 
-Screencast::DisplayOutput Screencast::OutputMode() const {
+video::DisplayOutput Screencast::OutputMode() const {
     return output_;
 }
 
-MirNativeBuffer* Screencast::CurrentBuffer() const {
+void* Screencast::CurrentBuffer() const {
     MirNativeBuffer *buffer = nullptr;
     mir_buffer_stream_get_current_buffer(buffer_stream_, &buffer);
-    return buffer;
+    return reinterpret_cast<void*>(buffer);
 }
 } // namespace mir
 } // namespace mcs
