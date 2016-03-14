@@ -27,6 +27,8 @@
 #include <error.h>
 #include <stdlib.h>
 
+#include <system_error>
+
 #include "mcs/logger.h"
 
 #include "mcs/network/udpstream.h"
