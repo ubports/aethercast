@@ -19,8 +19,6 @@ Build-Depends: android-headers-19 (>= 23),
 # thread-specific storage locations.
                libboost-thread-dev,
                libglib2.0-dev,
-               libgstreamer1.0-dev,
-               libgstreamer-plugins-base1.0-dev,
                libgtest-dev,
                libhybris-dev,
                liblttng-ust-dev,
