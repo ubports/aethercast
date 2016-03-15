@@ -1,2 +1,3 @@
 AETHERCAST_ADD_TEST(mpegtspacketizer_tests mpegtspacketizer_tests.cpp)
 AETHERCAST_ADD_TEST(mediasender_tests mediasender_tests.cpp)
+AETHERCAST_ADD_TEST(rtpsender_tests rtpsender_tests.cpp)

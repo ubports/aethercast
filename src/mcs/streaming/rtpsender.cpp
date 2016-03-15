@@ -147,9 +147,6 @@ bool RTPSender::Queue(const video::Buffer::Ptr &packets) {
 
     queue_->Unlock();
 
-    if (packets->Timestamp() == 0)
-        return true;
-
     return true;
 }
 
