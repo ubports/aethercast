@@ -25,6 +25,7 @@ using namespace ::testing;
 
 namespace {
 static constexpr unsigned int kStreamMaxUnitSize = 1472;
+static constexpr unsigned int kMPEGTSPacketSize{188};
 
 class MockNetworkStream : public mcs::network::Stream {
 public:
@@ -91,10 +92,10 @@ TEST(RTPSender, DoeNotAcceptIncorrectPacketSizes) {
 
     auto sender = std::make_shared<mcs::streaming::RTPSender>(mock_stream, mock_report);
 
-    auto packets = mcs::video::Buffer::Create(188 + 1);
+    auto packets = mcs::video::Buffer::Create(kMPEGTSPacketSize + 1);
     EXPECT_FALSE(sender->Queue(packets));
 
-    packets = mcs::video::Buffer::Create(188 - 1);
+    packets = mcs::video::Buffer::Create(kMPEGTSPacketSize - 1);
     EXPECT_FALSE(sender->Queue(packets));
 }
 
@@ -123,7 +124,7 @@ TEST(RTPSender, ExecuteDoesNotFailWhenStreamIsNotReady) {
 
     auto sender = std::make_shared<mcs::streaming::RTPSender>(mock_stream, mock_report);
 
-    auto packets = mcs::video::Buffer::Create(188);
+    auto packets = mcs::video::Buffer::Create(kMPEGTSPacketSize);
 
     EXPECT_TRUE(sender->Queue(packets));
     EXPECT_TRUE(sender->Execute());
@@ -151,7 +152,7 @@ TEST(RTPSender, QueuesUpPackagesAndSendsAll) {
 
     auto sender = std::make_shared<mcs::streaming::RTPSender>(mock_stream, mock_report);
 
-    auto packets = mcs::video::Buffer::Create(188 * 15);
+    auto packets = mcs::video::Buffer::Create(kMPEGTSPacketSize * 15);
     packets->SetTimestamp(now);
 
     EXPECT_TRUE(sender->Queue(packets));
@@ -175,7 +176,7 @@ TEST(RTPSender, WritePackageFails) {
 
     auto sender = std::make_shared<mcs::streaming::RTPSender>(mock_stream, mock_report);
 
-    auto packets = mcs::video::Buffer::Create(188);
+    auto packets = mcs::video::Buffer::Create(kMPEGTSPacketSize);
 
     EXPECT_TRUE(sender->Queue(packets));
     EXPECT_FALSE(sender->Execute());
