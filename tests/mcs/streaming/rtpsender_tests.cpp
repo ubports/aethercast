@@ -24,8 +24,12 @@
 using namespace ::testing;
 
 namespace {
+static constexpr unsigned int kRTPHeaderSize{12};
 static constexpr unsigned int kStreamMaxUnitSize = 1472;
 static constexpr unsigned int kMPEGTSPacketSize{188};
+static constexpr unsigned int kSourceID = 0xdeadbeef;
+// See http://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml
+static constexpr unsigned int kRTPPayloadTypeMP2T = 33;
 
 class MockNetworkStream : public mcs::network::Stream {
 public:
@@ -180,4 +184,77 @@ TEST(RTPSender, WritePackageFails) {
 
     EXPECT_TRUE(sender->Queue(packets));
     EXPECT_FALSE(sender->Execute());
+}
+
+TEST(RTPSender, ConstructsCorrectRTPHeader) {
+    auto mock_stream = std::make_shared<MockNetworkStream>();
+    auto mock_report = std::make_shared<MockSenderReport>();
+
+    auto packet_timestamp = mcs::Utils::GetNowUs();
+
+    uint32_t expected_output_size = kMPEGTSPacketSize + kRTPHeaderSize;
+
+    EXPECT_CALL(*mock_report, SentPacket(packet_timestamp, expected_output_size))
+            .Times(1);
+
+    EXPECT_CALL(*mock_stream, MaxUnitSize())
+            .WillRepeatedly(Return(kStreamMaxUnitSize));
+
+    EXPECT_CALL(*mock_stream, WaitUntilReady())
+            .WillOnce(Return(true));
+
+    std::uint8_t *output_data = nullptr;
+
+    EXPECT_CALL(*mock_stream, Write(_, expected_output_size))
+            .WillOnce(DoAll(Invoke([&](const uint8_t *data, unsigned int size) {
+                                // Need to copy the data here as otherwise its freed
+                                // as soon as the write call comes back.
+                                output_data = new std::uint8_t[size];
+                                ::memcpy(output_data, data, size);
+                            }),
+                            Return(mcs::network::Stream::Error::kNone)));
+
+    auto sender = std::make_shared<mcs::streaming::RTPSender>(mock_stream, mock_report);
+
+    auto packets = mcs::video::Buffer::Create(kMPEGTSPacketSize);
+    packets->SetTimestamp(packet_timestamp);
+
+    EXPECT_TRUE(sender->Queue(packets));
+    EXPECT_TRUE(sender->Execute());
+
+    EXPECT_NE(nullptr, output_data);
+
+    EXPECT_EQ(0x80, output_data[0]);
+    EXPECT_EQ(kRTPPayloadTypeMP2T, output_data[1]);
+
+    // Sequence should start at 0
+    EXPECT_EQ(0x00, output_data[2]);
+    EXPECT_EQ(0x00, output_data[3]);
+
+    // We can't compare the actual RTP time here but we can make sure
+    // its between our start time and now.
+    std::uint32_t rtp_time = 0;
+    rtp_time |= (output_data[4] << 24);
+    rtp_time |= (output_data[5] << 16);
+    rtp_time |= (output_data[6] << 8);
+    rtp_time |= (output_data[7] << 0);
+
+    // Convert back from a 90 kHz clock
+    rtp_time *= 100ll;
+    rtp_time /= 9;
+
+    auto packet_timestamp_ms = packet_timestamp / 1000ll;
+    EXPECT_LE(packet_timestamp_ms, rtp_time);
+    EXPECT_GE(mcs::Utils::GetNowUs(), rtp_time);
+
+    std::uint32_t source_id = 0;
+    source_id |= (output_data[8] << 24);
+    source_id |= (output_data[9] << 16);
+    source_id |= (output_data[10] << 8);
+    source_id |= (output_data[11] << 0);
+
+    EXPECT_EQ(kSourceID, source_id);
+
+    if (output_data)
+        delete output_data;
 }
