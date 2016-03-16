@@ -34,8 +34,8 @@
 
 namespace {
 static constexpr const char *kRTPSenderThreadName{"RTPSender"};
-static constexpr unsigned int kMaxUDPPacketSize = 1472;
-static constexpr unsigned int kMaxNumTSPacketsPerRTPPacket = (kMaxUDPPacketSize - 12) / 188;
+static constexpr unsigned int kRTPHeaderSize{12};
+static constexpr unsigned int kMPEGTSPacketSize{188};
 static constexpr unsigned int kSourceID = 0xdeadbeef;
 // See http://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml
 static constexpr unsigned int kRTPPayloadTypeMP2T = 33;
@@ -46,6 +46,7 @@ namespace streaming {
 
 RTPSender::RTPSender(const network::Stream::Ptr &stream, const video::SenderReport::Ptr &report) :
     stream_(stream),
+    max_ts_packets_((stream->MaxUnitSize() - kRTPHeaderSize) / kMPEGTSPacketSize),
     report_(report),
     rtp_sequence_number_(0),
     queue_(video::BufferQueue::Create()){
@@ -101,7 +102,7 @@ bool RTPSender::Queue(const video::Buffer::Ptr &packets) {
 
     uint32_t offset = 0;
     while (offset < packets->Length()) {
-        auto packet = mcs::video::Buffer::Create(12 + kMaxNumTSPacketsPerRTPPacket * 188);
+        auto packet = mcs::video::Buffer::Create(kRTPHeaderSize + max_ts_packets_ * kMPEGTSPacketSize);
 
         uint8_t *ptr = packet->Data();
 
@@ -126,21 +127,20 @@ bool RTPSender::Queue(const video::Buffer::Ptr &packets) {
         ptr[10] = (kSourceID >> 8) & 0xff;
         ptr[11] = kSourceID & 0xff;
 
-        size_t num_ts_packets = (packets->Length() - offset) / 188;
-        if (num_ts_packets > kMaxNumTSPacketsPerRTPPacket) {
-            num_ts_packets = kMaxNumTSPacketsPerRTPPacket;
-        }
+        size_t num_ts_packets = (packets->Length() - offset) / kMPEGTSPacketSize;
+        if (num_ts_packets > max_ts_packets_)
+            num_ts_packets = max_ts_packets_;
 
-        ::memcpy(&ptr[12], packets->Data() + offset, num_ts_packets * 188);
+        ::memcpy(&ptr[12], packets->Data() + offset, num_ts_packets * kMPEGTSPacketSize);
 
-        packet->SetRange(0, 12 + num_ts_packets * 188);
+        packet->SetRange(0, kRTPHeaderSize + num_ts_packets * kMPEGTSPacketSize);
 
         // We're only setting the timestamp on the packet here for
         // statistically reasons we can check later on how late we
         // send a buffer out.
         packet->SetTimestamp(packets->Timestamp());
 
-        offset += num_ts_packets * 188;
+        offset += num_ts_packets * kMPEGTSPacketSize;
 
         queue_->PushUnlocked(packet);
     }

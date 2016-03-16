@@ -59,6 +59,7 @@ public:
 
 private:
     network::Stream::Ptr stream_;
+    const std::uint32_t max_ts_packets_;
     video::SenderReport::Ptr report_;
     uint32_t rtp_sequence_number_;
     mcs::video::BufferQueue::Ptr queue_;

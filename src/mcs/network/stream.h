@@ -43,6 +43,12 @@ public:
 
     virtual Port LocalPort() const = 0;
 
+    /**
+     * @brief Returns the maximum size of a unit the stream will send out
+     * @return Maximum send unit size in bytes
+     */
+    virtual std::uint32_t MaxUnitSize() const = 0;
+
 protected:
     Stream() = default;
 };

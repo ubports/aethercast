@@ -39,6 +39,8 @@ public:
 
     Port LocalPort() const override;
 
+    std::uint32_t MaxUnitSize() const override;
+
 private:
     int socket_;
     Port local_port_;

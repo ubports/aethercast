@@ -24,11 +24,14 @@
 using namespace ::testing;
 
 namespace {
+static constexpr unsigned int kStreamMaxUnitSize = 1472;
+
 class MockNetworkStream : public mcs::network::Stream {
 public:
     MOCK_METHOD0(WaitUntilReady, bool());
     MOCK_METHOD2(Write, mcs::network::Stream::Error(const uint8_t*, unsigned int));
     MOCK_CONST_METHOD0(LocalPort, mcs::network::Port());
+    MOCK_CONST_METHOD0(MaxUnitSize, std::uint32_t());
 };
 
 class MockSenderReport : public mcs::video::SenderReport {
@@ -40,6 +43,9 @@ public:
 TEST(RTPSender, ForwardsCorrectPort) {
     auto mock_stream = std::make_shared<MockNetworkStream>();
     auto mock_report = std::make_shared<MockSenderReport>();
+
+    EXPECT_CALL(*mock_stream, MaxUnitSize())
+            .WillRepeatedly(Return(kStreamMaxUnitSize));
 
     mcs::network::Port local_port = 1234;
 
@@ -56,6 +62,9 @@ TEST(RTPSender, SpecifiesExecutableName) {
     auto mock_stream = std::make_shared<MockNetworkStream>();
     auto mock_report = std::make_shared<MockSenderReport>();
 
+    EXPECT_CALL(*mock_stream, MaxUnitSize())
+            .WillRepeatedly(Return(kStreamMaxUnitSize));
+
     auto sender = std::make_shared<mcs::streaming::RTPSender>(mock_stream, mock_report);
     EXPECT_NE(0, sender->Name().length());
 }
@@ -63,6 +72,9 @@ TEST(RTPSender, SpecifiesExecutableName) {
 TEST(RTPSender, StartAndStopDoesNotFail) {
     auto mock_stream = std::make_shared<MockNetworkStream>();
     auto mock_report = std::make_shared<MockSenderReport>();
+
+    EXPECT_CALL(*mock_stream, MaxUnitSize())
+            .WillRepeatedly(Return(kStreamMaxUnitSize));
 
     auto sender = std::make_shared<mcs::streaming::RTPSender>(mock_stream, mock_report);
 
@@ -73,6 +85,9 @@ TEST(RTPSender, StartAndStopDoesNotFail) {
 TEST(RTPSender, DoeNotAcceptIncorrectPacketSizes) {
     auto mock_stream = std::make_shared<MockNetworkStream>();
     auto mock_report = std::make_shared<MockSenderReport>();
+
+    EXPECT_CALL(*mock_stream, MaxUnitSize())
+            .WillRepeatedly(Return(kStreamMaxUnitSize));
 
     auto sender = std::make_shared<mcs::streaming::RTPSender>(mock_stream, mock_report);
 
@@ -87,6 +102,9 @@ TEST(RTPSender, ExecutesWithEmptyQueue) {
     auto mock_stream = std::make_shared<MockNetworkStream>();
     auto mock_report = std::make_shared<MockSenderReport>();
 
+    EXPECT_CALL(*mock_stream, MaxUnitSize())
+            .WillRepeatedly(Return(kStreamMaxUnitSize));
+
     auto sender = std::make_shared<mcs::streaming::RTPSender>(mock_stream, mock_report);
 
     EXPECT_TRUE(sender->Execute());
@@ -95,6 +113,9 @@ TEST(RTPSender, ExecutesWithEmptyQueue) {
 TEST(RTPSender, ExecuteDoesNotFailWhenStreamIsNotReady) {
     auto mock_stream = std::make_shared<MockNetworkStream>();
     auto mock_report = std::make_shared<MockSenderReport>();
+
+    EXPECT_CALL(*mock_stream, MaxUnitSize())
+            .WillRepeatedly(Return(kStreamMaxUnitSize));
 
     EXPECT_CALL(*mock_stream, WaitUntilReady())
             .Times(1)
@@ -117,6 +138,9 @@ TEST(RTPSender, QueuesUpPackagesAndSendsAll) {
     EXPECT_CALL(*mock_report, SentPacket(now, _))
             .Times(3);
 
+    EXPECT_CALL(*mock_stream, MaxUnitSize())
+            .WillRepeatedly(Return(kStreamMaxUnitSize));
+
     EXPECT_CALL(*mock_stream, WaitUntilReady())
             .Times(1)
             .WillOnce(Return(true));
@@ -137,6 +161,9 @@ TEST(RTPSender, QueuesUpPackagesAndSendsAll) {
 TEST(RTPSender, WritePackageFails) {
     auto mock_stream = std::make_shared<MockNetworkStream>();
     auto mock_report = std::make_shared<MockSenderReport>();
+
+    EXPECT_CALL(*mock_stream, MaxUnitSize())
+            .WillRepeatedly(Return(kStreamMaxUnitSize));
 
     EXPECT_CALL(*mock_stream, WaitUntilReady())
             .Times(1)

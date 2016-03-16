@@ -35,6 +35,8 @@
 
 namespace {
 static constexpr unsigned int kUdpTxBufferSize = 256 * 1024;
+/* Value below configured MTU so that we don't require any further splits */
+static constexpr unsigned int kMaxUDPPacketSize = 1472;
 
 static mcs::network::Port PickRandomRTPPort() {
     // Pick an even integer in range [1024, 65534)
@@ -150,6 +152,10 @@ Stream::Error UdpStream::Write(const uint8_t *data, unsigned int size) {
 
 Port UdpStream::LocalPort() const {
     return local_port_;
+}
+
+std::uint32_t UdpStream::MaxUnitSize() const {
+    return kMaxUDPPacketSize;
 }
 
 } // namespace network
