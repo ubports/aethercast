@@ -25,6 +25,12 @@
 #include "utils.h"
 #include "logging.h"
 
+#include "mcs/report/reportfactory.h"
+
+#include "mcs/network/udpstream.h"
+
+#include "mcs/android/h264encoder.h"
+
 namespace mcs {
 
 void NullSourceMediaManager::Play() {
@@ -56,8 +62,19 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
 
     DEBUG("Creating source media manager of type %s", type.c_str());
 
-    if (type == "mir")
-        return mcs::mir::SourceMediaManager::Create(remote_address);
+    if (type == "mir") {
+        auto report_factory = report::ReportFactory::Create();
+        auto screencast = std::make_shared<mcs::mir::Screencast>();
+        auto encoder = mcs::android::H264Encoder::Create(report_factory->CreateEncoderReport());
+        auto network_stream = std::make_shared<mcs::network::UdpStream>();
+
+        return std::make_shared<mcs::mir::SourceMediaManager>(
+                    remote_address,
+                    screencast,
+                    encoder,
+                    network_stream,
+                    report_factory);
+    }
     else if (type == "x11")
         return X11SourceMediaManager::create(remote_address);
     else if (type == "test")

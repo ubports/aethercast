@@ -32,7 +32,9 @@ namespace report {
 
 class ReportFactory : public mcs::NonCopyable {
 public:
-    static std::unique_ptr<ReportFactory> Create();
+    typedef std::shared_ptr<ReportFactory> Ptr;
+
+    static Ptr Create();
 
     virtual video::EncoderReport::Ptr CreateEncoderReport() = 0;
     virtual video::RendererReport::Ptr CreateRendererReport() = 0;

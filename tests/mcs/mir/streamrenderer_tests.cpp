@@ -26,6 +26,7 @@ using namespace ::testing;
 namespace {
 class MockBufferProducer : public mcs::video::BufferProducer {
 public:
+    MOCK_METHOD1(Setup, bool(const mcs::video::DisplayOutput&));
     MOCK_METHOD0(SwapBuffers, void());
     MOCK_CONST_METHOD0(CurrentBuffer, void*());
     MOCK_CONST_METHOD0(OutputMode, mcs::video::DisplayOutput());
@@ -33,6 +34,7 @@ public:
 
 class MockEncoder : public mcs::video::BaseEncoder {
 public:
+    MOCK_METHOD0(DefaultConfiguration, mcs::video::BaseEncoder::Config());
     MOCK_METHOD1(Configure, bool(const mcs::video::BaseEncoder::Config&));
     MOCK_METHOD1(QueueBuffer, void(const mcs::video::Buffer::Ptr&));
     MOCK_CONST_METHOD0(Configuration, mcs::video::BaseEncoder::Config());

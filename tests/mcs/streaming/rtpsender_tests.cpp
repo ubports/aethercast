@@ -33,6 +33,7 @@ static constexpr unsigned int kRTPPayloadTypeMP2T = 33;
 
 class MockNetworkStream : public mcs::network::Stream {
 public:
+    MOCK_METHOD2(Connect, bool(const std::string &address, const mcs::network::Port &port));
     MOCK_METHOD0(WaitUntilReady, bool());
     MOCK_METHOD2(Write, mcs::network::Stream::Error(const uint8_t*, unsigned int));
     MOCK_CONST_METHOD0(LocalPort, mcs::network::Port());

@@ -26,6 +26,10 @@
 #include "mcs/common/threadedexecutor.h"
 #include "mcs/common/executorpool.h"
 
+#include "mcs/report/reportfactory.h"
+
+#include "mcs/network/stream.h"
+
 #include "mcs/video/baseencoder.h"
 
 #include "mcs/streaming/mediasender.h"
@@ -46,7 +50,11 @@ public:
         Stopped
     };
 
-    static Ptr Create(const std::string &remote_address);
+    SourceMediaManager(const std::string &remote_address,
+                       const mcs::video::BufferProducer::Ptr &producer,
+                       const mcs::video::BaseEncoder::Ptr &encoder,
+                       const mcs::network::Stream::Ptr &output_stream,
+                       const mcs::report::ReportFactory::Ptr &report_factory);
 
     ~SourceMediaManager();
 
@@ -59,18 +67,16 @@ public:
 
     int GetLocalRtpPort() const override;
 
-private:
-    SourceMediaManager(const std::string &remote_address);
-
 protected:
     bool Configure() override;
 
 private:
-    std::string remote_address_;
     State state_;
+    std::string remote_address_;
+    mcs::video::BufferProducer::Ptr producer_;
     mcs::video::BaseEncoder::Ptr encoder_;
-    mcs::common::Executor::Ptr encoder_executor_;
-    mcs::mir::Screencast::Ptr screencast_;
+    mcs::network::Stream::Ptr output_stream_;
+    mcs::report::ReportFactory::Ptr report_factory_;
     mcs::mir::StreamRenderer::Ptr renderer_;
     mcs::streaming::MediaSender::Ptr sender_;
     mcs::common::ExecutorPool pipeline_;

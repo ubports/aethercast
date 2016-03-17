@@ -37,12 +37,16 @@
 namespace mcs {
 namespace mir {
 
-SourceMediaManager::Ptr SourceMediaManager::Create(const std::string &remote_address) {
-    return std::shared_ptr<SourceMediaManager>(new SourceMediaManager(remote_address));
-}
-
-SourceMediaManager::SourceMediaManager(const std::string &remote_address) :
+SourceMediaManager::SourceMediaManager(const std::string &remote_address,
+                                       const mcs::video::BufferProducer::Ptr &producer,
+                                       const mcs::video::BaseEncoder::Ptr &encoder,
+                                       const mcs::network::Stream::Ptr &output_stream,
+                                       const mcs::report::ReportFactory::Ptr &report_factory) :
     remote_address_(remote_address),
+    producer_(producer),
+    encoder_(encoder),
+    output_stream_(output_stream),
+    report_factory_(report_factory),
     state_(State::Stopped),
     pipeline_(std::make_shared<mcs::common::ThreadedExecutorFactory>(), 4) {
 }
@@ -53,22 +57,24 @@ SourceMediaManager::~SourceMediaManager() {
 }
 
 bool SourceMediaManager::Configure() {
-    auto report_factory = report::ReportFactory::Create();
-
     auto rr = mcs::video::ExtractRateAndResolution(format_);
+
+    if (!output_stream_->Connect(remote_address_, sink_port1_))
+        return false;
 
     MCS_DEBUG("dimensions: %dx%d@%d", rr.width, rr.height, rr.framerate);
 
-    video::DisplayOutput output{video::DisplayOutput::Mode::kExtend, rr.width, rr.height};
+    video::DisplayOutput output{video::DisplayOutput::Mode::kExtend, rr.width, rr.height, rr.framerate};
 
-    screencast_ = std::make_shared<mcs::mir::Screencast>(output);
-
-    encoder_ = mcs::android::H264Encoder::Create(report_factory->CreateEncoderReport());
+    if (!producer_->Setup(output)) {
+        MCS_ERROR("Failed to setup buffer producer");
+        return false;
+    }
 
     int profile = 0, level = 0, constraint = 0;
     mcs::video::ExtractProfileLevel(format_, &profile, &level, &constraint);
 
-    auto config = mcs::android::H264Encoder::DefaultConfiguration();
+    auto config = encoder_->DefaultConfiguration();
     config.width = rr.width;
     config.height = rr.height;
     config.framerate = rr.framerate;
@@ -82,18 +88,22 @@ bool SourceMediaManager::Configure() {
     }
 
     renderer_ = std::make_shared<mcs::mir::StreamRenderer>(
-                screencast_, encoder_, report_factory->CreateRendererReport());
-
-    auto output_stream = std::make_shared<mcs::network::UdpStream>(
-                mcs::IpV4Address::from_string(remote_address_), sink_port1_);
+                producer_,
+                encoder_,
+                report_factory_->CreateRendererReport());
 
     auto rtp_sender = std::make_shared<mcs::streaming::RTPSender>(
-                output_stream, report_factory->CreateSenderReport());
+                output_stream_,
+                report_factory_->CreateSenderReport());
 
     auto mpegts_packetizer = mcs::streaming::MPEGTSPacketizer::Create(
-                report_factory->CreatePacketizerReport());
+                report_factory_->CreatePacketizerReport());
 
-    sender_ = std::make_shared<mcs::streaming::MediaSender>(mpegts_packetizer, rtp_sender, config);
+    sender_ = std::make_shared<mcs::streaming::MediaSender>(
+                mpegts_packetizer,
+                rtp_sender,
+                config);
+
     encoder_->SetDelegate(sender_);
 
     pipeline_.Add(encoder_);
@@ -150,7 +160,6 @@ void SourceMediaManager::SendIDRPicture() {
 }
 
 int SourceMediaManager::GetLocalRtpPort() const {
-    MCS_DEBUG("local port %d", sender_->LocalRTPPort());
     return sender_->LocalRTPPort();
 }
 

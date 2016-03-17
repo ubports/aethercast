@@ -20,7 +20,9 @@
 
 #include <memory>
 
-#include "basesourcemediamanager.h"
+#include "mcs/basesourcemediamanager.h"
+
+#include "mcs/network/types.h"
 
 namespace mcs {
 

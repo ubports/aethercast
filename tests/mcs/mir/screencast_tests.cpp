@@ -23,48 +23,16 @@
 
 using namespace ::testing;
 
-TEST(Screencast, StoresDisplayOutputConfiguration) {
-    auto mir = std::make_shared<mcs::test::mir::MockMir>();
-
-    mcs::video::DisplayOutput output;
-    ::memset(&output, 0, sizeof(output));
-    output.width = 1280;
-    output.height = 720;
-    output.refresh_rate = 30;
-    output.mode = mcs::video::DisplayOutput::Mode::kExtend;
-
-    // Let the test stop once we connect to mir
-    EXPECT_CALL(*mir, mir_connect_sync(_, _))
-            .Times(1)
-            .WillRepeatedly(Return(nullptr));
-
-    EXPECT_CALL(*mir, mir_connection_is_valid(nullptr))
-            .Times(1)
-            .WillRepeatedly(Return(false));
-
-    EXPECT_CALL(*mir, mir_connection_get_error_message(nullptr))
-            .Times(1)
-            .WillOnce(Return("Error message from mock"));
-
-    auto screencast = std::make_shared<mcs::mir::Screencast>(output);
-
-    auto returned_output = screencast->OutputMode();
-    EXPECT_EQ(output.width, returned_output.width);
-    EXPECT_EQ(output.height, returned_output.height);
-    EXPECT_EQ(output.refresh_rate, returned_output.refresh_rate);
-    EXPECT_EQ(output.mode, returned_output.mode);
-}
-
 TEST(Screencast, DoesNotSupportMirrorMode) {
     mcs::video::DisplayOutput output;
     ::memset(&output, 0, sizeof(output));
     output.mode = mcs::video::DisplayOutput::Mode::kMirror;
 
-    auto screencast = std::make_shared<mcs::mir::Screencast>(output);
-    EXPECT_FALSE(screencast->IsValid());
+    auto screencast = std::make_shared<mcs::mir::Screencast>();
+    EXPECT_FALSE(screencast->Setup(output));
 }
 
-TEST(Sceencast, ConnectToMirFailsCorrectly) {
+TEST(Screencast, ConnectToMirFailsCorrectly) {
     auto mir = std::make_shared<mcs::test::mir::MockMir>();
 
     EXPECT_CALL(*mir, mir_connect_sync(_, _))
@@ -81,9 +49,9 @@ TEST(Sceencast, ConnectToMirFailsCorrectly) {
 
     mcs::video::DisplayOutput output;
     output.mode = mcs::video::DisplayOutput::Mode::kExtend;
-    auto screencast = std::make_shared<mcs::mir::Screencast>(output);
+    auto screencast = std::make_shared<mcs::mir::Screencast>();
 
-    EXPECT_FALSE(screencast->IsValid());
+    EXPECT_FALSE(screencast->Setup(output));
 }
 
 TEST(Screencast, DoesNotCrashOnInvalidDisplayConfig) {
@@ -112,9 +80,9 @@ TEST(Screencast, DoesNotCrashOnInvalidDisplayConfig) {
 
     mcs::video::DisplayOutput output;
     output.mode = mcs::video::DisplayOutput::Mode::kExtend;
-    auto screencast = std::make_shared<mcs::mir::Screencast>(output);
+    auto screencast = std::make_shared<mcs::mir::Screencast>();
 
-    EXPECT_FALSE(screencast->IsValid());
+    EXPECT_FALSE(screencast->Setup(output));
 }
 
 TEST(Screencast, NoDisplayConfigurationAvailable) {
@@ -142,8 +110,8 @@ TEST(Screencast, NoDisplayConfigurationAvailable) {
 
     mcs::video::DisplayOutput output;
     output.mode = mcs::video::DisplayOutput::Mode::kExtend;
-    auto screencast = std::make_shared<mcs::mir::Screencast>(output);
-    EXPECT_FALSE(screencast->IsValid());
+    auto screencast = std::make_shared<mcs::mir::Screencast>();
+    EXPECT_FALSE(screencast->Setup(output));
 }
 
 TEST(Screencast, NoUsableDisplayConfigurationAvailable) {
@@ -182,8 +150,8 @@ TEST(Screencast, NoUsableDisplayConfigurationAvailable) {
 
     mcs::video::DisplayOutput output;
     output.mode = mcs::video::DisplayOutput::Mode::kExtend;
-    auto screencast = std::make_shared<mcs::mir::Screencast>(output);
-    EXPECT_FALSE(screencast->IsValid());
+    auto screencast = std::make_shared<mcs::mir::Screencast>();
+    EXPECT_FALSE(screencast->Setup(output));
 }
 
 
@@ -229,8 +197,8 @@ TEST(Screencast, NoPixelFormatAvailable) {
 
     mcs::video::DisplayOutput output;
     output.mode = mcs::video::DisplayOutput::Mode::kExtend;
-    auto screencast = std::make_shared<mcs::mir::Screencast>(output);
-    EXPECT_FALSE(screencast->IsValid());
+    auto screencast = std::make_shared<mcs::mir::Screencast>();
+    EXPECT_FALSE(screencast->Setup(output));
 }
 
 TEST(Screencast, ScreencastCreationFails) {
@@ -280,8 +248,8 @@ TEST(Screencast, ScreencastCreationFails) {
 
     mcs::video::DisplayOutput output;
     output.mode = mcs::video::DisplayOutput::Mode::kExtend;
-    auto screencast = std::make_shared<mcs::mir::Screencast>(output);
-    EXPECT_FALSE(screencast->IsValid());
+    auto screencast = std::make_shared<mcs::mir::Screencast>();
+    EXPECT_FALSE(screencast->Setup(output));
 }
 
 TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
@@ -339,8 +307,8 @@ TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
 
     mcs::video::DisplayOutput output;
     output.mode = mcs::video::DisplayOutput::Mode::kExtend;
-    auto screencast = std::make_shared<mcs::mir::Screencast>(output);
-    EXPECT_FALSE(screencast->IsValid());
+    auto screencast = std::make_shared<mcs::mir::Screencast>();
+    EXPECT_FALSE(screencast->Setup(output));
 
     // Also make sure that swap buffers isn't called when we don't have
     // a buffer stream and the screencast doesn't return a valid buffer
@@ -411,9 +379,18 @@ TEST(Screencast, DoesSwapBuffersAndReturnsCurrentBuffer) {
             .WillOnce(SetArgPointee<1>(expected_buffer));
 
     mcs::video::DisplayOutput output;
+    output.width = 1280;
+    output.height = 720;
+    output.refresh_rate = 30;
     output.mode = mcs::video::DisplayOutput::Mode::kExtend;
-    auto screencast = std::make_shared<mcs::mir::Screencast>(output);
-    EXPECT_TRUE(screencast->IsValid());
+    auto screencast = std::make_shared<mcs::mir::Screencast>();
+    EXPECT_TRUE(screencast->Setup(output));
+
+    auto returned_output = screencast->OutputMode();
+    EXPECT_EQ(output.width, returned_output.width);
+    EXPECT_EQ(output.height, returned_output.height);
+    EXPECT_EQ(output.refresh_rate, returned_output.refresh_rate);
+    EXPECT_EQ(output.mode, returned_output.mode);
 
     screencast->SwapBuffers();
     EXPECT_EQ(expected_buffer, screencast->CurrentBuffer());

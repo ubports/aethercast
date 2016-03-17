@@ -33,10 +33,10 @@ namespace mir {
 
 class Screencast : public mcs::video::BufferProducer {
 public:
-    explicit Screencast(const video::DisplayOutput &output);
+    explicit Screencast();
     ~Screencast();
 
-    bool IsValid() const;
+    bool Setup(const video::DisplayOutput &output) override;
 
     // From mcs::video::BufferProducer
     void SwapBuffers() override;

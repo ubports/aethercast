@@ -21,7 +21,6 @@
 #include <memory>
 
 #include "mcs/non_copyable.h"
-#include "mcs/ip_v4_address.h"
 
 #include "mcs/network/stream.h"
 
@@ -30,10 +29,12 @@ namespace network {
 
 class UdpStream : public Stream {
 public:
-    UdpStream(const mcs::IpV4Address &address, const Port &port);
+    UdpStream();
     ~UdpStream();
 
-    bool WaitUntilReady();
+    bool Connect(const std::string &address, const Port &port) override;
+
+    bool WaitUntilReady() override;
 
     Error Write(const uint8_t *data, unsigned int size) override;
 

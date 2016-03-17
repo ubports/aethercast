@@ -58,7 +58,8 @@ int main(int argc, char **argv) {
     auto report_factory = mcs::report::ReportFactory::Create();
 
     auto packetizer = mcs::streaming::MPEGTSPacketizer::Create(report_factory->CreatePacketizerReport());
-    auto udp_stream = std::make_shared<mcs::network::UdpStream>(mcs::IpV4Address::from_string("192.168.178.1"), 5000);
+    auto udp_stream = std::make_shared<mcs::network::UdpStream>();
+    udp_stream->Connect("192.168.178.1", 5000);
     auto sender = std::make_shared<mcs::streaming::RTPSender>(udp_stream, report_factory->CreateSenderReport());
 
     if (!sender)

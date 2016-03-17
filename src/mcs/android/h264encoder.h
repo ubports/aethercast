@@ -39,13 +39,13 @@ class H264Encoder : public video::BaseEncoder {
 public:
     typedef std::shared_ptr<H264Encoder> Ptr;
 
-    static BaseEncoder::Config DefaultConfiguration();
-
     static BaseEncoder::Ptr Create(const video::EncoderReport::Ptr &report);
 
     ~H264Encoder();
 
-    bool Configure(const BaseEncoder::Config &config);
+    BaseEncoder::Config DefaultConfiguration() override;
+
+    bool Configure(const BaseEncoder::Config &config) override;
 
     void QueueBuffer(const mcs::video::Buffer::Ptr &buffer) override;
 

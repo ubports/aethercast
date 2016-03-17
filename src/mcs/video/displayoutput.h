@@ -24,11 +24,14 @@ namespace mcs {
 namespace video {
 
 struct DisplayOutput {
-
     enum class Mode {
         kMirror,
         kExtend
     };
+
+    DisplayOutput();
+    DisplayOutput(const DisplayOutput::Mode &mode, const unsigned int &width,
+                  const unsigned int &height, const double &refresh_rate);
 
     static std::string ModeToString(const Mode &mode);
 

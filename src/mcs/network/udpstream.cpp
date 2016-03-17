@@ -59,22 +59,35 @@ static int MakeSocketNonBlocking(int socket) {
 namespace mcs {
 namespace network {
 
-UdpStream::UdpStream(const IpV4Address &address, const Port &port) :
+UdpStream::UdpStream() :
     socket_(0),
     local_port_(PickRandomRTPPort()) {
+}
 
+UdpStream::~UdpStream() {
+    if (socket_ > 0)
+        ::close(socket_);
+}
+
+bool UdpStream::Connect(const std::string &address, const Port &port) {
     MCS_DEBUG("Connected with remote on %s:%d", address, port);
 
     socket_ = ::socket(AF_INET, SOCK_DGRAM, 0);
-    if (socket_ < 0)
-        throw new std::system_error{errno, std::system_category(), "Failed to create socket"};
+    if (socket_ < 0) {
+        MCS_ERROR("Failed to create socket: %s (%d)", ::strerror(errno), errno);
+        return false;
+    }
 
     int value = kUdpTxBufferSize;
-    if (::setsockopt(socket_, SOL_SOCKET, SO_SNDBUF, &value, sizeof(value)) < 0)
-        throw new std::system_error{errno, std::system_category(), "Failed to set socket transmit buffer size"};
+    if (::setsockopt(socket_, SOL_SOCKET, SO_SNDBUF, &value, sizeof(value)) < 0) {
+        MCS_ERROR("Failed to set socket transmit buffer size: %s (%d)", ::strerror(errno), errno);
+        return false;
+    }
 
-    if (::MakeSocketNonBlocking(socket_) < 0)
-        throw new std::runtime_error("Failed to make socket non-blocking");
+    if (::MakeSocketNonBlocking(socket_) < 0) {
+        MCS_ERROR("Failed to make socket non blocking");
+        return false;
+    }
 
     struct sockaddr_in addr;
     memset(addr.sin_zero, 0, sizeof(addr.sin_zero));
@@ -82,27 +95,30 @@ UdpStream::UdpStream(const IpV4Address &address, const Port &port) :
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(local_port_);
 
-    if (::bind(socket_, (const struct sockaddr *) &addr, sizeof(addr)) < 0)
-        throw new std::system_error{errno, std::system_category(), "Failed to bind socket to address"};
+    if (::bind(socket_, (const struct sockaddr *) &addr, sizeof(addr)) < 0) {
+        MCS_ERROR("Failed to bind socket to address: %s (%d)", ::strerror(errno), errno);
+        return false;
+    }
 
     struct sockaddr_in remote_addr;
     memset(remote_addr.sin_zero, 0, sizeof(remote_addr.sin_zero));
     remote_addr.sin_family = AF_INET;
     remote_addr.sin_port = htons(port);
 
-    struct hostent *ent = gethostbyname(address.to_string().c_str());
-    if (!ent)
-        throw new std::runtime_error("Failed to resolve remote address");
+    struct hostent *ent = gethostbyname(address.c_str());
+    if (!ent) {
+        MCS_ERROR("Failed to resolve remote address");
+        return false;
+    }
 
     remote_addr.sin_addr.s_addr = *(in_addr_t*) ent->h_addr;
 
-    if (::connect(socket_, (const struct sockaddr*) &remote_addr, sizeof(remote_addr)) < 0)
-        throw new std::system_error{errno, std::system_category(), "Failed to connect with remote"};
-}
+    if (::connect(socket_, (const struct sockaddr*) &remote_addr, sizeof(remote_addr)) < 0) {
+        MCS_ERROR("Failed to connect to remote: %s (%d)", ::strerror(errno), errno);
+        return false;
+    }
 
-UdpStream::~UdpStream() {
-    if (socket_ > 0)
-        ::close(socket_);
+    return true;
 }
 
 bool UdpStream::WaitUntilReady() {
@@ -139,11 +155,11 @@ Stream::Error UdpStream::Write(const uint8_t *data, unsigned int size) {
     }
 
     if (bytes_sent < 0) {
-        MCS_ERROR("Failed to send packet to remote: %s (%d)", std::strerror(-errno), errno);
+        MCS_ERROR("Failed to send packet to remote: %s (%d)", ::strerror(-errno), errno);
         return Error::kFailed;
     }
     else if (bytes_sent == 0) {
-        MCS_ERROR("Remote has closed connection: %s (%d)", std::strerror(-errno), errno);
+        MCS_ERROR("Remote has closed connection: %s (%d)", ::strerror(-errno), errno);
         return Error::kRemoteClosedConnection;
     }
 

@@ -32,5 +32,20 @@ std::string DisplayOutput::ModeToString(const Mode &mode) {
     return "unknown";
 }
 
+DisplayOutput::DisplayOutput() :
+    mode(Mode::kMirror),
+    width(0),
+    height(0),
+    refresh_rate(0) {
+}
+
+DisplayOutput::DisplayOutput(const DisplayOutput::Mode &mode, const unsigned int &width,
+                             const unsigned int &height, const double &refresh_rate) :
+    mode(mode),
+    width(width),
+    height(height),
+    refresh_rate(refresh_rate) {
+}
+
 } // namespace video
 } // namespace mcs

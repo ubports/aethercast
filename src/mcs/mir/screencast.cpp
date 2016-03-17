@@ -28,34 +28,42 @@ static constexpr const char *kMirConnectionName{"aethercast screencast client"};
 namespace mcs {
 namespace mir {
 
-Screencast::Screencast(const video::DisplayOutput &output) :
+Screencast::Screencast() :
     connection_(nullptr),
     screencast_(nullptr),
-    buffer_stream_(nullptr),
-    output_(output) {
+    buffer_stream_(nullptr) {
+}
 
-    // TODO(morphis): Refactor this to set we don't leave a partially
-    // initialized object floating around. We should either fail with
-    // an exception here or do initialization differently.
+Screencast::~Screencast() {
+    if (screencast_)
+        mir_screencast_release_sync(screencast_);
 
-    if (output_.mode != video::DisplayOutput::Mode::kExtend) {
+    if (connection_)
+        mir_connection_release(connection_);
+}
+
+bool Screencast::Setup(const video::DisplayOutput &output) {
+    if (screencast_ || connection_ || buffer_stream_)
+        return false;
+
+    if (output.mode != video::DisplayOutput::Mode::kExtend) {
         MCS_ERROR("Unsupported display output mode specified '%s'",
-                  mcs::video::DisplayOutput::ModeToString(output_.mode));
-        return;
+                  mcs::video::DisplayOutput::ModeToString(output.mode));
+        return false;
     }
 
     connection_ = mir_connect_sync(kMirSocket, kMirConnectionName);
     if (!mir_connection_is_valid(connection_)) {
         MCS_ERROR("Failed to connect to Mir server: %s",
                   mir_connection_get_error_message(connection_));
-        return;
+        return false;
     }
 
     auto config = mir_connection_create_display_config(connection_);
     if (!config) {
         MCS_ERROR("Failed to create display configuration: %s",
                   mir_connection_get_error_message(connection_));
-        return;
+        return false;
     }
 
     MirDisplayOutput *active_output = nullptr;
@@ -74,7 +82,7 @@ Screencast::Screencast(const video::DisplayOutput &output) :
 
     if (!active_output) {
         MCS_ERROR("Failed to find a suitable display output");
-        return;
+        return false;
     }
 
     const MirDisplayMode *display_mode = &active_output->modes[active_output->current_mode];
@@ -87,11 +95,11 @@ Screencast::Screencast(const video::DisplayOutput &output) :
     // as just another display.
     params_.region.left = params_.width;
     params_.region.top = 0;
-    params_.region.width = output_.width;
-    params_.region.height = output_.height;
+    params_.region.width = output.width;
+    params_.region.height = output.height;
 
-    params_.width = output_.width;
-    params_.height = output_.height;
+    params_.width = output.width;
+    params_.height = output.height;
 
     output_.refresh_rate = display_mode->refresh_rate;
 
@@ -102,9 +110,9 @@ Screencast::Screencast(const video::DisplayOutput &output) :
              active_output->orientation);
 
     MCS_DEBUG("Setting up screencast [%s %dx%d]",
-              video::DisplayOutput::ModeToString(output_.mode),
-              output_.width,
-              output_.height);
+              video::DisplayOutput::ModeToString(output.mode),
+              output.width,
+              output.height);
 
     unsigned int num_pixel_formats = 0;
     mir_connection_get_available_surface_formats(connection_, &params_.pixel_format,
@@ -112,29 +120,25 @@ Screencast::Screencast(const video::DisplayOutput &output) :
     if (num_pixel_formats == 0) {
         MCS_ERROR("Failed to find suitable pixel format: %s",
                   mir_connection_get_error_message(connection_));
-        return;
+        return false;
     }
 
     screencast_ = mir_connection_create_screencast_sync(connection_, &params_);
     if (!screencast_) {
         MCS_ERROR("Failed to create Mir screencast: %s",
                   mir_connection_get_error_message(connection_));
-        return;
+        return false;
     }
 
     buffer_stream_ = mir_screencast_get_buffer_stream(screencast_);
     if (!buffer_stream_) {
         MCS_ERROR("Failed to setup Mir buffer stream");
-        return;
+        return false;
     }
-}
 
-Screencast::~Screencast() {
-    if (screencast_)
-        mir_screencast_release_sync(screencast_);
+    output_ = output;
 
-    if (connection_)
-        mir_connection_release(connection_);
+    return true;
 }
 
 void Screencast::SwapBuffers() {
@@ -142,10 +146,6 @@ void Screencast::SwapBuffers() {
         return;
 
     mir_buffer_stream_swap_buffers_sync(buffer_stream_);
-}
-
-bool Screencast::IsValid() const {
-    return connection_ && screencast_ &&  buffer_stream_;
 }
 
 video::DisplayOutput Screencast::OutputMode() const {
