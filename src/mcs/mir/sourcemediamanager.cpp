@@ -83,7 +83,6 @@ bool SourceMediaManager::Configure() {
 
     renderer_ = std::make_shared<mcs::mir::StreamRenderer>(
                 screencast_, encoder_, report_factory->CreateRendererReport());
-    renderer_->SetDimensions(rr.width, rr.height);
 
     auto output_stream = std::make_shared<mcs::network::UdpStream>(
                 mcs::IpV4Address::from_string(remote_address_), sink_port1_);

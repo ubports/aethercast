@@ -33,14 +33,15 @@ static constexpr unsigned int kNumBufferSlots{2};
 namespace mcs {
 namespace mir {
 
-StreamRenderer::StreamRenderer(const video::BufferProducer::Ptr &buffer_producer, const video::BaseEncoder::Ptr &encoder,
+StreamRenderer::StreamRenderer(const video::BufferProducer::Ptr &buffer_producer,
+                               const video::BaseEncoder::Ptr &encoder,
                                const video::RendererReport::Ptr &report) :
     report_(report),
     buffer_producer_(buffer_producer),
     encoder_(encoder),
     width_(buffer_producer->OutputMode().width),
     height_(buffer_producer->OutputMode().height),
-    input_buffers_(mcs::video::BufferQueue::Create(kNumBufferSlots)),
+    input_buffers_(mcs::video::BufferQueue::Create(BufferSlots())),
     target_iteration_time_((1. / encoder_->Configuration().framerate) * std::micro::den) {
 }
 
@@ -51,12 +52,12 @@ StreamRenderer::~StreamRenderer() {
 bool StreamRenderer::Execute() {
     mcs::TimestampUs iteration_start_time = mcs::Utils::GetNowUs();
 
-    report_->BeganFrame();
-
     // Wait until we have free slots again and all buffers we produced
     // went through the pipeline.
     if (!input_buffers_->WaitForSlots())
         return true;
+
+    report_->BeganFrame();
 
     // This will trigger the rendering/compositing process inside mir
     // and will block until that is done and we received a new buffer
@@ -98,11 +99,6 @@ void StreamRenderer::OnBufferFinished(const video::Buffer::Ptr &buffer) {
     input_buffers_->Pop();
 }
 
-void StreamRenderer::SetDimensions(unsigned int width, unsigned int height) {
-    width_ = width;
-    height_ = height;
-}
-
 bool StreamRenderer::Start() {
     MCS_DEBUG("Everything successfully setup; Starting recording now %dx%d@%d",
               width_, height_, encoder_->Configuration().framerate);
@@ -116,6 +112,10 @@ bool StreamRenderer::Stop() {
 
 std::string StreamRenderer::Name() const {
     return kStreamRendererThreadName;
+}
+
+std::uint32_t StreamRenderer::BufferSlots() const {
+    return kNumBufferSlots;
 }
 
 } // namespace mir

@@ -48,7 +48,7 @@ public:
                    const video::RendererReport::Ptr  &report);
     ~StreamRenderer();
 
-    void SetDimensions(unsigned int width, unsigned int height);
+    std::uint32_t BufferSlots() const;
 
     // From mcs::video::Buffer::Delegate
     void OnBufferFinished(const mcs::video::Buffer::Ptr &buffer);
