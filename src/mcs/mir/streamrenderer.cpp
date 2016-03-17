@@ -15,15 +15,6 @@
  *
  */
 
-#define GL_GLEXT_PROTOTYPES
-#define EGL_EGLEXT_PROTOTYPES
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-
-#include <system/window.h>
-
 #include <chrono>
 #include <thread>
 
@@ -47,9 +38,10 @@ StreamRenderer::StreamRenderer(const video::BufferProducer::Ptr &buffer_producer
     report_(report),
     buffer_producer_(buffer_producer),
     encoder_(encoder),
-    width_(0),
-    height_(0),
-    input_buffers_(mcs::video::BufferQueue::Create(kNumBufferSlots)) {
+    width_(buffer_producer->OutputMode().width),
+    height_(buffer_producer->OutputMode().height),
+    input_buffers_(mcs::video::BufferQueue::Create(kNumBufferSlots)),
+    target_iteration_time_((1. / encoder_->Configuration().framerate) * std::micro::den) {
 }
 
 StreamRenderer::~StreamRenderer() {
@@ -57,12 +49,12 @@ StreamRenderer::~StreamRenderer() {
 }
 
 bool StreamRenderer::Execute() {
-    static const mcs::TimestampUs target_iteration_time = (1. / encoder_->Configuration().framerate) * 1000000ll;
-
     mcs::TimestampUs iteration_start_time = mcs::Utils::GetNowUs();
 
     report_->BeganFrame();
 
+    // Wait until we have free slots again and all buffers we produced
+    // went through the pipeline.
     if (!input_buffers_->WaitForSlots())
         return true;
 
@@ -76,8 +68,8 @@ bool StreamRenderer::Execute() {
     buffer->SetDelegate(shared_from_this());
 
     // FIXME: at optimum we would get the timestamp directly supplied
-    // from mir but as long as that isn't available we don't have any
-    // other chance and need to do it here.
+    // from our producer but as long as that isn't available we don't
+    // have any other chance and need to do it here.
     buffer->SetTimestamp(mcs::Utils::GetNowUs());
 
     input_buffers_->Push(buffer);
@@ -89,7 +81,7 @@ bool StreamRenderer::Execute() {
     // Calculate how long we have to wait until we can render the next
     // frame to keep our framerate constant.
     mcs::TimestampUs iteration_time = mcs::Utils::GetNowUs() - iteration_start_time;
-    int64_t sleep_time = target_iteration_time - iteration_time;
+    mcs::TimestampUs sleep_time = target_iteration_time_ - iteration_time;
     if (sleep_time > 0)
         std::this_thread::sleep_for(std::chrono::microseconds(sleep_time));
 
@@ -112,13 +104,6 @@ void StreamRenderer::SetDimensions(unsigned int width, unsigned int height) {
 }
 
 bool StreamRenderer::Start() {
-    auto output_mode = buffer_producer_->OutputMode();
-
-    if (width_ == 0 || height_ == 0) {
-        width_ = output_mode.width;
-        height_ = output_mode.height;
-    }
-
     MCS_DEBUG("Everything successfully setup; Starting recording now %dx%d@%d",
               width_, height_, encoder_->Configuration().framerate);
 

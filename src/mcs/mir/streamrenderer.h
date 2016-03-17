@@ -66,6 +66,7 @@ private:
     unsigned int width_;
     unsigned int height_;
     mcs::video::BufferQueue::Ptr input_buffers_;
+    mcs::TimestampUs target_iteration_time_;
 };
 } // namespace mir
 } // namespace mcs
