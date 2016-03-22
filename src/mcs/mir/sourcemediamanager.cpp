@@ -38,6 +38,7 @@ namespace mcs {
 namespace mir {
 
 SourceMediaManager::SourceMediaManager(const std::string &remote_address,
+                                       const mcs::common::ExecutorFactory::Ptr &executor_factory,
                                        const mcs::video::BufferProducer::Ptr &producer,
                                        const mcs::video::BaseEncoder::Ptr &encoder,
                                        const mcs::network::Stream::Ptr &output_stream,
@@ -48,7 +49,7 @@ SourceMediaManager::SourceMediaManager(const std::string &remote_address,
     output_stream_(output_stream),
     report_factory_(report_factory),
     state_(State::Stopped),
-    pipeline_(std::make_shared<mcs::common::ThreadedExecutorFactory>(), 4) {
+    pipeline_(executor_factory, 4) {
 }
 
 SourceMediaManager::~SourceMediaManager() {
@@ -115,7 +116,7 @@ bool SourceMediaManager::Configure() {
 }
 
 void SourceMediaManager::Play() {
-    if (!IsPaused() || !renderer_)
+    if (!IsPaused())
         return;
 
     MCS_DEBUG("");
@@ -126,7 +127,7 @@ void SourceMediaManager::Play() {
 }
 
 void SourceMediaManager::Pause() {
-    if (IsPaused()|| !renderer_)
+    if (IsPaused())
         return;
 
     MCS_DEBUG("");
@@ -137,7 +138,7 @@ void SourceMediaManager::Pause() {
 }
 
 void SourceMediaManager::Teardown() {
-    if (state_ == State::Stopped || !renderer_)
+    if (state_ == State::Stopped)
         return;
 
     MCS_DEBUG("");

@@ -51,6 +51,7 @@ public:
     };
 
     SourceMediaManager(const std::string &remote_address,
+                       const mcs::common::ExecutorFactory::Ptr &executor_factory,
                        const mcs::video::BufferProducer::Ptr &producer,
                        const mcs::video::BaseEncoder::Ptr &encoder,
                        const mcs::network::Stream::Ptr &output_stream,

@@ -25,6 +25,8 @@
 #include "utils.h"
 #include "logging.h"
 
+#include "mcs/common/threadedexecutorfactory.h"
+
 #include "mcs/report/reportfactory.h"
 
 #include "mcs/network/udpstream.h"
@@ -63,6 +65,7 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
     DEBUG("Creating source media manager of type %s", type.c_str());
 
     if (type == "mir") {
+        auto executor_factory = std::make_shared<common::ThreadedExecutorFactory>();
         auto report_factory = report::ReportFactory::Create();
         auto screencast = std::make_shared<mcs::mir::Screencast>();
         auto encoder = mcs::android::H264Encoder::Create(report_factory->CreateEncoderReport());
@@ -70,6 +73,7 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
 
         return std::make_shared<mcs::mir::SourceMediaManager>(
                     remote_address,
+                    executor_factory,
                     screencast,
                     encoder,
                     network_stream,
