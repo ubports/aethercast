@@ -260,5 +260,3 @@ TEST_F(SourceMediaManagerFixture, SendsIDRPicture) {
 
     manager->SendIDRPicture();
 }
-
-TEST_F(SourceMediaManagerFixture, )

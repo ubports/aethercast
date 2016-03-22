@@ -26,7 +26,6 @@
 #include "logger.h"
 #include "miracastsourceclient.h"
 #include "mcs/mir/sourcemediamanager.h"
-#include "testsourcemediamanager.h"
 #include "mediamanagerfactory.h"
 
 #include "networkutils.h"

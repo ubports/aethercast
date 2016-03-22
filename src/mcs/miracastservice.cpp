@@ -26,7 +26,6 @@
 
 #include <glib.h>
 #include <glib-unix.h>
-#include <gst/gst.h>
 
 #include <chrono>
 
@@ -34,7 +33,6 @@
 
 #include <wds/logging.h>
 
-#include "initgstreameronce.h"
 #include "config.h"
 #include "keep_alive.h"
 #include "logger.h"
@@ -130,9 +128,6 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
             g_unix_signal_add(SIGINT, OnSignalRaised, this);
             g_unix_signal_add(SIGTERM, OnSignalRaised, this);
 
-            // Initialize gstreamer.
-            mcs::InitGstreamerOnceOrThrow();
-
             // Redirect all wds logging to our own.
             wds::LogSystem::set_vlog_func(SafeLog<mcs::Logger::Severity::kTrace>);
             wds::LogSystem::set_log_func(SafeLog<mcs::Logger::Severity::kInfo>);
@@ -184,7 +179,6 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
         }
 
         GMainLoop *ml = g_main_loop_new(nullptr, FALSE);
-        bool is_gst_initialized = gst_init_check(nullptr, nullptr, nullptr);
         mcs::NetworkManager::Ptr network_manager;
         mcs::MiracastService::Ptr service;
         mcs::MiracastControllerSkeleton::Ptr mcsa;
