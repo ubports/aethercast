@@ -24,12 +24,11 @@
 #include <memory>
 #include <map>
 
-#include <glib.h>
-#include <gio/gio.h>
-
 #include <wds/peer.h>
 #include <wds/source.h>
 #include <wds/media_manager.h>
+
+#include "mcs/glib_wrapper.h"
 
 #include "mcs/ip_v4_address.h"
 #include "mcs/non_copyable.h"

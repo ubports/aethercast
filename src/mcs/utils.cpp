@@ -79,15 +79,15 @@ uint64_t Utils::GetNowUs() {
 
 std::string Utils::Hexdump(const uint8_t *data, uint32_t size) {
     unsigned char buff[17];
-    unsigned char *pc = (unsigned char*) data;
+    const uint8_t *pc = data;
     std::stringstream buffer;
 
-    if (size == 0 || size < 0) {
+    if (size == 0) {
         buffer << "NULL" << std::endl;
         return buffer.str();
     }
 
-    int i;
+    unsigned int i;
     for (i = 0; i < size; i++) {
         if ((i % 16) == 0) {
             if (i != 0)

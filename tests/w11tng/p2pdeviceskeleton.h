@@ -20,10 +20,6 @@
 
 #include <mcs/non_copyable.h>
 
-extern "C" {
-#include "wpasupplicantinterface.h"
-}
-
 #include "baseskeleton.h"
 
 #include "w11tng/p2pdevicestub.h"

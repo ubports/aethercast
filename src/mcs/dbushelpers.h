@@ -20,11 +20,10 @@
 
 #include <functional>
 
-#include <glib.h>
-#include <gio/gio.h>
+#include "mcs/glib_wrapper.h"
 
-#include "networkmanager.h"
-#include "scoped_gobject.h"
+#include "mcs/networkmanager.h"
+#include "mcs/scoped_gobject.h"
 
 namespace mcs {
 

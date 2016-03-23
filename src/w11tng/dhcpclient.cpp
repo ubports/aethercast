@@ -15,8 +15,6 @@
  *
  */
 
-#include <gio/gio.h>
-
 #include <asm/types.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>

@@ -1,23 +1,7 @@
-# We have to make sure that this directory exists.
-# Otherwise, GDBUS_CODEGEN_EXECUTABLE fails.
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mcs)
+add_subdirectory(gdbus)
 
-execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
-                        --c-namespace AethercastInterface
-                        --c-generate-object-manager
-                        --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/mcs/aethercastinterface
-                        --interface-prefix org.aethercast.
-                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/org.aethercast.xml)
-
-execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
-                        --c-namespace WpaSupplicant
-                        --c-generate-object-manager
-                        --generate-c-code ${CMAKE_CURRENT_BINARY_DIR}/mcs/wpasupplicantinterface
-                        --interface-prefix fi.w1.wpa_supplicant1.
-                        ${CMAKE_CURRENT_SOURCE_DIR}/../data/fi.w1.wpa_supplicant1.xml)
-
-# Make sure that generated header files can be found
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/mcs)
+# Make sure that generated gdbus header files can be found
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/gdbus)
 
 set(AETHERCAST_DHCP_HELPER "/usr/sbin/aethercast-dhcp-helper")
 set(DHCP_SERVER_PATH "/usr/sbin/dhcpd")
@@ -27,10 +11,11 @@ configure_file(mcs/config.h.in mcs/config.h @ONLY)
 configure_file(w11tng/config.h.in w11tng/config.h @ONLY)
 
 set(HEADERS
+  mcs/glib_wrapper.h
+
   mcs/ip_v4_address.h
   mcs/keep_alive.h
   mcs/mac_address.h
-  mcs/types.h
   mcs/shared_gobject.h
   mcs/keep_alive.h
   mcs/config.h
@@ -61,6 +46,7 @@ set(HEADERS
 )
 
 set(SOURCES
+  mcs/types.cpp
   mcs/utils.cpp
   mcs/networkutils.cpp
   mcs/mediamanagerfactory.cpp
@@ -76,7 +62,6 @@ set(SOURCES
   mcs/networkmanager.cpp
   mcs/networkmanagerfactory.cpp
   mcs/networkdevice.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/mcs/aethercastinterface.c
   mcs/dbushelpers.cpp
   mcs/networkdeviceskeleton.cpp
 
@@ -131,7 +116,6 @@ set(SOURCES
   mcs/ubuntu/systemcontroller.cpp
   mcs/ubuntu/unitydisplaylock.cpp
 
-  ${CMAKE_CURRENT_BINARY_DIR}/mcs/wpasupplicantinterface.c
   w11tng/networkmanager.cpp
   w11tng/networkdevice.cpp
   w11tng/interfaceselector.cpp
@@ -165,23 +149,11 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/src/w11tng
 )
 
-
 add_library(aethercast-core ${SOURCES} ${HEADERS})
 target_compile_definitions(aethercast-core PUBLIC
     "-DAETHERCAST_TRACEPOINT_LIB_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/${AETHERCAST_TRACEPOINT_LIB_INSTALL_DIR}\"")
-
-add_library(aethercast-lttng SHARED mcs/report/lttng/tracepoints.c)
-target_link_libraries(aethercast-lttng
-    ${LTTNG_UST_LIBRARIES}
-)
-
-install(TARGETS aethercast-lttng
-  LIBRARY DESTINATION ${AETHERCAST_TRACEPOINT_LIB_INSTALL_DIR}
-)
-
-add_executable(aethercast mcs/main.cpp)
-
 target_link_libraries(aethercast-core
+  aethercast-gdbus-wrapper
   ${Boost_LDFLAGS}
   ${Boost_LIBRARIES}
   ${GLIB_LDFLAGS}
@@ -204,6 +176,16 @@ target_link_libraries(aethercast-core
   -ldl
 )
 
+add_library(aethercast-lttng SHARED mcs/report/lttng/tracepoints.c)
+target_link_libraries(aethercast-lttng
+    ${LTTNG_UST_LIBRARIES}
+)
+
+install(TARGETS aethercast-lttng
+  LIBRARY DESTINATION ${AETHERCAST_TRACEPOINT_LIB_INSTALL_DIR}
+)
+
+add_executable(aethercast mcs/main.cpp)
 target_link_libraries(aethercast aethercast-core)
 
 install(

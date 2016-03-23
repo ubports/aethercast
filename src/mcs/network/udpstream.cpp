@@ -79,7 +79,7 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(local_port_);
 
-    if (::bind(socket_, (const struct sockaddr *) &addr, sizeof(addr)) < 0) {
+    if (::bind(socket_, reinterpret_cast<const struct sockaddr*>(&addr), sizeof(addr)) < 0) {
         MCS_ERROR("Failed to bind socket to address: %s (%d)", ::strerror(errno), errno);
         return false;
     }
@@ -97,7 +97,7 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
 
     remote_addr.sin_addr.s_addr = *(in_addr_t*) ent->h_addr;
 
-    if (::connect(socket_, (const struct sockaddr*) &remote_addr, sizeof(remote_addr)) < 0) {
+    if (::connect(socket_, reinterpret_cast<const struct sockaddr*>(&remote_addr), sizeof(remote_addr)) < 0) {
         MCS_ERROR("Failed to connect to remote: %s (%d)", ::strerror(errno), errno);
         return false;
     }
@@ -110,7 +110,7 @@ bool UdpStream::WaitUntilReady() {
     FD_SET(socket_, &fds);
 
     int ret = ::select(socket_ + 1, nullptr, &fds, nullptr, nullptr);
-    if (!FD_ISSET(socket_, &fds))
+    if (ret < 0 || !FD_ISSET(socket_, &fds))
         return false;
 
     return true;

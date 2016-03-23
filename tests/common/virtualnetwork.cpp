@@ -23,15 +23,15 @@ extern "C" {
 #include "virtualnetwork.h"
 
 namespace {
-static constexpr char* kVethNameTemplate{"vethXXXXXX"};
+static constexpr const char* kVethNameTemplate{"vethXXXXXX"};
 }
 
 namespace mcs {
 namespace testing {
 
 VirtualNetwork::VirtualNetwork() :
-    endpoint1_(lxc_mkifname(kVethNameTemplate)),
-    endpoint2_(lxc_mkifname(kVethNameTemplate)) {
+    endpoint1_(lxc_mkifname(const_cast<char*>(kVethNameTemplate))),
+    endpoint2_(lxc_mkifname(const_cast<char*>(kVethNameTemplate))) {
 
     lxc_veth_create(endpoint1_.c_str(), endpoint2_.c_str());
     lxc_netdev_up(endpoint1_.c_str());

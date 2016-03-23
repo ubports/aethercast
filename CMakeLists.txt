@@ -35,6 +35,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-permissive")
 endif()
 
+string(TOLOWER "${CMAKE_BUILD_TYPE}" cmake_build_type_lower)
+
 if ("${cmake_build_type_lower}" STREQUAL "release" OR "${cmake_build_type_lower}" STREQUAL "relwithdebinfo")
   option(Werror "Treat warnings as errors" ON)
 else()
@@ -42,6 +44,7 @@ else()
 endif()
 
 if (${Werror})
+    message(STATUS "Treat warnings as errors")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   if ("${cmake_build_type_lower}" STREQUAL "release" OR "${cmake_build_type_lower}" STREQUAL "relwithdebinfo")

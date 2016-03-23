@@ -18,8 +18,6 @@
 #ifndef W11TNG_FILEMONITOR_H_
 #define W11TNG_FILEMONITOR_H_
 
-#include <gio/gio.h>
-
 #include <memory>
 #include <map>
 #include <string>

@@ -17,8 +17,6 @@
  *
  */
 
-#include <glib.h>
-#include <glib-unix.h>
 
 #include <signal.h>
 #include <sys/time.h>
@@ -31,6 +29,7 @@
 #include <boost/program_options.hpp>
 
 #include <mcs/logger.h>
+#include <mcs/glib_wrapper.h>
 
 #include "simplesource.h"
 
