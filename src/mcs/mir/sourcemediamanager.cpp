@@ -89,13 +89,10 @@ bool SourceMediaManager::Configure() {
     }
 
     renderer_ = std::make_shared<mcs::mir::StreamRenderer>(
-                producer_,
-                encoder_,
-                report_factory_->CreateRendererReport());
+                producer_, encoder_, report_factory_->CreateRendererReport());
 
     auto rtp_sender = std::make_shared<mcs::streaming::RTPSender>(
-                output_stream_,
-                report_factory_->CreateSenderReport());
+                output_stream_, report_factory_->CreateSenderReport());
 
     auto mpegts_packetizer = mcs::streaming::MPEGTSPacketizer::Create(
                 report_factory_->CreatePacketizerReport());
