@@ -45,8 +45,11 @@ bool ExecutorPool::Start() {
         return false;
 
     bool result = true;
-    for (Item &item : items_)
+    for (Item &item : items_) {
         result &= item.executor->Start();
+        if (!result)
+            break;
+    }
 
     // If we failed to start all we stop those we already
     // started to come back into a well known state.

@@ -27,9 +27,10 @@
 #include <error.h>
 #include <stdlib.h>
 
-#include <system_error>
+#include <random>
 
 #include "mcs/logger.h"
+#include "mcs/networkutils.h"
 
 #include "mcs/network/udpstream.h"
 
@@ -37,23 +38,6 @@ namespace {
 static constexpr unsigned int kUdpTxBufferSize = 256 * 1024;
 /* Value below configured MTU so that we don't require any further splits */
 static constexpr unsigned int kMaxUDPPacketSize = 1472;
-
-static mcs::network::Port PickRandomRTPPort() {
-    // Pick an even integer in range [1024, 65534)
-    static const size_t range = (65534 - 1024) / 2;
-    return (mcs::network::Port)(((float)(range + 1) * rand()) / RAND_MAX) * 2 + 1024;
-}
-
-static int MakeSocketNonBlocking(int socket) {
-    int flags = fcntl(socket, F_GETFL, 0);
-    if (flags < 0)
-        flags = 0;
-    int res = fcntl(socket, F_SETFL, flags | O_NONBLOCK);
-    if (res < 0)
-        return -errno;
-    return 0;
-}
-
 }
 
 namespace mcs {
@@ -61,7 +45,7 @@ namespace network {
 
 UdpStream::UdpStream() :
     socket_(0),
-    local_port_(PickRandomRTPPort()) {
+    local_port_(NetworkUtils::PickRandomPort()) {
 }
 
 UdpStream::~UdpStream() {
@@ -84,7 +68,7 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
         return false;
     }
 
-    if (::MakeSocketNonBlocking(socket_) < 0) {
+    if (NetworkUtils::MakeSocketNonBlocking(socket_) < 0) {
         MCS_ERROR("Failed to make socket non blocking");
         return false;
     }
