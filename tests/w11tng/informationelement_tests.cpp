@@ -24,7 +24,7 @@
 TEST(InformationElement, SourceWithAvailableSession) {
     w11tng::InformationElement ie;
     auto sub_element = new_subelement(w11tng::kDeviceInformation);
-    auto dev_info = reinterpret_cast<w11tng::DeviceInformationSubelement*>(sub_element);
+    const auto dev_info = reinterpret_cast<w11tng::DeviceInformationSubelement*>(sub_element);
 
     dev_info->session_management_control_port = htons(7236);
     dev_info->maximum_throughput = htons(50);
@@ -44,7 +44,7 @@ TEST(InformationElement, SourceWithAvailableSession) {
 TEST(InformationElement, DualRole) {
     w11tng::InformationElement ie;
     auto sub_element = new_subelement(w11tng::kDeviceInformation);
-    auto dev_info = reinterpret_cast<w11tng::DeviceInformationSubelement*>(sub_element);
+    const auto dev_info = reinterpret_cast<w11tng::DeviceInformationSubelement*>(sub_element);
 
     dev_info->session_management_control_port = htons(7236);
     dev_info->maximum_throughput = htons(50);
