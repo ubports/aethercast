@@ -43,12 +43,12 @@ SourceMediaManager::SourceMediaManager(const std::string &remote_address,
                                        const mcs::video::BaseEncoder::Ptr &encoder,
                                        const mcs::network::Stream::Ptr &output_stream,
                                        const mcs::report::ReportFactory::Ptr &report_factory) :
+    state_(State::Stopped),
     remote_address_(remote_address),
     producer_(producer),
     encoder_(encoder),
     output_stream_(output_stream),
     report_factory_(report_factory),
-    state_(State::Stopped),
     pipeline_(executor_factory, 4) {
 }
 
@@ -89,13 +89,10 @@ bool SourceMediaManager::Configure() {
     }
 
     renderer_ = std::make_shared<mcs::mir::StreamRenderer>(
-                producer_,
-                encoder_,
-                report_factory_->CreateRendererReport());
+                producer_, encoder_, report_factory_->CreateRendererReport());
 
     auto rtp_sender = std::make_shared<mcs::streaming::RTPSender>(
-                output_stream_,
-                report_factory_->CreateSenderReport());
+                output_stream_, report_factory_->CreateSenderReport());
 
     auto mpegts_packetizer = mcs::streaming::MPEGTSPacketizer::Create(
                 report_factory_->CreatePacketizerReport());
