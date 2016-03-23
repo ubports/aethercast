@@ -147,8 +147,8 @@ class InformationElement {
     virtual ~InformationElement();
 
     void add_subelement(Subelement* subelement);
-    const DeviceType get_device_type() const;
-    const int get_rtsp_port() const;
+    DeviceType get_device_type() const;
+    int get_rtsp_port() const;
 
     std::unique_ptr<InformationElementArray> serialize () const;
     std::string to_string() const;

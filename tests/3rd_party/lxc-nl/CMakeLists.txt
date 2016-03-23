@@ -3,4 +3,9 @@ set(SOURCES
     network.c
 )
 
+# We copied this code parts for LXC and don't want to fix any compile
+# warnings in it.
+set(CMAKE_C_FLAGS "-Wall")
+set(CMAKE_CXX_FLAGS "-Wall")
+
 add_library(lxc-network ${SOURCES})

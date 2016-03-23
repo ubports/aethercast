@@ -20,10 +20,6 @@
 
 #include <vector>
 
-extern "C" {
-#include "wpasupplicantinterface.h"
-}
-
 #include "baseskeleton.h"
 
 namespace w11tng {

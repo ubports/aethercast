@@ -33,13 +33,13 @@ Subelement* new_subelement (SubelementId id)
     Subelement* element;
     switch (id) {
         case kDeviceInformation:
-            element = (Subelement*)new DeviceInformationSubelement;
+            element = reinterpret_cast<Subelement*>(new DeviceInformationSubelement);
             break;
         case kAssociatedBssid:
-            element = (Subelement*)new AssociatedBSSIDSubelement;
+            element = reinterpret_cast<Subelement*>(new AssociatedBSSIDSubelement);
             break;
         case kCoupledSinkInformation:
-            element = (Subelement*)new CoupledSinkInformationSubelement;
+            element = reinterpret_cast<Subelement*>(new CoupledSinkInformationSubelement);
             break;
         default:
             element = NULL;
@@ -60,13 +60,13 @@ void InformationElement::delete_subelement (Subelement *element)
 {
     switch (element->id) {
         case kDeviceInformation:
-            delete ((DeviceInformationSubelement*)element);
+            delete reinterpret_cast<DeviceInformationSubelement*>(element);
             break;
         case kAssociatedBssid:
-            delete ((AssociatedBSSIDSubelement*)element);
+            delete reinterpret_cast<AssociatedBSSIDSubelement*>(element);
             break;
         case kCoupledSinkInformation:
-            delete ((CoupledSinkInformationSubelement*)element);
+            delete reinterpret_cast<CoupledSinkInformationSubelement*>(element);
             break;
         default:
             assert(false);
@@ -81,7 +81,7 @@ InformationElement::InformationElement(const std::unique_ptr<InformationElementA
     length_ = array->length;
 
     while (length_ >= pos + 2) {
-        SubelementId id = (SubelementId)array->bytes[pos];
+        SubelementId id = static_cast<SubelementId>(array->bytes[pos]);
         size_t subelement_size = SubelementSize[id];
 
         Subelement *element = new_subelement(id);
@@ -103,7 +103,7 @@ InformationElement::~InformationElement()
 
 void InformationElement::add_subelement(Subelement* subelement)
 {
-    SubelementId id = (SubelementId)subelement->id;
+    SubelementId id = static_cast<SubelementId>(subelement->id);
     Subelement* old = subelements_[id];
     if (old){
         delete_subelement (old);
@@ -113,7 +113,7 @@ void InformationElement::add_subelement(Subelement* subelement)
     subelements_[id] = subelement;
 }
 
-const DeviceType InformationElement::get_device_type() const
+DeviceType InformationElement::get_device_type() const
 {
     auto it = subelements_.find (kDeviceInformation);
     if (it == subelements_.end()) {
@@ -121,11 +121,11 @@ const DeviceType InformationElement::get_device_type() const
         return kDualRole;
     }
 
-    auto dev_info = (DeviceInformationSubelement*)(*it).second;
-    return (DeviceType)dev_info->field1.device_type;
+    auto dev_info = reinterpret_cast<DeviceInformationSubelement*>((*it).second);
+    return static_cast<DeviceType>(dev_info->field1.device_type);
 }
 
-const int InformationElement::get_rtsp_port() const
+int InformationElement::get_rtsp_port() const
 {
     auto it = subelements_.find (kDeviceInformation);
     if (it == subelements_.end()) {
@@ -133,7 +133,7 @@ const int InformationElement::get_rtsp_port() const
        return -1;
     }
 
-    auto dev_info = (DeviceInformationSubelement*)(*it).second;
+    auto dev_info = reinterpret_cast<DeviceInformationSubelement*>((*it).second);
     return dev_info->session_management_control_port;
 }
 

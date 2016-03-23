@@ -15,6 +15,8 @@
  *
  */
 
+#include <boost/concept_check.hpp>
+
 #include "mcs/report/null/packetizerreport.h"
 
 namespace mcs {
@@ -22,6 +24,7 @@ namespace report {
 namespace null {
 
 void PacketizerReport::PacketizedFrame(const TimestampUs &timestamp) {
+    boost::ignore_unused_variable_warning(timestamp);
 }
 
 } // namespace null

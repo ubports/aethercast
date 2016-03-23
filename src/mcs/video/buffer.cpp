@@ -74,7 +74,7 @@ void Buffer::Release() {
 }
 
 void Buffer::SetRange(uint32_t offset, uint32_t length) {
-    if (length > capacity_ || offset < 0 || offset > capacity_)
+    if (length > capacity_ || offset > capacity_)
         return;
 
     offset_ = offset;
@@ -90,7 +90,7 @@ void Buffer::Allocate(uint32_t capacity) {
         return;
 
     data_ = new uint8_t[capacity];
-    ::memset(data_, 0, sizeof(data_));
+    ::memset(data_, 0, capacity);
     capacity_ = capacity;
     length_ = capacity;
     offset_ = 0;

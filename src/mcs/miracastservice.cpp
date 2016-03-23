@@ -30,7 +30,7 @@
 
 #include <wds/logging.h>
 
-#include "config.h"
+#include "mcs/config.h"
 #include "keep_alive.h"
 #include "logger.h"
 #include "miracastservice.h"
