@@ -27,10 +27,11 @@ configure_file(mcs/config.h.in mcs/config.h @ONLY)
 configure_file(w11tng/config.h.in w11tng/config.h @ONLY)
 
 set(HEADERS
+  mcs/glib_wrapper.h
+
   mcs/ip_v4_address.h
   mcs/keep_alive.h
   mcs/mac_address.h
-  mcs/types.h
   mcs/shared_gobject.h
   mcs/keep_alive.h
   mcs/config.h
@@ -61,6 +62,7 @@ set(HEADERS
 )
 
 set(SOURCES
+  mcs/types.cpp
   mcs/utils.cpp
   mcs/networkutils.cpp
   mcs/mediamanagerfactory.cpp

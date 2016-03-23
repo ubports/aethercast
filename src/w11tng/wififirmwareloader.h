@@ -18,11 +18,10 @@
 #ifndef FIRMWARELOADER_H_
 #define FIRMWARELOADER_H_
 
-#include <glib.h>
-#include <gio/gio.h>
-
 #include <string>
 #include <boost/noncopyable.hpp>
+
+#include <mcs/glib_wrapper.h>
 
 namespace w11tng {
 class WiFiFirmwareLoader {

@@ -58,6 +58,10 @@ struct BoostLogLogger : public mcs::Logger {
         auto logger = boost::log::add_console_log(std::cout);
         logger->set_formatter(formatter);
 
+        // FIXME need to enable this once we found how we wrap this
+        // properly into our service architecture. For now left as
+        // it is.
+        boost::ignore_unused_variable_warning(severity);
         // logger->set_filter(attrs::Severity < severity);
 
         initialized_ = true;

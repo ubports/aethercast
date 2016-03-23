@@ -77,7 +77,7 @@ bool RTPSender::Execute() {
         if (!packet)
             break;
 
-        if (auto error = stream_->Write(packet->Data(), packet->Length()) != network::Stream::Error::kNone) {
+        if (stream_->Write(packet->Data(), packet->Length()) != network::Stream::Error::kNone) {
             MCS_ERROR("Failed to send packet to remote");
             // FIXME possible the remote side disconected. Check and
             // bring everything down if that is the case.

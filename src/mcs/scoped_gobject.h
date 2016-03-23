@@ -20,9 +20,8 @@
 
 #include <memory>
 
-#include <glib-object.h>
-
-#include "gobject_deleter.h"
+#include "mcs/glib_wrapper.h"
+#include "mcs/gobject_deleter.h"
 
 namespace mcs {
 // A ScopedGObject instance handles raw GObject instances

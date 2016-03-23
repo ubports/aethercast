@@ -18,10 +18,10 @@
 #ifndef W11TNG_DHCPLEASEPARSER_H_
 #define W11TNG_DHCPLEASEPARSER_H_
 
-#include <glib.h>
-
 #include <string>
 #include <vector>
+
+#include <mcs/glib_wrapper.h>
 
 #include <mcs/ip_v4_address.h>
 

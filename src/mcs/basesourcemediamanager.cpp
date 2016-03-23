@@ -17,8 +17,6 @@
 
 #include <iostream>
 
-#include <glib.h>
-
 #include "mcs/logger.h"
 #include "mcs/basesourcemediamanager.h"
 #include "mcs/video/videoformat.h"

@@ -24,7 +24,7 @@
 #include <memory>
 #include <chrono>
 
-#include <glib.h>
+#include "mcs/glib_wrapper.h"
 
 #include "miracastcontroller.h"
 #include "miracastsourcemanager.h"

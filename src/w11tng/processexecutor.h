@@ -18,11 +18,11 @@
 #ifndef W11TNG_PROCESS_EXECUTOR_H_
 #define W11TNG_PROCESS_EXECUTOR_H_
 
-#include <glib.h>
-
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <mcs/glib_wrapper.h>
 
 #include <mcs/non_copyable.h>
 

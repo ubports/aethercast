@@ -22,8 +22,7 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <glib.h>
-#include <gio/gio.h>
+#include "mcs/glib_wrapper.h"
 
 #include "miracastsourceclient.h"
 #include "scoped_gobject.h"

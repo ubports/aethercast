@@ -18,13 +18,15 @@
 #ifndef MIRACASTSERVICEADAPTOR_H_
 #define MIRACASTSERVICEADAPTOR_H_
 
-#ifdef __cplusplus
 extern "C" {
-#endif
+// Ignore all warnings coming from the external headers as we don't
+// control them and also don't want to get any warnings from them
+// which will only polute our build output.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-w"
 #include "aethercastinterface.h"
-#ifdef __cplusplus
+#pragma GCC diagnostic pop
 }
-#endif
 
 #include <memory>
 #include <unordered_map>

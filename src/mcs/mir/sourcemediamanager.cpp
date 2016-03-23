@@ -43,12 +43,12 @@ SourceMediaManager::SourceMediaManager(const std::string &remote_address,
                                        const mcs::video::BaseEncoder::Ptr &encoder,
                                        const mcs::network::Stream::Ptr &output_stream,
                                        const mcs::report::ReportFactory::Ptr &report_factory) :
+    state_(State::Stopped),
     remote_address_(remote_address),
     producer_(producer),
     encoder_(encoder),
     output_stream_(output_stream),
     report_factory_(report_factory),
-    state_(State::Stopped),
     pipeline_(executor_factory, 4) {
 }
 

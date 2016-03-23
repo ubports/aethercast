@@ -18,11 +18,11 @@
 #ifndef W11TNG_DHCPCLIENT_H_
 #define W11TNG_DHCPCLIENT_H_
 
-#include <glib.h>
-
 #include <boost/noncopyable.hpp>
 
 #include <string>
+
+#include <mcs/glib_wrapper.h>
 
 #include <mcs/ip_v4_address.h>
 #include <mcs/non_copyable.h>

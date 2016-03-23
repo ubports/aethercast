@@ -30,7 +30,7 @@ void DumpNativeFormat(const wds::NativeVideoFormat &format);
 struct RateAndResolution {
     unsigned int width;
     unsigned int height;
-    unsigned int framerate;
+    double framerate;
 };
 
 RateAndResolution ExtractRateAndResolution(const wds::H264VideoFormat &format);

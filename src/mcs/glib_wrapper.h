@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical, Ltd.
+ * Copyright (C) 2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,24 +15,18 @@
  *
  */
 
-#ifndef SHARED_GOBJECT_H_
-#define SHARED_GOBJECT_H_
+#ifndef MCS_GLIBWRAPPER_H_
+#define MCS_GLIBWRAPPER_H_
 
-#include <memory>
+// Ignore all warnings coming from the external GLib headers as
+// we don't control them and also don't want to get any warnings
+// from them which will only polute our build output.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-w"
+#include <glib.h>
+#include <gio/gio.h>
+#include <glib-unix.h>
+#include <glib-object.h>
+#pragma GCC diagnostic pop
 
-#include "mcs/glib_wrapper.h"
-#include "mcs/gobject_deleter.h"
-
-namespace mcs {
-// A SharedGObject instance handles raw GObject instances
-// and automatically cleans them up on destruction.
-template<typename T>
-using SharedGObject = std::shared_ptr<T>;
-
-template<typename T>
-SharedGObject<T> make_shared_gobject(T *gobject) {
-    return SharedGObject<T>{gobject, GObjectDeleter<T>{}};
-}
-}
-
-#endif // SHARED_GOBJECT_H_
+#endif
