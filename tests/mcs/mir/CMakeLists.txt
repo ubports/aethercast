@@ -2,10 +2,6 @@ set(LIB_SOURCES
     mockmir.cpp
 )
 
-# We're mocking the hybris media API here which returns void* pointers
-# which ISO C++ doesn't like. So lets ignore those here.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=pointer-arith")
-
 add_library(aethercast-test-mir ${LIB_SOURCES})
 
 AETHERCAST_ADD_TEST(screencast_tests screencast_tests.cpp aethercast-test-mir)

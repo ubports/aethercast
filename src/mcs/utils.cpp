@@ -87,7 +87,7 @@ std::string Utils::Hexdump(const uint8_t *data, uint32_t size) {
         return buffer.str();
     }
 
-    unsigned int i;
+    uint32_t i;
     for (i = 0; i < size; i++) {
         if ((i % 16) == 0) {
             if (i != 0)

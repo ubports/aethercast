@@ -20,7 +20,7 @@
 
 // Ignore all warnings coming from the external GLib headers as
 // we don't control them and also don't want to get any warnings
-// from them which will only polute our build output.
+// from them which will only pollute our build output.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-w"
 #include <glib.h>

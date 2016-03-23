@@ -121,7 +121,7 @@ DeviceType InformationElement::get_device_type() const
         return kDualRole;
     }
 
-    auto dev_info = reinterpret_cast<DeviceInformationSubelement*>((*it).second);
+    const auto dev_info = reinterpret_cast<DeviceInformationSubelement*>((*it).second);
     return static_cast<DeviceType>(dev_info->field1.device_type);
 }
 
@@ -133,7 +133,7 @@ int InformationElement::get_rtsp_port() const
        return -1;
     }
 
-    auto dev_info = reinterpret_cast<DeviceInformationSubelement*>((*it).second);
+    const auto dev_info = reinterpret_cast<DeviceInformationSubelement*>((*it).second);
     return dev_info->session_management_control_port;
 }
 

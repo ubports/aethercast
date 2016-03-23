@@ -109,7 +109,7 @@ bool UdpStream::WaitUntilReady() {
     fd_set fds;
     FD_SET(socket_, &fds);
 
-    int ret = ::select(socket_ + 1, nullptr, &fds, nullptr, nullptr);
+    const int ret = ::select(socket_ + 1, nullptr, &fds, nullptr, nullptr);
     if (ret < 0 || !FD_ISSET(socket_, &fds))
         return false;
 
