@@ -17,10 +17,12 @@ AETHERCAST_ADD_TEST(forwardingnetworkdevice_tests forwardingnetworkdevice_tests.
 AETHERCAST_ADD_TEST(networkdeviceskeleton_tests networkdeviceskeleton_tests.cpp)
 AETHERCAST_ADD_TEST(networkdevice_tests networkdevice_tests.cpp)
 AETHERCAST_ADD_TEST(networkmanagerfactory_tests networkmanagerfactory_tests.cpp)
+AETHERCAST_ADD_TEST(networkutils_tests networkutils_tests.cpp)
 
 add_subdirectory(acceptance_tests)
 add_subdirectory(streaming)
 add_subdirectory(video)
+add_subdirectory(mir)
 add_subdirectory(android)
 add_subdirectory(common)
 add_subdirectory(report)

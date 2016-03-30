@@ -31,26 +31,28 @@
 namespace mcs {
 namespace streaming {
 
-class MediaSender : public std::enable_shared_from_this<MediaSender>,
+class MediaSender : public mcs::common::Executable,
                     public mcs::video::BaseEncoder::Delegate {
 public:
     typedef std::shared_ptr<MediaSender> Ptr;
 
-    static Ptr Create(const Packetizer::Ptr &packetizer, const TransportSender::Ptr &sender, const mcs::video::BaseEncoder::Config &config);
-
+    MediaSender(const Packetizer::Ptr &packetizer, const TransportSender::Ptr &sender,
+                const mcs::video::BaseEncoder::Config &config);
     ~MediaSender();
-
-    void Start();
-    void Stop();
-
-    void OnBufferAvailable(const mcs::video::Buffer::Ptr &buffer) override;
-    void OnBufferWithCodecConfig(const mcs::video::Buffer::Ptr &buffer) override;
 
     uint16_t LocalRTPPort() const;
 
-private:
-    MediaSender(const Packetizer::Ptr &packetizer, const TransportSender::Ptr &sender, const mcs::video::BaseEncoder::Config &config);
+    // From mcs::common::Executable
+    bool Start() override;
+    bool Stop() override;
+    bool Execute() override;
+    std::string Name() const override;
 
+    // From mcs::video::BaseEncoder::Delegate
+    void OnBufferAvailable(const mcs::video::Buffer::Ptr &buffer) override;
+    void OnBufferWithCodecConfig(const mcs::video::Buffer::Ptr &buffer) override;
+
+private:
     void WorkerThread();
 
     void ProcessBuffer(const mcs::video::Buffer::Ptr &buffer);
@@ -60,9 +62,7 @@ private:
     TransportSender::Ptr sender_;
     Packetizer::TrackId video_track_;
     int64_t prev_time_us_;
-    std::thread worker_thread_;
     mcs::video::BufferQueue::Ptr queue_;
-    bool running_;
 };
 
 } // namespace streaming

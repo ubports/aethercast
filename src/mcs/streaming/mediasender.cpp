@@ -30,16 +30,12 @@ static constexpr const char *kMediaSenderThreadName{"MediaSender"};
 namespace mcs {
 namespace streaming {
 
-MediaSender::Ptr MediaSender::Create(const Packetizer::Ptr &packetizer, const TransportSender::Ptr &sender, const mcs::video::BaseEncoder::Config &config) {
-    return std::shared_ptr<MediaSender>(new MediaSender(packetizer, sender, config));
-}
-
-MediaSender::MediaSender(const Packetizer::Ptr &packetizer, const TransportSender::Ptr &sender, const mcs::video::BaseEncoder::Config &config) :
+MediaSender::MediaSender(const Packetizer::Ptr &packetizer, const TransportSender::Ptr &sender,
+                         const mcs::video::BaseEncoder::Config &config) :
     packetizer_(packetizer),
     sender_(sender),
     prev_time_us_(-1ll),
-    queue_(video::BufferQueue::Create()),
-    running_(false) {
+    queue_(video::BufferQueue::Create()) {
 
     if (!packetizer_ || !sender_) {
         MCS_WARNING("Sender not correct initialized. Missing packetizer or sender.");
@@ -61,24 +57,12 @@ MediaSender::~MediaSender() {
     Stop();
 }
 
-void MediaSender::Start() {
-    if (running_)
-        return;
-
-    if (!sender_ || !packetizer_)
-        return;
-
-    running_ = true;
-    worker_thread_ = std::thread(&MediaSender::WorkerThread, this);
-    pthread_setname_np(worker_thread_.native_handle(), kMediaSenderThreadName);
+bool MediaSender::Start() {
+    return true;
 }
 
-void MediaSender::Stop() {
-    if (!running_)
-        return;
-
-    running_ = false;
-    worker_thread_.join();
+bool MediaSender::Stop() {
+    return true;
 }
 
 void MediaSender::ProcessBuffer(const mcs::video::Buffer::Ptr &buffer) {
@@ -107,17 +91,17 @@ void MediaSender::ProcessBuffer(const mcs::video::Buffer::Ptr &buffer) {
     sender_->Queue(packets);
 }
 
-void MediaSender::WorkerThread() {
-    while (running_) {
-        // This will wait for a short time and then return back
-        // so we can loop again and check if we have to exit or
-        // not.
-        if (!queue_->WaitToBeFilled())
-            continue;
+bool MediaSender::Execute() {
+    // This will wait for a short time and then return back
+    // so we can loop again and check if we have to exit or
+    // not.
+    if (!queue_->WaitToBeFilled())
+        return true;
 
-        auto buffer = queue_->Pop();
-        ProcessBuffer(buffer);
-    }
+    const auto buffer = queue_->Pop();
+    ProcessBuffer(buffer);
+
+    return true;
 }
 
 void MediaSender::OnBufferAvailable(const video::Buffer::Ptr &buffer) {
@@ -136,6 +120,10 @@ uint16_t MediaSender::LocalRTPPort() const {
         return 0;
 
     return sender_->LocalPort();
+}
+
+std::string MediaSender::Name() const {
+    return kMediaSenderThreadName;
 }
 
 } // namespace streaming

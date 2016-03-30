@@ -37,6 +37,10 @@ set(HEADERS
 
   mcs/common/executable.h
   mcs/common/executor.h
+  mcs/common/executorfactory.h
+
+  mcs/network/types.h
+  mcs/network/stream.h
 
   mcs/report/lttng/utils.h
   mcs/report/lttng/encoderreport_tp.h
@@ -48,6 +52,7 @@ set(HEADERS
   mcs/video/rendererreport.h
   mcs/video/packetizerreport.h
   mcs/video/senderreport.h
+  mcs/video/bufferproducer.h
 
   mcs/streaming/packetizer.h
   mcs/streaming/transportsender.h
@@ -75,7 +80,11 @@ set(SOURCES
   mcs/dbushelpers.cpp
   mcs/networkdeviceskeleton.cpp
 
+  mcs/common/executorpool.cpp
   mcs/common/threadedexecutor.cpp
+  mcs/common/threadedexecutorfactory.cpp
+
+  mcs/network/udpstream.cpp
 
   mcs/report/reportfactory.cpp
   mcs/report/reportfactory.h
@@ -104,6 +113,7 @@ set(SOURCES
   mcs/video/utils_from_android.cpp
   mcs/video/baseencoder.cpp
   mcs/video/h264analyzer.cpp
+  mcs/video/displayoutput.cpp
 
   mcs/streaming/mpegtspacketizer.cpp
   mcs/streaming/rtpsender.cpp

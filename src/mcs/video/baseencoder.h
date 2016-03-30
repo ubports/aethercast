@@ -88,11 +88,11 @@ public:
 
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
 
+    virtual BaseEncoder::Config DefaultConfiguration() = 0;
+
     virtual bool Configure(const Config &config) = 0;
 
     virtual void QueueBuffer(const mcs::video::Buffer::Ptr &buffer) = 0;
-
-    virtual void* NativeWindowHandle() const = 0;
 
     virtual Config Configuration() const = 0;
 

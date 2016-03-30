@@ -23,6 +23,14 @@
 #include "utils.h"
 #include "logging.h"
 
+#include "mcs/common/threadedexecutorfactory.h"
+
+#include "mcs/report/reportfactory.h"
+
+#include "mcs/network/udpstream.h"
+
+#include "mcs/android/h264encoder.h"
+
 namespace mcs {
 
 void NullSourceMediaManager::Play() {
@@ -54,8 +62,21 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
 
     DEBUG("Creating source media manager of type %s", type.c_str());
 
-    if (type == "mir")
-        return mcs::mir::SourceMediaManager::Create(remote_address);
+    if (type == "mir") {
+        const auto executor_factory = std::make_shared<common::ThreadedExecutorFactory>();
+        const auto report_factory = report::ReportFactory::Create();
+        const auto screencast = std::make_shared<mcs::mir::Screencast>();
+        const auto encoder = mcs::android::H264Encoder::Create(report_factory->CreateEncoderReport());
+        const auto network_stream = std::make_shared<mcs::network::UdpStream>();
+
+        return std::make_shared<mcs::mir::SourceMediaManager>(
+                    remote_address,
+                    executor_factory,
+                    screencast,
+                    encoder,
+                    network_stream,
+                    report_factory);
+    }
 
     return std::make_shared<NullSourceMediaManager>();
 }

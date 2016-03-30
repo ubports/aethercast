@@ -19,6 +19,7 @@
 #define MCS_COMMON_EXECUTABLE_H_
 
 #include <memory>
+#include <string>
 
 #include "mcs/non_copyable.h"
 
@@ -35,6 +36,8 @@ public:
     // Run one iteration and then return. Returning true means executor
     // should continue to execute otherwise false means it should stop.
     virtual bool Execute() = 0;
+
+    virtual std::string Name() const = 0;
 
 protected:
     Executable() = default;

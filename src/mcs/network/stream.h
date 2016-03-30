@@ -15,34 +15,47 @@
  *
  */
 
-#ifndef MCS_REPORT_REPORTFACTORY_H_
-#define MCS_REPORT_REPORTFACTORY_H_
+#ifndef MCS_NETWORK_STREAM_H_
+#define MCS_NETWORK_STREAM_H_
 
 #include <memory>
 
 #include "mcs/non_copyable.h"
 
-#include "mcs/video/encoderreport.h"
-#include "mcs/video/rendererreport.h"
-#include "mcs/video/packetizerreport.h"
-#include "mcs/video/senderreport.h"
+#include "mcs/network/types.h"
 
 namespace mcs {
-namespace report {
+namespace network {
 
-class ReportFactory : public mcs::NonCopyable {
+class Stream : public mcs::NonCopyable {
 public:
-    typedef std::shared_ptr<ReportFactory> Ptr;
+    typedef std::shared_ptr<Stream> Ptr;
 
-    static Ptr Create();
+    enum class Error {
+        kNone,
+        kFailed,
+        kRemoteClosedConnection,
+    };
 
-    virtual video::EncoderReport::Ptr CreateEncoderReport() = 0;
-    virtual video::RendererReport::Ptr CreateRendererReport() = 0;
-    virtual video::PacketizerReport::Ptr CreatePacketizerReport() = 0;
-    virtual video::SenderReport::Ptr CreateSenderReport() = 0;
+    virtual bool Connect(const std::string &address, const Port &port) = 0;
+
+    virtual bool WaitUntilReady() = 0;
+
+    virtual Error Write(const uint8_t *data, unsigned int size) = 0;
+
+    virtual Port LocalPort() const = 0;
+
+    /**
+     * @brief Returns the maximum size of a unit the stream will send out
+     * @return Maximum send unit size in bytes
+     */
+    virtual std::uint32_t MaxUnitSize() const = 0;
+
+protected:
+    Stream() = default;
 };
 
-} // namespace report
+} // namespace network
 } // namespace mcs
 
 #endif

@@ -505,13 +505,6 @@ void H264Encoder::QueueBuffer(const video::Buffer::Ptr &buffer) {
     report_->ReceivedInputBuffer(buffer->Timestamp());
 }
 
-void* H264Encoder::NativeWindowHandle() const {
-    if (!encoder_)
-        return nullptr;
-
-    return media_codec_source_get_native_window_handle(encoder_);
-}
-
 video::BaseEncoder::Config H264Encoder::Configuration() const {
     return config_;
 }
@@ -523,6 +516,10 @@ void H264Encoder::SendIDRFrame() {
     MCS_DEBUG("");
 
     media_codec_source_request_idr_frame(encoder_);
+}
+
+std::string H264Encoder::Name() const {
+    return kEncoderThreadName;
 }
 
 } // namespace android

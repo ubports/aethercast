@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical, Ltd.
+ * Copyright (C) 2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,32 +15,35 @@
  *
  */
 
-#ifndef MEDIAMANAGERFACTORY_H_
-#define MEDIAMANAGERFACTORY_H_
+#ifndef MCS_VIDEO_DISPLAYOUTPUT_H_
+#define MCS_VIDEO_DISPLAYOUTPUT_H_
 
-#include <memory>
-
-#include "mcs/basesourcemediamanager.h"
-
-#include "mcs/network/types.h"
+#include <string>
 
 namespace mcs {
+namespace video {
 
-// Only here to make unit testing easier for the factory class
-class NullSourceMediaManager : public BaseSourceMediaManager {
-public:
-    void Play() override;
-    void Pause() override;
-    void Teardown() override;
-    bool IsPaused() const override;
+struct DisplayOutput {
+    enum class Mode {
+        kMirror,
+        kExtend
+    };
 
-protected:
-    bool Configure() override;
+    DisplayOutput();
+    DisplayOutput(const DisplayOutput::Mode &mode, const unsigned int &width,
+                  const unsigned int &height, const double &refresh_rate);
+
+    static std::string ModeToString(const Mode &mode);
+
+    Mode mode;
+    unsigned int width;
+    unsigned int height;
+    double refresh_rate;
 };
 
-class MediaManagerFactory {
-public:
-    static std::shared_ptr<BaseSourceMediaManager> CreateSource(const std::string &remote_address);
-};
+std::ostream& operator<<(std::ostream& out, DisplayOutput::Mode mode);
+
+} // namespace video
 } // namespace mcs
+
 #endif

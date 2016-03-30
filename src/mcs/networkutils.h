@@ -20,10 +20,15 @@
 
 #include <string>
 
+#include "mcs/network/types.h"
+
 namespace mcs {
 class NetworkUtils
 {
 public:
+    static const mcs::network::Port kMinUserPort;
+    static const mcs::network::Port kMaxUserPort;
+
     static int RetrieveInterfaceIndex(const char *name);
     static std::string RetrieveInterfaceName(int index);
     static int ModifyInterfaceAddress(int cmd, int flags, int index, int family,
@@ -32,6 +37,8 @@ public:
     static int ResetInterface(int index);
     static int BytesAvailableToRead(int fd);
     static int SendDriverPrivateCommand(const std::string &ifname, const std::string &cmd);
+    static mcs::network::Port PickRandomPort();
+    static int MakeSocketNonBlocking(int socket);
 };
 } // namespace mcs
 #endif

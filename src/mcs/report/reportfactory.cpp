@@ -25,15 +25,15 @@
 namespace mcs {
 namespace report {
 
-std::unique_ptr<ReportFactory> ReportFactory::Create() {
+ReportFactory::Ptr ReportFactory::Create() {
     std::string type = mcs::Utils::GetEnvValue("AETHERCAST_REPORT_TYPE");
 
     if (type == "log")
-        return std::make_unique<LoggingReportFactory>();
+        return std::make_shared<LoggingReportFactory>();
     else if (type == "lttng")
-        return std::make_unique<LttngReportFactory>();
+        return std::make_shared<LttngReportFactory>();
 
-    return std::make_unique<NullReportFactory>();
+    return std::make_shared<NullReportFactory>();
 }
 
 } // namespace report

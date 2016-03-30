@@ -23,49 +23,50 @@
 #include <mutex>
 #include <queue>
 
+#include "mcs/common/executable.h"
+
 #include "mcs/mir/streamrenderer.h"
 #include "mcs/mir/screencast.h"
 
 #include "mcs/video/baseencoder.h"
 #include "mcs/video/bufferqueue.h"
+#include "mcs/video/bufferproducer.h"
 #include "mcs/video/rendererreport.h"
 
 namespace mcs {
 namespace mir {
 class StreamRenderer : public std::enable_shared_from_this<StreamRenderer>,
+                       public mcs::common::Executable,
                        public mcs::video::Buffer::Delegate {
 public:
     static constexpr unsigned int kNumTextures{2};
 
     typedef std::shared_ptr<StreamRenderer> Ptr;
 
-    static Ptr Create(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder,
-                      const video::RendererReport::Ptr &report);
-
+    StreamRenderer(const video::BufferProducer::Ptr &buffer_producer,
+                   const video::BaseEncoder::Ptr &encoder,
+                   const video::RendererReport::Ptr  &report);
     ~StreamRenderer();
 
-    void SetDimensions(unsigned int width, unsigned int height);
+    std::uint32_t BufferSlots() const;
 
-    void StartThreaded();
-    void Stop();
-
+    // From mcs::video::Buffer::Delegate
     void OnBufferFinished(const mcs::video::Buffer::Ptr &buffer);
 
-private:
-    StreamRenderer(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder,
-                   const video::RendererReport::Ptr  &report);
-
-    void RenderThread();
+    // From mcs::common::Executable
+    bool Start() override;
+    bool Stop() override;
+    bool Execute() override;
+    std::string Name() const override;
 
 private:
     video::RendererReport::Ptr report_;
-    Screencast::Ptr connector_;
+    video::BufferProducer::Ptr buffer_producer_;
     video::BaseEncoder::Ptr encoder_;
-    std::thread render_thread_;
-    bool running_;
     unsigned int width_;
     unsigned int height_;
     mcs::video::BufferQueue::Ptr input_buffers_;
+    mcs::TimestampUs target_iteration_time_;
 };
 } // namespace mir
 } // namespace mcs

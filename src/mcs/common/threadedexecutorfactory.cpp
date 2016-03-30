@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical, Ltd.
+ * Copyright (C) 2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,32 +15,15 @@
  *
  */
 
-#ifndef MEDIAMANAGERFACTORY_H_
-#define MEDIAMANAGERFACTORY_H_
-
-#include <memory>
-
-#include "mcs/basesourcemediamanager.h"
-
-#include "mcs/network/types.h"
+#include "mcs/common/threadedexecutorfactory.h"
+#include "mcs/common/threadedexecutor.h"
 
 namespace mcs {
+namespace common {
 
-// Only here to make unit testing easier for the factory class
-class NullSourceMediaManager : public BaseSourceMediaManager {
-public:
-    void Play() override;
-    void Pause() override;
-    void Teardown() override;
-    bool IsPaused() const override;
+Executor::Ptr ThreadedExecutorFactory::Create(const Executable::Ptr &executable) {
+    return std::make_shared<ThreadedExecutor>(executable);
+}
 
-protected:
-    bool Configure() override;
-};
-
-class MediaManagerFactory {
-public:
-    static std::shared_ptr<BaseSourceMediaManager> CreateSource(const std::string &remote_address);
-};
+} // namespace common
 } // namespace mcs
-#endif

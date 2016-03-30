@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical, Ltd.
+ * Copyright (C) 2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,32 +15,31 @@
  *
  */
 
-#ifndef MEDIAMANAGERFACTORY_H_
-#define MEDIAMANAGERFACTORY_H_
+#ifndef MCS_VIDEO_BUFFERPRODUCER_H_
+#define MCS_VIDEO_BUFFERPRODUCER_H_
 
 #include <memory>
 
-#include "mcs/basesourcemediamanager.h"
+#include "mcs/non_copyable.h"
 
-#include "mcs/network/types.h"
+#include "mcs/video/displayoutput.h"
 
 namespace mcs {
+namespace video {
 
-// Only here to make unit testing easier for the factory class
-class NullSourceMediaManager : public BaseSourceMediaManager {
+class BufferProducer : public mcs::NonCopyable {
 public:
-    void Play() override;
-    void Pause() override;
-    void Teardown() override;
-    bool IsPaused() const override;
+    typedef std::shared_ptr<BufferProducer> Ptr;
 
-protected:
-    bool Configure() override;
+    virtual ~BufferProducer() { }
+
+    virtual bool Setup(const video::DisplayOutput &output) = 0;
+    virtual void SwapBuffers() = 0;
+    virtual void* CurrentBuffer() const = 0;
+    virtual DisplayOutput OutputMode() const = 0;
 };
 
-class MediaManagerFactory {
-public:
-    static std::shared_ptr<BaseSourceMediaManager> CreateSource(const std::string &remote_address);
-};
+} // namespace video
 } // namespace mcs
+
 #endif

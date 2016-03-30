@@ -15,15 +15,6 @@
  *
  */
 
-#define GL_GLEXT_PROTOTYPES
-#define EGL_EGLEXT_PROTOTYPES
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-
-#include <system/window.h>
-
 #include <chrono>
 #include <thread>
 
@@ -42,69 +33,60 @@ static constexpr unsigned int kNumBufferSlots{2};
 namespace mcs {
 namespace mir {
 
-StreamRenderer::Ptr StreamRenderer::Create(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder,
-                                           const video::RendererReport::Ptr &report) {
-    return std::shared_ptr<StreamRenderer>(new StreamRenderer(connector, encoder, report));
-}
-
-StreamRenderer::StreamRenderer(const Screencast::Ptr &connector, const video::BaseEncoder::Ptr &encoder,
+StreamRenderer::StreamRenderer(const video::BufferProducer::Ptr &buffer_producer,
+                               const video::BaseEncoder::Ptr &encoder,
                                const video::RendererReport::Ptr &report) :
     report_(report),
-    connector_(connector),
+    buffer_producer_(buffer_producer),
     encoder_(encoder),
-    running_(false),
-    width_(0),
-    height_(0),
-    input_buffers_(mcs::video::BufferQueue::Create(kNumBufferSlots)) {
+    width_(buffer_producer->OutputMode().width),
+    height_(buffer_producer->OutputMode().height),
+    input_buffers_(mcs::video::BufferQueue::Create(BufferSlots())),
+    target_iteration_time_((1. / encoder_->Configuration().framerate) * std::micro::den) {
 }
 
 StreamRenderer::~StreamRenderer() {
     Stop();
 }
 
-void StreamRenderer::RenderThread() {
-    mcs::Utils::SetThreadName(kStreamRendererThreadName);
+bool StreamRenderer::Execute() {
+    mcs::TimestampUs iteration_start_time = mcs::Utils::GetNowUs();
 
-    MCS_DEBUG("Everything successfully setup; Starting recording now %dx%d@%d",
-              width_, height_, encoder_->Configuration().framerate);
+    // Wait until we have free slots again and all buffers we produced
+    // went through the pipeline.
+    if (!input_buffers_->WaitForSlots())
+        return true;
 
-    static const mcs::TimestampUs target_iteration_time = (1. / encoder_->Configuration().framerate) * 1000000ll;
+    report_->BeganFrame();
 
-    while (running_) {
-        mcs::TimestampUs iteration_start_time = mcs::Utils::GetNowUs();
+    // This will trigger the rendering/compositing process inside mir
+    // and will block until that is done and we received a new buffer
+    buffer_producer_->SwapBuffers();
 
-        report_->BeganFrame();
+    const auto native_buffer = buffer_producer_->CurrentBuffer();
 
-        if (!input_buffers_->WaitForSlots())
-            continue;
+    auto buffer = mcs::video::Buffer::Create(native_buffer);
+    buffer->SetDelegate(shared_from_this());
 
-        // This will trigger the rendering/compositing process inside mir
-        // and will block until that is done and we received a new buffer
-        connector_->SwapBuffersSync();
+    // FIXME: at optimum we would get the timestamp directly supplied
+    // from our producer but as long as that isn't available we don't
+    // have any other chance and need to do it here.
+    buffer->SetTimestamp(mcs::Utils::GetNowUs());
 
-        auto native_buffer = connector_->CurrentBuffer();
+    input_buffers_->Push(buffer);
 
-        auto buffer = mcs::video::Buffer::Create(native_buffer);
-        buffer->SetDelegate(shared_from_this());
+    encoder_->QueueBuffer(buffer);
 
-        // FIXME: at optimum we would get the timestamp directly supplied
-        // from mir but as long as that isn't available we don't have any
-        // other chance and need to do it here.
-        buffer->SetTimestamp(mcs::Utils::GetNowUs());
+    report_->FinishedFrame(buffer->Timestamp());
 
-        input_buffers_->Push(buffer);
+    // Calculate how long we have to wait until we can render the next
+    // frame to keep our framerate constant.
+    mcs::TimestampUs iteration_time = mcs::Utils::GetNowUs() - iteration_start_time;
+    mcs::TimestampUs sleep_time = target_iteration_time_ - iteration_time;
+    if (sleep_time > 0)
+        std::this_thread::sleep_for(std::chrono::microseconds(sleep_time));
 
-        encoder_->QueueBuffer(buffer);
-
-        report_->FinishedFrame(buffer->Timestamp());
-
-        // Calculate how long we have to wait until we can render the next
-        // frame to keep our framerate constant.
-        mcs::TimestampUs iteration_time = mcs::Utils::GetNowUs() - iteration_start_time;
-        int64_t sleep_time = target_iteration_time - iteration_time;
-        if (sleep_time > 0)
-            std::this_thread::sleep_for(std::chrono::microseconds(sleep_time));
-    }
+    return true;
 }
 
 void StreamRenderer::OnBufferFinished(const video::Buffer::Ptr &buffer) {
@@ -117,33 +99,23 @@ void StreamRenderer::OnBufferFinished(const video::Buffer::Ptr &buffer) {
     input_buffers_->Pop();
 }
 
-void StreamRenderer::SetDimensions(unsigned int width, unsigned int height) {
-    width_ = width;
-    height_ = height;
+bool StreamRenderer::Start() {
+    MCS_DEBUG("Everything successfully setup; Starting recording now %dx%d@%d",
+              width_, height_, encoder_->Configuration().framerate);
+
+    return true;
 }
 
-void StreamRenderer::StartThreaded() {
-    if (running_)
-        return;
-
-    auto output_mode = connector_->OutputMode();
-
-    if (width_ == 0 || height_ == 0) {
-        width_ = output_mode.width;
-        height_ = output_mode.height;
-    }
-
-    running_ = true;
-
-    render_thread_ = std::thread(&StreamRenderer::RenderThread, this);
+bool StreamRenderer::Stop() {
+    return true;
 }
 
-void StreamRenderer::Stop() {
-    if (!running_)
-        return;
+std::string StreamRenderer::Name() const {
+    return kStreamRendererThreadName;
+}
 
-    running_ = false;
-    render_thread_.join();
+std::uint32_t StreamRenderer::BufferSlots() const {
+    return kNumBufferSlots;
 }
 
 } // namespace mir

@@ -25,6 +25,7 @@
 #include <memory.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -38,6 +39,8 @@
 #include <linux/wireless.h>
 
 #include <glib.h>
+
+#include <random>
 
 #include "logger.h"
 #include "networkutils.h"
@@ -72,6 +75,9 @@ int __rtnl_addattr_l(struct nlmsghdr *n, size_t max_length,
 }
 
 namespace mcs {
+const network::Port NetworkUtils::kMinUserPort{1024};
+const network::Port NetworkUtils::kMaxUserPort{65534};
+
 int NetworkUtils::ModifyInterfaceAddress(int cmd, int flags,
                 int index, int family,
                 const char *address,
@@ -313,6 +319,26 @@ int NetworkUtils::SendDriverPrivateCommand(const std::string &ifname, const std:
     const int ret = ::ioctl(s, SIOCDEVPRIVATE + 1, &ifr);
     ::close(s);
     return ret;
+}
+
+mcs::network::Port NetworkUtils::PickRandomPort() {
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    std::uniform_int_distribution<> distribution(kMinUserPort, kMaxUserPort);
+    return static_cast<mcs::network::Port>(distribution(generator));
+}
+
+int NetworkUtils::MakeSocketNonBlocking(int socket) {
+    if (socket < 0)
+        return -EINVAL;
+
+    int flags = fcntl(socket, F_GETFL, 0);
+    if (flags < 0)
+        flags = 0;
+    const int res = fcntl(socket, F_SETFL, flags | O_NONBLOCK);
+    if (res < 0)
+        return -errno;
+    return 0;
 }
 
 } // namespace mcs

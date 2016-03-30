@@ -15,40 +15,26 @@
  *
  */
 
-#ifndef MCS_COMMON_THREADEDEXECUTOR_H_
-#define MCS_COMMON_THREADEDEXECUTOR_H_
+#include <gtest/gtest.h>
 
-#include <atomic>
-#include <memory>
-#include <thread>
+#include <sys/socket.h>
+#include <fcntl.h>
 
-#include "mcs/common/executor.h"
-#include "mcs/common/executable.h"
+#include "mcs/networkutils.h"
 
-namespace mcs {
-namespace common {
+TEST(NetworkUtils_PickRandomPort, PicksPortsInRange) {
+    for (int n = 0; n < 100; n++) {
+        auto port = mcs::NetworkUtils::PickRandomPort();
+        EXPECT_LE(mcs::NetworkUtils::kMinUserPort, port);
+        EXPECT_GE(mcs::NetworkUtils::kMaxUserPort, port);
+    }
+}
 
-class ThreadedExecutor : public Executor {
-public:
-    ThreadedExecutor(const Executable::Ptr &executable);
-    ~ThreadedExecutor();
+TEST(NetworkUtils_MakeSocketNonBlocking, SocketFlagsCorrectlySet) {
+    const auto sock = ::socket(AF_INET, SOCK_DGRAM, 0);
 
-    bool Start() override;
-    bool Stop() override;
+    EXPECT_EQ(0, mcs::NetworkUtils::MakeSocketNonBlocking(sock));
 
-    bool Running() const override;
-
-private:
-
-    void ThreadWorker();
-
-private:
-    Executable::Ptr executable_;
-    std::atomic<bool> running_;
-    std::thread thread_;
-};
-
-} // namespace common
-} // namespace mcs
-
-#endif
+    const auto flags = ::fcntl(sock, F_GETFL, 0);
+    EXPECT_TRUE(flags & O_NONBLOCK);
+}

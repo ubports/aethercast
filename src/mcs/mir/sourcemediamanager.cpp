@@ -18,10 +18,14 @@
 #include "mcs/logger.h"
 
 #include "mcs/common/threadedexecutor.h"
+#include "mcs/common/threadedexecutorfactory.h"
+
+#include "mcs/network/udpstream.h"
 
 #include "mcs/report/reportfactory.h"
 
 #include "mcs/video/videoformat.h"
+#include "mcs/video/displayoutput.h"
 
 #include "mcs/streaming/mpegtspacketizer.h"
 #include "mcs/streaming/rtpsender.h"
@@ -33,42 +37,45 @@
 namespace mcs {
 namespace mir {
 
-SourceMediaManager::Ptr SourceMediaManager::Create(const std::string &remote_address) {
-    return std::shared_ptr<SourceMediaManager>(new SourceMediaManager(remote_address));
-}
-
-SourceMediaManager::SourceMediaManager(const std::string &remote_address) :
+SourceMediaManager::SourceMediaManager(const std::string &remote_address,
+                                       const mcs::common::ExecutorFactory::Ptr &executor_factory,
+                                       const mcs::video::BufferProducer::Ptr &producer,
+                                       const mcs::video::BaseEncoder::Ptr &encoder,
+                                       const mcs::network::Stream::Ptr &output_stream,
+                                       const mcs::report::ReportFactory::Ptr &report_factory) :
+    state_(State::Stopped),
     remote_address_(remote_address),
-    state_(State::Stopped) {
+    producer_(producer),
+    encoder_(encoder),
+    output_stream_(output_stream),
+    report_factory_(report_factory),
+    pipeline_(executor_factory, 4) {
 }
 
 SourceMediaManager::~SourceMediaManager() {
     if (state_ != State::Stopped)
-        StopPipeline();
+        pipeline_.Stop();
 }
 
 bool SourceMediaManager::Configure() {
-    auto report_factory = report::ReportFactory::Create();
-
     auto rr = mcs::video::ExtractRateAndResolution(format_);
+
+    if (!output_stream_->Connect(remote_address_, sink_port1_))
+        return false;
 
     MCS_DEBUG("dimensions: %dx%d@%d", rr.width, rr.height, rr.framerate);
 
-    // FIXME we don't support any other mode than extend for now as that means some
-    // additional work from mir to still give us properly sized frames we can hand
-    // to the encoder.
-    Screencast::DisplayOutput output{Screencast::DisplayMode::kExtend, rr.width, rr.height};
+    video::DisplayOutput output{video::DisplayOutput::Mode::kExtend, rr.width, rr.height, rr.framerate};
 
-    connector_ = std::make_shared<mcs::mir::Screencast>(output);
-    if (!connector_->IsValid())
+    if (!producer_->Setup(output)) {
+        MCS_ERROR("Failed to setup buffer producer");
         return false;
-
-    encoder_ = mcs::android::H264Encoder::Create(report_factory->CreateEncoderReport());
+    }
 
     int profile = 0, level = 0, constraint = 0;
     mcs::video::ExtractProfileLevel(format_, &profile, &level, &constraint);
 
-    auto config = mcs::android::H264Encoder::DefaultConfiguration();
+    auto config = encoder_->DefaultConfiguration();
     config.width = rr.width;
     config.height = rr.height;
     config.framerate = rr.framerate;
@@ -81,63 +88,59 @@ bool SourceMediaManager::Configure() {
         return false;
     }
 
-    encoder_executor_ = mcs::common::ThreadedExecutor::Create(encoder_, "Encoder");
+    renderer_ = std::make_shared<mcs::mir::StreamRenderer>(
+                producer_, encoder_, report_factory_->CreateRendererReport());
 
-    renderer_ = mcs::mir::StreamRenderer::Create(connector_, encoder_,
-                                                 report_factory->CreateRendererReport());
-    renderer_->SetDimensions(rr.width, rr.height);
+    const auto rtp_sender = std::make_shared<mcs::streaming::RTPSender>(
+                output_stream_, report_factory_->CreateSenderReport());
 
-    auto rtp_sender = mcs::streaming::RTPSender::Create(remote_address_, sink_port1_,
-                                                        report_factory->CreateSenderReport());
-    auto mpegts_packetizer = mcs::streaming::MPEGTSPacketizer::Create(report_factory->CreatePacketizerReport());
+    const auto mpegts_packetizer = mcs::streaming::MPEGTSPacketizer::Create(
+                report_factory_->CreatePacketizerReport());
 
-    sender_ = mcs::streaming::MediaSender::Create(mpegts_packetizer, rtp_sender, config);
+    sender_ = std::make_shared<mcs::streaming::MediaSender>(
+                mpegts_packetizer,
+                rtp_sender,
+                config);
+
     encoder_->SetDelegate(sender_);
+
+    pipeline_.Add(encoder_);
+    pipeline_.Add(renderer_);
+    pipeline_.Add(rtp_sender);
+    pipeline_.Add(sender_);
 
     return true;
 }
 
-void SourceMediaManager::StartPipeline() {
-    sender_->Start();
-    encoder_executor_->Start();
-    renderer_->StartThreaded();
-}
-
-void SourceMediaManager::StopPipeline() {
-    renderer_->Stop();
-    encoder_executor_->Stop();
-    sender_->Stop();
-}
-
 void SourceMediaManager::Play() {
-    if (!IsPaused() || !renderer_)
+    if (!IsPaused())
         return;
 
     MCS_DEBUG("");
 
-    StartPipeline();
+    pipeline_.Start();
 
     state_ = State::Playing;
 }
 
 void SourceMediaManager::Pause() {
-    if (IsPaused()|| !renderer_)
+    if (IsPaused())
         return;
 
     MCS_DEBUG("");
 
-    StopPipeline();
+    pipeline_.Stop();
 
     state_ = State::Paused;
 }
 
 void SourceMediaManager::Teardown() {
-    if (state_ == State::Stopped || !renderer_)
+    if (state_ == State::Stopped)
         return;
 
     MCS_DEBUG("");
 
-    StopPipeline();
+    pipeline_.Stop();
 
     state_ = State::Stopped;
 }
@@ -155,7 +158,6 @@ void SourceMediaManager::SendIDRPicture() {
 }
 
 int SourceMediaManager::GetLocalRtpPort() const {
-    MCS_DEBUG("local port %d", sender_->LocalRTPPort());
     return sender_->LocalRTPPort();
 }
 

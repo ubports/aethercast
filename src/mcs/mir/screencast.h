@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical, Ltd.
+ * Copyright (C) 2015-2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -26,48 +26,29 @@
 
 #include "mcs/non_copyable.h"
 
+#include "mcs/video/bufferproducer.h"
+
 namespace mcs {
 namespace mir {
 
-class Screencast : public mcs::NonCopyable {
+class Screencast : public mcs::video::BufferProducer {
 public:
-    typedef std::shared_ptr<Screencast> Ptr;
-
-    enum class DisplayMode {
-        kMirror,
-        kExtend
-    };
-
-    static std::string DisplayModeToString(const DisplayMode &mode);
-
-    struct DisplayOutput {
-        DisplayMode mode;
-        unsigned int width;
-        unsigned int height;
-        double refresh_rate;
-    };
-
-    explicit Screencast(const DisplayOutput &output);
+    explicit Screencast();
     ~Screencast();
 
-    void SwapBuffers();
-    void SwapBuffersSync();
+    bool Setup(const video::DisplayOutput &output) override;
 
-    bool IsValid() const;
-
-    void* NativeWindowHandle() const;
-    void* NativeDisplayHandle() const;
-
-    DisplayOutput OutputMode() const;
-    MirNativeBuffer* CurrentBuffer() const;
-
+    // From mcs::video::BufferProducer
+    void SwapBuffers() override;
+    void* CurrentBuffer() const override;
+    video::DisplayOutput OutputMode() const override;
 
 private:
     MirConnection *connection_;
     MirScreencast *screencast_;
     MirBufferStream *buffer_stream_;
     MirScreencastParameters params_;
-    DisplayOutput output_;
+    video::DisplayOutput output_;
 };
 
 } // namespace mir

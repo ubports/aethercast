@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical, Ltd.
+ * Copyright (C) 2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,32 +15,39 @@
  *
  */
 
-#ifndef MEDIAMANAGERFACTORY_H_
-#define MEDIAMANAGERFACTORY_H_
+#ifndef MCS_NETWORK_UDPSTREAM_H_
+#define MCS_NETWORK_UDPSTREAM_H_
 
 #include <memory>
 
-#include "mcs/basesourcemediamanager.h"
+#include "mcs/non_copyable.h"
 
-#include "mcs/network/types.h"
+#include "mcs/network/stream.h"
 
 namespace mcs {
+namespace network {
 
-// Only here to make unit testing easier for the factory class
-class NullSourceMediaManager : public BaseSourceMediaManager {
+class UdpStream : public Stream {
 public:
-    void Play() override;
-    void Pause() override;
-    void Teardown() override;
-    bool IsPaused() const override;
+    UdpStream();
+    ~UdpStream();
 
-protected:
-    bool Configure() override;
+    bool Connect(const std::string &address, const Port &port) override;
+
+    bool WaitUntilReady() override;
+
+    Error Write(const uint8_t *data, unsigned int size) override;
+
+    Port LocalPort() const override;
+
+    std::uint32_t MaxUnitSize() const override;
+
+private:
+    int socket_;
+    Port local_port_;
 };
 
-class MediaManagerFactory {
-public:
-    static std::shared_ptr<BaseSourceMediaManager> CreateSource(const std::string &remote_address);
-};
+} // namespace network
 } // namespace mcs
+
 #endif
