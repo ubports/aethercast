@@ -74,8 +74,8 @@ int __rtnl_addattr_l(struct nlmsghdr *n, size_t max_length,
 }
 
 namespace mcs {
-const std::uint16_t NetworkUtils::kMinUserPort{1024};
-const std::uint16_t NetworkUtils::kMaxUserPort{65534};
+const network::Port NetworkUtils::kMinUserPort{1024};
+const network::Port NetworkUtils::kMaxUserPort{65534};
 
 int NetworkUtils::ModifyInterfaceAddress(int cmd, int flags,
                 int index, int family,
@@ -328,10 +328,13 @@ mcs::network::Port NetworkUtils::PickRandomPort() {
 }
 
 int NetworkUtils::MakeSocketNonBlocking(int socket) {
+    if (socket < 0)
+        return -EINVAL;
+
     int flags = fcntl(socket, F_GETFL, 0);
     if (flags < 0)
         flags = 0;
-    int res = fcntl(socket, F_SETFL, flags | O_NONBLOCK);
+    const int res = fcntl(socket, F_SETFL, flags | O_NONBLOCK);
     if (res < 0)
         return -errno;
     return 0;

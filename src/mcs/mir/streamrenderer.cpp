@@ -63,7 +63,7 @@ bool StreamRenderer::Execute() {
     // and will block until that is done and we received a new buffer
     buffer_producer_->SwapBuffers();
 
-    auto native_buffer = buffer_producer_->CurrentBuffer();
+    const auto native_buffer = buffer_producer_->CurrentBuffer();
 
     auto buffer = mcs::video::Buffer::Create(native_buffer);
     buffer->SetDelegate(shared_from_this());

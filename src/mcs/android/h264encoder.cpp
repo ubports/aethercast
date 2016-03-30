@@ -519,7 +519,7 @@ void H264Encoder::SendIDRFrame() {
 }
 
 std::string H264Encoder::Name() const {
-    return "H264Encoder";
+    return kEncoderThreadName;
 }
 
 } // namespace android

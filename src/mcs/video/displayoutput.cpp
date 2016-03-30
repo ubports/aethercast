@@ -15,21 +15,23 @@
  *
  */
 
+#include <iostream>
+
 #include "mcs/video/displayoutput.h"
 
 namespace mcs {
 namespace video {
 
-std::string DisplayOutput::ModeToString(const Mode &mode) {
+std::ostream& operator<<(std::ostream& out, DisplayOutput::Mode mode) {
     switch (mode) {
-    case Mode::kExtend:
-        return "extend";
-    case Mode::kMirror:
-        return "mirror";
+    case DisplayOutput::Mode::kExtend:
+        return out << "extend";
+    case DisplayOutput::Mode::kMirror:
+        return out << "mirror";
     default:
         break;
     }
-    return "unknown";
+    return out << "unknown";
 }
 
 DisplayOutput::DisplayOutput() :

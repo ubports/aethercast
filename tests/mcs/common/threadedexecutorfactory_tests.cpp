@@ -21,7 +21,7 @@
 #include "mcs/common/threadedexecutor.h"
 
 TEST(ThreadedExecutorFactory, ConstructsCorrectType) {
-    auto factory = std::make_shared<mcs::common::ThreadedExecutorFactory>();
+    const auto factory = std::make_shared<mcs::common::ThreadedExecutorFactory>();
     mcs::common::Executable::Ptr null_executable = nullptr;
     EXPECT_TRUE(!!dynamic_cast<mcs::common::ThreadedExecutor*>(factory->Create(null_executable).get()));
 }

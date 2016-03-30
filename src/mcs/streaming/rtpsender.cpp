@@ -73,7 +73,7 @@ bool RTPSender::Execute() {
     queue_->Lock();
 
     while(true) {
-        auto packet = queue_->PopUnlocked();
+        const auto packet = queue_->PopUnlocked();
         if (!packet)
             break;
 
@@ -102,7 +102,10 @@ bool RTPSender::Queue(const video::Buffer::Ptr &packets) {
 
     uint32_t offset = 0;
     while (offset < packets->Length()) {
-        auto packet = mcs::video::Buffer::Create(kRTPHeaderSize + max_ts_packets_ * kMPEGTSPacketSize);
+        const auto packet = mcs::video::Buffer::Create(kRTPHeaderSize + max_ts_packets_ * kMPEGTSPacketSize);
+
+        if (!packet->Data())
+            continue;
 
         uint8_t *ptr = packet->Data();
 

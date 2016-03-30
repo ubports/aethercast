@@ -26,8 +26,8 @@ namespace mcs {
 class NetworkUtils
 {
 public:
-    static const std::uint16_t kMinUserPort;
-    static const std::uint16_t kMaxUserPort;
+    static const mcs::network::Port kMinUserPort;
+    static const mcs::network::Port kMaxUserPort;
 
     static int RetrieveInterfaceIndex(const char *name);
     static std::string RetrieveInterfaceName(int index);

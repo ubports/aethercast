@@ -36,6 +36,3 @@ install(
 
 add_executable(mpegts_muxer mpegts_muxer.cpp)
 target_link_libraries(mpegts_muxer aethercast-core)
-
-add_executable(raw_streamer raw_streamer.cpp)
-target_link_libraries(raw_streamer aethercast-core)
