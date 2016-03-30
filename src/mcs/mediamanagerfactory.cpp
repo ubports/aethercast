@@ -63,11 +63,11 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
     DEBUG("Creating source media manager of type %s", type.c_str());
 
     if (type == "mir") {
-        auto executor_factory = std::make_shared<common::ThreadedExecutorFactory>();
-        auto report_factory = report::ReportFactory::Create();
-        auto screencast = std::make_shared<mcs::mir::Screencast>();
-        auto encoder = mcs::android::H264Encoder::Create(report_factory->CreateEncoderReport());
-        auto network_stream = std::make_shared<mcs::network::UdpStream>();
+        const auto executor_factory = std::make_shared<common::ThreadedExecutorFactory>();
+        const auto report_factory = report::ReportFactory::Create();
+        const auto screencast = std::make_shared<mcs::mir::Screencast>();
+        const auto encoder = mcs::android::H264Encoder::Create(report_factory->CreateEncoderReport());
+        const auto network_stream = std::make_shared<mcs::network::UdpStream>();
 
         return std::make_shared<mcs::mir::SourceMediaManager>(
                     remote_address,

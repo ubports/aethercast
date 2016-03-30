@@ -47,8 +47,7 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
         return false;
 
     if (output.mode != video::DisplayOutput::Mode::kExtend) {
-        MCS_ERROR("Unsupported display output mode specified '%s'",
-                  mcs::video::DisplayOutput::ModeToString(output.mode));
+        MCS_ERROR("Unsupported display output mode specified '%s'", output.mode);
         return false;
     }
 
@@ -59,7 +58,7 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
         return false;
     }
 
-    auto config = mir_connection_create_display_config(connection_);
+    const auto config = mir_connection_create_display_config(connection_);
     if (!config) {
         MCS_ERROR("Failed to create display configuration: %s",
                   mir_connection_get_error_message(connection_));
@@ -109,10 +108,8 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
              params_.region.left, params_.region.top,
              active_output->orientation);
 
-    MCS_DEBUG("Setting up screencast [%s %dx%d]",
-              video::DisplayOutput::ModeToString(output.mode),
-              output.width,
-              output.height);
+    MCS_DEBUG("Setting up screencast [%s %dx%d]", output.mode,
+              output.width, output.height);
 
     unsigned int num_pixel_formats = 0;
     mir_connection_get_available_surface_formats(connection_, &params_.pixel_format,

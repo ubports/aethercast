@@ -98,7 +98,7 @@ bool MediaSender::Execute() {
     if (!queue_->WaitToBeFilled())
         return true;
 
-    auto buffer = queue_->Pop();
+    const auto buffer = queue_->Pop();
     ProcessBuffer(buffer);
 
     return true;

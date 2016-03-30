@@ -84,7 +84,7 @@ public:
 TEST_F(StreamRendererFixture, ValidExecutableName) {
     ExpectValidConfiguration();
 
-    auto renderer = std::make_shared<mcs::mir::StreamRenderer>(
+    const auto renderer = std::make_shared<mcs::mir::StreamRenderer>(
                 mock_buffer_producer,
                 mock_encoder,
                 mock_renderer_report);
@@ -95,7 +95,7 @@ TEST_F(StreamRendererFixture, ValidExecutableName) {
 TEST_F(StreamRendererFixture, StartAndStopSucceed) {
     ExpectValidConfiguration();
 
-    auto renderer = std::make_shared<mcs::mir::StreamRenderer>(
+    const auto renderer = std::make_shared<mcs::mir::StreamRenderer>(
                 mock_buffer_producer,
                 mock_encoder,
                 mock_renderer_report);
@@ -107,7 +107,7 @@ TEST_F(StreamRendererFixture, StartAndStopSucceed) {
 TEST_F(StreamRendererFixture, TakesBufferFromProducerAndForwardsToEncoder) {
     ExpectValidConfiguration();
 
-    auto renderer = std::make_shared<mcs::mir::StreamRenderer>(
+    const auto renderer = std::make_shared<mcs::mir::StreamRenderer>(
                 mock_buffer_producer,
                 mock_encoder,
                 mock_renderer_report);
@@ -145,7 +145,7 @@ TEST_F(StreamRendererFixture, TakesBufferFromProducerAndForwardsToEncoder) {
 TEST_F(StreamRendererFixture, CorrectBufferManagement) {
     ExpectValidConfiguration();
 
-    auto renderer = std::make_shared<mcs::mir::StreamRenderer>(
+    const auto renderer = std::make_shared<mcs::mir::StreamRenderer>(
                 mock_buffer_producer,
                 mock_encoder,
                 mock_renderer_report);
@@ -202,7 +202,7 @@ TEST_F(StreamRendererFixture, CorrectBufferManagement) {
 TEST_F(StreamRendererFixture, KeepsExecutingWhenNoFreeSlots) {
     ExpectValidConfiguration();
 
-    auto renderer = std::make_shared<mcs::mir::StreamRenderer>(
+    const auto renderer = std::make_shared<mcs::mir::StreamRenderer>(
                 mock_buffer_producer,
                 mock_encoder,
                 mock_renderer_report);
