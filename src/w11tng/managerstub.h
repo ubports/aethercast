@@ -24,7 +24,13 @@
 #include <mcs/scoped_gobject.h>
 
 extern "C" {
+// Ignore all warnings coming from the external headers as we don't
+// control them and also don't want to get any warnings from them
+// which will only pollute our build output.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-w"
 #include "wpasupplicantinterface.h"
+#pragma GCC diagnostic pop
 }
 
 namespace w11tng {

@@ -18,10 +18,10 @@
 #ifndef W11TNG_HOSTNAME1STUB_H_
 #define W11TNG_HOSTNAME1STUB_H_
 
-#include <glib.h>
-
 #include <memory>
 #include <string>
+
+#include <mcs/glib_wrapper.h>
 
 #include <mcs/scoped_gobject.h>
 

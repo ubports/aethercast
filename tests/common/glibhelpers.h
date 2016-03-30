@@ -18,7 +18,7 @@
 #ifndef GLIBHELPERS_H_
 #define GLIBHELPERS_H_
 
-#include <glib.h>
+#include <mcs/glib_wrapper.h>
 
 #include <chrono>
 

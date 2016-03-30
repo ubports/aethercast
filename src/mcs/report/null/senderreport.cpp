@@ -15,6 +15,8 @@
  *
  */
 
+#include <boost/concept_check.hpp>
+
 #include "mcs/logger.h"
 
 #include "mcs/report/null/senderreport.h"
@@ -24,6 +26,8 @@ namespace report {
 namespace null {
 
 void SenderReport::SentPacket(const TimestampUs &timestamp, const size_t &size) {
+    boost::ignore_unused_variable_warning(timestamp);
+    boost::ignore_unused_variable_warning(size);
 }
 
 } // namespace null

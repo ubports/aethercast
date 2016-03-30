@@ -25,7 +25,7 @@ AssertionResult DidExitCleanly(core::posix::ChildProcess& child) {
 AssertionResult DidExitCleanly(const core::posix::wait::Result& result)
 {
     if (result.status != core::posix::wait::Result::Status::exited)
-        return AssertionFailure() << "Process did not exit, but: " << (int)result.status;
+        return AssertionFailure() << "Process did not exit, but: " << static_cast<int>(result.status);
     if (result.detail.if_exited.status != core::posix::exit::Status::success)
         return AssertionFailure() << "Process did exit with failure.";
 

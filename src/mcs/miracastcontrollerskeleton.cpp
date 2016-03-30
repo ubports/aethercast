@@ -15,18 +15,17 @@
  *
  */
 
-#include <glib.h>
-#include <gio/gio.h>
-
 #include <algorithm>
 
 #include <boost/concept_check.hpp>
 
-#include "miracastcontrollerskeleton.h"
-#include "keep_alive.h"
-#include "utils.h"
-#include "dbushelpers.h"
-#include "logger.h"
+#include "mcs/glib_wrapper.h"
+
+#include "mcs/miracastcontrollerskeleton.h"
+#include "mcs/keep_alive.h"
+#include "mcs/utils.h"
+#include "mcs/dbushelpers.h"
+#include "mcs/logger.h"
 
 namespace mcs {
 std::shared_ptr<MiracastControllerSkeleton> MiracastControllerSkeleton::create(const std::shared_ptr<MiracastController> &controller) {

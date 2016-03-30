@@ -18,10 +18,6 @@
 #ifndef W11TNG_TESTING_INTERFACE_SKELETON_H_
 #define W11TNG_TESTING_INTERFACE_SKELETON_H_
 
-extern "C" {
-#include "wpasupplicantinterface.h"
-}
-
 #include "baseskeleton.h"
 
 namespace w11tng {

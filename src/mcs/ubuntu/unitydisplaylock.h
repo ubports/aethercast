@@ -18,8 +18,7 @@
 #ifndef MCS_UBUNTU_POWERDDISPLAYLOCK_H_
 #define MCS_UBUNTU_POWERDDISPLAYLOCK_H_
 
-#include <glib.h>
-#include <gio/gio.h>
+#include "mcs/glib_wrapper.h"
 
 #include "mcs/scoped_gobject.h"
 #include "mcs/systemcontroller.h"

@@ -171,10 +171,10 @@ TEST_F(StreamRendererFixture, CorrectBufferManagement) {
     EXPECT_CALL(*mock_buffer_producer, SwapBuffers())
             .Times(AtLeast(1));
 
-    auto buffer_native_handle = reinterpret_cast<void*>(1);
+    auto buffer_native_handle = reinterpret_cast<uint8_t*>(1);
 
     EXPECT_CALL(*mock_buffer_producer, CurrentBuffer())
-            .WillRepeatedly(Return(buffer_native_handle++));
+            .WillRepeatedly(Return(reinterpret_cast<void*>(buffer_native_handle++)));
 
     auto thread_renderer = std::thread([&]() {
         while (running && renderer->Execute()) {
@@ -223,11 +223,11 @@ TEST_F(StreamRendererFixture, KeepsExecutingWhenNoFreeSlots) {
     EXPECT_CALL(*mock_buffer_producer, SwapBuffers())
             .Times(2);
 
-    auto buffer_native_handle = reinterpret_cast<void*>(1);
+    auto buffer_native_handle = reinterpret_cast<uint8_t*>(1);
 
     EXPECT_CALL(*mock_buffer_producer, CurrentBuffer())
             .Times(2)
-            .WillRepeatedly(Return(buffer_native_handle++));
+            .WillRepeatedly(Return(reinterpret_cast<void*>(buffer_native_handle++)));
 
     EXPECT_TRUE(renderer->Start());
 

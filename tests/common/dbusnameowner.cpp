@@ -15,7 +15,7 @@
  *
  */
 
-#include <gio/gio.h>
+#include <mcs/glib_wrapper.h>
 
 #include "dbusnameowner.h"
 #include "glibhelpers.h"

@@ -15,6 +15,8 @@
  *
  */
 
+#include <boost/concept_check.hpp>
+
 #include "mcs/report/null/rendererreport.h"
 
 namespace mcs {
@@ -25,6 +27,7 @@ void RendererReport::BeganFrame() {
 }
 
 void RendererReport::FinishedFrame(const TimestampUs &timestamp) {
+    boost::ignore_unused_variable_warning(timestamp);
 }
 
 } // namespace null

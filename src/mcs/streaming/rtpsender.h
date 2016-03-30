@@ -18,15 +18,11 @@
 #ifndef MCS_STREAMING_RTPSENDER_H_
 #define MCS_STREAMING_RTPSENDER_H_
 
-#include <gio/gio.h>
-
 #include <memory>
 #include <queue>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-
-#include "mcs/scoped_gobject.h"
 
 #include "mcs/common/executable.h"
 

@@ -23,10 +23,16 @@
 #include <map>
 #include <functional>
 
-#include <glib.h>
+#include "mcs/glib_wrapper.h"
 
 extern "C" {
+// Ignore all warnings coming from the external headers as we don't
+// control them and also don't want to get any warnings from them
+// which will only pollute our build output.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-w"
 #include "aethercastinterface.h"
+#pragma GCC diagnostic pop
 }
 
 namespace mcs {

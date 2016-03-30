@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical, Ltd.
+ * Copyright (C) 2015-2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,24 +15,29 @@
  *
  */
 
-#ifndef SHARED_GOBJECT_H_
-#define SHARED_GOBJECT_H_
-
-#include <memory>
-
-#include "mcs/glib_wrapper.h"
-#include "mcs/gobject_deleter.h"
+#include "mcs/types.h"
 
 namespace mcs {
-// A SharedGObject instance handles raw GObject instances
-// and automatically cleans them up on destruction.
-template<typename T>
-using SharedGObject = std::shared_ptr<T>;
 
-template<typename T>
-SharedGObject<T> make_shared_gobject(T *gobject) {
-    return SharedGObject<T>{gobject, GObjectDeleter<T>{}};
-}
+std::string ErrorToString(const Error &error) {
+    switch (error) {
+    case Error::kNone:
+        return "None";
+    case Error::kFailed:
+        return "Operation failed";
+    case Error::kAlready:
+        return "Operation already in progress";
+    case Error::kParamInvalid:
+        return "Invalid parameters";
+    case Error::kInvalidState:
+        return "Invalid state";
+    case Error::kNoDeviceConnected:
+        return "No device connected";
+    case Error::kUnknown:
+    default:
+        break;
+    }
+    return "Unknown error occured";
 }
 
-#endif // SHARED_GOBJECT_H_
+} // namespace mcs

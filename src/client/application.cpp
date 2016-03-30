@@ -23,9 +23,10 @@
 #include <string>
 #include <sstream>
 
-#include <glib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+
+#include "mcs/glib_wrapper.h"
 
 #include "application.h"
 

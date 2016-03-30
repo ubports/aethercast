@@ -35,6 +35,8 @@ namespace posix
 class CORE_POSIX_DLL_PUBLIC Signalable
 {
 public:
+    virtual ~Signalable() { }
+
     /**
      * @brief Sends a signal to this signalable object.
      * @throws std::system_error in case of problems.

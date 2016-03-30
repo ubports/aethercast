@@ -262,7 +262,7 @@ MPEGTSPacketizer::TrackId MPEGTSPacketizer::AddTrack(const TrackFormat &format) 
 }
 
 void MPEGTSPacketizer::SubmitCSD(TrackId track_index, const video::Buffer::Ptr &buffer) {
-    if (track_index > tracks_.size() -1)
+    if (track_index > static_cast<int>(tracks_.size()) - 1)
         return;
 
     auto track = tracks_.at(track_index);
@@ -279,7 +279,7 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
 
     packets->reset();
 
-    if (track_index > tracks_.size() - 1) {
+    if (track_index > static_cast<int>(tracks_.size()) - 1) {
         MCS_ERROR("Invalid track index %d supplied", track_index);
         return false;
     }

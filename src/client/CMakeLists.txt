@@ -1,5 +1,4 @@
 set(SOURCES
-    ${CMAKE_CURRENT_BINARY_DIR}/../mcs/aethercastinterface.c
     main.cpp
     application.cpp
 )
@@ -16,11 +15,13 @@ include_directories(
   ${GIO_INCLUDE_DIRS}
   ${GIO-UNIX_INCLUDE_DIRS}
   ${READLINE_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../
   ${CMAKE_CURRENT_BINARY_DIR}/src
 )
 
 add_executable(aethercastctl ${SOURCES})
 target_link_libraries(aethercastctl
+  aethercast-gdbus-wrapper
   ${Boost_LIBRARIES}
   ${GLIB_LIBRARIES}
   ${GIO_LIBRARIES}

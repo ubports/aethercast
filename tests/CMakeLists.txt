@@ -13,7 +13,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/tests
   ${CMAKE_SOURCE_DIR}/tests/3rd_party/process-cpp-minimal/include
   # We have to pull in generated header files.
-  ${CMAKE_BINARY_DIR}/src/mcs
+  ${CMAKE_BINARY_DIR}/src/gdbus
 )
 
 set(TEST_COMMON_SOURCE

@@ -24,16 +24,13 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include <glib.h>
-#include <glib-unix.h>
-
 #include <chrono>
 
 #include <boost/filesystem.hpp>
 
 #include <wds/logging.h>
 
-#include "config.h"
+#include "mcs/config.h"
 #include "keep_alive.h"
 #include "logger.h"
 #include "miracastservice.h"

@@ -38,13 +38,12 @@
 #include <linux/if.h>
 #include <linux/wireless.h>
 
-#include <glib.h>
-
 #include <random>
 
-#include "logger.h"
-#include "networkutils.h"
-#include "logger.h"
+#include "mcs/glib_wrapper.h"
+#include "mcs/logger.h"
+#include "mcs/networkutils.h"
+#include "mcs/logger.h"
 
 namespace {
 static constexpr size_t kDriverCommandReplySize{1024};

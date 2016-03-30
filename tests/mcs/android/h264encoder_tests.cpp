@@ -17,7 +17,13 @@
 
 #include <gmock/gmock.h>
 
+// Ignore all warnings coming from the external Android headers as
+// we don't control them and also don't want to get any warnings
+// from them which will only pollute our build output.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-w"
 #include <system/window.h>
+#pragma GCC diagnostic pop
 
 #include "mcs/report/reportfactory.h"
 

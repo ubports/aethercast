@@ -19,14 +19,13 @@
 #include <sstream>
 #include <fstream>
 
-#include <gio/gio.h>
-
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 
 #include <core/posix/exec.h>
 #include <core/posix/this_process.h>
 
+#include <mcs/glib_wrapper.h>
 #include <mcs/scoped_gobject.h>
 
 #include "glibhelpers.h"

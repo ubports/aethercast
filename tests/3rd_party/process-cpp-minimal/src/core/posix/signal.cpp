@@ -75,6 +75,8 @@ public:
         case Scope::thread:
             set_thread_signal_mask(&blocked_signals_mask, &old_signals_mask);
             break;
+        default:
+            break;
         }
     }
 
@@ -87,6 +89,8 @@ public:
             break;
         case Scope::thread:
             set_thread_signal_mask(&old_signals_mask, nullptr);
+            break;
+        default:
             break;
         }
 
