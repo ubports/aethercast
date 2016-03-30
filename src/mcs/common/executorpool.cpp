@@ -20,7 +20,7 @@
 namespace mcs {
 namespace common {
 
-ExecutorPool::ExecutorPool(const ExecutorFactory::Ptr &factory, const std::uint32_t &size) :
+ExecutorPool::ExecutorPool(const ExecutorFactory::Ptr &factory, const size_t &size) :
     size_(size),
     running_(false),
     factory_(factory) {
@@ -35,7 +35,7 @@ bool ExecutorPool::Add(const Executable::Ptr &executable) {
         return false;
 
     auto executor = factory_->Create(executable);
-    items_.push_back(Item{executable, executor});
+    items_.emplace_back(Item{executable, executor});
 
     return true;
 }
@@ -45,7 +45,7 @@ bool ExecutorPool::Start() {
         return false;
 
     bool result = true;
-    for (Item &item : items_) {
+    for (const auto &item : items_) {
         result &= item.executor->Start();
         if (!result)
             break;
@@ -54,7 +54,7 @@ bool ExecutorPool::Start() {
     // If we failed to start all we stop those we already
     // started to come back into a well known state.
     if (!result) {
-        for (auto &item : items_) {
+        for (const auto &item : items_) {
             if (item.executor->Running())
                 item.executor->Stop();
         }

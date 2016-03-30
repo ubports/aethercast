@@ -41,6 +41,8 @@ struct DisplayOutput {
     double refresh_rate;
 };
 
+std::ostream& operator<<(std::ostream& out, DisplayOutput::Mode mode);
+
 } // namespace video
 } // namespace mcs
 

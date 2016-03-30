@@ -159,7 +159,7 @@ public:
 TEST_F(H264EncoderFixture, ValidDefaultConfiguration) {
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
     EXPECT_EQ(-1, config.framerate);
     EXPECT_EQ(5000000, config.bitrate);
     EXPECT_EQ(15, config.i_frame_interval);
@@ -182,7 +182,7 @@ TEST_F(H264EncoderFixture, MediaMessageCreationFails) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     EXPECT_FALSE(encoder->Configure(config));
 }
@@ -208,7 +208,7 @@ TEST_F(H264EncoderFixture, MediaSourceCreationFails) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     EXPECT_FALSE(encoder->Configure(config));
 }
@@ -242,7 +242,7 @@ TEST_F(H264EncoderFixture, MediaMetaDataCreationFails) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     EXPECT_FALSE(encoder->Configure(config));
 }
@@ -303,7 +303,7 @@ TEST_F(H264EncoderFixture, MediaCodecSourceCreationFails) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     EXPECT_FALSE(encoder->Configure(config));
 }
@@ -430,7 +430,7 @@ TEST_F(H264EncoderFixture, CorrectConfiguration) {
     // We can configure the encoder only once
     EXPECT_FALSE(encoder->Configure(config));
 
-    auto stored_config = encoder->Configuration();
+    const auto stored_config = encoder->Configuration();
     EXPECT_EQ(config, stored_config);
 }
 
@@ -439,7 +439,7 @@ TEST_F(H264EncoderFixture, CorrectStartAndStopBehavior) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     ExpectValidConfiguration(config, mock);
     ExpectValidStartAndStop(mock);
@@ -462,7 +462,7 @@ TEST_F(H264EncoderFixture, StartFailsCorrectly) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     ExpectValidConfiguration(config, mock);
 
@@ -480,7 +480,7 @@ TEST_F(H264EncoderFixture, StopFailsCorrectly) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     ExpectValidConfiguration(config, mock);
 
@@ -507,7 +507,7 @@ TEST_F(H264EncoderFixture, RequestIDRFrame) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     ExpectValidConfiguration(config, mock);
 
@@ -526,7 +526,7 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     ExpectValidConfiguration(config, mock);
 
@@ -617,7 +617,7 @@ TEST_F(H264EncoderFixture, SourceReadFailsForInvalidState) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     ExpectValidConfiguration(config, mock);
 
@@ -641,7 +641,7 @@ TEST_F(H264EncoderFixture, QueueBufferDoesNotCrashWhenInactive) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     auto buffer = mcs::video::Buffer::Create(nullptr);
     encoder->QueueBuffer(buffer);
@@ -662,7 +662,7 @@ TEST_F(H264EncoderFixture, ExecuteFailsForFailedSourceRead) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     ExpectValidConfiguration(config, mock);
     ExpectValidStartAndStop(mock);
@@ -687,7 +687,7 @@ TEST_F(H264EncoderFixture, ExecuteProvidesBuffers) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     ExpectValidConfiguration(config, mock);
     ExpectValidStartAndStop(mock);
@@ -751,7 +751,7 @@ TEST_F(H264EncoderFixture, HandsBuffersWithCodecSpecificDataBack) {
 
     auto encoder = mcs::android::H264Encoder::Create(mock_report);
 
-    auto config = encoder->DefaultConfiguration();
+    const auto config = encoder->DefaultConfiguration();
 
     ExpectValidConfiguration(config, mock);
     ExpectValidStartAndStop(mock);

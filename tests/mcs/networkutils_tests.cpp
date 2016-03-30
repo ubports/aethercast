@@ -31,10 +31,10 @@ TEST(NetworkUtils_PickRandomPort, PicksPortsInRange) {
 }
 
 TEST(NetworkUtils_MakeSocketNonBlocking, SocketFlagsCorrectlySet) {
-    auto sock = ::socket(AF_INET, SOCK_DGRAM, 0);
+    const auto sock = ::socket(AF_INET, SOCK_DGRAM, 0);
 
     EXPECT_EQ(0, mcs::NetworkUtils::MakeSocketNonBlocking(sock));
 
-    auto flags = ::fcntl(sock, F_GETFL, 0);
+    const auto flags = ::fcntl(sock, F_GETFL, 0);
     EXPECT_TRUE(flags & O_NONBLOCK);
 }

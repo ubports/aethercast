@@ -143,7 +143,7 @@ TEST_F(SourceMediaManagerFixture, FailingStreamCausesConfigureToFail) {
     EXPECT_CALL(*mock_output_stream, Connect(remote_address, _))
             .WillOnce(Return(false));
 
-    auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
+    const auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
                 remote_address,
                 mock_executor_factory,
                 nullptr,
@@ -161,7 +161,7 @@ TEST_F(SourceMediaManagerFixture, ConfiguresFailsWithFailingProducer) {
     EXPECT_CALL(*mock_buffer_producer, Setup(_))
             .WillOnce(Return(false));
 
-    auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
+    const auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
                 remote_address,
                 mock_executor_factory,
                 mock_buffer_producer,
@@ -185,7 +185,7 @@ TEST_F(SourceMediaManagerFixture, ConfigureFailsWithFailingEncoder) {
     EXPECT_CALL(*mock_encoder, Configure(_))
             .WillOnce(Return(false));
 
-    auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
+    const auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
                 remote_address,
                 mock_executor_factory,
                 mock_buffer_producer,
@@ -199,7 +199,7 @@ TEST_F(SourceMediaManagerFixture, ConfigureFailsWithFailingEncoder) {
 TEST_F(SourceMediaManagerFixture, ConfiugresAndSetsUpEverything) {
     ExpectCorrectConfiguration();
 
-    auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
+    const auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
                 remote_address,
                 mock_executor_factory,
                 mock_buffer_producer,
@@ -221,7 +221,7 @@ TEST_F(SourceMediaManagerFixture, StateSwitching) {
             .Times(8)
             .WillRepeatedly(Return(true));
 
-    auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
+    const auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
                 remote_address,
                 mock_executor_factory,
                 mock_buffer_producer,
@@ -247,7 +247,7 @@ TEST_F(SourceMediaManagerFixture, StateSwitching) {
 }
 
 TEST_F(SourceMediaManagerFixture, SendsIDRPicture) {
-    auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
+    const auto manager = std::make_shared<mcs::mir::SourceMediaManager>(
                 remote_address,
                 mock_executor_factory,
                 mock_buffer_producer,

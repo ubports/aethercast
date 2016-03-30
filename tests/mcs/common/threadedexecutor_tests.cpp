@@ -49,7 +49,7 @@ TEST(ThreadedExecutor, CorrectStartAndStopBehaviour) {
             .Times(AtLeast(0))
             .WillRepeatedly(Return(true));
 
-    auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
+    const auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
 
     EXPECT_FALSE(executor->Running());
     EXPECT_FALSE(executor->Stop());
@@ -77,7 +77,7 @@ TEST(ThreadedExecutor, CorrectlyExecutes) {
             .Times(AtLeast(10))
             .WillRepeatedly(DoAll(Invoke([&]() { count++; running = count < 10; }), ReturnPointee(&running)));
 
-    auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
+    const auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
 
     EXPECT_TRUE(executor->Start());
 
@@ -95,7 +95,7 @@ TEST(ThreadedExecutor, ExecutableFailsToStart) {
             .Times(1)
             .WillOnce(Return(false));
 
-    auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
+    const auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
 
     EXPECT_FALSE(executor->Start());
     EXPECT_FALSE(executor->Running());
@@ -112,7 +112,7 @@ TEST(ThreadedExecutor, IgnoresFailedStopFromExecutable) {
             .Times(1)
             .WillOnce(Return(false));
 
-    auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
+    const auto executor = std::make_shared<mcs::common::ThreadedExecutor>(executable);
 
     EXPECT_TRUE(executor->Start());
     EXPECT_TRUE(executor->Stop());

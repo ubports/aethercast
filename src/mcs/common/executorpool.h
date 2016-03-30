@@ -34,7 +34,7 @@ namespace common {
 
 class ExecutorPool : public mcs::NonCopyable {
 public:
-    ExecutorPool(const ExecutorFactory::Ptr &factory, const std::uint32_t &size);
+    ExecutorPool(const ExecutorFactory::Ptr &factory, const size_t &size);
     ~ExecutorPool();
 
     bool Add(const Executable::Ptr &executable);
