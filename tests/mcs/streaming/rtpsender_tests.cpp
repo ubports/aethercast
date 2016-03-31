@@ -240,13 +240,11 @@ TEST(RTPSender, ConstructsCorrectRTPHeader) {
     rtp_time |= (output_data[6] << 8);
     rtp_time |= (output_data[7] << 0);
 
-    // Convert back from a 90 kHz clock
-    rtp_time *= 100ll;
-    rtp_time /= 9;
+    const uint32_t packet_timestamp_90khz = (packet_timestamp * 9) / 100ll;
+    const uint32_t now_rtp_time = (mcs::Utils::GetNowUs() * 9) / 100ll;
 
-    auto packet_timestamp_ms = packet_timestamp / 1000ll;
-    EXPECT_LE(packet_timestamp_ms, rtp_time);
-    EXPECT_GE(mcs::Utils::GetNowUs(), rtp_time);
+    EXPECT_LE(packet_timestamp_90khz, rtp_time);
+    EXPECT_GE(now_rtp_time, rtp_time);
 
     std::uint32_t source_id = 0;
     source_id |= (output_data[8] << 24);
