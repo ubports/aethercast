@@ -25,6 +25,8 @@
 #include <iostream>
 #include <map>
 
+#include "mcs/logger.h"
+
 #include "tests/common/statistics.h"
 
 namespace math = boost::math;
@@ -46,9 +48,7 @@ AndersonDarlingTest::for_normality(
     double std_dev = std::sqrt(result.get_variance());
 
     std::vector<double> y;
-
-    result.enumerate([&](double value)
-    {
+    result.enumerate([&](double value) {
         y.push_back((value - mean) / std_dev);
     });
 
@@ -57,8 +57,7 @@ AndersonDarlingTest::for_normality(
     math::normal_distribution<> normal;
     double s = 0.f;
 
-    for (std::size_t i = 1; i <= y.size(); i++)
-    {
+    for (std::size_t i = 1; i <= y.size(); i++) {
         auto cdf = math::cdf(normal, y[i-1]);
         s += (2*i-1) * std::log(cdf) + (2*(n-i)+1)*std::log(1-cdf);
     }

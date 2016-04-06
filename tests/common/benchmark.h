@@ -47,8 +47,8 @@ public:
         /** Timing characteristics captured during the benchmark run. */
         struct Timing : public Sample
         {
-            /** All timing-based results are measures in milliseconds. */
-            typedef std::chrono::milliseconds Milliseconds;
+            /** All timing-based results are measures in seconds. */
+            typedef std::chrono::duration<double> Seconds;
 
             /** \cond */
             Timing() = default;
@@ -114,15 +114,15 @@ public:
                     double alpha = 0.05) const;
 
             /** Minimum execution time for the benchmarked operation. */
-            Milliseconds min{Milliseconds::min()};
+            Seconds min{Seconds::min()};
             /** Maximum execution time for the benchmarked operation. */
-            Milliseconds max{Milliseconds::min()};
+            Seconds max{Seconds::min()};
             /** Mean execution time for the benchmarked operation. */
-            Milliseconds mean{Milliseconds::min()};
+            Seconds mean{Seconds::min()};
             /** Std. deviation in execution time for the benchmarked operation. */
-            Milliseconds std_dev{Milliseconds::min()};
+            Seconds std_dev{Seconds::min()};
             /** Raw sample vector, with sample.size() == sample_size */
-            std::vector<Milliseconds> sample{};
+            std::vector<Seconds> sample{};
         } timing{}; ///< Runtime-specific sample data.
 
         /**

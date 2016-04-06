@@ -61,7 +61,7 @@ public:
 };
 
 typedef std::chrono::high_resolution_clock Clock;
-typedef mcs::testing::Benchmark::Result::Timing::Milliseconds Resolution;
+typedef mcs::testing::Benchmark::Result::Timing::Seconds Resolution;
 
 typedef ba::accumulator_set<
     Resolution::rep,
@@ -82,7 +82,7 @@ void FillResultsFromStatistics(mcs::testing::Benchmark::Result& result,
 class StreamBenchmark : public mcs::testing::Benchmark {
 public:
     struct PlaybackConfiguration {
-        std::chrono::seconds duration{30};
+        std::chrono::seconds duration{5};
         StatisticsConfiguration statistics_configuration{};
     };
 
@@ -115,11 +115,21 @@ public:
                 boost::ignore_unused_variable_warning(data);
                 boost::ignore_unused_variable_warning(size);
                 const mcs::TimestampUs now = mcs::Utils::GetNowUs();
-                if (timestamp == 0ll)
+                if (timestamp <= 0ll) {
+                    MCS_DEBUG("timestamp %lld", timestamp);
                     return mcs::network::Stream::Error::kNone;
-                const mcs::TimestampUs diff = (now - timestamp) / 1000ll;
-                stats(diff);
-                benchmark_result.timing.sample.push_back(mcs::testing::Benchmark::Result::Timing::Milliseconds{diff});
+                }
+                const mcs::TimestampUs diff = now - timestamp;
+
+                double seconds = diff;
+                // Converting from microseconds to seconds
+                seconds /= (1000000.0);
+                if (seconds > 1) {
+                    MCS_DEBUG("second > 1 -> %d s (now %lld timestamp %lld)", seconds, now, timestamp);
+                    return mcs::network::Stream::Error::kNone;
+                }
+                stats(seconds);
+                benchmark_result.timing.sample.push_back(mcs::testing::Benchmark::Result::Timing::Seconds{seconds});
                 return mcs::network::Stream::Error::kNone;
             }));
 
@@ -160,8 +170,9 @@ public:
 };
 }
 
-TEST(StreamPerformance, VerifyPerformanceIsAcceptable) {
+TEST(StreamPerformance, EndToEndIsAcceptable) {
     mcs::testing::Benchmark::Result reference_result;
+
     std::ifstream in{kReferenceResultFile};
     reference_result.load_from_xml(in);
 

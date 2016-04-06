@@ -31,7 +31,7 @@
 #include "tests/common/benchmark.h"
 
 namespace {
-constexpr const char* kNameForMilliseconds{"milliseconds"};
+constexpr const char* kNameForSeconds{"seconds"};
 }
 
 namespace boost {
@@ -39,28 +39,28 @@ namespace serialization {
 template<class Archive>
 void load(
         Archive & ar,
-        mcs::testing::Benchmark::Result::Timing::Milliseconds& duration,
+        mcs::testing::Benchmark::Result::Timing::Seconds& duration,
         const unsigned int)
 {
-    mcs::testing::Benchmark::Result::Timing::Milliseconds::rep value;
-    ar & boost::serialization::make_nvp(kNameForMilliseconds, value);
-    duration = mcs::testing::Benchmark::Result::Timing::Milliseconds{value};
+    mcs::testing::Benchmark::Result::Timing::Seconds::rep value;
+    ar & boost::serialization::make_nvp(kNameForSeconds, value);
+    duration = mcs::testing::Benchmark::Result::Timing::Seconds{value};
 }
 
 template<class Archive>
 void save(
         Archive & ar,
-        const mcs::testing::Benchmark::Result::Timing::Milliseconds& duration,
+        const mcs::testing::Benchmark::Result::Timing::Seconds& duration,
         const unsigned int)
 {
-    mcs::testing::Benchmark::Result::Timing::Milliseconds::rep value = duration.count();
-    ar & boost::serialization::make_nvp(kNameForMilliseconds, value);
+    mcs::testing::Benchmark::Result::Timing::Seconds::rep value = duration.count();
+    ar & boost::serialization::make_nvp(kNameForSeconds, value);
 }
 
 template<class Archive>
 void serialize(
         Archive & ar,
-        mcs::testing::Benchmark::Result::Timing::Milliseconds& duration,
+        mcs::testing::Benchmark::Result::Timing::Seconds& duration,
         const unsigned int version)
 {
     boost::serialization::split_free(ar, duration, version);
@@ -70,13 +70,13 @@ template<class Archive>
 void serialize(
         Archive & ar,
         std::pair<
-            mcs::testing::Benchmark::Result::Timing::Milliseconds,
+            mcs::testing::Benchmark::Result::Timing::Seconds,
             double
         >& pair,
         const unsigned int)
 {
     ar & boost::serialization::make_nvp("first", pair.first);
-    ar & boost::serialization::make_nvp("milliseconds", pair.second);
+    ar & boost::serialization::make_nvp("seconds", pair.second);
 }
 
 template<class Archive>
@@ -181,7 +181,6 @@ bool Benchmark::Result::Timing::is_significantly_faster_than_reference(
             .data_fits_normal_distribution(
                 Confidence::zero_point_five_percent))
         throw std::runtime_error{"Reference timing sample is not normally distributed."};
-
     auto test_result = StudentsTTest()
             .two_independent_samples(
                 reference,
