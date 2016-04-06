@@ -32,6 +32,8 @@
 #include "utils.h"
 #include "logging.h"
 
+#include "mcs/network/udpstream.h"
+
 namespace {
 static int send_cseq = 0;
 }
@@ -213,7 +215,9 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
         return sp;
     }
 
-    media_manager_ = MediaManagerFactory::CreateSource(peer_address);
+    auto udp_stream = std::make_shared<mcs::network::UdpStream>();
+
+    media_manager_ = MediaManagerFactory::CreateSource(peer_address, udp_stream);
     source_.reset(wds::Source::Create(this, media_manager_.get()));
 
     source_->Start();

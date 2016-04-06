@@ -36,7 +36,8 @@ public:
 
     bool WaitUntilReady() override;
 
-    Error Write(const uint8_t *data, unsigned int size) override;
+    Error Write(const uint8_t *data, unsigned int size,
+                const mcs::TimestampUs &timestamp = 0) override;
 
     Port LocalPort() const override;
 

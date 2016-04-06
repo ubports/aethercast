@@ -24,7 +24,7 @@ struct MediaManagerFactoryFixture : public ::testing::Test {
     template <typename T>
     void CheckSourceCreation(const std::string &type_name) {
         setenv("MIRACAST_SOURCE_TYPE", type_name.c_str(), 1);
-        EXPECT_TRUE((std::dynamic_pointer_cast<T>(mcs::MediaManagerFactory::CreateSource("")) ? true : false));
+        EXPECT_TRUE((std::dynamic_pointer_cast<T>(mcs::MediaManagerFactory::CreateSource("", nullptr)) ? true : false));
     }
 };
 
