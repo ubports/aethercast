@@ -153,6 +153,11 @@ Sample::ValueType Benchmark::Result::Timing::get_mean() const
    return mean.count();
 }
 
+Sample::ValueType Benchmark::Result::Timing::get_stddev() const
+{
+    return std_dev.count();
+}
+
 Sample::ValueType Benchmark::Result::Timing::get_variance() const
 {
    return std_dev.count() * std_dev.count();
@@ -175,7 +180,6 @@ bool Benchmark::Result::Timing::is_significantly_faster_than_reference(
 
     return HypothesisStatus::not_rejected ==
             test_result.sample1_mean_gt_sample2_mean(alpha);
-
 }
 
 bool Benchmark::Result::Timing::is_significantly_faster_than_reference(

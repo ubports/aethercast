@@ -83,7 +83,7 @@ void FillResultsFromStatistics(mcs::testing::Benchmark::Result& result,
 class StreamBenchmark : public mcs::testing::Benchmark {
 public:
     struct PlaybackConfiguration {
-        std::chrono::seconds duration{5};
+        std::chrono::seconds duration{10};
         StatisticsConfiguration statistics_configuration{};
     };
 
@@ -128,7 +128,7 @@ public:
                 double seconds = diff;
                 // Converting from microseconds to seconds as that is what the
                 // sample stores internally.
-                seconds /= (1000000.0);
+                seconds /= 1000000.0;
 
                 stats(seconds);
                 benchmark_result.timing.sample.push_back(mcs::testing::Benchmark::Result::Timing::Seconds{seconds});
@@ -188,11 +188,20 @@ TEST(StreamPerformance, EndToEndIsAcceptable) {
     std::ofstream out{"ref-new.xml"};
     result.save_to_xml(out);
 
-    MCS_DEBUG("current mean %f var %f", result.timing.get_mean(),
-              result.timing.get_variance());
-    MCS_DEBUG("reference mean %f var %f", reference_result.timing.get_mean(),
-              reference_result.timing.get_variance());
+    MCS_DEBUG("current sample size %d mean %f var %f std dev %f",
+              result.timing.get_size(), result.timing.get_mean(),
+              result.timing.get_variance(), result.timing.get_stddev());
+    MCS_DEBUG("reference sample size %d  mean %f var %f std dev %f",
+              reference_result.timing.get_size(), reference_result.timing.get_mean(),
+              reference_result.timing.get_variance(), reference_result.timing.get_stddev());
 
-    EXPECT_FALSE(result.timing.is_significantly_faster_than_reference(reference_result.timing));
-    EXPECT_FALSE(result.timing.is_significantly_slower_than_reference(reference_result.timing));
+    // We're only interested in the question if we got slower or not. If
+    // we got faster will just produce a warning but will not fail the
+    // test. We can't safely error when a test is much faster as this
+    // depends very much on what is actually streamed, how long the encoder
+    // etc. takes to process.
+    ASSERT_FALSE(result.timing.is_significantly_slower_than_reference(reference_result.timing));
+
+    if (result.timing.is_significantly_faster_than_reference(reference_result.timing))
+        MCS_WARNING("Benchmark shows significantly better performance than reference sample");
 }

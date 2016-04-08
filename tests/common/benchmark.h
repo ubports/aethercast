@@ -62,6 +62,8 @@ public:
             Sample::ValueType get_mean() const;
             /** Query the empirical variance of the sample. */
             Sample::ValueType get_variance() const;
+            /** Query the standard devariation of the sample */
+            Sample::ValueType get_stddev() const;
             /** Enumerate all raw observations from the sample. */
             void enumerate(const Sample::Enumerator& enumerator) const;
 
