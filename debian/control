@@ -61,3 +61,19 @@ Description: Tools for the display casting service
  .
  This package contains small utilities that assist in working with
  the display streaming stack.
+
+Package: aethercast-tests
+Architecture: i386 amd64 armhf
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         isc-dhcp-server,
+         isc-dhcp-client,
+         wpasupplicant
+Description: Tests for the display casting service
+ A management service that streams current device screen content
+ to a remote display. This service supports several different
+ protocols such as Miracast.
+ .
+ This package contains tests programs that check the service and
+ the system for confirmity with what aethercast requires to work
+ properly.
