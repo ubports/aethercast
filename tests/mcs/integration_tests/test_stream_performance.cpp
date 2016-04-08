@@ -42,6 +42,8 @@
 #include "tests/common/benchmark.h"
 #include "tests/common/statistics.h"
 
+#include "tests/mcs/integration_tests/config.h"
+
 namespace ba = boost::accumulators;
 
 using namespace ::testing;
@@ -49,7 +51,6 @@ using namespace ::testing;
 namespace {
 static constexpr unsigned int kStreamMaxUnitSize = 1472;
 static constexpr const char *kNullIpAddress{"0.0.0.0"};
-static constexpr const char *kReferenceResultFile{"ref.xml"};
 
 class MockStream : public mcs::network::Stream {
 public:
@@ -175,7 +176,7 @@ public:
 TEST(StreamPerformance, EndToEndIsAcceptable) {
     mcs::testing::Benchmark::Result reference_result;
 
-    std::ifstream in{kReferenceResultFile};
+    std::ifstream in{mcs::testing::stream_performance::kReferenceResultFile};
     reference_result.load_from_xml(in);
 
     StreamBenchmark benchmark;
@@ -186,6 +187,11 @@ TEST(StreamPerformance, EndToEndIsAcceptable) {
     // the last test fails.
     std::ofstream out{"ref-new.xml"};
     result.save_to_xml(out);
+
+    MCS_DEBUG("current mean %f var %f", result.timing.get_mean(),
+              result.timing.get_variance());
+    MCS_DEBUG("reference mean %f var %f", reference_result.timing.get_mean(),
+              reference_result.timing.get_variance());
 
     EXPECT_FALSE(result.timing.is_significantly_faster_than_reference(reference_result.timing));
     EXPECT_FALSE(result.timing.is_significantly_slower_than_reference(reference_result.timing));
