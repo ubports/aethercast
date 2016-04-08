@@ -168,19 +168,6 @@ bool Benchmark::Result::Timing::is_significantly_faster_than_reference(
         const Benchmark::Result::Timing& reference,
         double alpha) const
 {
-    if (HypothesisStatus::rejected ==
-            AndersonDarlingTest()
-            .for_normality(*this)
-            .data_fits_normal_distribution(
-                Confidence::zero_point_five_percent))
-        throw std::runtime_error{"Timing sample is not normally distributed."};
-
-    if (HypothesisStatus::rejected ==
-            AndersonDarlingTest()
-            .for_normality(reference)
-            .data_fits_normal_distribution(
-                Confidence::zero_point_five_percent))
-        throw std::runtime_error{"Reference timing sample is not normally distributed."};
     auto test_result = StudentsTTest()
             .two_independent_samples(
                 reference,
@@ -188,6 +175,7 @@ bool Benchmark::Result::Timing::is_significantly_faster_than_reference(
 
     return HypothesisStatus::not_rejected ==
             test_result.sample1_mean_gt_sample2_mean(alpha);
+
 }
 
 bool Benchmark::Result::Timing::is_significantly_faster_than_reference(
@@ -195,13 +183,6 @@ bool Benchmark::Result::Timing::is_significantly_faster_than_reference(
         double std_dev,
         double alpha) const
 {
-    if (HypothesisStatus::rejected ==
-            AndersonDarlingTest()
-            .for_normality(*this)
-            .data_fits_normal_distribution(
-                Confidence::zero_point_five_percent))
-        throw std::runtime_error{"Timing sample is not normally distributed."};
-
     auto test_result = StudentsTTest()
             .one_sample(*this, mean, std_dev);
 
@@ -213,20 +194,6 @@ bool Benchmark::Result::Timing::is_significantly_slower_than_reference(
         const Benchmark::Result::Timing& reference,
         double alpha) const
 {
-    if (HypothesisStatus::rejected ==
-            AndersonDarlingTest()
-            .for_normality(*this)
-            .data_fits_normal_distribution(
-                Confidence::zero_point_five_percent))
-        throw std::runtime_error{"Timing sample is not normally distributed."};
-
-    if (HypothesisStatus::rejected ==
-            AndersonDarlingTest()
-            .for_normality(reference)
-            .data_fits_normal_distribution(
-                Confidence::zero_point_five_percent))
-        throw std::runtime_error{"Reference timing sample is not normally distributed."};
-
     auto test_result = StudentsTTest()
             .two_independent_samples(
                 reference,
@@ -241,13 +208,6 @@ bool Benchmark::Result::Timing::is_significantly_slower_than_reference(
         double std_dev,
         double alpha) const
 {
-    if (HypothesisStatus::rejected ==
-            AndersonDarlingTest()
-            .for_normality(*this)
-            .data_fits_normal_distribution(
-                Confidence::zero_point_five_percent))
-        throw std::runtime_error{"Timing sample is not normally distributed."};
-
     auto test_result = StudentsTTest()
             .one_sample(*this, mean, std_dev);
 

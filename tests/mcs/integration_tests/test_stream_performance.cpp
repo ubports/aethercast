@@ -114,22 +114,24 @@ public:
             .WillRepeatedly(Invoke([&](const uint8_t *data, unsigned int size, const mcs::TimestampUs &timestamp) {
                 boost::ignore_unused_variable_warning(data);
                 boost::ignore_unused_variable_warning(size);
+
                 const mcs::TimestampUs now = mcs::Utils::GetNowUs();
-                if (timestamp <= 0ll) {
-                    MCS_DEBUG("timestamp %lld", timestamp);
+
+                // FIXME there is atleast one buffer which doesn't have a timestamp
+                // set. Most propably its the one carrying the CSD data.
+                if (timestamp <= 0ll)
                     return mcs::network::Stream::Error::kNone;
-                }
+
                 const mcs::TimestampUs diff = now - timestamp;
 
                 double seconds = diff;
-                // Converting from microseconds to seconds
+                // Converting from microseconds to seconds as that is what the
+                // sample stores internally.
                 seconds /= (1000000.0);
-                if (seconds > 1) {
-                    MCS_DEBUG("second > 1 -> %d s (now %lld timestamp %lld)", seconds, now, timestamp);
-                    return mcs::network::Stream::Error::kNone;
-                }
+
                 stats(seconds);
                 benchmark_result.timing.sample.push_back(mcs::testing::Benchmark::Result::Timing::Seconds{seconds});
+
                 return mcs::network::Stream::Error::kNone;
             }));
 

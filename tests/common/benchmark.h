@@ -68,7 +68,6 @@ public:
             /**
              * \brief Checks if a timing sample is statistically significantly
              * faster than a reference timing sample.
-             * \throw std::runtime_error if either this sample or the reference sample is not normally distributed.
              * \param reference The reference timing sample to compare to.
              * \param alpha The critical value of the statistical test. The lower, the higher the relevance of the test.
              * \return true iff this timing sample is significantly faster than the reference sample.
@@ -92,7 +91,6 @@ public:
             /**
              * \brief Checks if a timing sample is statistically significantly
              * slower than a reference timing sample.
-             * \throw std::runtime_error if either this sample or the reference sample is not normally distributed.
              * \param reference The reference timing sample to compare to.
              * \param alpha The critical value of the statistical test. The lower, the higher the relevance of the test.
              * \return true iff this timing sample is significantly slower than the reference.
@@ -102,7 +100,6 @@ public:
             /**
              * \brief Checks if a timing sample is statistically significantly
              * slower than a reference timing with mean 'mean and std. dev. 'std_dev'
-             * \throw std::runtime_error if this sample is not normally distributed.
              * \param mean The reference mean to compare to.
              * \param std_dev The reference std. dev. to compare to.
              * \param alpha The critical value of the statistical test. The lower, the higher the relevance of the test.
