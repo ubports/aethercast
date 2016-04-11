@@ -109,6 +109,7 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
 
 bool UdpStream::WaitUntilReady() {
     fd_set fds;
+    FD_ZERO(&fds);
     FD_SET(socket_, &fds);
 
     const int ret = ::select(socket_ + 1, nullptr, &fds, nullptr, nullptr);
