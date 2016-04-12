@@ -17,6 +17,8 @@
 
 #include <gmock/gmock.h>
 
+#include <boost/concept_check.hpp>
+
 #include "mcs/network/stream.h"
 
 #include "mcs/streaming/rtpsender.h"
@@ -35,7 +37,7 @@ class MockNetworkStream : public mcs::network::Stream {
 public:
     MOCK_METHOD2(Connect, bool(const std::string &address, const mcs::network::Port &port));
     MOCK_METHOD0(WaitUntilReady, bool());
-    MOCK_METHOD2(Write, mcs::network::Stream::Error(const uint8_t*, unsigned int));
+    MOCK_METHOD3(Write, mcs::network::Stream::Error(const uint8_t*, unsigned int, const mcs::TimestampUs&));
     MOCK_CONST_METHOD0(LocalPort, mcs::network::Port());
     MOCK_CONST_METHOD0(MaxUnitSize, std::uint32_t());
 };
@@ -151,7 +153,7 @@ TEST(RTPSender, QueuesUpPackagesAndSendsAll) {
             .Times(1)
             .WillOnce(Return(true));
 
-    EXPECT_CALL(*mock_stream, Write(_, _))
+    EXPECT_CALL(*mock_stream, Write(_, _, _))
             .Times(3)
             .WillRepeatedly(Return(mcs::network::Stream::Error::kNone));
 
@@ -175,7 +177,7 @@ TEST(RTPSender, WritePackageFails) {
             .Times(1)
             .WillOnce(Return(true));
 
-    EXPECT_CALL(*mock_stream, Write(_, _))
+    EXPECT_CALL(*mock_stream, Write(_, _, _))
             .Times(1)
             .WillOnce(Return(mcs::network::Stream::Error::kRemoteClosedConnection));
 
@@ -206,8 +208,10 @@ TEST(RTPSender, ConstructsCorrectRTPHeader) {
 
     std::uint8_t *output_data = nullptr;
 
-    EXPECT_CALL(*mock_stream, Write(_, expected_output_size))
-            .WillOnce(DoAll(Invoke([&](const uint8_t *data, unsigned int size) {
+    EXPECT_CALL(*mock_stream, Write(_, expected_output_size, _))
+            .WillOnce(DoAll(Invoke([&](const uint8_t *data, unsigned int size, const mcs::TimestampUs &timestamp) {
+                                boost::ignore_unused_variable_warning(timestamp);
+
                                 // Need to copy the data here as otherwise its freed
                                 // as soon as the write call comes back.
                                 output_data = new std::uint8_t[size];

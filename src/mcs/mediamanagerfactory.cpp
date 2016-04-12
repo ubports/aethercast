@@ -55,7 +55,8 @@ bool NullSourceMediaManager::Configure() {
     return false;
 }
 
-std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const std::string &remote_address) {
+std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const std::string &remote_address,
+                                                                          const mcs::network::Stream::Ptr &output_stream) {
     std::string type = Utils::GetEnvValue("MIRACAST_SOURCE_TYPE");
     if (type.length() == 0)
         type = "mir";
@@ -67,14 +68,13 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
         const auto report_factory = report::ReportFactory::Create();
         const auto screencast = std::make_shared<mcs::mir::Screencast>();
         const auto encoder = mcs::android::H264Encoder::Create(report_factory->CreateEncoderReport());
-        const auto network_stream = std::make_shared<mcs::network::UdpStream>();
 
         return std::make_shared<mcs::mir::SourceMediaManager>(
                     remote_address,
                     executor_factory,
                     screencast,
                     encoder,
-                    network_stream,
+                    output_stream,
                     report_factory);
     }
 

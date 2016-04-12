@@ -57,7 +57,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 include(cmake/FindReadline.cmake)
 
-find_package(Boost COMPONENTS filesystem log system thread program_options)
+find_package(Boost COMPONENTS filesystem log serialization system thread program_options)
 find_package(PkgConfig)
 find_package(Threads)
 find_package(LTTngUST REQUIRED)

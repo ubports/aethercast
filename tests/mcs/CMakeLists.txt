@@ -8,6 +8,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/src/mcs
   ${CMAKE_SOURCE_DIR}/src/mcs/w11t/gdhcp
+  ${CMAKE_BINARY_DIR}
 )
 
 AETHERCAST_ADD_TEST(mediamanagerfactory_tests mediamanagerfactory_tests.cpp)
@@ -20,6 +21,7 @@ AETHERCAST_ADD_TEST(networkmanagerfactory_tests networkmanagerfactory_tests.cpp)
 AETHERCAST_ADD_TEST(networkutils_tests networkutils_tests.cpp)
 
 add_subdirectory(acceptance_tests)
+add_subdirectory(integration_tests)
 add_subdirectory(streaming)
 add_subdirectory(video)
 add_subdirectory(mir)

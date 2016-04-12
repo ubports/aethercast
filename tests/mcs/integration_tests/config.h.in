@@ -15,40 +15,15 @@
  *
  */
 
-#ifndef MCS_NETWORK_UDPSTREAM_H_
-#define MCS_NETWORK_UDPSTREAM_H_
-
-#include <memory>
-
-#include "mcs/non_copyable.h"
-
-#include "mcs/network/stream.h"
+#ifndef MCS_TESTS_INTEGRATION_CONFIG_H_
+#define MCS_TESTS_INTEGRATION_CONFIG_H_
 
 namespace mcs {
-namespace network {
-
-class UdpStream : public Stream {
-public:
-    UdpStream();
-    ~UdpStream();
-
-    bool Connect(const std::string &address, const Port &port) override;
-
-    bool WaitUntilReady() override;
-
-    Error Write(const uint8_t *data, unsigned int size,
-                const mcs::TimestampUs &timestamp = 0) override;
-
-    Port LocalPort() const override;
-
-    std::uint32_t MaxUnitSize() const override;
-
-private:
-    int socket_;
-    Port local_port_;
-};
-
-} // namespace network
+namespace testing {
+namespace stream_performance {
+constexpr const char *kReferenceResultFile{"@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATAROOTDIR@/aethercast/tests/integration/stream-performance-reference.xml"};
+} // namespace stream_performance
+} // namespace testing
 } // namespace mcs
 
 #endif

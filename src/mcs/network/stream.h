@@ -21,6 +21,7 @@
 #include <memory>
 
 #include "mcs/non_copyable.h"
+#include "mcs/utils.h"
 
 #include "mcs/network/types.h"
 
@@ -41,7 +42,8 @@ public:
 
     virtual bool WaitUntilReady() = 0;
 
-    virtual Error Write(const uint8_t *data, unsigned int size) = 0;
+    virtual Error Write(const uint8_t *data, unsigned int size,
+                        const mcs::TimestampUs &timestamp = 0) = 0;
 
     virtual Port LocalPort() const = 0;
 

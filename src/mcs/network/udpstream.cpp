@@ -29,6 +29,8 @@
 
 #include <random>
 
+#include <boost/concept_check.hpp>
+
 #include "mcs/logger.h"
 #include "mcs/networkutils.h"
 
@@ -107,6 +109,7 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
 
 bool UdpStream::WaitUntilReady() {
     fd_set fds;
+    FD_ZERO(&fds);
     FD_SET(socket_, &fds);
 
     const int ret = ::select(socket_ + 1, nullptr, &fds, nullptr, nullptr);
@@ -116,7 +119,11 @@ bool UdpStream::WaitUntilReady() {
     return true;
 }
 
-Stream::Error UdpStream::Write(const uint8_t *data, unsigned int size) {
+Stream::Error UdpStream::Write(const uint8_t *data, unsigned int size,
+                               const mcs::TimestampUs &timestamp) {
+
+    boost::ignore_unused_variable_warning(timestamp);
+
     auto bytes_sent = ::send(socket_, data, size, 0);
 
     // If we get an error back which relates to a possible congested

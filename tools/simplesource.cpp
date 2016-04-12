@@ -17,6 +17,7 @@
 
 #include "mcs/utils.h"
 #include "mcs/mediamanagerfactory.h"
+#include "mcs/network/udpstream.h"
 
 #include "simplesource.h"
 
@@ -28,7 +29,7 @@ SimpleSource::Ptr SimpleSource::Create(const std::string &remote_address, int po
 }
 
 SimpleSource::SimpleSource(const std::string &remote_address, int port) :
-    media_manager_(mcs::MediaManagerFactory::CreateSource(remote_address)) {
+    media_manager_(mcs::MediaManagerFactory::CreateSource(remote_address, std::make_shared<mcs::network::UdpStream>())) {
 
     wds::RateAndResolutionsBitmap cea_rr;
     wds::RateAndResolutionsBitmap vesa_rr;

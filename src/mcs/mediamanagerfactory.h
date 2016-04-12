@@ -23,6 +23,7 @@
 #include "mcs/basesourcemediamanager.h"
 
 #include "mcs/network/types.h"
+#include "mcs/network/stream.h"
 
 namespace mcs {
 
@@ -40,7 +41,8 @@ protected:
 
 class MediaManagerFactory {
 public:
-    static std::shared_ptr<BaseSourceMediaManager> CreateSource(const std::string &remote_address);
+    static std::shared_ptr<BaseSourceMediaManager> CreateSource(const std::string &remote_address,
+                                                                const mcs::network::Stream::Ptr &output_stream);
 };
 } // namespace mcs
 #endif
