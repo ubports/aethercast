@@ -204,6 +204,7 @@ std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction(const Net
 
     if (network_manager_) {
         network_manager_->SetDelegate(this);
+        network_manager_->SetCapabilities({NetworkManager::Capability::kSource});
         network_manager_->Setup();
     }
 

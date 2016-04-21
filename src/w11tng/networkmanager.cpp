@@ -576,7 +576,7 @@ std::vector<NetworkManager::Capability> NetworkManager::Capabilities() const {
 }
 
 DeviceType NetworkManager::GenerateWfdDeviceType() {
-    DeviceType device_type;
+    DeviceType device_type = DeviceType::kSource;
     bool has_source = false, has_sink = false;
 
     for (auto capability : capabilities_) {
