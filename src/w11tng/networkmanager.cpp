@@ -138,6 +138,8 @@ void NetworkManager::SetupInterface(const std::string &object_path) {
     mgmt_interface_->SetDelegate(shared_from_this());
 
     p2p_device_ = P2PDeviceStub::Create(object_path, shared_from_this());
+
+    ConfigureFromCapabilities();
 }
 
 void NetworkManager::ReleaseInterface() {
@@ -620,8 +622,6 @@ void NetworkManager::ConfigureFromCapabilities() {
 }
 
 void NetworkManager::OnManagerReady() {
-    ConfigureFromCapabilities();
-
     // If we need to create an interface object at wpa first we
     // do that and continue in one of the delegate callbacks from
     // the manager stub.
