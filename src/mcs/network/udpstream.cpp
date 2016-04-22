@@ -126,6 +126,25 @@ Stream::Error UdpStream::Write(const uint8_t *data, unsigned int size,
 
     auto bytes_sent = ::send(socket_, data, size, 0);
 
+    // If we get an error back which relates to a possible congested
+    // socket we try to resend one time and then fall into our actual
+    // error handling.
+    if (bytes_sent < 0) {
+        switch (errno) {
+        case ECONNREFUSED:
+        case ENOPROTOOPT:
+        case EPROTO:
+        case EHOSTUNREACH:
+        case ENETUNREACH:
+        case ENETDOWN:
+            MCS_DEBUG("Trying to resend due to a possible congested socket (errno %d)", errno);
+            bytes_sent = ::send(socket_, data, size, 0);
+           break;
+        default:
+            break;
+        }
+    }
+
     if (bytes_sent < 0) {
         MCS_ERROR("Failed to send packet to remote: %s (%d)", ::strerror(-errno), errno);
         return Error::kFailed;
