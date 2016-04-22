@@ -50,8 +50,11 @@ mcs::video::Buffer::Ptr BufferQueue::Front() {
 }
 
 mcs::video::Buffer::Ptr BufferQueue::Next() {
-    // We will block here forever until we get a new buffer
-    WaitToBeFilled(std::chrono::milliseconds{-1});
+    // We will block here forever until we get a new buffer but if
+    // the wait call returns with false we're mostly likly terminating
+    if (!WaitToBeFilled(std::chrono::milliseconds{-1}))
+        return nullptr;
+
     std::unique_lock<std::mutex> l(mutex_);
     auto buffer = queue_.front();
     queue_.pop();
@@ -85,6 +88,9 @@ mcs::video::Buffer::Ptr BufferQueue::PopUnlocked() {
 
 bool BufferQueue::WaitFor(const std::function<bool()> &pred, const std::chrono::milliseconds &timeout) {
     std::unique_lock<std::mutex> l(mutex_);
+
+    if (l.owns_lock())
+        return false;
 
     if (timeout.count() >= 0) {
         auto now = std::chrono::system_clock::now();

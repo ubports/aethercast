@@ -395,6 +395,8 @@ int H264Encoder::OnSourceRead(MediaBufferWrapper **buffer, void *user_data) {
         return kAndroidMediaErrorBufferTooSmall;
 
     const auto input_buffer = thiz->input_queue_->Next();
+    if (!input_buffer)
+        return kAndroidMediaErrorEndOfStream;
 
     const auto next_buffer = thiz->PackBuffer(input_buffer, input_buffer->Timestamp());
 
