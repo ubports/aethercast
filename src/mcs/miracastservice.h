@@ -71,6 +71,9 @@ public:
     NetworkDeviceState State() const;
     std::vector<NetworkManager::Capability> Capabilities() const;
     bool Scanning() const;
+    bool Enabled() const;
+
+    void SetEnabled(bool enabled);
 
     void OnClientDisconnected();
 
@@ -107,6 +110,7 @@ private:
     ResultCallback current_scan_callback_;
     std::vector<NetworkDeviceRole> supported_roles_;
     mcs::SystemController::Ptr system_controller_;
+    bool enabled_;
 };
 } // namespace mcs
 #endif

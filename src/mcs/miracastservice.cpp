@@ -194,7 +194,8 @@ std::shared_ptr<MiracastService> MiracastService::Create(const NetworkManager::P
 MiracastService::MiracastService() :
     current_state_(kIdle),
     scan_timeout_source_(0),
-    supported_roles_({kSource}) {
+    supported_roles_({kSource}),
+    enabled_(false) {
 
     CreateRuntimeDirectory();
 }
@@ -245,6 +246,17 @@ std::vector<NetworkManager::Capability> MiracastService::Capabilities() const {
 
 bool MiracastService::Scanning() const {
     return network_manager_->Scanning();
+}
+
+bool MiracastService::Enabled() const {
+    return enabled_;
+}
+
+void MiracastService::SetEnabled(bool enabled) {
+    enabled_ = enabled;
+
+    if (auto sp = delegate_.lock())
+        sp->OnChanged();
 }
 
 void MiracastService::OnClientDisconnected() {

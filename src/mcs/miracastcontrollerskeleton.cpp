@@ -61,6 +61,7 @@ void MiracastControllerSkeleton::SyncProperties() {
     g_strfreev(capabilities);
 
     aethercast_interface_manager_set_scanning(manager_obj_.get(), Scanning());
+    aethercast_interface_manager_set_enabled(manager_obj_.get(), Enabled());
 }
 
 void MiracastControllerSkeleton::OnStateChanged(NetworkDeviceState state) {

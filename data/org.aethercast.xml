@@ -11,6 +11,7 @@
         <method name="Scan"/>
         <!-- FIXME just for demo purposes. Don't use this method. -->
         <method name="DisconnectAll"/>
+        <property name="Enabled" type="b" access="readwrite"/>
         <property name="State" type="s" access="read"/>
         <property name="Capabilities" type="as" access="read"/>
         <property name="Scanning" type="b" access="read"/>
