@@ -89,7 +89,7 @@ mcs::video::Buffer::Ptr BufferQueue::PopUnlocked() {
 bool BufferQueue::WaitFor(const std::function<bool()> &pred, const std::chrono::milliseconds &timeout) {
     std::unique_lock<std::mutex> l(mutex_);
 
-    if (l.owns_lock())
+    if (!l.owns_lock())
         return false;
 
     if (timeout.count() >= 0) {
