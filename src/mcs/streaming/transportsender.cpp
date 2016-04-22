@@ -15,36 +15,16 @@
  *
  */
 
-#ifndef MCS_STREAMING_TRANSPORTSENDER_H_
-#define MCS_STREAMING_TRANSPORTSENDER_H_
-
-#include "mcs/non_copyable.h"
-
-#include "mcs/video/buffer.h"
+#include "mcs/streaming/transportsender.h"
 
 namespace mcs {
 namespace streaming {
+void TransportSender::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+    delegate_ = delegate;
+}
 
-class TransportSender : public mcs::NonCopyable {
-public:
-    typedef std::shared_ptr<TransportSender> Ptr;
-
-    class Delegate : public mcs::NonCopyable {
-    public:
-        virtual void OnTransportNetworkError() = 0;
-    };
-
-    void SetDelegate(const std::weak_ptr<Delegate> &delegate);
-    void ResetDelegate();
-
-    virtual bool Queue(const mcs::video::Buffer::Ptr &packets) = 0;
-    virtual int32_t LocalPort() const = 0;
-
-protected:
-    std::weak_ptr<Delegate> delegate_;
-};
-
-} // namespace streaming
+void TransportSender::ResetDelegate() {
+    delegate_.reset();
+}
+} // namespace network
 } // namespace mcs
-
-#endif

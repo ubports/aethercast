@@ -18,13 +18,25 @@
 #ifndef BASEMEDIAMANAGER_H_
 #define BASEMEDIAMANAGER_H_
 
+#include <memory>
+
 #include <wds/media_manager.h>
+
+#include "mcs/non_copyable.h"
 
 namespace mcs {
 class BaseSourceMediaManager : public wds::SourceMediaManager
 {
 public:
+    class Delegate : public mcs::NonCopyable {
+    public:
+        virtual void OnSourceNetworkError() = 0;
+    };
+
     explicit BaseSourceMediaManager();
+
+    void SetDelegate(const std::weak_ptr<Delegate> &delegate);
+    void ResetDelegate();
 
     void SetSinkRtpPorts(int port1, int port2) override;
     std::pair<int,int> GetSinkRtpPorts() const override;
@@ -42,6 +54,8 @@ public:
 protected:
     virtual bool Configure() = 0;
     virtual std::vector<wds::H264VideoCodec> GetH264VideoCodecs();
+
+    std::weak_ptr<Delegate> delegate_;
 
 protected:
     int sink_port1_;

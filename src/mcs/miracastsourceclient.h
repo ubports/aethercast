@@ -34,11 +34,14 @@
 #include "mcs/non_copyable.h"
 #include "mcs/scoped_gobject.h"
 
+#include "mcs/basesourcemediamanager.h"
+
 namespace mcs {
 class TimerCallbackData;
 
 class MiracastSourceClient : public std::enable_shared_from_this<MiracastSourceClient>,
-                             public wds::Peer::Delegate {
+                             public wds::Peer::Delegate,
+                             public BaseSourceMediaManager::Delegate {
 public:
     class Delegate : private mcs::NonCopyable {
     public:
@@ -51,6 +54,8 @@ public:
 
     void SetDelegate(const std::weak_ptr<Delegate>& delegate);
     void ResetDelegate();
+
+    void OnSourceNetworkError();
 
 public:
     void SendRTSPData(const std::string &data) override;
@@ -79,7 +84,7 @@ private:
     mcs::IpV4Address local_address_;
     std::vector<guint> timers_;
     std::unique_ptr<wds::Source> source_;
-    std::shared_ptr<wds::SourceMediaManager> media_manager_;
+    std::shared_ptr<BaseSourceMediaManager> media_manager_;
     guint watch_;
 
     friend class TimerCallbackData;

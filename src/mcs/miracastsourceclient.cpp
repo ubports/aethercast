@@ -218,10 +218,16 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
     auto udp_stream = std::make_shared<mcs::network::UdpStream>();
 
     media_manager_ = MediaManagerFactory::CreateSource(peer_address, udp_stream);
+    media_manager_->SetDelegate(shared_from_this());
     source_.reset(wds::Source::Create(this, media_manager_.get()));
 
     source_->Start();
     return sp;
+}
+
+void MiracastSourceClient::OnSourceNetworkError() {
+    if (auto sp = delegate_.lock())
+        sp->OnConnectionClosed();
 }
 
 } // namespace mcs

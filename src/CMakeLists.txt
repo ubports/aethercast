@@ -25,7 +25,6 @@ set(HEADERS
   mcs/common/executorfactory.h
 
   mcs/network/types.h
-  mcs/network/stream.h
 
   mcs/report/lttng/utils.h
   mcs/report/lttng/encoderreport_tp.h
@@ -40,7 +39,6 @@ set(HEADERS
   mcs/video/bufferproducer.h
 
   mcs/streaming/packetizer.h
-  mcs/streaming/transportsender.h
 
   w11tng/config.h
 )
@@ -69,6 +67,7 @@ set(SOURCES
   mcs/common/threadedexecutor.cpp
   mcs/common/threadedexecutorfactory.cpp
 
+  mcs/network/stream.cpp
   mcs/network/udpstream.cpp
 
   mcs/report/reportfactory.cpp
@@ -100,6 +99,7 @@ set(SOURCES
   mcs/video/h264analyzer.cpp
   mcs/video/displayoutput.cpp
 
+  mcs/streaming/transportsender.cpp
   mcs/streaming/mpegtspacketizer.cpp
   mcs/streaming/rtpsender.cpp
   mcs/streaming/mediasender.cpp
