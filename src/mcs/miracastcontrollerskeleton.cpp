@@ -115,6 +115,10 @@ void MiracastControllerSkeleton::OnNameAcquired(GDBusConnection *connection, con
     auto inst = static_cast<SharedKeepAlive<MiracastControllerSkeleton>*>(user_data)->ShouldDie();
     inst->manager_obj_.reset(aethercast_interface_manager_skeleton_new());
 
+    g_signal_connect_data(inst->manager_obj_.get(), "notify::enabled",
+                          G_CALLBACK(&MiracastControllerSkeleton::OnEnabledChanged), new WeakKeepAlive<MiracastControllerSkeleton>(inst),
+                          [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(data); }, GConnectFlags(0));
+
     g_signal_connect_data(inst->manager_obj_.get(), "handle-scan",
                      G_CALLBACK(&MiracastControllerSkeleton::OnHandleScan), new WeakKeepAlive<MiracastControllerSkeleton>(inst),
                      [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(data); }, GConnectFlags(0));
@@ -132,6 +136,16 @@ void MiracastControllerSkeleton::OnNameAcquired(GDBusConnection *connection, con
     g_dbus_object_manager_server_set_connection(inst->object_manager_.get(), connection);
 
     INFO("Registered bus name %s", name);
+}
+
+void MiracastControllerSkeleton::OnEnabledChanged(GObject *source, GParamSpec *spec, gpointer user_data) {
+    boost::ignore_unused_variable_warning(source);
+
+    auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
+    if (not inst)
+        return;
+
+    inst->SetEnabled(static_cast<bool>(aethercast_interface_manager_get_enabled(inst->manager_obj_.get())));
 }
 
 gboolean MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *skeleton,

@@ -118,6 +118,12 @@ void NetworkManager::Initialize(bool firmware_loading) {
 void NetworkManager::Release() {
     MCS_DEBUG("");
 
+    for (auto &iter : devices_) {
+        if (delegate_)
+            delegate_->OnDeviceLost(iter.second);
+    }
+
+    devices_.clear();
 
     ReleaseInternal();
 }
@@ -172,7 +178,7 @@ bool NetworkManager::Setup() {
                                    new mcs::WeakKeepAlive<NetworkManager>(shared_from_this()),
                                    nullptr);
 
-    return false;
+    return true;
 }
 
 void NetworkManager::Scan(const std::chrono::seconds &timeout) {

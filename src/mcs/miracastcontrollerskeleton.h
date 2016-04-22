@@ -58,6 +58,8 @@ public:
 private:
     static void OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data);
 
+    static void OnEnabledChanged(GObject *source, GParamSpec *spec, gpointer user_data);
+
     static gboolean OnHandleScan(AethercastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                                  gpointer user_data);
     static gboolean OnHandleDisconnectAll(AethercastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,

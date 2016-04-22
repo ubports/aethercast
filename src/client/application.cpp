@@ -498,6 +498,9 @@ void Application::OnManagerPropertiesChanged(GDBusConnection *connection, const 
 
             for (int m = 0; m < g_variant_n_children(value_v); m++) {
                 auto capability = g_variant_get_child_value(value_v, m);
+                if (!g_variant_is_of_type(capability, G_VARIANT_TYPE_STRING))
+                    continue;
+
                 capabilities << g_variant_get_string(capability, nullptr) << " ";
             }
 

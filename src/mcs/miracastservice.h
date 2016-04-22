@@ -55,7 +55,7 @@ public:
 
     static int Main(const MainOptions &options);
 
-    static std::shared_ptr<MiracastService> Create(const NetworkManager::Ptr &network_manager);
+    static std::shared_ptr<MiracastService> Create();
 
     ~MiracastService();
 
@@ -73,9 +73,12 @@ public:
     bool Scanning() const;
     bool Enabled() const;
 
-    void SetEnabled(bool enabled);
+    bool SetEnabled(bool enabled);
 
     void OnClientDisconnected();
+
+    bool SetupNetworkManager();
+    bool ReleaseNetworkManager();
 
 public:
     void OnDeviceStateChanged(const NetworkDevice::Ptr &device) override;
@@ -89,7 +92,7 @@ private:
 
 private:
     MiracastService();
-    std::shared_ptr<MiracastService> FinalizeConstruction(const NetworkManager::Ptr &network_manager);
+    std::shared_ptr<MiracastService> FinalizeConstruction();
 
     void AdvanceState(NetworkDeviceState new_state);
     void FinishConnectAttempt(mcs::Error error = mcs::Error::kNone);

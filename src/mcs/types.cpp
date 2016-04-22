@@ -33,6 +33,8 @@ std::string ErrorToString(const Error &error) {
         return "Invalid state";
     case Error::kNoDeviceConnected:
         return "No device connected";
+    case Error::kNotReady:
+        return "Not ready";
     case Error::kUnknown:
     default:
         break;

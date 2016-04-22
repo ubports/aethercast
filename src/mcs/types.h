@@ -30,6 +30,7 @@ enum class Error {
     kParamInvalid,
     kInvalidState,
     kNoDeviceConnected,
+    kNotReady,
     kUnknown
 };
 
