@@ -643,6 +643,9 @@ void NetworkManager::OnManagerInterfaceAdded(const std::string &path) {
 void NetworkManager::OnManagerInterfaceRemoved(const std::string &path) {
     MCS_DEBUG("path %s", path);
 
+    if (!p2p_device_)
+        return;
+
     if (p2p_device_->ObjectPath() != path)
         return;
 
