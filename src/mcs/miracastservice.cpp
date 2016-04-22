@@ -248,9 +248,16 @@ bool MiracastService::Scanning() const {
 }
 
 void MiracastService::OnClientDisconnected() {
-    AdvanceState(kFailure);
-    source_.reset();
-    current_device_.reset();
+    g_timeout_add(0, [](gpointer user_data) {
+        auto thiz = static_cast<WeakKeepAlive<MiracastService>*>(user_data)->GetInstance().lock();
+
+        if (!thiz)
+            return FALSE;
+
+        thiz->Disconnect(thiz->current_device_, nullptr);
+
+        return FALSE;
+    }, new WeakKeepAlive<MiracastService>(shared_from_this()));
 }
 
 void MiracastService::AdvanceState(NetworkDeviceState new_state) {
@@ -267,6 +274,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
 
     case kConnected:
         source_ = MiracastSourceManager::Create(network_manager_->LocalAddress(), kMiracastDefaultRtspCtrlPort);
+        source_->SetDelegate(shared_from_this());
         FinishConnectAttempt();
         break;
 
@@ -374,16 +382,19 @@ void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback c
 
 void MiracastService::Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback) {
     if (!current_device_ || !device) {
-        callback(Error::kParamInvalid);
+        if (callback)
+            callback(Error::kParamInvalid);
         return;
     }
 
     if (!network_manager_->Disconnect(device)) {
-        callback(Error::kFailed);
+        if (callback)
+            callback(Error::kFailed);
         return;
     }
 
-    callback(Error::kNone);
+    if (callback)
+        callback(Error::kNone);
 }
 
 void MiracastService::DisconnectAll(ResultCallback callback) {

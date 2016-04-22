@@ -49,7 +49,8 @@ RTPSender::RTPSender(const network::Stream::Ptr &stream, const video::SenderRepo
     max_ts_packets_((stream->MaxUnitSize() - kRTPHeaderSize) / kMPEGTSPacketSize),
     report_(report),
     rtp_sequence_number_(0),
-    queue_(video::BufferQueue::Create()){
+    queue_(video::BufferQueue::Create()),
+    network_error_(false) {
 }
 
 RTPSender::~RTPSender() {
@@ -88,7 +89,7 @@ bool RTPSender::Execute() {
 
     queue_->Unlock();
 
-    return true;
+    return !network_error_;
 }
 
 bool RTPSender::Queue(const video::Buffer::Ptr &packets) {
