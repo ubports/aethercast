@@ -154,7 +154,6 @@ video::BaseEncoder::Ptr H264Encoder::Create(const video::EncoderReport::Ptr &rep
 H264Encoder::H264Encoder(const video::EncoderReport::Ptr &report) :
     report_(report),
     format_(nullptr),
-    source_(nullptr),
     source_format_(nullptr),
     encoder_(nullptr),
     running_(false),
@@ -168,9 +167,6 @@ H264Encoder::~H264Encoder() {
 
     if (encoder_)
         media_codec_source_release(encoder_);
-
-    if (source_)
-        media_source_release(source_);
 
     if (format_)
         media_message_release(format_);
@@ -231,8 +227,8 @@ bool H264Encoder::Configure(const Config &config) {
     // SPS/PPS to the buffers it is producing or if we have to manually do that
     media_message_set_int32(format, kFormatKeyPrependSpsPpstoIdrFrames, 1);
 
-    source_ = media_source_create();
-    if (!source_) {
+    auto source = media_source_create();
+    if (!source) {
         MCS_ERROR("Failed to create media input source for encoder");
         media_message_release(format);
         return false;
@@ -242,8 +238,7 @@ bool H264Encoder::Configure(const Config &config) {
     if (!source_format) {
         MCS_ERROR("Failed to create media meta data for encoder source");
         media_message_release(format);
-        media_source_release(source_);
-        source_ = nullptr;
+        media_source_release(source);
         return false;
     }
 
@@ -275,20 +270,22 @@ bool H264Encoder::Configure(const Config &config) {
         media_meta_data_get_key_id(MEDIA_META_DATA_KEY_FRAMERATE),
         config.framerate);
 
-    media_source_set_format(source_, source_format);
+    media_source_set_format(source, source_format);
 
-    media_source_set_start_callback(source_, &H264Encoder::OnSourceStart, this);
-    media_source_set_stop_callback(source_, &H264Encoder::OnSourceStop, this);
-    media_source_set_read_callback(source_, &H264Encoder::OnSourceRead, this);
-    media_source_set_pause_callback(source_, &H264Encoder::OnSourcePause, this);
+    media_source_set_start_callback(source, &H264Encoder::OnSourceStart, this);
+    media_source_set_stop_callback(source, &H264Encoder::OnSourceStop, this);
+    media_source_set_read_callback(source, &H264Encoder::OnSourceRead, this);
+    media_source_set_pause_callback(source, &H264Encoder::OnSourcePause, this);
 
-    encoder_ = media_codec_source_create(format, source_, 0);
+    // The MediaSource will be now owned by the MediaCodecSource wrapper
+    // inside our compatibility layer. It will make sure its freed when
+    // needed.
+    encoder_ = media_codec_source_create(format, source, 0);
     if (!encoder_) {
         MCS_ERROR("Failed to create encoder instance");
         media_meta_data_release(source_format);
         media_message_release(format);
-        media_source_release(source_);
-        source_ = nullptr;
+        media_source_release(source);
         return false;
     }
 
