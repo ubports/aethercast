@@ -62,6 +62,7 @@ set(SOURCES
   mcs/networkdevice.cpp
   mcs/dbushelpers.cpp
   mcs/networkdeviceskeleton.cpp
+  mcs/dbuserrors.cpp
 
   mcs/common/executorpool.cpp
   mcs/common/threadedexecutor.cpp

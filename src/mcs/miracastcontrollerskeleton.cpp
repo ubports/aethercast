@@ -26,6 +26,7 @@
 #include "mcs/utils.h"
 #include "mcs/dbushelpers.h"
 #include "mcs/logger.h"
+#include "mcs/dbuserrors.h"
 
 namespace mcs {
 std::shared_ptr<MiracastControllerSkeleton> MiracastControllerSkeleton::create(const std::shared_ptr<MiracastController> &controller) {
@@ -154,7 +155,8 @@ gboolean MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *sk
     auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
 
     if (not inst) {
-        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");
+        g_dbus_method_invocation_return_error(invocation, AETHERCAST_ERROR,
+            AETHERCAST_ERROR_INVALID_STATE, "Invalid state");
         return TRUE;
     }
 
@@ -162,7 +164,8 @@ gboolean MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *sk
 
     const auto error = inst->Scan();
     if (error != mcs::Error::kNone) {
-        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "%s", mcs::ErrorToString(error).c_str());
+        g_dbus_method_invocation_return_error(invocation, AETHERCAST_ERROR,
+            AethercastErrorFromError(error), "%s", mcs::ErrorToString(error).c_str());
         return TRUE;
     }
 
@@ -177,7 +180,8 @@ gboolean MiracastControllerSkeleton::OnHandleDisconnectAll(AethercastInterfaceMa
     const auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
 
     if (not inst) {
-        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");
+        g_dbus_method_invocation_return_error(invocation, AETHERCAST_ERROR,
+            AETHERCAST_ERROR_INVALID_STATE, "Invalid state");
         return TRUE;
     }
 
@@ -186,8 +190,8 @@ gboolean MiracastControllerSkeleton::OnHandleDisconnectAll(AethercastInterfaceMa
 
     inst->DisconnectAll([inv](mcs::Error error) {
         if (error != Error::kNone) {
-            g_dbus_method_invocation_return_error(inv.get(), G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                  "%s", mcs::ErrorToString(error).c_str());
+            g_dbus_method_invocation_return_error(inv.get(), AETHERCAST_ERROR,
+                AethercastErrorFromError(error), "%s", mcs::ErrorToString(error).c_str());
             return;
         }
 

@@ -467,7 +467,7 @@ mcs::Error MiracastService::Scan(const std::chrono::seconds &timeout) {
         return Error::kNotReady;
 
     if (current_device_)
-        return mcs::Error::kNoDeviceConnected;
+        return mcs::Error::kNotReady;
 
     network_manager_->Scan(timeout);
 

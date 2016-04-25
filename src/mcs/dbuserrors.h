@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Canonical, Ltd.
+ * Copyright (C) 2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,31 +15,30 @@
  *
  */
 
+#ifndef MCS_DBUSERRORS_H_
+#define MCS_DBUSERRORS_H_
+
 #include "mcs/types.h"
+#include "mcs/glib_wrapper.h"
 
 namespace mcs {
 
-std::string ErrorToString(const Error &error) {
-    switch (error) {
-    case Error::kNone:
-        return "None";
-    case Error::kFailed:
-        return "Operation failed";
-    case Error::kAlready:
-        return "Operation already in progress";
-    case Error::kParamInvalid:
-        return "Invalid parameters";
-    case Error::kInvalidState:
-        return "Invalid state";
-    case Error::kNotConnected:
-        return "No device connected";
-    case Error::kNotReady:
-        return "Not ready";
-    case Error::kUnknown:
-    default:
-        break;
-    }
-    return "Unknown error occured";
-}
+#define AETHERCAST_ERROR (aethercast_error_quark())
+GQuark aethercast_error_quark(void);
+
+typedef enum {
+    AETHERCAST_ERROR_FAILED,
+    AETHERCAST_ERROR_ALREADY,
+    AETHERCAST_ERROR_PARAM_INVALID,
+    AETHERCAST_ERROR_INVALID_STATE,
+    AETHERCAST_ERROR_NOT_CONNECTED,
+    AETHERCAST_ERROR_NOT_READY,
+    AETHERCAST_ERROR_IN_PROGRESS,
+    AETHERCAST_N_ERRORS,
+} AethercastError;
+
+AethercastError AethercastErrorFromError(const Error &error);
 
 } // namespace mcs
+
+#endif
