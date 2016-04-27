@@ -19,7 +19,10 @@
 #define MCS_CONFIG_H_
 
 namespace mcs {
+// FIXME(morphis) Make both paths be configured from cmake with the
+// correct system defaults.
 constexpr const char* kRuntimePath{"/run/aethercast"};
+constexpr const char* kStateDir{"/var/lib/aethercast"};
 }
 
 #endif

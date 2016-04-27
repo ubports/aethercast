@@ -73,6 +73,11 @@ bool NullNetworkManager::Scanning() const {
     return false;
 }
 
+bool NullNetworkManager::Ready() const {
+    ERROR("Not implemented");
+    return false;
+}
+
 void NullNetworkManager::SetCapabilities(const std::vector<Capability> &capabilities) {
     ERROR("Not implemented");
 }

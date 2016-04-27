@@ -41,7 +41,7 @@ public:
     virtual bool Scanning() const override;
     virtual bool Enabled() const override;
 
-    virtual bool SetEnabled(bool enabled) override;
+    virtual Error SetEnabled(bool enabled) override;
 
 private:
     MiracastController::Ptr fwd_;

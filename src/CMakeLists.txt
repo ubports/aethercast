@@ -118,6 +118,7 @@ set(SOURCES
   mcs/ubuntu/unitydisplaylock.cpp
 
   w11tng/networkmanager.cpp
+  w11tng/rfkillmanager.cpp
   w11tng/networkdevice.cpp
   w11tng/interfaceselector.cpp
   w11tng/p2pdevicestub.cpp

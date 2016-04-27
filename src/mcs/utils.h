@@ -46,6 +46,8 @@ struct Utils
     static std::string GetEnvValue(const std::string &name, const std::string &default_value = "");
     // CreateFile - create an empty file at the specified path
     static bool CreateFile(const std::string &file_path);
+    // RemoveFile - remove a file at the specified path
+    static bool RemoveFile(const std::string &file_path);
     // IsEnvSet - check if an environment variable is set or not
     static bool IsEnvSet(const std::string &name);
     // GetNowNs - get a timestamp in nanoseconds

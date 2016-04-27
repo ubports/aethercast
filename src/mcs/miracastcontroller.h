@@ -61,7 +61,7 @@ public:
     virtual bool Scanning() const = 0;
     virtual bool Enabled() const = 0;
 
-    virtual bool SetEnabled(bool enabled) = 0;
+    virtual Error SetEnabled(bool enabled) = 0;
 
 protected:
     MiracastController() = default;

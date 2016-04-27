@@ -31,6 +31,7 @@
 #include "wififirmwareloader.h"
 #include "informationelement.h"
 #include "hostname1stub.h"
+#include "rfkillmanager.h"
 
 namespace w11tng {
 
@@ -44,7 +45,8 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>,
                        public w11tng::InterfaceSelector::Delegate,
                        public w11tng::ManagerStub::Delegate,
                        public w11tng::InterfaceStub::Delegate,
-                       public w11tng::Hostname1Stub::Delegate {
+                       public w11tng::Hostname1Stub::Delegate,
+                       public w11tng::RfkillManager::Delegate {
 public:
     static constexpr const char *kBusName{"fi.w1.wpa_supplicant1"};
 
@@ -65,6 +67,7 @@ public:
     mcs::IpV4Address LocalAddress() const override;
     bool Running() const override;
     bool Scanning() const override;
+    bool Ready() const override;
 
     void SetCapabilities(const std::vector<Capability> &capabilities);
     std::vector<Capability> Capabilities() const;
@@ -99,6 +102,8 @@ public:
     void OnInterfaceReady(const std::string &object_path) override;
 
     void OnHostnameChanged() override;
+
+    void OnRfkillChanged(const RfkillManager::Type &type) override;
 
 private:
     static void OnServiceLost(GDBusConnection *connection, const gchar *name, gpointer user_data);
@@ -157,6 +162,7 @@ private:
     bool session_available_;
     std::vector<Capability> capabilities_;
     Hostname1Stub::Ptr hostname_service_;
+    RfkillManager::Ptr rfkill_manager_;
 };
 
 } // namespace w11tng

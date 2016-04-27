@@ -35,7 +35,7 @@ struct MockMiracastController : public mcs::MiracastController {
     MOCK_CONST_METHOD0(Scanning, bool());
     MOCK_CONST_METHOD0(Enabled, bool());
 
-    MOCK_METHOD1(SetEnabled, bool(bool));
+    MOCK_METHOD1(SetEnabled, mcs::Error(bool));
 };
 }
 
@@ -62,7 +62,7 @@ TEST(MiracastControllerSkeleton, ForwardsCallsToImpl) {
     EXPECT_CALL(*impl, Capabilities()).Times(1).WillRepeatedly(Return(std::vector<mcs::NetworkManager::Capability>{mcs::NetworkManager::Capability::kSource}));
     EXPECT_CALL(*impl, Scanning()).Times(1).WillRepeatedly(Return(true));
     EXPECT_CALL(*impl, Enabled()).Times(1).WillRepeatedly(Return(true));
-    EXPECT_CALL(*impl, SetEnabled(false)).Times(1).WillRepeatedly(Return(true));
+    EXPECT_CALL(*impl, SetEnabled(false)).Times(1).WillRepeatedly(Return(mcs::Error::kNone));
 
     auto fmc = mcs::MiracastControllerSkeleton::create(impl);
     fmc->SetDelegate(std::shared_ptr<mcs::MiracastController::Delegate>{});

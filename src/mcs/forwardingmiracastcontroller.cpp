@@ -66,7 +66,7 @@ bool ForwardingMiracastController::Enabled() const {
     return fwd_->Enabled();
 }
 
-bool ForwardingMiracastController::SetEnabled(bool enabled) {
+Error ForwardingMiracastController::SetEnabled(bool enabled) {
     return fwd_->SetEnabled(enabled);
 }
 }

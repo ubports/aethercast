@@ -73,7 +73,7 @@ public:
     bool Scanning() const;
     bool Enabled() const;
 
-    bool SetEnabled(bool enabled);
+    Error SetEnabled(bool enabled) override;
 
     void OnClientDisconnected();
 
@@ -86,6 +86,7 @@ public:
     void OnDeviceFound(const NetworkDevice::Ptr &device) override;
     void OnDeviceLost(const NetworkDevice::Ptr &device) override;
     void OnChanged() override;
+    void OnReadyChanged() override;
 
 private:
     static gboolean OnIdleTimer(gpointer user_data);
@@ -101,6 +102,11 @@ private:
 
     void Shutdown();
     void CreateRuntimeDirectory();
+
+    Error SetEnabledInternal(bool enabled, bool no_save);
+
+    void LoadState();
+    void SaveState();
 
 private:
     std::weak_ptr<MiracastController::Delegate> delegate_;
