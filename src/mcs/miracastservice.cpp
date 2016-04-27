@@ -506,7 +506,7 @@ mcs::Error MiracastService::Scan(const std::chrono::seconds &timeout) {
 }
 
 void MiracastService::Shutdown() {
-    SetEnabled(false);
+    SetEnabledInternal(false, true);
 }
 
 } // namespace miracast
