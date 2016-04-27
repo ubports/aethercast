@@ -41,6 +41,7 @@ class TimerCallbackData;
 
 class MiracastSourceClient : public std::enable_shared_from_this<MiracastSourceClient>,
                              public wds::Peer::Delegate,
+                             public wds::Peer::Observer,
                              public BaseSourceMediaManager::Delegate {
 public:
     class Delegate : private mcs::NonCopyable {
@@ -65,6 +66,10 @@ public:
     int GetNextCSeq(int* initial_peer_cseq = nullptr) const override;
 
 public:
+    void ErrorOccurred(wds::ErrorType error) override;
+    void SessionCompleted() override;
+
+public:
     static gboolean OnTimeout(gpointer user_data);
     static void OnTimeoutRemove(gpointer user_data);
     static gboolean OnIncomingData(GSocket *socket, GIOCondition condition,
@@ -76,6 +81,7 @@ private:
 
     void DumpRtsp(const std::string &prefix, const std::string &data);
     void ReleaseTimers();
+    void NotifyConnectionClosed();
 
 private:
     std::weak_ptr<Delegate> delegate_;
