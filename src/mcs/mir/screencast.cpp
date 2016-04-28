@@ -53,6 +53,9 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
         return false;
     }
 
+    MCS_DEBUG("Setting up screencast [%s %dx%d]", output.mode,
+              output.width, output.height);
+
     connection_ = mir_connect_sync(kMirSocket, kMirConnectionName);
     if (!mir_connection_is_valid(connection_)) {
         MCS_ERROR("Failed to connect to Mir server: %s",
@@ -95,8 +98,8 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
         return false;
     }
 
-    mir_screencast_spec_set_width(spec, display_mode->horizontal_resolution);
-    mir_screencast_spec_set_height(spec, display_mode->vertical_resolution);
+    mir_screencast_spec_set_width(spec, output_.width);
+    mir_screencast_spec_set_height(spec, output_.height);
 
     MirRectangle region;
     // If we request a screen region outside the available screen area
@@ -104,8 +107,8 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
     // as just another display.
     region.left = display_mode->horizontal_resolution;
     region.top = 0;
-    region.width = output.width;
-    region.height = output.height;
+    region.width = display_mode->vertical_resolution;
+    region.height = display_mode->horizontal_resolution;
 
     mir_screencast_spec_set_capture_region(spec, &region);
 
@@ -117,9 +120,6 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
              display_mode->horizontal_resolution,
              region.left, region.top,
              active_output->orientation);
-
-    MCS_DEBUG("Setting up screencast [%s %dx%d]", output.mode,
-              output.width, output.height);
 
     unsigned int num_pixel_formats = 0;
     MirPixelFormat pixel_format;
