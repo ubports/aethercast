@@ -238,9 +238,11 @@ TEST(Screencast, ScreencastCreationFails) {
             .Times(1)
             .WillOnce(SetArgPointee<3>(1));
 
+#if 0
     EXPECT_CALL(*mir, mir_connection_create_screencast_sync(connection, _))
             .Times(1)
             .WillOnce(Return(nullptr));
+#endif
 
     EXPECT_CALL(*mir, mir_connection_get_error_message(connection))
             .Times(1)
@@ -291,9 +293,11 @@ TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
 
     auto mir_screencast = reinterpret_cast<MirScreencast*>(2);
 
+#if 0
     EXPECT_CALL(*mir, mir_connection_create_screencast_sync(connection, _))
             .Times(1)
             .WillOnce(Return(mir_screencast));
+#endif
 
     EXPECT_CALL(*mir, mir_screencast_release_sync(mir_screencast))
             .Times(1);
@@ -356,9 +360,11 @@ TEST(Screencast, DoesSwapBuffersAndReturnsCurrentBuffer) {
 
     auto mir_screencast = reinterpret_cast<MirScreencast*>(2);
 
+#if 0
     EXPECT_CALL(*mir, mir_connection_create_screencast_sync(connection, _))
             .Times(1)
             .WillOnce(Return(mir_screencast));
+#endif
 
     EXPECT_CALL(*mir, mir_screencast_release_sync(mir_screencast))
             .Times(1);

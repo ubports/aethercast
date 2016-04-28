@@ -47,7 +47,6 @@ private:
     MirConnection *connection_;
     MirScreencast *screencast_;
     MirBufferStream *buffer_stream_;
-    MirScreencastParameters params_;
     video::DisplayOutput output_;
 };
 
