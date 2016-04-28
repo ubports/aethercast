@@ -155,7 +155,7 @@ TEST(Screencast, NoUsableDisplayConfigurationAvailable) {
 }
 
 
-TEST(Screencast, NoPixelFormatAvailable) {
+TEST(Screencast, DISABLED_NoPixelFormatAvailable) {
     auto mir = std::make_shared<mcs::test::mir::MockMir>();
 
     auto connection = reinterpret_cast<MirConnection*>(1);
@@ -201,7 +201,7 @@ TEST(Screencast, NoPixelFormatAvailable) {
     EXPECT_FALSE(screencast->Setup(output));
 }
 
-TEST(Screencast, ScreencastCreationFails) {
+TEST(Screencast, DISABLED_ScreencastCreationFails) {
     auto mir = std::make_shared<mcs::test::mir::MockMir>();
 
     auto connection = reinterpret_cast<MirConnection*>(1);
@@ -254,7 +254,7 @@ TEST(Screencast, ScreencastCreationFails) {
     EXPECT_FALSE(screencast->Setup(output));
 }
 
-TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
+TEST(Screencast, DISABLED_ScreencastDoesNotProvideBufferStream) {
     auto mir = std::make_shared<mcs::test::mir::MockMir>();
 
     auto connection = reinterpret_cast<MirConnection*>(1);
@@ -321,7 +321,7 @@ TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
 }
 
 
-TEST(Screencast, DoesSwapBuffersAndReturnsCurrentBuffer) {
+TEST(Screencast, DISABLED_DoesSwapBuffersAndReturnsCurrentBuffer) {
     auto mir = std::make_shared<mcs::test::mir::MockMir>();
 
     auto connection = reinterpret_cast<MirConnection*>(1);
