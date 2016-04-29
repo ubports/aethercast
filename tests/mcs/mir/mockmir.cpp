@@ -66,10 +66,48 @@ void mir_connection_get_available_surface_formats(
     global_mock->mir_connection_get_available_surface_formats(connection, formats, format_size, num_valid_formats);
 }
 
-MirScreencast *mir_connection_create_screencast_sync(
-    MirConnection *connection,
-    MirScreencastParameters *parameters) {
-    return global_mock->mir_connection_create_screencast_sync(connection, parameters);
+MirScreencastSpec* mir_create_screencast_spec(MirConnection* connection) {
+    return global_mock->mir_create_screencast_spec(connection);
+}
+
+void mir_screencast_spec_set_width(MirScreencastSpec* spec, unsigned int width) {
+    global_mock->mir_screencast_spec_set_width(spec, width);
+}
+
+void mir_screencast_spec_set_height(MirScreencastSpec* spec, unsigned int height) {
+    global_mock->mir_screencast_spec_set_height(spec, height);
+}
+
+void mir_screencast_spec_set_pixel_format(MirScreencastSpec* spec, MirPixelFormat format) {
+    global_mock->mir_screencast_spec_set_pixel_format(spec, format);
+}
+
+void mir_screencast_spec_set_capture_region(MirScreencastSpec* spec, MirRectangle const* region) {
+    global_mock->mir_screencast_spec_set_capture_region(spec, region);
+}
+
+void mir_screencast_spec_set_mirror_mode(MirScreencastSpec* spec, MirMirrorMode mode) {
+    global_mock->mir_screencast_spec_set_mirror_mode(spec, mode);
+}
+
+void mir_screencast_spec_set_number_of_buffers(MirScreencastSpec* spec, unsigned int nbuffers) {
+    global_mock->mir_screencast_spec_set_number_of_buffers(spec, nbuffers);
+}
+
+void mir_screencast_spec_release(MirScreencastSpec* spec) {
+    global_mock->mir_screencast_spec_release(spec);
+}
+
+MirScreencast* mir_screencast_create_sync(MirScreencastSpec* spec){
+    return global_mock->mir_screencast_create_sync(spec);
+}
+
+bool mir_screencast_is_valid(MirScreencast *screencast) {
+    return global_mock->mir_screencast_is_valid(screencast);
+}
+
+char const *mir_screencast_get_error_message(MirScreencast *screencast){
+    return global_mock->mir_screencast_get_error_message(screencast);
 }
 
 void mir_screencast_release_sync(MirScreencast *screencast) {

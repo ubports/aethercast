@@ -15,6 +15,8 @@
  *
  */
 
+#include <boost/concept_check.hpp>
+
 #include <gmock/gmock.h>
 
 #include "mockmir.h"
@@ -22,6 +24,11 @@
 #include "mcs/mir/screencast.h"
 
 using namespace ::testing;
+
+namespace {
+struct TestMirScreencastSpec {
+};
+}
 
 TEST(Screencast, DoesNotSupportMirrorMode) {
     mcs::video::DisplayOutput output;
@@ -158,6 +165,11 @@ TEST(Screencast, NoUsableDisplayConfigurationAvailable) {
 TEST(Screencast, NoPixelFormatAvailable) {
     auto mir = std::make_shared<mcs::test::mir::MockMir>();
 
+    mcs::video::DisplayOutput output;
+    output.mode = mcs::video::DisplayOutput::Mode::kExtend;
+    output.width = 640;
+    output.height = 480;
+
     auto connection = reinterpret_cast<MirConnection*>(1);
 
     EXPECT_CALL(*mir, mir_connect_sync(_, _))
@@ -188,6 +200,28 @@ TEST(Screencast, NoPixelFormatAvailable) {
             .Times(1)
             .WillRepeatedly(Return(&display_config));
 
+    TestMirScreencastSpec spec;
+    auto mir_spec = reinterpret_cast<MirScreencastSpec*>(&spec);
+
+    EXPECT_CALL(*mir, mir_create_screencast_spec(connection))
+            .Times(1)
+            .WillRepeatedly(Return(mir_spec));
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_width(mir_spec, output.width))
+            .Times(1);
+    EXPECT_CALL(*mir, mir_screencast_spec_set_height(mir_spec, output.height))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_capture_region(mir_spec, _))
+            .Times(1)
+            .WillRepeatedly(Invoke([&](MirScreencastSpec *spec, MirRectangle const *rect) {
+                boost::ignore_unused_variable_warning(spec);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->left);
+                EXPECT_EQ(0, rect->top);
+                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, rect->width);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->height);
+            }));
+
     EXPECT_CALL(*mir, mir_connection_get_available_surface_formats(connection, _, _, _))
             .Times(1);
 
@@ -195,8 +229,6 @@ TEST(Screencast, NoPixelFormatAvailable) {
             .Times(1)
             .WillOnce(Return("Error message from mock"));
 
-    mcs::video::DisplayOutput output;
-    output.mode = mcs::video::DisplayOutput::Mode::kExtend;
     const auto screencast = std::make_shared<mcs::mir::Screencast>();
     EXPECT_FALSE(screencast->Setup(output));
 }
@@ -204,6 +236,11 @@ TEST(Screencast, NoPixelFormatAvailable) {
 TEST(Screencast, ScreencastCreationFails) {
     auto mir = std::make_shared<mcs::test::mir::MockMir>();
 
+    mcs::video::DisplayOutput output;
+    output.mode = mcs::video::DisplayOutput::Mode::kExtend;
+    output.width = 640;
+    output.height = 480;
+
     auto connection = reinterpret_cast<MirConnection*>(1);
 
     EXPECT_CALL(*mir, mir_connect_sync(_, _))
@@ -234,20 +271,56 @@ TEST(Screencast, ScreencastCreationFails) {
             .Times(1)
             .WillRepeatedly(Return(&display_config));
 
+    TestMirScreencastSpec spec;
+    auto mir_spec = reinterpret_cast<MirScreencastSpec*>(&spec);
+
+    EXPECT_CALL(*mir, mir_create_screencast_spec(connection))
+            .Times(1)
+            .WillRepeatedly(Return(mir_spec));
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_width(mir_spec, output.width))
+            .Times(1);
+    EXPECT_CALL(*mir, mir_screencast_spec_set_height(mir_spec, output.height))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_capture_region(mir_spec, _))
+            .Times(1)
+            .WillRepeatedly(Invoke([&](MirScreencastSpec *spec, MirRectangle const *rect) {
+                boost::ignore_unused_variable_warning(spec);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->left);
+                EXPECT_EQ(0, rect->top);
+                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, rect->width);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->height);
+            }));
+
     EXPECT_CALL(*mir, mir_connection_get_available_surface_formats(connection, _, _, _))
             .Times(1)
-            .WillOnce(SetArgPointee<3>(1));
+            .WillOnce(SetArgPointee<3>(mir_pixel_format_abgr_8888));
 
-    EXPECT_CALL(*mir, mir_connection_create_screencast_sync(connection, _))
+    EXPECT_CALL(*mir, mir_screencast_spec_set_pixel_format(mir_spec, _))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_mirror_mode(mir_spec, mir_mirror_mode_vertical))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_number_of_buffers(mir_spec, 2))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_create_sync(mir_spec))
             .Times(1)
-            .WillOnce(Return(nullptr));
+            .WillRepeatedly(Return(nullptr));
 
-    EXPECT_CALL(*mir, mir_connection_get_error_message(connection))
+    EXPECT_CALL(*mir, mir_screencast_spec_release(mir_spec))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_is_valid(nullptr))
+            .Times(1)
+            .WillRepeatedly(Return(false));
+
+    EXPECT_CALL(*mir, mir_screencast_get_error_message(nullptr))
             .Times(1)
             .WillOnce(Return("Error message from mock"));
 
-    mcs::video::DisplayOutput output;
-    output.mode = mcs::video::DisplayOutput::Mode::kExtend;
     const auto screencast = std::make_shared<mcs::mir::Screencast>();
     EXPECT_FALSE(screencast->Setup(output));
 }
@@ -255,6 +328,11 @@ TEST(Screencast, ScreencastCreationFails) {
 TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
     auto mir = std::make_shared<mcs::test::mir::MockMir>();
 
+    mcs::video::DisplayOutput output;
+    output.mode = mcs::video::DisplayOutput::Mode::kExtend;
+    output.width = 640;
+    output.height = 480;
+
     auto connection = reinterpret_cast<MirConnection*>(1);
 
     EXPECT_CALL(*mir, mir_connect_sync(_, _))
@@ -285,18 +363,53 @@ TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
             .Times(1)
             .WillRepeatedly(Return(&display_config));
 
+    TestMirScreencastSpec spec;
+    auto mir_spec = reinterpret_cast<MirScreencastSpec*>(&spec);
+
+    EXPECT_CALL(*mir, mir_create_screencast_spec(connection))
+            .Times(1)
+            .WillRepeatedly(Return(mir_spec));
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_width(mir_spec, output.width))
+            .Times(1);
+    EXPECT_CALL(*mir, mir_screencast_spec_set_height(mir_spec, output.height))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_capture_region(mir_spec, _))
+            .Times(1)
+            .WillRepeatedly(Invoke([&](MirScreencastSpec *spec, MirRectangle const *rect) {
+                boost::ignore_unused_variable_warning(spec);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->left);
+                EXPECT_EQ(0, rect->top);
+                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, rect->width);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->height);
+            }));
+
     EXPECT_CALL(*mir, mir_connection_get_available_surface_formats(connection, _, _, _))
             .Times(1)
-            .WillOnce(SetArgPointee<3>(1));
+            .WillOnce(SetArgPointee<3>(mir_pixel_format_abgr_8888));
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_pixel_format(mir_spec, _))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_mirror_mode(mir_spec, mir_mirror_mode_vertical))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_number_of_buffers(mir_spec, 2))
+            .Times(1);
 
     auto mir_screencast = reinterpret_cast<MirScreencast*>(2);
 
-    EXPECT_CALL(*mir, mir_connection_create_screencast_sync(connection, _))
+    EXPECT_CALL(*mir, mir_screencast_create_sync(mir_spec))
             .Times(1)
-            .WillOnce(Return(mir_screencast));
+            .WillRepeatedly(Return(mir_screencast));
 
-    EXPECT_CALL(*mir, mir_screencast_release_sync(mir_screencast))
+    EXPECT_CALL(*mir, mir_screencast_spec_release(mir_spec))
             .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_is_valid(mir_screencast))
+            .Times(1)
+            .WillRepeatedly(Return(true));
 
     EXPECT_CALL(*mir, mir_screencast_get_buffer_stream(mir_screencast))
             .Times(1)
@@ -305,8 +418,9 @@ TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
     EXPECT_CALL(*mir, mir_buffer_stream_swap_buffers_sync(_))
             .Times(0);
 
-    mcs::video::DisplayOutput output;
-    output.mode = mcs::video::DisplayOutput::Mode::kExtend;
+    EXPECT_CALL(*mir, mir_screencast_release_sync(mir_screencast))
+            .Times(1);
+
     const auto screencast = std::make_shared<mcs::mir::Screencast>();
     EXPECT_FALSE(screencast->Setup(output));
 
@@ -320,6 +434,12 @@ TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
 TEST(Screencast, DoesSwapBuffersAndReturnsCurrentBuffer) {
     auto mir = std::make_shared<mcs::test::mir::MockMir>();
 
+    mcs::video::DisplayOutput output;
+    output.mode = mcs::video::DisplayOutput::Mode::kExtend;
+    output.width = 640;
+    output.height = 480;
+    output.refresh_rate = 30;
+
     auto connection = reinterpret_cast<MirConnection*>(1);
 
     EXPECT_CALL(*mir, mir_connect_sync(_, _))
@@ -350,18 +470,53 @@ TEST(Screencast, DoesSwapBuffersAndReturnsCurrentBuffer) {
             .Times(1)
             .WillRepeatedly(Return(&display_config));
 
+    TestMirScreencastSpec spec;
+    auto mir_spec = reinterpret_cast<MirScreencastSpec*>(&spec);
+
+    EXPECT_CALL(*mir, mir_create_screencast_spec(connection))
+            .Times(1)
+            .WillRepeatedly(Return(mir_spec));
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_width(mir_spec, output.width))
+            .Times(1);
+    EXPECT_CALL(*mir, mir_screencast_spec_set_height(mir_spec, output.height))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_capture_region(mir_spec, _))
+            .Times(1)
+            .WillRepeatedly(Invoke([&](MirScreencastSpec *spec, MirRectangle const *rect) {
+                boost::ignore_unused_variable_warning(spec);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->left);
+                EXPECT_EQ(0, rect->top);
+                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, rect->width);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->height);
+            }));
+
     EXPECT_CALL(*mir, mir_connection_get_available_surface_formats(connection, _, _, _))
             .Times(1)
-            .WillOnce(SetArgPointee<3>(1));
+            .WillOnce(SetArgPointee<3>(mir_pixel_format_abgr_8888));
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_pixel_format(mir_spec, _))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_mirror_mode(mir_spec, mir_mirror_mode_vertical))
+            .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_spec_set_number_of_buffers(mir_spec, 2))
+            .Times(1);
 
     auto mir_screencast = reinterpret_cast<MirScreencast*>(2);
 
-    EXPECT_CALL(*mir, mir_connection_create_screencast_sync(connection, _))
+    EXPECT_CALL(*mir, mir_screencast_create_sync(mir_spec))
             .Times(1)
-            .WillOnce(Return(mir_screencast));
+            .WillRepeatedly(Return(mir_screencast));
 
-    EXPECT_CALL(*mir, mir_screencast_release_sync(mir_screencast))
+    EXPECT_CALL(*mir, mir_screencast_spec_release(mir_spec))
             .Times(1);
+
+    EXPECT_CALL(*mir, mir_screencast_is_valid(mir_screencast))
+            .Times(1)
+            .WillRepeatedly(Return(true));
 
     auto buffer_stream = reinterpret_cast<MirBufferStream*>(3);
 
@@ -378,11 +533,9 @@ TEST(Screencast, DoesSwapBuffersAndReturnsCurrentBuffer) {
             .Times(1)
             .WillOnce(SetArgPointee<1>(expected_buffer));
 
-    mcs::video::DisplayOutput output;
-    output.width = 1280;
-    output.height = 720;
-    output.refresh_rate = 30;
-    output.mode = mcs::video::DisplayOutput::Mode::kExtend;
+    EXPECT_CALL(*mir, mir_screencast_release_sync(mir_screencast))
+            .Times(1);
+
     const auto screencast = std::make_shared<mcs::mir::Screencast>();
     EXPECT_TRUE(screencast->Setup(output));
 
