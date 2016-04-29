@@ -76,6 +76,8 @@ RfkillManager::Ptr RfkillManager::FinalizeConstruction() {
     flags |= G_IO_FLAG_NONBLOCK;
     g_io_channel_set_flags(channel_.get(), GIOFlags(flags), nullptr);
 
+    // We're reading the current state of all rfkill items to make sure
+    // have everything in sync
     while (ProcessRfkillEvents());
 
     watch_ = g_io_add_watch_full(channel_.get(), G_PRIORITY_DEFAULT,
@@ -103,13 +105,11 @@ bool RfkillManager::IsBlocked(const Type &type) {
 }
 
 bool RfkillManager::ProcessRfkillEvents() {
-    uint8_t buf[32];
-    RfkillEvent *event = reinterpret_cast<RfkillEvent*>(buf);
-
-    ::memset(buf, 0, sizeof(buf));
+    RfkillEvent event;
+    ::memset(&event, 0, sizeof(RfkillEvent));
 
     gsize len = 0;
-    auto status = g_io_channel_read_chars(channel_.get(), reinterpret_cast<gchar*>(buf),
+    auto status = g_io_channel_read_chars(channel_.get(), reinterpret_cast<gchar*>(&event),
                                           sizeof(RfkillEvent),
                                           &len, nullptr);
 
