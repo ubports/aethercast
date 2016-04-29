@@ -1,9 +1,374 @@
-aethercast (0.1-0ubuntu2) UNRELEASED; urgency=medium
+aethercast (0.1+16.04.20160429.2-0ubuntu1) xenial; urgency=medium
 
+  [ Simon Fels ]
   * First release of aethercast in Ubuntu. This brings basic WiFi Display
     support to Ubuntu Touch for selected target devices.
+  * Adapt for new screencast API in Mir 0.22
+  * Add DBus API definition for external input providers.
+  * Add DBus API specification and service usage instructions. added:
+    docs/ docs/device-api.txt docs/manager-api.txt docs/overview.txt
+    docs/usage.txt
+  * Add DHCP client support for P2P client mode
+  * Add LTTng support for aethercast
+  * Add a network manager implementation to use the DBus interface of
+    wpa-supplicant.
+  * Add build dep on libboost-iostreams-dev Use PR_SET_CHILD_SUBREAPER
+    to reap all of our children when we going down. Send SIGKILL when
+    parent dies. Let supplicant wait until we connect over the socket
+    with it.
+  * Add build dependency on gstreamer-1.0
+  * Add command line argument to enable debugging
+  * Add comment about firmware loading on startup
+  * Add cross-compilation support.
+  * Add debug support for DHCP
+  * Add dhclient wrapper and use it after group was started removed:
+    src/gdhcp/ src/gdhcp/client.c src/gdhcp/common.c src/gdhcp/common.h
+    src/gdhcp/gdhcp.h src/gdhcp/ipv4ll.c src/gdhcp/ipv4ll.h
+    src/gdhcp/server.c src/gdhcp/unaligned.h added: src/dhcpclient.cpp
+    src/dhcpclient.h
+  * Add dict entry reading for supplicant message
+  * Add factory to construct media managers added:
+    src/mediamanagerfactory.cpp src/mediamanagerfactory.h
+  * Add first part of things needed for Miracast support added:
+    src/basesourcemediamanager.cpp src/basesourcemediamanager.h
+    src/miracastsource.cpp src/miracastsource.h
+    src/miracastsourceclient.cpp src/miracastsourceclient.h
+    src/mirsourcemediamanager.cpp src/mirsourcemediamanager.h
+  * Add hardware encoding and video streaming support.
+  * Add initial debian packaging added: debian/ debian/changelog
+    debian/compat debian/control debian/copyright debian/miracast-
+    service/ debian/miracast-service.debhelper.log debian/miracast-
+    service/usr/ debian/miracast-service/usr/bin/ debian/miracast-
+    service/usr/bin/miracast-service debian/miracast-service/usr/share/
+    debian/miracast-service/usr/share/doc/ debian/miracast-
+    service/usr/share/doc/miracast-service/ debian/miracast-
+    service/usr/share/doc/miracast-service/changelog.gz debian/miracast-
+    service/usr/share/doc/miracast-service/copyright debian/rules
+    debian/source/ debian/source/format
+  * Add integration tests to ensure performance doesn't regress
+  * Add missing COPYING and README files added: COPYING README.md
+  * Add missing WiFi display device info class added:
+    src/wfddeviceinfo.h
+  * Add missing warning for null media manager implementation
+  * Add more verbose output for supplicant
+  * Add proper repsawning of supplicant when it exists
+  * Add set of tests for WpaSupplicantCommandQueue implementation.
+    Convert WpaSupplicantMessage tests to gtest. removed:
+    src/wpa/wpasupplicantmessage_test.cpp added: tests/wpa/
+    tests/wpa/CMakeLists.txt
+    tests/wpa/wpasupplicantcommandqueue_test.cpp
+    tests/wpa/wpasupplicantmessage_test.cpp
+  * Add support for persistent connections
+  * Add unix signal handler added: src/unixsignalhandler.cpp
+    src/unixsignalhandler.h
+  * Add upstart job and install it added: conf/CMakeLists.txt
+    conf/miracast-service.conf.in
+  * Changing logging format.
+  * Check manager role rather than peer one and set sane default
+  * Check response status when attaching to supplicant for events
+  * Cleanup miracast source class a bit
+  * Configure source media manager once we ready
+  * Consider selected H264 profile when setting up encoder
+  * Convert even more noncopyable.hpp references
+  * Convert remaining references to org.wds to org.aethercast.
+  * Correctly handle peer lost message
+  * Depend on correct wds soversion
+  * Depend on wpasupplicant at installation time and on libwds1 at build
+    time until wds is properly updated.
+  * Detect client disconnects on RTSP channel
+  * Differentiate between being the owner and the client during
+    connection setup
+  * Don't mux test audio into what we stream for now
+  * Don't query supplicant status on startup
+  * Don't use QString for interface name operations
+  * Drop direct libwds0 dependency as wds package was updated
+  * Drop gstreamer backend
+  * Drop more unwanted files removed: debian/miracast-service/
+    debian/miracast-service/usr/ debian/miracast-service/usr/bin/
+    debian/miracast-service/usr/bin/miracast-service debian/miracast-
+    service/usr/share/ debian/miracast-service/usr/share/doc/
+    debian/miracast-service/usr/share/doc/miracast-service/
+    debian/miracast-service/usr/share/doc/miracast-service/changelog.gz
+    debian/miracast-service/usr/share/doc/miracast-service/copyright
+  * Drop signal/slot usage for network manager implementation
+  * Drop unneeded debug message
+  * Drop unneeded debug messages
+  * Drop unneeded debug statements
+  * Drop unneeded files removed: debian/miracast-service.debhelper.log
+  * Dump RTSP messages in debug mode
+  * Enable RTSP connection handling
+  * Enable acceptance tests against mcs::MiracastService: Introduce
+    mcs::MiracastService::Main, enabling us to reuse the service in
+    testing scenarios. Adjust src/mcs/main.cpp to use
+    mcs::MiracastService::Main. Hook up signal handlers for SIG{INT,
+    TERM} and shut down cleanly for those signals. Introduce
+    tests/acceptance_tests.cpp and a first test case exercising the
+    signal handler. Add process-cpp as a 3rd-party dependency for tests.
+    Bundling it with the project allows for easier adoption by other
+    interested parties. added: tests/3rd_party/ tests/3rd_party/process-
+    cpp-minimal/ tests/3rd_party/process-cpp-minimal/CMakeLists.txt
+    tests/3rd_party/process-cpp-minimal/COPYING tests/3rd_party/process-
+    cpp-minimal/README.md tests/3rd_party/process-cpp-minimal/include/
+    tests/3rd_party/process-cpp-minimal/include/core/
+    tests/3rd_party/process-cpp-minimal/include/core/posix/
+    tests/3rd_party/process-cpp-
+    minimal/include/core/posix/child_process.h tests/3rd_party/process-
+    cpp-minimal/include/core/posix/exec.h tests/3rd_party/process-cpp-
+    minimal/include/core/posix/exit.h tests/3rd_party/process-cpp-
+    minimal/include/core/posix/fork.h tests/3rd_party/process-cpp-
+    minimal/include/core/posix/linux/ tests/3rd_party/process-cpp-
+    minimal/include/core/posix/linux/proc/ tests/3rd_party/process-cpp-
+    minimal/include/core/posix/linux/proc/process/
+    tests/3rd_party/process-cpp-
+    minimal/include/core/posix/linux/proc/process/oom_adj.h
+    tests/3rd_party/process-cpp-
+    minimal/include/core/posix/linux/proc/process/oom_score.h
+    tests/3rd_party/process-cpp-
+    minimal/include/core/posix/linux/proc/process/oom_score_adj.h
+    tests/3rd_party/process-cpp-
+    minimal/include/core/posix/linux/proc/process/stat.h
+    tests/3rd_party/process-cpp-
+    minimal/include/core/posix/linux/proc/process/state.h
+    tests/3rd_party/process-cpp-minimal/include/core/posix/process.h
+    tests/3rd_party/process-cpp-
+    minimal/include/core/posix/process_group.h tests/3rd_party/process-
+    cpp-minimal/include/core/posix/signal.h tests/3rd_party/process-cpp-
+    minimal/include/core/posix/signalable.h tests/3rd_party/process-cpp-
+    minimal/include/core/posix/standard_stream.h
+    tests/3rd_party/process-cpp-
+    minimal/include/core/posix/this_process.h tests/3rd_party/process-
+    cpp-minimal/include/core/posix/visibility.h tests/3rd_party/process-
+    cpp-minimal/include/core/posix/wait.h tests/3rd_party/process-cpp-
+    minimal/include/core/testing/ tests/3rd_party/process-cpp-
+    minimal/include/core/testing/cross_process_sync.h
+    tests/3rd_party/process-cpp-
+    minimal/include/core/testing/fork_and_run.h tests/3rd_party/process-
+    cpp-minimal/src/ tests/3rd_party/process-cpp-
+    minimal/src/CMakeLists.txt tests/3rd_party/process-cpp-
+    minimal/src/core/ tests/3rd_party/process-cpp-
+    minimal/src/core/posix/ tests/3rd_party/process-cpp-
+    minimal/src/core/posix/CMakeLists.txt tests/3rd_party/process-cpp-
+    minimal/src/core/posix/backtrace.cpp tests/3rd_party/process-cpp-
+    minimal/src/core/posix/backtrace.h tests/3rd_party/process-cpp-
+    minimal/src/core/posix/child_process.cpp tests/3rd_party/process-
+    cpp-minimal/src/core/posix/exec.cpp tests/3rd_party/process-cpp-
+    minimal/src/core/posix/fork.cpp tests/3rd_party/process-cpp-
+    minimal/src/core/posix/linux/ tests/3rd_party/process-cpp-
+    minimal/src/core/posix/linux/CMakeLists.txt tests/3rd_party/process-
+    cpp-minimal/src/core/posix/linux/proc/ tests/3rd_party/process-cpp-
+    minimal/src/core/posix/linux/proc/process/ tests/3rd_party/process-
+    cpp-minimal/src/core/posix/linux/proc/process/oom_adj.cpp
+    tests/3rd_party/process-cpp-
+    minimal/src/core/posix/linux/proc/process/oom_score.cpp
+    tests/3rd_party/process-cpp-
+    minimal/src/core/posix/linux/proc/process/oom_score_adj.cpp
+    tests/3rd_party/process-cpp-
+    minimal/src/core/posix/linux/proc/process/stat.cpp
+    tests/3rd_party/process-cpp-
+    minimal/src/core/posix/linux/proc/process/state.cpp
+    tests/3rd_party/process-cpp-minimal/src/core/posix/process.cpp
+    tests/3rd_party/process-cpp-minimal/src/core/posix/process_group.cpp
+    tests/3rd_party/process-cpp-minimal/src/core/posix/signal.cpp
+    tests/3rd_party/process-cpp-minimal/src/core/posix/signalable.cpp
+    tests/3rd_party/process-cpp-
+    minimal/src/core/posix/standard_stream.cpp tests/3rd_party/process-
+    cpp-minimal/src/core/posix/this_process.cpp tests/3rd_party/process-
+    cpp-minimal/src/core/posix/wait.cpp tests/3rd_party/process-cpp-
+    minimal/src/core/testing/ tests/3rd_party/process-cpp-
+    minimal/src/core/testing/cross_process_sync.cpp
+    tests/3rd_party/process-cpp-
+    minimal/src/core/testing/fork_and_run.cpp tests/3rd_party/process-
+    cpp-minimal/symbols.map tests/mcs/acceptance_tests/
+    tests/mcs/acceptance_tests/CMakeLists.txt
+    tests/mcs/acceptance_tests/did_exit_cleanly.cpp
+    tests/mcs/acceptance_tests/did_exit_cleanly.h
+    tests/mcs/acceptance_tests/miracast_service_tests.cpp
+  * Enable automatic lifetime handling for
+    mcs::{Mir,Gst,Test}SourceMediaManager. Enable automatic lifetime
+    handling for mcs::MiracastSourceClient. Enable automatic lifetime
+    handling for mcs::MiracastSource. added: src/mcs/gobject_deleter.h
+    src/mcs/shared_gobject.h
+  * Enable code coverage reporting through gcov/gcovr/lcov.
+  * Enable pedantic compiler flags. Fix resulting warnings and errors.
+    added: src/mcs/non_copyable.h
+  * Explicitly bring supplicant process down
+  * Expose current P2P role for our manager instance
+  * Finish DBus API implementation. Further cleanup and fixes.
+  * Fix SIGBUS crash
+  * Fix all compiler warnings so that we build now fine with -Werror
+  * Fix apparmor rules to let us use the ics-dhcp-server properly.
+  * Fix cast of dbus object to right interface.
+  * Fix merge problem
+  * Fix problems with connect/disconnect
+  * Fix setting correct firmware on startup
+  * Fix trivial build issues.
+  * Fix trunk build added: tests/3rd_party/process-cpp-
+    minimal/include/core/connection.h tests/3rd_party/process-cpp-
+    minimal/include/core/signal.h
+  * Forward all found/lost devices to the dbus adapter
+  * Further work on DBus interface / DHCP connection setup / GO and
+    client handling
+  * Get rid of defines for declaring constants in wpa/. Get rid of
+    #define's for declaring constants.
+  * Get wds build configuration from pkg-config
+  * Give firmware changing a bit more time
+  * Handle WFD device info once device is discovered
+  * Implement service disconnect method
+  * Implement test source media manager
+  * Initialize GStreamer on startup
+  * Introduce a state property for the manager
+  * Introduce namespace 'mcs'. added: src/mcs/ renamed:
+    src/basesourcemediamanager.cpp => src/mcs/basesourcemediamanager.cpp
+    src/basesourcemediamanager.h => src/mcs/basesourcemediamanager.h
+    src/gstsourcemediamanager.cpp => src/mcs/gstsourcemediamanager.cpp
+    src/gstsourcemediamanager.h => src/mcs/gstsourcemediamanager.h
+    src/main.cpp => src/mcs/main.cpp src/mediamanagerfactory.cpp =>
+    src/mcs/mediamanagerfactory.cpp src/mediamanagerfactory.h =>
+    src/mcs/mediamanagerfactory.h src/miracastservice.cpp =>
+    src/mcs/miracastservice.cpp src/miracastservice.h =>
+    src/mcs/miracastservice.h src/miracastserviceadapter.cpp =>
+    src/mcs/miracastserviceadapter.cpp src/miracastserviceadapter.h =>
+    src/mcs/miracastserviceadapter.h src/miracastsource.cpp =>
+    src/mcs/miracastsource.cpp src/miracastsource.h =>
+    src/mcs/miracastsource.h src/miracastsourceclient.cpp =>
+    src/mcs/miracastsourceclient.cpp src/miracastsourceclient.h =>
+    src/mcs/miracastsourceclient.h src/mirsourcemediamanager.cpp =>
+    src/mcs/mirsourcemediamanager.cpp src/mirsourcemediamanager.h =>
+    src/mcs/mirsourcemediamanager.h src/networkdevice.cpp =>
+    src/mcs/networkdevice.cpp src/networkdevice.h =>
+    src/mcs/networkdevice.h src/networkmanager.cpp =>
+    src/mcs/networkmanager.cpp src/networkmanager.h =>
+    src/mcs/networkmanager.h src/networkutils.cpp =>
+    src/mcs/networkutils.cpp src/networkutils.h =>
+    src/mcs/networkutils.h src/testsourcemediamanager.cpp =>
+    src/mcs/testsourcemediamanager.cpp src/testsourcemediamanager.h =>
+    src/mcs/testsourcemediamanager.h src/unixsignalhandler.cpp =>
+    src/mcs/unixsignalhandler.cpp src/unixsignalhandler.h =>
+    src/mcs/unixsignalhandler.h src/utilities.cpp =>
+    src/mcs/utilities.cpp src/utilities.h => src/mcs/utilities.h
+    src/wfddeviceinfo.cpp => src/mcs/wfddeviceinfo.cpp
+    src/wfddeviceinfo.h => src/mcs/wfddeviceinfo.h
+  * Look at correct P2P role when stopping DHCP
+  * Major rework of the whole service
+  * Make sure that mcs::MiracastSourceClient::Delegate knows about error
+    and hangup conditions when reading from socket. Rework delegate
+    lifetime and ownership for mcs::Miracast*.
+  * Mark classes with virtual methods as boost::noncopyable (which also
+    gives us a virtual d'tor). Unify *::Delegate methods to be pure
+    virtual.
+  * Merge lp:~thomas-voss/miracast-service/add-logging-facilities added:
+    src/mcs/logger.cpp src/mcs/logger.h
+  * Minor cleanups for mcs::MiracastService{Adapter}:   - Clarify
+    ownership and lifetime of mcs::MiracastService::Delegate instances.
+      - Clarify ownership and lifetime of mcs::MiracastService instances
+    passed to mcs::MiracastServiceAdapters.   - Replace defines with
+    constexp const char* to gain type safety and correct scoping of
+    constants. added: src/mcs/scoped_gobject.h
+    tests/scoped_gobject_tests.cpp
+  * Move DHCP client/server handling into the network manager
+    implementation
+  * Move GStreamer pipeline construction to real media manager
+    implementation
+  * Move all wpa-supplicant specific source files into a separate
+    directory
+  * Multiple changes for Networking support:
+  * Pass remote address to source media manager
+  * Reduce device state change delegate methods to a single one
+  * Refactor mcs::NetworkDevice to be an interface. Refactor
+    mcs::NetworkDeviceAdapter to mcs::NetworkDeviceSkeleton. Add tests
+    around mcs::ForwardingNetworkDevice and mcs::NetworkDeviceSkeleton.
+    added: build/ src/mcs/forwardingnetworkdevice.cpp
+    src/mcs/forwardingnetworkdevice.h
+    src/wpa/wpasupplicantnetworkdevice.cpp
+    src/wpa/wpasupplicantnetworkdevice.h
+    tests/mcs/forwardingnetworkdevice_tests.cpp
+    tests/mcs/mock_network_device.h tests/mcs/networkdevice_tests.cpp
+    tests/mcs/networkdeviceskeleton_tests.cpp renamed:
+    src/mcs/networkdeviceadapter.cpp =>
+    src/mcs/networkdeviceskeleton.cpp src/mcs/networkdeviceadapter.h =>
+    src/mcs/networkdeviceskeleton.h
+  * Refactor mcs::utilities to mcs::Utilities, making it consistent with
+    mcs::NetworkUtils. Introduce subdirectory tests and a first set of
+    unit tests for mcs::Utilities. Adjust implementation of
+    mcs::Utilities to rely on boost header-only libraries where
+    appropriate. Adjust debian/control to capture additional build
+    dependencies. added: tests/ tests/CMakeLists.txt
+    tests/utilities_tests.cpp renamed: src/mcs/utilities.cpp =>
+    src/mcs/utils.cpp src/mcs/utilities.h => src/mcs/utils.h
+  * Rename SourceMediaManager classes to always include Source in their
+    name
+  * Rename our service methods to more appropiate ones
+  * Rename wpa -> w11t for w pasupplican t. renamed: src/wpa/ =>
+    src/w11t/ src/wpa/wpasupplicantcommand.cpp => src/w11t/command.cpp
+    src/wpa/wpasupplicantcommand.h => src/w11t/command.h
+    src/wpa/wpasupplicantcommandqueue.cpp => src/w11t/commandqueue.cpp
+    src/wpa/wpasupplicantcommandqueue.h => src/w11t/commandqueue.h
+    src/wpa/wpasupplicantmessage.cpp => src/w11t/message.cpp
+    src/wpa/wpasupplicantmessage.h => src/w11t/message.h
+    src/wpa/wpasupplicantnetworkdevice.cpp => src/w11t/networkdevice.cpp
+    src/wpa/wpasupplicantnetworkdevice.h => src/w11t/networkdevice.h
+    src/wpa/wpasupplicantnetworkmanager.cpp =>
+    src/w11t/networkmanager.cpp src/wpa/wpasupplicantnetworkmanager.h =>
+    src/w11t/networkmanager.h tests/wpa/ => tests/w11t/
+  * Report errors when failing to connect
+  * Reset network interface once DHCP goes down
+  * Restructure network manager implementation for wpa-supplicant a bit
+  * Retrieve interface index just once
+  * Rework of various bits added: src/networkp2pdevice.cpp
+    src/networkp2pdevice.h
+  * Rework part of the streaming framework and add further unit tests
+  * Rework supplicant command/response processing
+  * Rewrite timestamp comparision for RTP tests to overcome timing
+    issues on our builders
+  * Select mir MediaManager as default and add proper unit tests added:
+    tests/mcs/ tests/mcs/CMakeLists.txt
+    tests/mcs/mediamanagerfactory_tests.cpp
+  * Set needed WFD sub element
+  * Set static IP address again for our endpoint
+  * Setup dbus object manager interface
+  * Setup source as soon as we have a connection with remote side
+  * Split out firmware loading and netdev specification into wpa network
+    manager. Further small cleanups and fixes. added:
+    src/wpa/wififirmwareloader.cpp src/wpa/wififirmwareloader.h
+  * Split out gstreamer based media manager as base class
+  * Surface and reuse mcs::KeepAlive<T> in namespace mcs. added:
+    src/mcs/keep_alive.h
+  * Switch all dbus related names to aethercast to reflect our renaming.
+  * Switch to com.canonical as DBus service prefix renamed:
+    data/org.freedesktop.miracast.xml => data/com.canonical.miracast.xml
+  * Switch to old boost::ignore_unused_variable_warning.
+  * Use new message dict reading functionality to read peer information
+  * Use org.wds as service prefix renamed:
+    data/com.canonical.miracast.xml => data/org.wds.xml
+  * Use system wpa_supplicant binary again
+  * Various fixes and API cleanup removed: src/mcs/miracastsource.cpp
+    src/mcs/miracastsource.h added: src/mcs/ip_v4_address.h
+    src/mcs/mac_address.h src/mcs/miracastsourcemanager.cpp
+    src/mcs/miracastsourcemanager.h
+  * Various fixes and improvements for stability
+  * We need to add the WFD IE to WPA once we've created an interface
+  * With WDS 1.0.0 the API has slightly changed. This adopts our
+    implementation to respect the new API and build again.
+  * wpa: correct device state handling
+  * wpa: correctly update peer when found again
 
- -- Simon Fels <simon.fels@canonical.com>  Wed, 20 Apr 2016 17:19:17 +0200
+  [ Thomas Voß ]
+  * Add function names to log entries.
+  * Disable acceptance tests to unblock silo builds.
+  * Distinguish between positional and optional (named) args in
+    WpaSupplicantMessage. Pass in const references to
+    WpaSupplicantMessage::Write(...). (LP: #1524996)
+  * Elongate sleep to make acceptance test more robust.
+  * Enable strong typing for WpaSupplicantMessage, together with
+    convenient Read/Write functions. Add convenience types Skip<T> and
+    Named<K,V> to be used with WpaSupplicantMessage. Make
+    WpaSupplicantMessage::Type a strongly typed enum.
+  * Introduce interface mcs::MiracastController to decouple
+    MiracastService and MiracastServiceAdapter. Refactor
+    mcs::MiracastServiceAdapter to be a skeleton-implementation of
+    MiracastController and rename accordingly.
+
+ -- Simon Fels <simon.busch@canonical.com>  Fri, 29 Apr 2016 09:56:27 +0000
 
 aethercast (0.1-0ubuntu1) vivid; urgency=medium
 
