@@ -98,8 +98,8 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
         return false;
     }
 
-    mir_screencast_spec_set_width(spec, output_.width);
-    mir_screencast_spec_set_height(spec, output_.height);
+    mir_screencast_spec_set_width(spec, output.width);
+    mir_screencast_spec_set_height(spec, output.height);
 
     MirRectangle region;
     // If we request a screen region outside the available screen area
