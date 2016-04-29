@@ -55,7 +55,7 @@ public:
 
     static int Main(const MainOptions &options);
 
-    static std::shared_ptr<MiracastService> Create(const NetworkManager::Ptr &network_manager);
+    static std::shared_ptr<MiracastService> Create();
 
     ~MiracastService();
 
@@ -71,8 +71,14 @@ public:
     NetworkDeviceState State() const;
     std::vector<NetworkManager::Capability> Capabilities() const;
     bool Scanning() const;
+    bool Enabled() const;
+
+    Error SetEnabled(bool enabled) override;
 
     void OnClientDisconnected();
+
+    bool SetupNetworkManager();
+    bool ReleaseNetworkManager();
 
 public:
     void OnDeviceStateChanged(const NetworkDevice::Ptr &device) override;
@@ -80,13 +86,14 @@ public:
     void OnDeviceFound(const NetworkDevice::Ptr &device) override;
     void OnDeviceLost(const NetworkDevice::Ptr &device) override;
     void OnChanged() override;
+    void OnReadyChanged() override;
 
 private:
     static gboolean OnIdleTimer(gpointer user_data);
 
 private:
     MiracastService();
-    std::shared_ptr<MiracastService> FinalizeConstruction(const NetworkManager::Ptr &network_manager);
+    std::shared_ptr<MiracastService> FinalizeConstruction();
 
     void AdvanceState(NetworkDeviceState new_state);
     void FinishConnectAttempt(mcs::Error error = mcs::Error::kNone);
@@ -95,6 +102,11 @@ private:
 
     void Shutdown();
     void CreateRuntimeDirectory();
+
+    Error SetEnabledInternal(bool enabled, bool no_save);
+
+    void LoadState();
+    void SaveState();
 
 private:
     std::weak_ptr<MiracastController::Delegate> delegate_;
@@ -107,6 +119,7 @@ private:
     ResultCallback current_scan_callback_;
     std::vector<NetworkDeviceRole> supported_roles_;
     mcs::SystemController::Ptr system_controller_;
+    bool enabled_;
 };
 } // namespace mcs
 #endif

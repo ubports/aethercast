@@ -39,6 +39,9 @@ public:
     virtual NetworkDeviceState State() const override;
     virtual std::vector<NetworkManager::Capability> Capabilities() const override;
     virtual bool Scanning() const override;
+    virtual bool Enabled() const override;
+
+    virtual Error SetEnabled(bool enabled) override;
 
 private:
     MiracastController::Ptr fwd_;

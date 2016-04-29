@@ -61,4 +61,12 @@ std::vector<NetworkManager::Capability> ForwardingMiracastController::Capabiliti
 bool ForwardingMiracastController::Scanning() const {
     return fwd_->Scanning();
 }
+
+bool ForwardingMiracastController::Enabled() const {
+    return fwd_->Enabled();
+}
+
+Error ForwardingMiracastController::SetEnabled(bool enabled) {
+    return fwd_->SetEnabled(enabled);
+}
 }

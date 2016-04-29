@@ -38,6 +38,7 @@ public:
     IpV4Address LocalAddress() const override;
     bool Running() const override;
     bool Scanning() const override;
+    bool Ready() const override;
 
     void SetCapabilities(const std::vector<Capability> &capabilities) override;
     std::vector<Capability> Capabilities() const override;

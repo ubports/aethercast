@@ -162,8 +162,7 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
             // Raise our process priority to be as fast as possible
             setpriority(PRIO_PROCESS, 0, kProcessPriorityUrgentDisplay);
 
-            network_manager = mcs::NetworkManagerFactory::Create();
-            service = mcs::MiracastService::Create(network_manager);
+            service = mcs::MiracastService::Create();
             mcsa = mcs::MiracastControllerSkeleton::create(service);
         }
 
@@ -176,7 +175,6 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
         }
 
         GMainLoop *ml = g_main_loop_new(nullptr, FALSE);
-        mcs::NetworkManager::Ptr network_manager;
         mcs::MiracastService::Ptr service;
         mcs::MiracastControllerSkeleton::Ptr mcsa;
     } rt;
@@ -186,29 +184,28 @@ int MiracastService::Main(const MiracastService::MainOptions &options) {
     return 0;
 }
 
-std::shared_ptr<MiracastService> MiracastService::Create(const NetworkManager::Ptr &network_manager) {
+std::shared_ptr<MiracastService> MiracastService::Create() {
     auto sp = std::shared_ptr<MiracastService>{new MiracastService{}};
-    return sp->FinalizeConstruction(network_manager);
+    return sp->FinalizeConstruction();
 }
 
 MiracastService::MiracastService() :
     current_state_(kIdle),
     scan_timeout_source_(0),
-    supported_roles_({kSource}) {
+    supported_roles_({kSource}),
+    enabled_(false) {
 
     CreateRuntimeDirectory();
 }
 
-std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction(const NetworkManager::Ptr &network_manager) {
-    network_manager_ = network_manager;
-
-    if (network_manager_) {
-        network_manager_->SetDelegate(this);
-        network_manager_->SetCapabilities({NetworkManager::Capability::kSource});
-        network_manager_->Setup();
-    }
-
+std::shared_ptr<MiracastService> MiracastService::FinalizeConstruction() {
     system_controller_ = mcs::SystemController::CreatePlatformDefault();
+
+    network_manager_ = mcs::NetworkManagerFactory::Create();
+    network_manager_->SetDelegate(this);
+    network_manager_->SetCapabilities({NetworkManager::Capability::kSource});
+
+    LoadState();
 
     return shared_from_this();
 }
@@ -227,6 +224,29 @@ void MiracastService::CreateRuntimeDirectory() {
     boost::filesystem::create_directory(runtime_dir);
 }
 
+void MiracastService::LoadState() {
+    boost::filesystem::path state_dir(mcs::kStateDir);
+
+    if (!boost::filesystem::is_directory(state_dir))
+        return;
+
+    auto enabled_path = state_dir / "enabled";
+    SetEnabled(boost::filesystem::exists(enabled_path));
+}
+
+void MiracastService::SaveState() {
+    boost::filesystem::path state_dir(mcs::kStateDir);
+
+    if (!boost::filesystem::is_directory(state_dir))
+        boost::filesystem::create_directory(state_dir);
+
+    auto enabled_path = state_dir / "enabled";
+    if (enabled_)
+        mcs::Utils::CreateFile(enabled_path.string());
+    else
+        mcs::Utils::RemoveFile(enabled_path.string());
+}
+
 void MiracastService::SetDelegate(const std::weak_ptr<MiracastController::Delegate> &delegate) {
     delegate_ = delegate;
 }
@@ -240,17 +260,76 @@ NetworkDeviceState MiracastService::State() const {
 }
 
 std::vector<NetworkManager::Capability> MiracastService::Capabilities() const {
+    if (!enabled_)
+        return std::vector<NetworkManager::Capability>{};
+
     return network_manager_->Capabilities();
 }
 
 bool MiracastService::Scanning() const {
+    if (!enabled_)
+        return false;
+
     return network_manager_->Scanning();
 }
 
-void MiracastService::OnClientDisconnected() {
-    AdvanceState(kFailure);
-    source_.reset();
+bool MiracastService::Enabled() const {
+    return network_manager_->Ready() && enabled_;
+}
+
+bool MiracastService::SetupNetworkManager() {
+    return network_manager_->Setup();
+}
+
+bool MiracastService::ReleaseNetworkManager() {
+    if (current_device_)
+        network_manager_->Disconnect(current_device_);
+
+    network_manager_->Release();
+
     current_device_.reset();
+
+    return true;
+}
+
+Error MiracastService::SetEnabled(bool enabled) {
+    if (!network_manager_->Ready())
+        return Error::kNotReady;
+
+    return SetEnabledInternal(enabled, false);
+}
+
+Error MiracastService::SetEnabledInternal(bool enabled, bool no_save) {
+    if (enabled_ == enabled)
+        return Error::kNone;
+
+    if (enabled && !SetupNetworkManager())
+        return Error::kFailed;
+    else if (!enabled && !ReleaseNetworkManager())
+        return Error::kFailed;
+
+    enabled_ = enabled;
+
+    if (!no_save)
+        SaveState();
+
+    if (auto sp = delegate_.lock())
+        sp->OnChanged();
+
+    return Error::kNone;
+}
+
+void MiracastService::OnClientDisconnected() {
+    g_timeout_add(0, [](gpointer user_data) {
+        auto thiz = static_cast<WeakKeepAlive<MiracastService>*>(user_data)->GetInstance().lock();
+
+        if (!thiz)
+            return FALSE;
+
+        thiz->Disconnect(thiz->current_device_, nullptr);
+
+        return FALSE;
+    }, new WeakKeepAlive<MiracastService>(shared_from_this()));
 }
 
 void MiracastService::AdvanceState(NetworkDeviceState new_state) {
@@ -267,6 +346,7 @@ void MiracastService::AdvanceState(NetworkDeviceState new_state) {
 
     case kConnected:
         source_ = MiracastSourceManager::Create(network_manager_->LocalAddress(), kMiracastDefaultRtspCtrlPort);
+        source_->SetDelegate(shared_from_this());
         FinishConnectAttempt();
         break;
 
@@ -328,6 +408,15 @@ void MiracastService::OnDeviceLost(const NetworkDevice::Ptr &device) {
         sp->OnDeviceLost(device);
 }
 
+void MiracastService::OnReadyChanged() {
+    if (!network_manager_->Ready())
+        // NetworkManager switch on its own to not ready so we avoid
+        // storing the new 'Enabled' state as that
+        SetEnabledInternal(false, true);
+    else
+        LoadState();
+}
+
 gboolean MiracastService::OnIdleTimer(gpointer user_data) {
     auto inst = static_cast<SharedKeepAlive<MiracastService>*>(user_data)->ShouldDie();
     inst->AdvanceState(kIdle);
@@ -347,6 +436,12 @@ void MiracastService::FinishConnectAttempt(mcs::Error error) {
 }
 
 void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback callback) {
+    if (!enabled_) {
+        MCS_DEBUG("Not ready");
+        callback(Error::kNotReady);
+        return;
+    }
+
     if (current_device_) {
         MCS_DEBUG("Tried to connect again while we're already trying to connect a device");
         callback(Error::kAlready);
@@ -373,17 +468,25 @@ void MiracastService::Connect(const NetworkDevice::Ptr &device, ResultCallback c
 }
 
 void MiracastService::Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback) {
+    if (!enabled_) {
+        callback(Error::kNotReady);
+        return;
+    }
+
     if (!current_device_ || !device) {
-        callback(Error::kParamInvalid);
+        if (callback)
+            callback(Error::kParamInvalid);
         return;
     }
 
     if (!network_manager_->Disconnect(device)) {
-        callback(Error::kFailed);
+        if (callback)
+            callback(Error::kFailed);
         return;
     }
 
-    callback(Error::kNone);
+    if (callback)
+        callback(Error::kNone);
 }
 
 void MiracastService::DisconnectAll(ResultCallback callback) {
@@ -391,8 +494,11 @@ void MiracastService::DisconnectAll(ResultCallback callback) {
 }
 
 mcs::Error MiracastService::Scan(const std::chrono::seconds &timeout) {
+    if (!enabled_)
+        return Error::kNotReady;
+
     if (current_device_)
-        return mcs::Error::kNoDeviceConnected;
+        return mcs::Error::kNotReady;
 
     network_manager_->Scan(timeout);
 
@@ -400,10 +506,7 @@ mcs::Error MiracastService::Scan(const std::chrono::seconds &timeout) {
 }
 
 void MiracastService::Shutdown() {
-    if (current_device_)
-        network_manager_->Disconnect(current_device_);
-
-    network_manager_->Release();
+    SetEnabledInternal(false, true);
 }
 
 } // namespace miracast

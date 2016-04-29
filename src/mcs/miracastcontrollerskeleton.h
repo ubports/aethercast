@@ -58,10 +58,17 @@ public:
 private:
     static void OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data);
 
+    static void OnEnabledChanged(GObject *source, GParamSpec *spec, gpointer user_data);
+
     static gboolean OnHandleScan(AethercastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                                  gpointer user_data);
     static gboolean OnHandleDisconnectAll(AethercastInterfaceManager *skeleton, GDBusMethodInvocation *invocation,
                                           gpointer user_data);
+
+    static gboolean OnSetProperty(GDBusConnection *connection, const gchar *sender,
+                                  const gchar *object_path,const gchar *interface_name,
+                                  const gchar *property_name, GVariant *variant,
+                                  GError **error, gpointer user_data);
 
     MiracastControllerSkeleton(const std::shared_ptr<MiracastController> &controller);
     std::shared_ptr<MiracastControllerSkeleton> FinalizeConstruction();

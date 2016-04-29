@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical, Ltd.
+ * Copyright (C) 2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,14 +15,4 @@
  *
  */
 
-#ifndef MCS_CONFIG_H_
-#define MCS_CONFIG_H_
-
-namespace mcs {
-// FIXME(morphis) Make both paths be configured from cmake with the
-// correct system defaults.
-constexpr const char* kRuntimePath{"/run/aethercast"};
-constexpr const char* kStateDir{"/var/lib/aethercast"};
-}
-
-#endif
+#include "mcs/network/stream.h"

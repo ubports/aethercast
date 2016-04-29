@@ -23,6 +23,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 
 #include "mcs/common/executable.h"
 
@@ -59,6 +60,7 @@ private:
     video::SenderReport::Ptr report_;
     uint16_t rtp_sequence_number_;
     mcs::video::BufferQueue::Ptr queue_;
+    std::atomic<bool> network_error_;
 };
 
 } // namespace streaming

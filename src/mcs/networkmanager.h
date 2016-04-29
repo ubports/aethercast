@@ -40,6 +40,7 @@ public:
         virtual void OnDeviceStateChanged(const NetworkDevice::Ptr &peer) = 0;
         virtual void OnDeviceChanged(const NetworkDevice::Ptr &peer) = 0;
         virtual void OnChanged() = 0;
+        virtual void OnReadyChanged() = 0;
 
     protected:
         Delegate() = default;
@@ -68,6 +69,7 @@ public:
     virtual IpV4Address LocalAddress() const = 0;
     virtual bool Running() const = 0;
     virtual bool Scanning() const = 0;
+    virtual bool Ready() const = 0;
 
 protected:
     NetworkManager() = default;

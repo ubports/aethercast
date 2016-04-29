@@ -13,7 +13,7 @@ Methods		void Connect()
 			Possible errors: org.aethercast.Error.NotReady
 					  org.aethercast.Error.Failed
 					  org.aethercast.Error.InProgress
-					  org.aethercast.Error.AlreadyConnected
+					  org.aethercast.Error.Already
 
 		void Disconnect()
 
@@ -24,6 +24,7 @@ Methods		void Connect()
 			call before a reply to it has been received.
 
 			Possible errors: org.aethercast.Error.NotConnected
+						  org.aethercast.Error.Failed
 
 
 Properties		string State [readonly]

@@ -29,7 +29,8 @@ enum class Error {
     kAlready,
     kParamInvalid,
     kInvalidState,
-    kNoDeviceConnected,
+    kNotConnected,
+    kNotReady,
     kUnknown
 };
 

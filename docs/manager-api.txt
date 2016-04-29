@@ -11,6 +11,9 @@ Methods		void Scan()
 			method will return directly and not wait until the
 			scan operation has finished.
 
+			Possible errors: org.aethercast.Error.NotReady
+					  org.aethercast.Error.Failed
+
 		void RegisterInputProvider(object provider, dict options)
 
 			This registers a input provider implementation.
@@ -46,3 +49,12 @@ Properties	string State [readonly]
 			List of capabilities the local device supports.
 			Possible values are "sink" and "source".
 
+		bool Scanning [readonly]
+
+			Indicating if the manager is currently scanning
+			for available devices or not.
+
+		bool Enabled [readwrite]
+
+			The global switch to turn display management on
+			or off.

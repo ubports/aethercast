@@ -95,9 +95,6 @@ public:
         EXPECT_CALL(*mock, media_source_create())
                 .Times(1)
                 .WillRepeatedly(Return(source));
-        EXPECT_CALL(*mock, media_source_release(source))
-                .Times(1)
-                .WillOnce(Invoke([](MediaSourceWrapper *source) { delete source; }));
 
         auto meta_data = new DummyMediaMetaDataWrapper;
 
@@ -408,9 +405,6 @@ TEST_F(H264EncoderFixture, CorrectConfiguration) {
     EXPECT_CALL(*mock, media_source_create())
             .Times(1)
             .WillRepeatedly(Return(source));
-    EXPECT_CALL(*mock, media_source_release(source))
-            .Times(1)
-            .WillOnce(Invoke([](MediaSourceWrapper *source) { delete source; }));
     EXPECT_CALL(*mock, media_source_set_format(source, meta_data))
             .Times(1);
     EXPECT_CALL(*mock, media_source_set_start_callback(source, _, _))

@@ -126,6 +126,8 @@ Application::Application() :
     g_dbus_connection_signal_subscribe(bus_connection_, "org.aethercast", "org.freedesktop.DBus.Properties", "PropertiesChanged", "/org/aethercast", nullptr,
                                        G_DBUS_SIGNAL_FLAGS_NONE, &Application::OnManagerPropertiesChanged, this, nullptr);
 
+    RegisterCommand(Command { "enable", "", "Enable manager", std::bind(&Application::HandleEnableCommand, this, _1) });
+    RegisterCommand(Command { "disable", "", "Disable manager", std::bind(&Application::HandleDisableCommand, this, _1) });
     RegisterCommand(Command { "show", "", "Show manager properties", std::bind(&Application::HandleShowCommand, this, _1) });
     RegisterCommand(Command { "scan", "", "Scan for devices", std::bind(&Application::HandleScanCommand, this, _1) });
     RegisterCommand(Command { "devices", "", "List available devices", std::bind(&Application::HandleDevicesCommand, this, _1) });
@@ -157,9 +159,26 @@ void Application::RegisterCommand(const Command &command) {
     available_commands_[command.name] = command;
 }
 
+void Application::HandleEnableCommand(const std::string &arguments) {
+    if (!manager_)
+        return;
+
+    aethercast_interface_manager_set_enabled(manager_, true);
+}
+
+void Application::HandleDisableCommand(const std::string &arguments) {
+    if (!manager_)
+        return;
+
+    aethercast_interface_manager_set_enabled(manager_, false);
+}
+
 void Application::HandleShowCommand(const std::string &arguments) {
     if (!manager_)
         return;
+
+    auto enabled = aethercast_interface_manager_get_enabled(manager_);
+    std::cout << "Enabled: " << std::boolalpha << (bool) enabled << std::endl;
 
     auto state = aethercast_interface_manager_get_state(manager_);
     std::cout << "State: " << state << std::endl;
@@ -468,7 +487,9 @@ void Application::OnManagerPropertiesChanged(GDBusConnection *connection, const 
 
         std::cout << "[CHG] Manager " << key << " changed: ";
 
-        if (key == "State")
+        if (key == "Enabled")
+            std::cout << std::boolalpha << (bool) g_variant_get_boolean(g_variant_get_variant(value_v)) << std::endl;
+        else if (key == "State")
             std::cout << g_variant_get_string(g_variant_get_variant(value_v), nullptr) << std::endl;
         else if (key == "Scanning")
             std::cout << std::boolalpha << (bool) g_variant_get_boolean(g_variant_get_variant(value_v)) << std::endl;
@@ -477,6 +498,9 @@ void Application::OnManagerPropertiesChanged(GDBusConnection *connection, const 
 
             for (int m = 0; m < g_variant_n_children(value_v); m++) {
                 auto capability = g_variant_get_child_value(value_v, m);
+                if (!g_variant_is_of_type(capability, G_VARIANT_TYPE_STRING))
+                    continue;
+
                 capabilities << g_variant_get_string(capability, nullptr) << " ";
             }
 

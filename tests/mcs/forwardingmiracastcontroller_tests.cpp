@@ -33,6 +33,9 @@ struct MockMiracastController : public mcs::MiracastController {
     MOCK_CONST_METHOD0(State, mcs::NetworkDeviceState());
     MOCK_CONST_METHOD0(Capabilities, std::vector<mcs::NetworkManager::Capability>());
     MOCK_CONST_METHOD0(Scanning, bool());
+    MOCK_CONST_METHOD0(Enabled, bool());
+
+    MOCK_METHOD1(SetEnabled, mcs::Error(bool));
 };
 }
 
@@ -54,6 +57,8 @@ TEST(ForwardingMiracastController, ForwardsCallsToImpl) {
     EXPECT_CALL(*impl, State()).Times(1).WillRepeatedly(Return(mcs::NetworkDeviceState::kConnected));
     EXPECT_CALL(*impl, Capabilities()).Times(1).WillRepeatedly(Return(std::vector<mcs::NetworkManager::Capability>{mcs::NetworkManager::Capability::kSource}));
     EXPECT_CALL(*impl, Scanning()).Times(1).WillRepeatedly(Return(true));
+    EXPECT_CALL(*impl, Enabled()).Times(1).WillRepeatedly(Return(true));
+    EXPECT_CALL(*impl, SetEnabled(false)).Times(1).WillRepeatedly(Return(mcs::Error::kNone));
 
     mcs::ForwardingMiracastController fmc{impl};
     fmc.SetDelegate(std::shared_ptr<mcs::MiracastController::Delegate>{});
@@ -65,4 +70,6 @@ TEST(ForwardingMiracastController, ForwardsCallsToImpl) {
     fmc.State();
     fmc.Capabilities();
     fmc.Scanning();
+    fmc.Enabled();
+    fmc.SetEnabled(false);
 }

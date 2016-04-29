@@ -18,11 +18,12 @@
 #include <algorithm>
 #include <boost/concept_check.hpp>
 
-#include "networkdeviceskeleton.h"
-#include "utils.h"
-#include "keep_alive.h"
-#include "logger.h"
-#include "dbushelpers.h"
+#include "mcs/networkdeviceskeleton.h"
+#include "mcs/utils.h"
+#include "mcs/keep_alive.h"
+#include "mcs/logger.h"
+#include "mcs/dbushelpers.h"
+#include "mcs/dbuserrors.h"
 
 namespace mcs {
 
@@ -91,7 +92,8 @@ gboolean NetworkDeviceSkeleton::OnHandleConnect(AethercastInterfaceDevice *skele
     auto inst = static_cast<WeakKeepAlive<NetworkDeviceSkeleton>*>(user_data)->GetInstance().lock();
 
     if (not inst) {
-        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");
+        g_dbus_method_invocation_return_error(invocation, AETHERCAST_ERROR,
+            AETHERCAST_ERROR_INVALID_STATE, "Invalid state");
         return TRUE;
     }
 
@@ -100,8 +102,8 @@ gboolean NetworkDeviceSkeleton::OnHandleConnect(AethercastInterfaceDevice *skele
 
     inst->controller_->Connect(inst->Fwd(), [inv](mcs::Error error) {
         if (error != Error::kNone) {
-            g_dbus_method_invocation_return_error(inv.get(), G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                  "%s", mcs::ErrorToString(error).c_str());
+            g_dbus_method_invocation_return_error(inv.get(), AETHERCAST_ERROR,
+                AethercastErrorFromError(error), "%s", mcs::ErrorToString(error).c_str());
             return;
         }
 
@@ -119,7 +121,8 @@ gboolean NetworkDeviceSkeleton::OnHandleDisconnect(AethercastInterfaceDevice *sk
     auto inst = static_cast<WeakKeepAlive<NetworkDeviceSkeleton>*>(user_data)->GetInstance().lock();
 
     if (not inst) {
-        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");
+        g_dbus_method_invocation_return_error(invocation, AETHERCAST_ERROR,
+            AETHERCAST_ERROR_INVALID_STATE, "Invalid state");
         return TRUE;
     }
 
@@ -128,8 +131,8 @@ gboolean NetworkDeviceSkeleton::OnHandleDisconnect(AethercastInterfaceDevice *sk
 
     inst->controller_->Disconnect(inst->Fwd(), [inv](mcs::Error error) {
         if (error != Error::kNone) {
-            g_dbus_method_invocation_return_error(inv.get(), G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                  "%s", mcs::ErrorToString(error).c_str());
+            g_dbus_method_invocation_return_error(inv.get(), AETHERCAST_ERROR,
+                AethercastErrorFromError(error), "%s", mcs::ErrorToString(error).c_str());
             return;
         }
 

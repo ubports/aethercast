@@ -35,6 +35,8 @@ Screencast::Screencast() :
 }
 
 Screencast::~Screencast() {
+    MCS_DEBUG("");
+
     if (screencast_)
         mir_screencast_release_sync(screencast_);
 

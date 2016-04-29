@@ -21,9 +21,11 @@
 #include <memory>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 #include <cstring>
 #include <cstdarg>
+#include <cstdio>
 
 #include "utils.h"
 
@@ -63,6 +65,15 @@ bool Utils::CreateFile(const std::string &file_path) {
     of.open(file_path, std::ofstream::out);
     of << "";
     of.close();
+    return true;
+}
+
+bool Utils::RemoveFile(const std::string &file_path) {
+    boost::filesystem::path p(file_path);
+    if (!boost::filesystem::exists(p))
+        return false;
+
+    ::remove(file_path.c_str());
     return true;
 }
 

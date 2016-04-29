@@ -59,6 +59,8 @@ private:
         std::function<void(std::string)> func;
     };
 
+    void HandleEnableCommand(const std::string &arguments);
+    void HandleDisableCommand(const std::string &arguments);
     void HandleShowCommand(const std::string &arguments);
     void HandleScanCommand(const std::string &arguments);
     void HandleDevicesCommand(const std::string &arguments);

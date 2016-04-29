@@ -40,7 +40,9 @@
 namespace mcs {
 namespace mir {
 
-class SourceMediaManager : public mcs::BaseSourceMediaManager {
+class SourceMediaManager : public std::enable_shared_from_this<SourceMediaManager>,
+                           public mcs::BaseSourceMediaManager,
+                           public mcs::streaming::TransportSender::Delegate {
 public:
     typedef std::shared_ptr<SourceMediaManager> Ptr;
 
@@ -67,6 +69,8 @@ public:
     void SendIDRPicture() override;
 
     int GetLocalRtpPort() const override;
+
+    void OnTransportNetworkError() override;
 
 protected:
     bool Configure() override;

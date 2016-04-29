@@ -51,6 +51,9 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
         return sp;
     }
 
+    rfkill_manager_ = RfkillManager::Create();
+    rfkill_manager_->SetDelegate(sp);
+
     return sp;
 }
 
@@ -118,6 +121,12 @@ void NetworkManager::Initialize(bool firmware_loading) {
 void NetworkManager::Release() {
     MCS_DEBUG("");
 
+    for (auto &iter : devices_) {
+        if (delegate_)
+            delegate_->OnDeviceLost(iter.second);
+    }
+
+    devices_.clear();
 
     ReleaseInternal();
 }
@@ -164,6 +173,13 @@ void NetworkManager::SetDelegate(mcs::NetworkManager::Delegate *delegate) {
 }
 
 bool NetworkManager::Setup() {
+    MCS_DEBUG("");
+
+    if (rfkill_manager_->IsBlocked(RfkillManager::Type::kWLAN)) {
+        MCS_ERROR("Can't setup network manager as WLAN is disabled");
+        return false;
+    }
+
     g_bus_watch_name_on_connection(connection_.get(),
                                    kBusName,
                                    G_BUS_NAME_WATCHER_FLAGS_NONE,
@@ -172,7 +188,7 @@ bool NetworkManager::Setup() {
                                    new mcs::WeakKeepAlive<NetworkManager>(shared_from_this()),
                                    nullptr);
 
-    return false;
+    return true;
 }
 
 void NetworkManager::Scan(const std::chrono::seconds &timeout) {
@@ -360,6 +376,10 @@ bool NetworkManager::Running() const {
 
 bool NetworkManager::Scanning() const {
     return p2p_device_ && p2p_device_->Scanning();
+}
+
+bool NetworkManager::Ready() const {
+    return !rfkill_manager_->IsBlocked(RfkillManager::Type::kWLAN);
 }
 
 void NetworkManager::OnP2PDeviceChanged() {
@@ -643,6 +663,9 @@ void NetworkManager::OnManagerInterfaceAdded(const std::string &path) {
 void NetworkManager::OnManagerInterfaceRemoved(const std::string &path) {
     MCS_DEBUG("path %s", path);
 
+    if (!p2p_device_)
+        return;
+
     if (p2p_device_->ObjectPath() != path)
         return;
 
@@ -696,6 +719,14 @@ void NetworkManager::OnGroupInterfaceReady() {
 void NetworkManager::OnHostnameChanged() {
     MCS_DEBUG("");
     SyncDeviceConfiguration();
+}
+
+void NetworkManager::OnRfkillChanged(const RfkillManager::Type &type) {
+    if (type != RfkillManager::Type::kWLAN)
+        return;
+
+    if (delegate_)
+        delegate_->OnReadyChanged();
 }
 
 } // namespace w11tng

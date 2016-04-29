@@ -137,9 +137,9 @@ Stream::Error UdpStream::Write(const uint8_t *data, unsigned int size,
         case EHOSTUNREACH:
         case ENETUNREACH:
         case ENETDOWN:
-            MCS_DEBUG("Trying to resend due to a possible congested socket");
+            MCS_DEBUG("Trying to resend due to a possible congested socket (errno %d)", errno);
             bytes_sent = ::send(socket_, data, size, 0);
-            break;
+           break;
         default:
             break;
         }

@@ -85,7 +85,6 @@ private:
     video::EncoderReport::Ptr report_;
     BaseEncoder::Config config_;
     MediaMessageWrapper *format_;
-    MediaSourceWrapper *source_;
     MediaMetaDataWrapper *source_format_;
     MediaCodecSourceWrapper *encoder_;
     bool running_;

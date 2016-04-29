@@ -218,10 +218,33 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
     auto udp_stream = std::make_shared<mcs::network::UdpStream>();
 
     media_manager_ = MediaManagerFactory::CreateSource(peer_address, udp_stream);
-    source_.reset(wds::Source::Create(this, media_manager_.get()));
+    media_manager_->SetDelegate(shared_from_this());
+    source_.reset(wds::Source::Create(this, media_manager_.get(), this));
 
     source_->Start();
     return sp;
+}
+
+void MiracastSourceClient::NotifyConnectionClosed() {
+    if (auto sp = delegate_.lock())
+        sp->OnConnectionClosed();
+}
+
+void MiracastSourceClient::OnSourceNetworkError() {
+    NotifyConnectionClosed();
+}
+
+void MiracastSourceClient::ErrorOccurred(wds::ErrorType error) {
+    if (error != wds::ErrorType::TimeoutError)
+        return;
+
+    MCS_ERROR("Detected RTSP timeout; disconnecting ..");
+
+    NotifyConnectionClosed();
+}
+
+void MiracastSourceClient::SessionCompleted() {
+    MCS_DEBUG("");
 }
 
 } // namespace mcs

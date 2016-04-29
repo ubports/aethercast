@@ -26,6 +26,11 @@
 #include "mcs/utils.h"
 #include "mcs/dbushelpers.h"
 #include "mcs/logger.h"
+#include "mcs/dbuserrors.h"
+
+namespace {
+constexpr const char *kManagerSkeletonInstanceKey{"miracast-controller-skeleton"};
+}
 
 namespace mcs {
 std::shared_ptr<MiracastControllerSkeleton> MiracastControllerSkeleton::create(const std::shared_ptr<MiracastController> &controller) {
@@ -61,6 +66,7 @@ void MiracastControllerSkeleton::SyncProperties() {
     g_strfreev(capabilities);
 
     aethercast_interface_manager_set_scanning(manager_obj_.get(), Scanning());
+    aethercast_interface_manager_set_enabled(manager_obj_.get(), Enabled());
 }
 
 void MiracastControllerSkeleton::OnStateChanged(NetworkDeviceState state) {
@@ -110,17 +116,84 @@ void MiracastControllerSkeleton::OnChanged() {
     SyncProperties();
 }
 
+static std::string HyphenNameFromPropertyName(const std::string &property_name) {
+    auto hyphen_name = property_name;
+    // NOTE: Once we have more complex property names which have to
+    // include a hyphen in its actual name we need to cover those
+    // cases here.
+    std::transform(hyphen_name.begin(), hyphen_name.end(), hyphen_name.begin(), ::tolower);
+    return hyphen_name;
+}
+
+gboolean MiracastControllerSkeleton::OnSetProperty(GDBusConnection *connection, const gchar *sender,
+                                                   const gchar *object_path, const gchar *interface_name,
+                                                   const gchar *property_name, GVariant *variant,
+                                                   GError **error, gpointer user_data) {
+
+    AethercastInterfaceManagerSkeleton *skeleton = AETHERCAST_INTERFACE_MANAGER_SKELETON(user_data);
+
+    auto inst = g_object_get_data(G_OBJECT(skeleton), kManagerSkeletonInstanceKey);
+
+    auto hyphen_name = HyphenNameFromPropertyName(property_name);
+    auto pspec = g_object_class_find_property(G_OBJECT_GET_CLASS(skeleton),
+                    hyphen_name.c_str());
+    if (!pspec) {
+        g_set_error(error, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                    "No property with name %s", property_name);
+        return FALSE;
+    }
+
+    GValue value = G_VALUE_INIT;
+    g_dbus_gvariant_to_gvalue(variant, &value);
+
+    if (inst && hyphen_name == "enabled" &&
+        g_variant_is_of_type(variant, G_VARIANT_TYPE_BOOLEAN)) {
+
+        auto thiz = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(inst)->GetInstance().lock();
+        if (!thiz) {
+            g_set_error(error, AETHERCAST_ERROR, AETHERCAST_ERROR_INVALID_STATE, "Invalid state");
+            return FALSE;
+        }
+
+        auto enabled = g_variant_get_boolean(variant);
+        auto err = thiz->SetEnabled(static_cast<bool>(enabled));
+        if (err != Error::kNone) {
+            g_set_error(error, AETHERCAST_ERROR, AethercastErrorFromError(err),
+                        "Failed to switch 'Enabled' property");
+            return FALSE;
+        }
+    }
+
+    g_object_set_property(G_OBJECT(skeleton), hyphen_name.c_str(), &value);
+    g_value_unset(&value);
+
+    return TRUE;
+}
+
 void MiracastControllerSkeleton::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
     auto inst = static_cast<SharedKeepAlive<MiracastControllerSkeleton>*>(user_data)->ShouldDie();
+
     inst->manager_obj_.reset(aethercast_interface_manager_skeleton_new());
+    g_object_set_data(G_OBJECT(inst->manager_obj_.get()), kManagerSkeletonInstanceKey,
+                      new WeakKeepAlive<MiracastControllerSkeleton>(inst));
+
+    // We override the property setter method of the skeleton's vtable
+    // here to apply some more policy decisions when the user sets
+    // specific properties which are state dependent.
+    auto vtable = g_dbus_interface_skeleton_get_vtable(G_DBUS_INTERFACE_SKELETON(inst->manager_obj_.get()));
+    vtable->set_property = &MiracastControllerSkeleton::OnSetProperty;
 
     g_signal_connect_data(inst->manager_obj_.get(), "handle-scan",
-                     G_CALLBACK(&MiracastControllerSkeleton::OnHandleScan), new WeakKeepAlive<MiracastControllerSkeleton>(inst),
-                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(data); }, GConnectFlags(0));
+                     G_CALLBACK(&MiracastControllerSkeleton::OnHandleScan),
+                     new WeakKeepAlive<MiracastControllerSkeleton>(inst),
+                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(data); },
+                     GConnectFlags(0));
 
     g_signal_connect_data(inst->manager_obj_.get(), "handle-disconnect-all",
-                     G_CALLBACK(&MiracastControllerSkeleton::OnHandleDisconnectAll), new WeakKeepAlive<MiracastControllerSkeleton>(inst),
-                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(data); }, GConnectFlags(0));
+                     G_CALLBACK(&MiracastControllerSkeleton::OnHandleDisconnectAll),
+                     new WeakKeepAlive<MiracastControllerSkeleton>(inst),
+                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(data); },
+                     GConnectFlags(0));
 
     inst->SyncProperties();
 
@@ -139,7 +212,8 @@ gboolean MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *sk
     auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
 
     if (not inst) {
-        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");
+        g_dbus_method_invocation_return_error(invocation, AETHERCAST_ERROR,
+            AETHERCAST_ERROR_INVALID_STATE, "Invalid state");
         return TRUE;
     }
 
@@ -147,7 +221,8 @@ gboolean MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *sk
 
     const auto error = inst->Scan();
     if (error != mcs::Error::kNone) {
-        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "%s", mcs::ErrorToString(error).c_str());
+        g_dbus_method_invocation_return_error(invocation, AETHERCAST_ERROR,
+            AethercastErrorFromError(error), "%s", mcs::ErrorToString(error).c_str());
         return TRUE;
     }
 
@@ -162,7 +237,8 @@ gboolean MiracastControllerSkeleton::OnHandleDisconnectAll(AethercastInterfaceMa
     const auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
 
     if (not inst) {
-        g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");
+        g_dbus_method_invocation_return_error(invocation, AETHERCAST_ERROR,
+            AETHERCAST_ERROR_INVALID_STATE, "Invalid state");
         return TRUE;
     }
 
@@ -171,8 +247,8 @@ gboolean MiracastControllerSkeleton::OnHandleDisconnectAll(AethercastInterfaceMa
 
     inst->DisconnectAll([inv](mcs::Error error) {
         if (error != Error::kNone) {
-            g_dbus_method_invocation_return_error(inv.get(), G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                  "%s", mcs::ErrorToString(error).c_str());
+            g_dbus_method_invocation_return_error(inv.get(), AETHERCAST_ERROR,
+                AethercastErrorFromError(error), "%s", mcs::ErrorToString(error).c_str());
             return;
         }
 

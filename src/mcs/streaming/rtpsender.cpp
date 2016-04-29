@@ -49,7 +49,8 @@ RTPSender::RTPSender(const network::Stream::Ptr &stream, const video::SenderRepo
     max_ts_packets_((stream->MaxUnitSize() - kRTPHeaderSize) / kMPEGTSPacketSize),
     report_(report),
     rtp_sequence_number_(0),
-    queue_(video::BufferQueue::Create()){
+    queue_(video::BufferQueue::Create()),
+    network_error_(false) {
 }
 
 RTPSender::~RTPSender() {
@@ -77,11 +78,10 @@ bool RTPSender::Execute() {
         if (!packet)
             break;
 
-        if (stream_->Write(packet->Data(), packet->Length(), packet->Timestamp()) != network::Stream::Error::kNone) {
-            MCS_ERROR("Failed to send packet to remote");
-            // FIXME possible the remote side disconected. Check and
-            // bring everything down if that is the case.
-            return false;
+        if (stream_->Write(packet->Data(), packet->Length(), packet->Timestamp())
+                != network::Stream::Error::kNone) {
+            network_error_.exchange(true);
+            break;
         }
 
         report_->SentPacket(packet->Timestamp(), packet->Length());
@@ -89,12 +89,21 @@ bool RTPSender::Execute() {
 
     queue_->Unlock();
 
-    return true;
+    return !network_error_;
 }
 
 bool RTPSender::Queue(const video::Buffer::Ptr &packets) {
     if (packets->Length() % kMPEGTSPacketSize != 0) {
         MCS_WARNING("Packet buffer has an invalid length %d", packets->Length());
+        return false;
+    }
+
+    if (network_error_) {
+        // If a network error has happened we need to wind this up the
+        // stack so that everything is closed up correctly.
+        if (auto sp = delegate_.lock())
+            sp->OnTransportNetworkError();
+
         return false;
     }
 

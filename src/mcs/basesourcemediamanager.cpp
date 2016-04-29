@@ -30,6 +30,14 @@ BaseSourceMediaManager::BaseSourceMediaManager() :
     session_id_(++next_session_id) {
 }
 
+void BaseSourceMediaManager::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+    delegate_ = delegate;
+}
+
+void BaseSourceMediaManager::ResetDelegate() {
+    delegate_.reset();
+}
+
 wds::SessionType BaseSourceMediaManager::GetSessionType() const {
     return wds::VideoSession;
 }
