@@ -32,12 +32,12 @@ static const GDBusErrorEntry kAethercastErrorEntries[] = {
 G_STATIC_ASSERT(G_N_ELEMENTS(kAethercastErrorEntries) == AETHERCAST_N_ERRORS);
 
 GQuark aethercast_error_quark () {
-  static volatile gsize quark_volatile = 0;
-  g_dbus_error_register_error_domain ("aethercast-error-quark",
-                                      &quark_volatile,
-                                      kAethercastErrorEntries,
-                                      G_N_ELEMENTS (kAethercastErrorEntries));
-  return (GQuark) quark_volatile;
+    static volatile gsize quark_volatile = 0;
+    g_dbus_error_register_error_domain ("aethercast-error-quark",
+                                        &quark_volatile,
+                                        kAethercastErrorEntries,
+                                        G_N_ELEMENTS (kAethercastErrorEntries));
+    return (GQuark) quark_volatile;
 }
 
 AethercastError AethercastErrorFromError(const Error &error) {
