@@ -119,16 +119,16 @@ bool RfkillManager::ProcessRfkillEvents() {
     if (len != sizeof(RfkillEvent))
         return false;
 
-    auto type = static_cast<Type>(event->type);
+    auto type = static_cast<Type>(event.type);
 
-    switch (event->op) {
+    switch (event.op) {
     case RfkillOp::kRfkillOpAdd:
     case RfkillOp::kRfkillOpChange:
 
-        block_status_[type] = (event->soft || event->hard);
+        block_status_[type] = (event.soft || event.hard);
 
         MCS_DEBUG("rfkill type %d is now %s",
-                  static_cast<int>(event->type),
+                  static_cast<int>(event.type),
                   block_status_[type] ? "blocked" : "not blocked");
 
         if (auto sp = delegate_.lock())
