@@ -39,7 +39,12 @@ void BaseSourceMediaManager::ResetDelegate() {
 }
 
 wds::SessionType BaseSourceMediaManager::GetSessionType() const {
-    return wds::VideoSession;
+    /* Even though we will send only video for the moment in the MPEG stream,
+     * we identify ourselves as an audio/video session, because some buggy
+     * dongles need the audio codec to be set in the negotiation for screencast
+     * to happen.
+     */
+    return wds::AudioVideoSession;
 }
 
 void BaseSourceMediaManager::SetSinkRtpPorts(int port1, int port2) {
@@ -121,19 +126,16 @@ wds::H264VideoFormat BaseSourceMediaManager::GetOptimalVideoFormat() const {
 }
 
 bool BaseSourceMediaManager::InitOptimalAudioFormat(const std::vector<wds::AudioCodec>& sink_codecs) {
-    for (const auto& codec : sink_codecs) {
-        if (codec.format == wds::AAC && codec.modes.test(wds::AAC_48K_16B_2CH))
-            return true;
-    }
+    if (sink_codecs.empty())
+        return false;
 
-    return false;
+    /* Just take first codec until we implement audio */
+    audio_codec_ = sink_codecs[0];
+    return true;
 }
 
 wds::AudioCodec BaseSourceMediaManager::GetOptimalAudioFormat() const {
-  wds::AudioModes audio_modes;
-  audio_modes.set(wds::AAC_48K_16B_2CH);
-
-  return wds::AudioCodec(wds::AAC, audio_modes, 0);
+  return audio_codec_;
 }
 
 void BaseSourceMediaManager::SendIDRPicture() {
