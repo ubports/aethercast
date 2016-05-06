@@ -16,6 +16,7 @@
  */
 
 #include "mcs/logger.h"
+#include "mcs/keep_alive.h"
 
 #include "mcs/common/threadedexecutor.h"
 #include "mcs/common/threadedexecutorfactory.h"
@@ -34,6 +35,11 @@
 
 #include "mcs/android/h264encoder.h"
 
+namespace {
+// Number of milliseconds was choosen by measurement
+static constexpr std::chrono::milliseconds kStreamDelayOnPlay{300};
+}
+
 namespace mcs {
 namespace mir {
 
@@ -49,7 +55,8 @@ SourceMediaManager::SourceMediaManager(const std::string &remote_address,
     encoder_(encoder),
     output_stream_(output_stream),
     report_factory_(report_factory),
-    pipeline_(executor_factory, 4) {
+    pipeline_(executor_factory, 4),
+    delay_timeout_(0) {
 }
 
 SourceMediaManager::~SourceMediaManager() {
@@ -118,20 +125,56 @@ void SourceMediaManager::OnTransportNetworkError() {
         sp->OnSourceNetworkError();
 }
 
+void SourceMediaManager::CancelDelayTimeout() {
+    if (delay_timeout_ == 0)
+        return;
+
+    g_source_remove(delay_timeout_);
+    delay_timeout_ = 0;
+}
+
+gboolean SourceMediaManager::OnStartPipeline(gpointer user_data) {
+    auto thiz = static_cast<mcs::WeakKeepAlive<SourceMediaManager>*>(user_data)->GetInstance().lock();
+    if (!thiz)
+        return FALSE;
+
+    thiz->pipeline_.Start();
+    thiz->delay_timeout_ = 0;
+
+    return FALSE;
+}
+
 void SourceMediaManager::Play() {
     if (!IsPaused())
         return;
 
     MCS_DEBUG("");
 
-    pipeline_.Start();
+    CancelDelayTimeout();
 
+    // Deferring the actual pipeline start a bit helps to solve
+    // problems with receiver devices not being ready in the same
+    // timeframe as we are. If we send RTP packages to early we
+    // will receive ICMP failures which are not causing much
+    // issues but its better to avoid them.
+    delay_timeout_ = g_timeout_add_full(G_PRIORITY_DEFAULT,
+           kStreamDelayOnPlay.count(),
+           &OnStartPipeline,
+           new WeakKeepAlive<SourceMediaManager>(shared_from_this()),
+           [](gpointer data) { delete static_cast<WeakKeepAlive<SourceMediaManager>*>(data); });
+
+    // We defer the actual start of the pipeline a bit here but
+    // stay in state 'Playing' as even if the pipeline start
+    // fails we don't have any direct way yet to switch the
+    // state from our position.
     state_ = State::Playing;
 }
 
 void SourceMediaManager::Pause() {
     if (IsPaused())
         return;
+
+    CancelDelayTimeout();
 
     MCS_DEBUG("");
 
@@ -145,6 +188,8 @@ void SourceMediaManager::Teardown() {
         return;
 
     MCS_DEBUG("");
+
+    CancelDelayTimeout();
 
     pipeline_.Stop();
 

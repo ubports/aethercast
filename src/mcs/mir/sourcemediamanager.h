@@ -20,6 +20,8 @@
 
 #include <memory>
 
+#include "mcs/glib_wrapper.h"
+
 #include "mcs/basesourcemediamanager.h"
 
 #include "mcs/common/executor.h"
@@ -72,6 +74,11 @@ public:
 
     void OnTransportNetworkError() override;
 
+private:
+    static gboolean OnStartPipeline(gpointer user_data);
+
+    void CancelDelayTimeout();
+
 protected:
     bool Configure() override;
 
@@ -85,6 +92,7 @@ private:
     mcs::mir::StreamRenderer::Ptr renderer_;
     mcs::streaming::MediaSender::Ptr sender_;
     mcs::common::ExecutorPool pipeline_;
+    guint delay_timeout_;
 };
 
 } // namespace mir
