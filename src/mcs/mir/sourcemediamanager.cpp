@@ -36,7 +36,8 @@
 #include "mcs/android/h264encoder.h"
 
 namespace {
-std::chrono::milliseconds kStreamDelayOnPlay{300};
+// Number of milliseconds was choosen by measurement
+static constexpr std::chrono::milliseconds kStreamDelayOnPlay{300};
 }
 
 namespace mcs {
@@ -124,7 +125,7 @@ void SourceMediaManager::OnTransportNetworkError() {
         sp->OnSourceNetworkError();
 }
 
-void SourceMediaManager::StopDelayTimeout() {
+void SourceMediaManager::CancelDelayTimeout() {
     if (delay_timeout_ == 0)
         return;
 
@@ -149,11 +150,11 @@ void SourceMediaManager::Play() {
 
     MCS_DEBUG("");
 
-    StopDelayTimeout();
+    CancelDelayTimeout();
 
     // Deferring the actual pipeline start a bit helps to solve
     // problems with receiver devices not being ready in the same
-    // timeframe as we're. If we send RTP packages to early we
+    // timeframe as we are. If we send RTP packages to early we
     // will receive ICMP failures which are not causing much
     // issues but its better to avoid them.
     delay_timeout_ = g_timeout_add_full(G_PRIORITY_DEFAULT,
@@ -173,7 +174,7 @@ void SourceMediaManager::Pause() {
     if (IsPaused())
         return;
 
-    StopDelayTimeout();
+    CancelDelayTimeout();
 
     MCS_DEBUG("");
 
@@ -188,7 +189,7 @@ void SourceMediaManager::Teardown() {
 
     MCS_DEBUG("");
 
-    StopDelayTimeout();
+    CancelDelayTimeout();
 
     pipeline_.Stop();
 

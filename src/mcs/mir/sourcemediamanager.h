@@ -77,7 +77,7 @@ public:
 private:
     static gboolean OnStartPipeline(gpointer user_data);
 
-    void StopDelayTimeout();
+    void CancelDelayTimeout();
 
 protected:
     bool Configure() override;
