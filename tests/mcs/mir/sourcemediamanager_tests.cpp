@@ -17,6 +17,8 @@
 
 #include <gmock/gmock.h>
 
+#include "tests/common/glibhelpers.h"
+
 #include "mcs/mir/sourcemediamanager.h"
 
 using namespace ::testing;
@@ -234,12 +236,14 @@ TEST_F(SourceMediaManagerFixture, StateSwitching) {
     EXPECT_TRUE(manager->IsPaused());
 
     manager->Play();
+    mcs::testing::RunMainLoop(std::chrono::seconds{1});
     EXPECT_FALSE(manager->IsPaused());
 
     manager->Pause();
     EXPECT_TRUE(manager->IsPaused());
 
     manager->Play();
+    mcs::testing::RunMainLoop(std::chrono::seconds{1});
     EXPECT_FALSE(manager->IsPaused());
 
     manager->Teardown();
