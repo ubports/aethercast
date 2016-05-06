@@ -61,6 +61,7 @@ protected:
     int sink_port1_;
     int sink_port2_;
     wds::H264VideoFormat format_;
+    wds::AudioCodec audio_codec_;
     unsigned int session_id_;
 };
 } // namespace mcs
