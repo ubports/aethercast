@@ -1,3 +1,13 @@
+aethercast (0.1+16.04.20160506.1-0ubuntu1) xenial; urgency=medium
+
+  [ Alfonso Sanchez-Beato ]
+  * Fix for Microsoft dongle
+
+  [ Simon Fels ]
+  * Add short delay before starting the screencast stream (LP: #1578941)
+
+ -- Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>  Fri, 06 May 2016 15:11:08 +0000
+
 aethercast (0.1+16.04.20160429.2-0ubuntu1) xenial; urgency=medium
 
   [ Simon Fels ]
