@@ -102,18 +102,14 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
     return true;
 }
 
-bool UdpStream::WaitUntilReady() {
-    // Blocking socket, will be ready always. Note that this is a datagram
-    // socket and any blocking due to a full sending buffer will be very short.
-    // Also, we have a dedicated thread to call Write().
-    return true;
-}
-
 Stream::Error UdpStream::Write(const uint8_t *data, unsigned int size,
                                const mcs::TimestampUs &timestamp) {
 
     boost::ignore_unused_variable_warning(timestamp);
 
+    // Note this is a blocking socket. However, this is a datagram socket and
+    // any blocking due to a full sending buffer will be very short. Also, we
+    // have a dedicated thread to call Write().
     auto bytes_sent = ::send(socket_, data, size, 0);
 
     // If we get an error back which relates to a possible congested

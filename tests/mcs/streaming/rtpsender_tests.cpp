@@ -36,7 +36,6 @@ static constexpr unsigned int kRTPPayloadTypeMP2T = 33;
 class MockNetworkStream : public mcs::network::Stream {
 public:
     MOCK_METHOD2(Connect, bool(const std::string &address, const mcs::network::Port &port));
-    MOCK_METHOD0(WaitUntilReady, bool());
     MOCK_METHOD3(Write, mcs::network::Stream::Error(const uint8_t*, unsigned int, const mcs::TimestampUs&));
     MOCK_CONST_METHOD0(LocalPort, mcs::network::Port());
     MOCK_CONST_METHOD0(MaxUnitSize, std::uint32_t());
@@ -118,25 +117,6 @@ TEST(RTPSender, ExecutesWithEmptyQueue) {
     EXPECT_TRUE(sender->Execute());
 }
 
-TEST(RTPSender, ExecuteDoesNotFailWhenStreamIsNotReady) {
-    auto mock_stream = std::make_shared<MockNetworkStream>();
-    auto mock_report = std::make_shared<MockSenderReport>();
-
-    EXPECT_CALL(*mock_stream, MaxUnitSize())
-            .WillRepeatedly(Return(kStreamMaxUnitSize));
-
-    EXPECT_CALL(*mock_stream, WaitUntilReady())
-            .Times(1)
-            .WillOnce(Return(false));
-
-    auto sender = std::make_shared<mcs::streaming::RTPSender>(mock_stream, mock_report);
-
-    auto packets = mcs::video::Buffer::Create(kMPEGTSPacketSize);
-
-    EXPECT_TRUE(sender->Queue(packets));
-    EXPECT_TRUE(sender->Execute());
-}
-
 TEST(RTPSender, QueuesUpPackagesAndSendsAll) {
     auto mock_stream = std::make_shared<MockNetworkStream>();
     auto mock_report = std::make_shared<MockSenderReport>();
@@ -148,10 +128,6 @@ TEST(RTPSender, QueuesUpPackagesAndSendsAll) {
 
     EXPECT_CALL(*mock_stream, MaxUnitSize())
             .WillRepeatedly(Return(kStreamMaxUnitSize));
-
-    EXPECT_CALL(*mock_stream, WaitUntilReady())
-            .Times(1)
-            .WillOnce(Return(true));
 
     EXPECT_CALL(*mock_stream, Write(_, _, _))
             .Times(3)
@@ -172,10 +148,6 @@ TEST(RTPSender, WritePackageFails) {
 
     EXPECT_CALL(*mock_stream, MaxUnitSize())
             .WillRepeatedly(Return(kStreamMaxUnitSize));
-
-    EXPECT_CALL(*mock_stream, WaitUntilReady())
-            .Times(1)
-            .WillOnce(Return(true));
 
     EXPECT_CALL(*mock_stream, Write(_, _, _))
             .Times(1)
@@ -202,9 +174,6 @@ TEST(RTPSender, ConstructsCorrectRTPHeader) {
 
     EXPECT_CALL(*mock_stream, MaxUnitSize())
             .WillRepeatedly(Return(kStreamMaxUnitSize));
-
-    EXPECT_CALL(*mock_stream, WaitUntilReady())
-            .WillOnce(Return(true));
 
     std::uint8_t *output_data = nullptr;
 

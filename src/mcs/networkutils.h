@@ -38,7 +38,6 @@ public:
     static int BytesAvailableToRead(int fd);
     static int SendDriverPrivateCommand(const std::string &ifname, const std::string &cmd);
     static mcs::network::Port PickRandomPort();
-    static int MakeSocketNonBlocking(int socket);
 };
 } // namespace mcs
 #endif
