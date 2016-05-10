@@ -70,11 +70,6 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
         return false;
     }
 
-    if (NetworkUtils::MakeSocketNonBlocking(socket_) < 0) {
-        MCS_ERROR("Failed to make socket non blocking");
-        return false;
-    }
-
     struct sockaddr_in addr;
     memset(addr.sin_zero, 0, sizeof(addr.sin_zero));
     addr.sin_family = AF_INET;
@@ -108,14 +103,9 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
 }
 
 bool UdpStream::WaitUntilReady() {
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(socket_, &fds);
-
-    const int ret = ::select(socket_ + 1, nullptr, &fds, nullptr, nullptr);
-    if (ret < 0 || !FD_ISSET(socket_, &fds))
-        return false;
-
+    // Blocking socket, will be ready always. Note that this is a datagram
+    // socket and any blocking due to a full sending buffer will be very short.
+    // Also, we have a dedicated thread to call Write().
     return true;
 }
 
