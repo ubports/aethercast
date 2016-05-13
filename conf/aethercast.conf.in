@@ -7,6 +7,9 @@ respawn
 
 script
 	if [ -x `which getprop` ] ; then
+		# Wait for Android properties to be set
+		while [ "$(getprop init.svc.upstart-watcher)" != "running" ]; do sleep 0.2; done
+
 		iface=`getprop wifi.direct.interface`
 		if [ "$iface" != "" ] ; then
 			export AETHERCAST_DEDICATED_P2P_INTERFACE=$iface
