@@ -6,7 +6,7 @@ stop on stopping dbus
 respawn
 
 script
-	if [ -x `which getprop` ] ; then
+	if [ -f /system/build.prop ] ; then
 		# Wait for Android properties to be set
 		while [ "$(getprop init.svc.upstart-watcher)" != "running" ]; do sleep 0.2; done
 
