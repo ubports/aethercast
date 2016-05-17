@@ -35,7 +35,7 @@ Vcs-Bzr: https://code.launchpad.net/aethercast/trunk
 Vcs-Browser: http://bazaar.launchpad.net/aethercast/trunk/files
 
 Package: aethercast
-Architecture: any
+Architecture: i386 amd64 armhf arm64
 Depends: ${misc:Depends},
          ${shlibs:Depends},
          aethercast-tools,
@@ -48,7 +48,7 @@ Description: Display casting service
  protocols such as Miracast.
 
 Package: aethercast-tools
-Architecture: any
+Architecture: i386 amd64 armhf arm64
 Depends: ${misc:Depends},
          ${shlibs:Depends},
          isc-dhcp-server,
@@ -63,7 +63,7 @@ Description: Tools for the display casting service
  the display streaming stack.
 
 Package: aethercast-tests
-Architecture: any
+Architecture: i386 amd64 armhf arm64
 Depends: ${misc:Depends},
          ${shlibs:Depends},
          isc-dhcp-server,
