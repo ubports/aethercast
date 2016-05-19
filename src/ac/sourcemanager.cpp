@@ -109,7 +109,7 @@ bool SourceManager::Setup(const ac::IpV4Address &address, unsigned short port) {
 gboolean SourceManager::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
     auto inst = static_cast<WeakKeepAlive<SourceManager>*>(user_data)->GetInstance().lock();
 
-    AC_DEBUG("");
+    DEBUG("");
 
     // The callback context was deleted while the wait for connection was active.
     // Hardly anything we can do about it except for returning early.

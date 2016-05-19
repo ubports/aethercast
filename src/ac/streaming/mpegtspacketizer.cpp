@@ -150,7 +150,7 @@ void MPEGTSPacketizer::Track::Finalize() {
     if(!IsH264())
         return;
 
-    AC_DEBUG("");
+    DEBUG("");
 
     {
         // AVC video descriptor (40)
@@ -223,12 +223,12 @@ MPEGTSPacketizer::TrackId MPEGTSPacketizer::AddTrack(const TrackFormat &format) 
     auto is_video = ac::Utils::StringStartsWith(format.mime, "video/");
 
     if (!is_video) {
-        AC_ERROR("Audio tracks for MPEGTS are currently not supported");
+        ERROR("Audio tracks for MPEGTS are currently not supported");
         return TrackId(-1);
     }
 
     if (format.mime != "video/avc") {
-        AC_ERROR("Video formats other than video/avc are not supported");
+        ERROR("Video formats other than video/avc are not supported");
         return TrackId(-1);
     }
 
@@ -251,7 +251,7 @@ MPEGTSPacketizer::TrackId MPEGTSPacketizer::AddTrack(const TrackFormat &format) 
 
     unsigned int stream_id = stream_id_start + num_same_tracks;
     if (stream_id > stream_id_stop) {
-        AC_ERROR("All stream ids are in use");
+        ERROR("All stream ids are in use");
         return TrackId(-1);
     }
 
@@ -280,7 +280,7 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
     packets->reset();
 
     if (track_index > static_cast<int>(tracks_.size()) - 1) {
-        AC_ERROR("Invalid track index %d supplied", track_index);
+        ERROR("Invalid track index %d supplied", track_index);
         return false;
     }
 
@@ -659,7 +659,7 @@ bool MPEGTSPacketizer::Packetize(TrackId track_index, const video::Buffer::Ptr &
             AC_FATAL("PES packet length too hight; should only happen for video (track %d mime %s)",
                       track_index, track->format.mime);
 
-        AC_WARNING("Reset PES packet length to 0");
+        WARNING("Reset PES packet length to 0");
 
         // It's valid to set this to 0 for video according to the specs.
         PES_packet_length = 0;

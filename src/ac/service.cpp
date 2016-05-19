@@ -106,7 +106,7 @@ int Service::Main(const Service::MainOptions &options) {
             // things a small amount of time to perform their shutdown jobs.
             thiz->service->Shutdown();
 
-            AC_DEBUG("Exiting");
+            DEBUG("Exiting");
 
             g_timeout_add_seconds(kShutdownGracePreriod.count(), [](gpointer user_data) {
                 auto thiz = static_cast<Runtime*>(user_data);
@@ -438,13 +438,13 @@ void Service::FinishConnectAttempt(ac::Error error) {
 
 void Service::Connect(const NetworkDevice::Ptr &device, ResultCallback callback) {
     if (!enabled_) {
-        AC_DEBUG("Not ready");
+        DEBUG("Not ready");
         callback(Error::kNotReady);
         return;
     }
 
     if (current_device_) {
-        AC_DEBUG("Tried to connect again while we're already trying to connect a device");
+        DEBUG("Tried to connect again while we're already trying to connect a device");
         callback(Error::kAlready);
         return;
     }

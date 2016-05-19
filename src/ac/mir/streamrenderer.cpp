@@ -100,7 +100,7 @@ void StreamRenderer::OnBufferFinished(const video::Buffer::Ptr &buffer) {
 }
 
 bool StreamRenderer::Start() {
-    AC_DEBUG("Everything successfully setup; Starting recording now %dx%d@%d",
+    DEBUG("Everything successfully setup; Starting recording now %dx%d@%d",
               width_, height_, encoder_->Configuration().framerate);
 
     return true;

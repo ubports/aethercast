@@ -238,13 +238,13 @@ void SourceClient::ErrorOccurred(wds::ErrorType error) {
     if (error != wds::ErrorType::TimeoutError)
         return;
 
-    AC_ERROR("Detected RTSP timeout; disconnecting ..");
+    ERROR("Detected RTSP timeout; disconnecting ..");
 
     NotifyConnectionClosed();
 }
 
 void SourceClient::SessionCompleted() {
-    AC_DEBUG("");
+    DEBUG("");
 }
 
 } // namespace ac

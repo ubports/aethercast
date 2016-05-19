@@ -56,22 +56,22 @@ UdpStream::~UdpStream() {
 }
 
 bool UdpStream::Connect(const std::string &address, const Port &port) {
-    AC_DEBUG("Connected with remote on %s:%d", address, port);
+    DEBUG("Connected with remote on %s:%d", address, port);
 
     socket_ = ::socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_ < 0) {
-        AC_ERROR("Failed to create socket: %s (%d)", ::strerror(errno), errno);
+        ERROR("Failed to create socket: %s (%d)", ::strerror(errno), errno);
         return false;
     }
 
     int value = kUdpTxBufferSize;
     if (::setsockopt(socket_, SOL_SOCKET, SO_SNDBUF, &value, sizeof(value)) < 0) {
-        AC_ERROR("Failed to set socket transmit buffer size: %s (%d)", ::strerror(errno), errno);
+        ERROR("Failed to set socket transmit buffer size: %s (%d)", ::strerror(errno), errno);
         return false;
     }
 
     if (NetworkUtils::MakeSocketNonBlocking(socket_) < 0) {
-        AC_ERROR("Failed to make socket non blocking");
+        ERROR("Failed to make socket non blocking");
         return false;
     }
 
@@ -82,7 +82,7 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
     addr.sin_port = htons(local_port_);
 
     if (::bind(socket_, reinterpret_cast<const struct sockaddr*>(&addr), sizeof(addr)) < 0) {
-        AC_ERROR("Failed to bind socket to address: %s (%d)", ::strerror(errno), errno);
+        ERROR("Failed to bind socket to address: %s (%d)", ::strerror(errno), errno);
         return false;
     }
 
@@ -93,14 +93,14 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
 
     struct hostent *ent = gethostbyname(address.c_str());
     if (!ent) {
-        AC_ERROR("Failed to resolve remote address");
+        ERROR("Failed to resolve remote address");
         return false;
     }
 
     remote_addr.sin_addr.s_addr = *(in_addr_t*) ent->h_addr;
 
     if (::connect(socket_, reinterpret_cast<const struct sockaddr*>(&remote_addr), sizeof(remote_addr)) < 0) {
-        AC_ERROR("Failed to connect to remote: %s (%d)", ::strerror(errno), errno);
+        ERROR("Failed to connect to remote: %s (%d)", ::strerror(errno), errno);
         return false;
     }
 
@@ -137,7 +137,7 @@ Stream::Error UdpStream::Write(const uint8_t *data, unsigned int size,
         case EHOSTUNREACH:
         case ENETUNREACH:
         case ENETDOWN:
-            AC_DEBUG("Trying to resend due to a possible congested socket (errno %d)", errno);
+            DEBUG("Trying to resend due to a possible congested socket (errno %d)", errno);
             bytes_sent = ::send(socket_, data, size, 0);
            break;
         default:
@@ -146,11 +146,11 @@ Stream::Error UdpStream::Write(const uint8_t *data, unsigned int size,
     }
 
     if (bytes_sent < 0) {
-        AC_ERROR("Failed to send packet to remote: %s (%d)", ::strerror(-errno), errno);
+        ERROR("Failed to send packet to remote: %s (%d)", ::strerror(-errno), errno);
         return Error::kFailed;
     }
     else if (bytes_sent == 0) {
-        AC_ERROR("Remote has closed connection: %s (%d)", ::strerror(-errno), errno);
+        ERROR("Remote has closed connection: %s (%d)", ::strerror(-errno), errno);
         return Error::kRemoteClosedConnection;
     }
 

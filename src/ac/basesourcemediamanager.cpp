@@ -111,7 +111,7 @@ bool BaseSourceMediaManager::InitOptimalVideoFormat(const wds::NativeVideoFormat
         format_.rate_resolution = wds::CEA1280x720p30;
 
     if (!success) {
-        AC_ERROR("Failed to select proper video format");
+        ERROR("Failed to select proper video format");
         return false;
     }
 

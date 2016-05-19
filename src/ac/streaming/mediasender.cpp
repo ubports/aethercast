@@ -38,7 +38,7 @@ MediaSender::MediaSender(const Packetizer::Ptr &packetizer, const TransportSende
     queue_(video::BufferQueue::Create()) {
 
     if (!packetizer_ || !sender_) {
-        AC_WARNING("Sender not correct initialized. Missing packetizer or sender.");
+        WARNING("Sender not correct initialized. Missing packetizer or sender.");
         return;
     }
 
@@ -83,7 +83,7 @@ void MediaSender::ProcessBuffer(const ac::video::Buffer::Ptr &buffer) {
     }
 
     if (!packetizer_->Packetize(video_track_, buffer, &packets, flags)) {
-        AC_ERROR("MPEGTS packetizing failed");
+        ERROR("MPEGTS packetizing failed");
         return;
     }
 

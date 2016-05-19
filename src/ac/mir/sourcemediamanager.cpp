@@ -70,12 +70,12 @@ bool SourceMediaManager::Configure() {
     if (!output_stream_->Connect(remote_address_, sink_port1_))
         return false;
 
-    AC_DEBUG("dimensions: %dx%d@%d", rr.width, rr.height, rr.framerate);
+    DEBUG("dimensions: %dx%d@%d", rr.width, rr.height, rr.framerate);
 
     video::DisplayOutput output{video::DisplayOutput::Mode::kExtend, rr.width, rr.height, rr.framerate};
 
     if (!producer_->Setup(output)) {
-        AC_ERROR("Failed to setup buffer producer");
+        ERROR("Failed to setup buffer producer");
         return false;
     }
 
@@ -91,7 +91,7 @@ bool SourceMediaManager::Configure() {
     config.constraint_set = constraint;
 
     if (!encoder_->Configure(config)) {
-        AC_ERROR("Failed to configure encoder");
+        ERROR("Failed to configure encoder");
         return false;
     }
 
@@ -148,7 +148,7 @@ void SourceMediaManager::Play() {
     if (!IsPaused())
         return;
 
-    AC_DEBUG("");
+    DEBUG("");
 
     CancelDelayTimeout();
 
@@ -176,7 +176,7 @@ void SourceMediaManager::Pause() {
 
     CancelDelayTimeout();
 
-    AC_DEBUG("");
+    DEBUG("");
 
     pipeline_.Stop();
 
@@ -187,7 +187,7 @@ void SourceMediaManager::Teardown() {
     if (state_ == State::Stopped)
         return;
 
-    AC_DEBUG("");
+    DEBUG("");
 
     CancelDelayTimeout();
 

@@ -35,7 +35,7 @@ Screencast::Screencast() :
 }
 
 Screencast::~Screencast() {
-    AC_DEBUG("");
+    DEBUG("");
 
     if (screencast_)
         mir_screencast_release_sync(screencast_);
@@ -49,23 +49,23 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
         return false;
 
     if (output.mode != video::DisplayOutput::Mode::kExtend) {
-        AC_ERROR("Unsupported display output mode specified '%s'", output.mode);
+        ERROR("Unsupported display output mode specified '%s'", output.mode);
         return false;
     }
 
-    AC_DEBUG("Setting up screencast [%s %dx%d]", output.mode,
+    DEBUG("Setting up screencast [%s %dx%d]", output.mode,
               output.width, output.height);
 
     connection_ = mir_connect_sync(kMirSocket, kMirConnectionName);
     if (!mir_connection_is_valid(connection_)) {
-        AC_ERROR("Failed to connect to Mir server: %s",
+        ERROR("Failed to connect to Mir server: %s",
                   mir_connection_get_error_message(connection_));
         return false;
     }
 
     const auto config = mir_connection_create_display_config(connection_);
     if (!config) {
-        AC_ERROR("Failed to create display configuration: %s",
+        ERROR("Failed to create display configuration: %s",
                   mir_connection_get_error_message(connection_));
         return false;
     }
@@ -85,7 +85,7 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
     }
 
     if (!active_output) {
-        AC_ERROR("Failed to find a suitable display output");
+        ERROR("Failed to find a suitable display output");
         return false;
     }
 
@@ -126,7 +126,7 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
     mir_connection_get_available_surface_formats(connection_, &pixel_format,
                                                  1, &num_pixel_formats);
     if (num_pixel_formats == 0) {
-        AC_ERROR("Failed to find suitable pixel format: %s",
+        ERROR("Failed to find suitable pixel format: %s",
                   mir_connection_get_error_message(connection_));
         return false;
     }
@@ -145,7 +145,7 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
 
     buffer_stream_ = mir_screencast_get_buffer_stream(screencast_);
     if (!buffer_stream_) {
-        AC_ERROR("Failed to setup Mir buffer stream");
+        ERROR("Failed to setup Mir buffer stream");
         return false;
     }
 
