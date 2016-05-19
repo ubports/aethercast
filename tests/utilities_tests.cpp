@@ -15,7 +15,7 @@
  *
  */
 
-#include <mcs/utils.h>
+#include <ac/utils.h>
 
 #include <gtest/gtest.h>
 
@@ -25,34 +25,34 @@ const std::string ref{"this is just a test string that helps us to exercise Util
 
 TEST(Utilities, StringStartsWithReturnsTrueForSameString)
 {
-    EXPECT_TRUE(mcs::Utils::StringStartsWith(ref, ref));
+    EXPECT_TRUE(ac::Utils::StringStartsWith(ref, ref));
 }
 
 TEST(Utilities, StringStartsWithReturnsTrueForPrefix)
 {
-    EXPECT_TRUE(mcs::Utils::StringStartsWith(ref, ref.substr(0, 10)));
+    EXPECT_TRUE(ac::Utils::StringStartsWith(ref, ref.substr(0, 10)));
 }
 
 TEST(Utilities, StringStartsWithReturnsTrueForEmptyString)
 {
-    EXPECT_TRUE(mcs::Utils::StringStartsWith(ref, ""));
+    EXPECT_TRUE(ac::Utils::StringStartsWith(ref, ""));
 }
 
 TEST(Utilities, StringStartsWithReturnsFalseForPrefixLongerThanString)
 {
-    EXPECT_FALSE(mcs::Utils::StringStartsWith(ref.substr(0, 10), ref));
+    EXPECT_FALSE(ac::Utils::StringStartsWith(ref.substr(0, 10), ref));
 }
 
 TEST(Utilities, ParseHexReturnsCorrectValueForHexString)
 {
     const int value = 42;
-    EXPECT_EQ(value, mcs::Utils::ParseHex(mcs::Utils::Sprintf("%x", value)));
+    EXPECT_EQ(value, ac::Utils::ParseHex(ac::Utils::Sprintf("%x", value)));
 }
 
 TEST(Utilities, ParseHexReturnsThrowsForStringWithout0x)
 {
     const int value = 42;
-    EXPECT_ANY_THROW(mcs::Utils::ParseHex(mcs::Utils::Sprintf("%x", value).substr(2)));
+    EXPECT_ANY_THROW(ac::Utils::ParseHex(ac::Utils::Sprintf("%x", value).substr(2)));
 }
 
 TEST(Utilities, StringSplitReturnsCorrectListOfTokens)
@@ -62,7 +62,7 @@ TEST(Utilities, StringSplitReturnsCorrectListOfTokens)
         "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n"
     };
 
-    EXPECT_EQ(tokens, mcs::Utils::StringSplit(separated, ':'));
+    EXPECT_EQ(tokens, ac::Utils::StringSplit(separated, ':'));
 }
 
 TEST(Utilities, StringSplitCompressesEmptyTokens)
@@ -72,7 +72,7 @@ TEST(Utilities, StringSplitCompressesEmptyTokens)
         "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n"
     };
 
-    EXPECT_EQ(tokens, mcs::Utils::StringSplit(separated, ':'));
+    EXPECT_EQ(tokens, ac::Utils::StringSplit(separated, ':'));
 }
 
 TEST(Utilities, StringSplitReturnsEmptyTokens)
@@ -82,5 +82,5 @@ TEST(Utilities, StringSplitReturnsEmptyTokens)
         "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", ""
     };
 
-    EXPECT_EQ(tokens, mcs::Utils::StringSplit(separated, ':'));
+    EXPECT_EQ(tokens, ac::Utils::StringSplit(separated, ':'));
 }

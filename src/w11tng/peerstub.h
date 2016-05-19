@@ -20,10 +20,10 @@
 
 #include <string>
 
-#include <mcs/shared_gobject.h>
-#include <mcs/scoped_gobject.h>
-#include <mcs/non_copyable.h>
-#include <mcs/mac_address.h>
+#include <ac/shared_gobject.h>
+#include <ac/scoped_gobject.h>
+#include <ac/non_copyable.h>
+#include <ac/mac_address.h>
 
 extern "C" {
 // Ignore all warnings coming from the external headers as we don't
@@ -43,7 +43,7 @@ public:
 
     typedef std::shared_ptr<PeerStub> Ptr;
 
-    class Delegate : public mcs::NonCopyable {
+    class Delegate : public ac::NonCopyable {
     public:
         virtual void OnPeerChanged() = 0;
         virtual void OnPeerReady() = 0;
@@ -54,7 +54,7 @@ public:
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
 
-    mcs::MacAddress Address() const;
+    ac::MacAddress Address() const;
     std::string Name() const;
 
 private:
@@ -71,10 +71,10 @@ private:
     static void OnPropertyChanged(GObject *source, GParamSpec *spec, gpointer user_data);
 
 private:
-    mcs::ScopedGObject<GDBusConnection> connection_;
-    mcs::ScopedGObject<WpaSupplicantPeer> proxy_;
+    ac::ScopedGObject<GDBusConnection> connection_;
+    ac::ScopedGObject<WpaSupplicantPeer> proxy_;
     std::weak_ptr<Delegate> delegate_;
-    mcs::MacAddress address_;
+    ac::MacAddress address_;
     std::string name_;
 };
 

@@ -20,8 +20,8 @@
 
 #include <vector>
 
-#include <mcs/shared_gobject.h>
-#include <mcs/scoped_gobject.h>
+#include <ac/shared_gobject.h>
+#include <ac/scoped_gobject.h>
 
 extern "C" {
 // Ignore all warnings coming from the external headers as we don't
@@ -42,7 +42,7 @@ public:
 
     typedef std::shared_ptr<ManagerStub> Ptr;
 
-    class Delegate : public mcs::NonCopyable {
+    class Delegate : public ac::NonCopyable {
     public:
         virtual void OnManagerReady() = 0;
         virtual void OnManagerInterfaceAdded(const std::string &path) = 0;
@@ -77,8 +77,8 @@ private:
 
 private:
     std::weak_ptr<Delegate> delegate_;
-    mcs::ScopedGObject<GDBusConnection> connection_;
-    mcs::ScopedGObject<WpaSupplicantFiW1Wpa_supplicant1> proxy_;
+    ac::ScopedGObject<GDBusConnection> connection_;
+    ac::ScopedGObject<WpaSupplicantFiW1Wpa_supplicant1> proxy_;
     bool p2p_supported_;
     std::vector<std::string> capabilities_;
     std::vector<std::string> interfaces_;

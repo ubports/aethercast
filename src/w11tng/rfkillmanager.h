@@ -21,8 +21,8 @@
 #include <memory>
 #include <map>
 
-#include "mcs/non_copyable.h"
-#include "mcs/glib_wrapper.h"
+#include "ac/non_copyable.h"
+#include "ac/glib_wrapper.h"
 
 namespace w11tng {
 
@@ -48,7 +48,7 @@ public:
         kFM,
     };
 
-    class Delegate : public mcs::NonCopyable {
+    class Delegate : public ac::NonCopyable {
     public:
         virtual void OnRfkillChanged(const Type &type) = 0;
     };

@@ -18,8 +18,8 @@
 #include <string.h>
 #include <errno.h>
 
-#include "mcs/logger.h"
-#include "mcs/keep_alive.h"
+#include "ac/logger.h"
+#include "ac/keep_alive.h"
 
 #include "rfkillmanager.h"
 
@@ -62,7 +62,7 @@ RfkillManager::Ptr RfkillManager::FinalizeConstruction() {
 
     auto fd = ::open(kDevRfkillPath, O_RDWR | O_CLOEXEC);
     if (fd < 0) {
-        MCS_ERROR("Failed to open rfkill device at %s: %s",
+        AC_ERROR("Failed to open rfkill device at %s: %s",
                   kDevRfkillPath, ::strerror(errno));
         return sp;
     }
@@ -83,8 +83,8 @@ RfkillManager::Ptr RfkillManager::FinalizeConstruction() {
     watch_ = g_io_add_watch_full(channel_.get(), G_PRIORITY_DEFAULT,
                 GIOCondition(G_IO_IN | G_IO_NVAL | G_IO_HUP | G_IO_ERR),
                 OnRfkillEvent,
-                new mcs::WeakKeepAlive<RfkillManager>(sp),
-                [](gpointer user_data) { delete static_cast<mcs::WeakKeepAlive<RfkillManager>*>(user_data); });
+                new ac::WeakKeepAlive<RfkillManager>(sp),
+                [](gpointer user_data) { delete static_cast<ac::WeakKeepAlive<RfkillManager>*>(user_data); });
 
     return sp;
 }
@@ -127,7 +127,7 @@ bool RfkillManager::ProcessRfkillEvents() {
 
         block_status_[type] = (event.soft || event.hard);
 
-        MCS_DEBUG("rfkill type %d is now %s",
+        AC_DEBUG("rfkill type %d is now %s",
                   static_cast<int>(event.type),
                   block_status_[type] ? "blocked" : "not blocked");
 
@@ -142,7 +142,7 @@ bool RfkillManager::ProcessRfkillEvents() {
 }
 
 gboolean RfkillManager::OnRfkillEvent(GIOChannel *channel, GIOCondition cond, gpointer data) {
-    auto thiz = static_cast<mcs::WeakKeepAlive<RfkillManager>*>(data)->GetInstance().lock();
+    auto thiz = static_cast<ac::WeakKeepAlive<RfkillManager>*>(data)->GetInstance().lock();
     if (!thiz)
         return FALSE;
 

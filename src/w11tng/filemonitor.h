@@ -22,8 +22,8 @@
 #include <map>
 #include <string>
 
-#include <mcs/non_copyable.h>
-#include <mcs/scoped_gobject.h>
+#include <ac/non_copyable.h>
+#include <ac/scoped_gobject.h>
 
 namespace w11tng {
 
@@ -31,7 +31,7 @@ class FileMonitor : public std::enable_shared_from_this<FileMonitor> {
 public:
     typedef std::shared_ptr<FileMonitor> Ptr;
 
-    class Delegate : public mcs::NonCopyable {
+    class Delegate : public ac::NonCopyable {
     public:
         virtual void OnFileChanged(const std::string &path) = 0;
     };
@@ -50,7 +50,7 @@ private:
 private:
     std::weak_ptr<Delegate> delegate_;
     std::map<std::string,void*> watches_;
-    mcs::ScopedGObject<GFileMonitor> monitor_;
+    ac::ScopedGObject<GFileMonitor> monitor_;
 };
 
 } // namespace w11tng

@@ -16,8 +16,8 @@
  * Authored by: Thomas Voß <thomas.voss@canonical.com>
  */
 
-#ifndef MCS_TESTING_COMMON_BENCHMARK_H_
-#define MCS_TESTING_COMMON_BENCHMARK_H_
+#ifndef AC_TESTING_COMMON_BENCHMARK_H_
+#define AC_TESTING_COMMON_BENCHMARK_H_
 
 #include <chrono>
 #include <functional>
@@ -26,7 +26,7 @@
 
 #include "tests/common/statistics.h"
 
-namespace mcs {
+namespace ac {
 namespace testing {
 
 /**
@@ -195,6 +195,6 @@ bool operator==(const Benchmark::Result& lhs, const Benchmark::Result& rhs);
 std::ostream& operator<<(std::ostream&, const Benchmark::Result&);
 
 } // namespace testing
-} // namespace mcs
+} // namespace ac
 
 #endif

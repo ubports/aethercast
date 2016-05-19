@@ -25,13 +25,13 @@
 #include <iostream>
 #include <map>
 
-#include "mcs/logger.h"
+#include "ac/logger.h"
 
 #include "tests/common/statistics.h"
 
 namespace math = boost::math;
 
-namespace mcs {
+namespace ac {
 namespace testing {
 
 // We are considering the procedure presented in:
@@ -166,4 +166,4 @@ StudentsTTest::Result StudentsTTest::two_independent_samples(
 }
 
 } // namespace testing
-} // namespace mcs
+} // namespace ac

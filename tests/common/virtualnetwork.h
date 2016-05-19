@@ -15,12 +15,12 @@
  *
  */
 
-#ifndef MCS_TESTING_VIRTUAL_ETHERNET_H_
-#define MCS_TESTING_VIRTUAL_ETHERNET_H_
+#ifndef AC_TESTING_VIRTUAL_ETHERNET_H_
+#define AC_TESTING_VIRTUAL_ETHERNET_H_
 
 #include <string>
 
-namespace mcs {
+namespace ac {
 namespace testing {
 
 class VirtualNetwork {
@@ -37,6 +37,6 @@ private:
 };
 
 } // namespace testing
-} // namespace mcs
+} // namespace ac
 
 #endif

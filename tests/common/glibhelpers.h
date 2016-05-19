@@ -18,17 +18,17 @@
 #ifndef GLIBHELPERS_H_
 #define GLIBHELPERS_H_
 
-#include <mcs/glib_wrapper.h>
+#include <ac/glib_wrapper.h>
 
 #include <chrono>
 
-namespace mcs {
+namespace ac {
 namespace testing {
 
 void RunMainLoop(const std::chrono::seconds &seconds);
 void RunMainLoopIteration();
 
 } // namespace testing
-} // namespace mcs
+} // namespace ac
 
 #endif

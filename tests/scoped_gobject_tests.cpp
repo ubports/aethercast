@@ -15,7 +15,7 @@
  *
  */
 
-#include <mcs/scoped_gobject.h>
+#include <ac/scoped_gobject.h>
 
 #include <gio/gio.h>
 
@@ -26,7 +26,7 @@
 
 TEST(ScopedGObject, BehavesNicelyOnNullInstances)
 {
-    mcs::ScopedGObject<GSubprocess> obj;
+    ac::ScopedGObject<GSubprocess> obj;
 }
 
 TEST(ScopedGObject, UnrefsObjectsOnDestruction)
@@ -51,7 +51,7 @@ TEST(ScopedGObject, UnrefsObjectsOnDestruction)
     // That is, after having left the scope, we expect the
     // the reference count to be 1.
     {
-        mcs::ScopedGObject<GSubprocess> obj{sleep};
+        ac::ScopedGObject<GSubprocess> obj{sleep};
     }
 
     g_subprocess_force_exit(sleep);

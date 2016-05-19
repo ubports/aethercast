@@ -21,7 +21,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include "mcs/utils.h"
+#include "ac/utils.h"
 #include "w11tng/dhcpleaseparser.h"
 
 namespace {
@@ -52,10 +52,10 @@ std::vector<std::string> leases_with_invalid_ip = {
 };
 
 std::string CreateLeaseFile(const std::vector<std::string> &content) {
-    auto path = mcs::Utils::Sprintf("%s/test-leases-%s",
+    auto path = ac::Utils::Sprintf("%s/test-leases-%s",
                                     boost::filesystem::temp_directory_path().string(),
                                     boost::filesystem::unique_path().string());
-    mcs::Utils::CreateFile(path);
+    ac::Utils::CreateFile(path);
 
     std::fstream file(path);
     for (auto line : content)

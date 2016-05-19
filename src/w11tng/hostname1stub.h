@@ -21,9 +21,9 @@
 #include <memory>
 #include <string>
 
-#include <mcs/glib_wrapper.h>
+#include <ac/glib_wrapper.h>
 
-#include <mcs/scoped_gobject.h>
+#include <ac/scoped_gobject.h>
 
 namespace w11tng {
 class Hostname1Stub : public std::enable_shared_from_this<Hostname1Stub> {
@@ -62,7 +62,7 @@ private:
 
 private:
     std::weak_ptr<Delegate> delegate_;
-    mcs::ScopedGObject<GDBusConnection> connection_;
+    ac::ScopedGObject<GDBusConnection> connection_;
     std::string hostname_;
     std::string static_hostname_;
     std::string pretty_hostname_;

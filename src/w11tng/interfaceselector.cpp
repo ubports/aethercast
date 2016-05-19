@@ -15,9 +15,9 @@
  *
  */
 
-#include <mcs/logger.h>
-#include <mcs/keep_alive.h>
-#include <mcs/dbushelpers.h>
+#include <ac/logger.h>
+#include <ac/keep_alive.h>
+#include <ac/dbushelpers.h>
 
 extern "C" {
 // Ignore all warnings coming from the external headers as we don't
@@ -49,7 +49,7 @@ InterfaceSelector::Ptr InterfaceSelector::FinalizeConstruction() {
     GError *error = nullptr;
     connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
     if (!connection_) {
-        MCS_ERROR("Failed to connect to system bus: %s", error->message);
+        AC_ERROR("Failed to connect to system bus: %s", error->message);
         g_error_free(error);
         return sp;
     }
@@ -84,7 +84,7 @@ void InterfaceSelector::TryNextInterface() {
     auto object_path = interfaces_.back();
     interfaces_.pop_back();
 
-    MCS_DEBUG("Looking at %s", object_path);
+    AC_DEBUG("Looking at %s", object_path);
 
     wpa_supplicant_interface_proxy_new(connection_.get(),
                                        G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
@@ -92,12 +92,12 @@ void InterfaceSelector::TryNextInterface() {
                                        object_path.c_str(),
                                        nullptr, [](GObject *source, GAsyncResult *res, gpointer user_data) {
 
-            auto inst = static_cast<mcs::SharedKeepAlive<InterfaceSelector>*>(user_data)->ShouldDie();
+            auto inst = static_cast<ac::SharedKeepAlive<InterfaceSelector>*>(user_data)->ShouldDie();
 
             GError *error = nullptr;
             auto proxy = wpa_supplicant_interface_proxy_new_finish(res, &error);
             if (!proxy) {
-                MCS_ERROR("Failed to create proxy for interface: %s", error->message);
+                AC_ERROR("Failed to create proxy for interface: %s", error->message);
                 g_error_free(error);
                 return;
             }
@@ -105,15 +105,15 @@ void InterfaceSelector::TryNextInterface() {
             bool supports_p2p = false;
 
             auto capabilities = wpa_supplicant_interface_get_capabilities(proxy);
-            mcs::DBusHelpers::ParseDictionary(capabilities, [&](const std::string &key, GVariant *value) {
-                mcs::DBusHelpers::ParseArray(g_variant_get_variant(value), [&](GVariant *mode) {
+            ac::DBusHelpers::ParseDictionary(capabilities, [&](const std::string &key, GVariant *value) {
+                ac::DBusHelpers::ParseArray(g_variant_get_variant(value), [&](GVariant *mode) {
                     if (std::string(g_variant_get_string(mode, nullptr)) == "p2p")
                         supports_p2p = true;
                 });
             }, "Modes");
 
             if (supports_p2p) {
-                MCS_DEBUG("Found interface which supports P2P");
+                AC_DEBUG("Found interface which supports P2P");
                 // We take the first interface which supports p2p here and ignore
                 // all others. That is really enough for now.
                 if (auto sp = inst->delegate_.lock())
@@ -125,7 +125,7 @@ void InterfaceSelector::TryNextInterface() {
 
             inst->TryNextInterface();
 
-    }, new mcs::SharedKeepAlive<InterfaceSelector>{shared_from_this()});
+    }, new ac::SharedKeepAlive<InterfaceSelector>{shared_from_this()});
 }
 
 } // w11tng

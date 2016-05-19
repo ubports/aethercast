@@ -17,8 +17,8 @@
 
 #include <boost/concept_check.hpp>
 
-#include <mcs/logger.h>
-#include <mcs/keep_alive.h>
+#include <ac/logger.h>
+#include <ac/keep_alive.h>
 
 #include "managerstub.h"
 
@@ -34,7 +34,7 @@ ManagerStub::Ptr ManagerStub::FinalizeConstruction() {
     GError *error = nullptr;
     connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
     if (!connection_) {
-        MCS_ERROR("Failed to connect to system bus: %s", error->message);
+        AC_ERROR("Failed to connect to system bus: %s", error->message);
         g_error_free(error);
         return sp;
     }
@@ -48,12 +48,12 @@ ManagerStub::Ptr ManagerStub::FinalizeConstruction() {
 
         boost::ignore_unused_variable_warning(source);
 
-        auto inst = static_cast<mcs::SharedKeepAlive<ManagerStub>*>(user_data)->ShouldDie();
+        auto inst = static_cast<ac::SharedKeepAlive<ManagerStub>*>(user_data)->ShouldDie();
 
         GError *error = nullptr;
         inst->proxy_.reset(wpa_supplicant_fi_w1_wpa_supplicant1_proxy_new_finish(res, &error));
         if (!inst->proxy_) {
-            MCS_ERROR("Failed to connect with supplicant manager object: %s", error->message);
+            AC_ERROR("Failed to connect with supplicant manager object: %s", error->message);
             g_error_free(error);
             return;
         }
@@ -63,7 +63,7 @@ ManagerStub::Ptr ManagerStub::FinalizeConstruction() {
         if (auto sp = inst->delegate_.lock())
             sp->OnManagerReady();
 
-    }, new mcs::SharedKeepAlive<ManagerStub>{sp});
+    }, new ac::SharedKeepAlive<ManagerStub>{sp});
     return sp;
 }
 
@@ -83,12 +83,12 @@ void ManagerStub::ResetDelegate() {
 }
 
 void ManagerStub::OnInterfaceAdded(GObject *source, const gchar *path, GVariant *properties, gpointer user_data) {
-    auto inst = static_cast<mcs::WeakKeepAlive<ManagerStub>*>(user_data)->GetInstance().lock();
+    auto inst = static_cast<ac::WeakKeepAlive<ManagerStub>*>(user_data)->GetInstance().lock();
 
     if (not inst)
         return;
 
-    MCS_DEBUG("path %s", path);
+    AC_DEBUG("path %s", path);
 
     inst->interfaces_.push_back(path);
 
@@ -97,12 +97,12 @@ void ManagerStub::OnInterfaceAdded(GObject *source, const gchar *path, GVariant 
 }
 
 void ManagerStub::OnInterfaceRemoved(GObject *source, const gchar *path, gpointer user_data) {
-    auto inst = static_cast<mcs::WeakKeepAlive<ManagerStub>*>(user_data)->GetInstance().lock();
+    auto inst = static_cast<ac::WeakKeepAlive<ManagerStub>*>(user_data)->GetInstance().lock();
 
     if (not inst)
         return;
 
-    MCS_DEBUG("path %s", path);
+    AC_DEBUG("path %s", path);
 
     inst->interfaces_.erase(std::remove(inst->interfaces_.begin(), inst->interfaces_.end(), std::string(path)),
                             inst->interfaces_.end());
@@ -116,18 +116,18 @@ void ManagerStub::Initialize() {
 
     g_signal_connect_data(proxy_.get(), "interface-added",
                           G_CALLBACK(&ManagerStub::OnInterfaceAdded),
-                          new mcs::WeakKeepAlive<ManagerStub>(shared_from_this()),
-                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<ManagerStub>*>(data); },
+                          new ac::WeakKeepAlive<ManagerStub>(shared_from_this()),
+                          [](gpointer data, GClosure *) { delete static_cast<ac::WeakKeepAlive<ManagerStub>*>(data); },
                           GConnectFlags(0));
 
     g_signal_connect_data(proxy_.get(), "interface-removed",
                           G_CALLBACK(&ManagerStub::OnInterfaceRemoved),
-                          new mcs::WeakKeepAlive<ManagerStub>(shared_from_this()),
-                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<ManagerStub>*>(data); },
+                          new ac::WeakKeepAlive<ManagerStub>(shared_from_this()),
+                          [](gpointer data, GClosure *) { delete static_cast<ac::WeakKeepAlive<ManagerStub>*>(data); },
                           GConnectFlags(0));
 
     if (!capabilities) {
-        MCS_WARNING("Could not retrieve any capabilities from supplicant. Aborting.");
+        AC_WARNING("Could not retrieve any capabilities from supplicant. Aborting.");
         return;
     }
 
@@ -144,7 +144,7 @@ void ManagerStub::Initialize() {
 
     auto interfaces = wpa_supplicant_fi_w1_wpa_supplicant1_get_interfaces(proxy_.get());
     if (!interfaces) {
-        MCS_WARNING("No WiFi interface available. Waiting for one to appear.");
+        AC_WARNING("No WiFi interface available. Waiting for one to appear.");
         return;
     }
 
@@ -160,7 +160,7 @@ void ManagerStub::SetWFDIEs(uint8_t *bytes, int length) {
 }
 
 void ManagerStub::CreateInterface(const std::string &interface_name) {
-    MCS_DEBUG("interface %s", interface_name);
+    AC_DEBUG("interface %s", interface_name);
 
     auto builder = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
     g_variant_builder_add(builder, "{sv}", "Ifname", g_variant_new_string(interface_name.c_str()));
@@ -171,12 +171,12 @@ void ManagerStub::CreateInterface(const std::string &interface_name) {
 
         boost::ignore_unused_variable_warning(source);
 
-        auto inst = static_cast<mcs::SharedKeepAlive<ManagerStub>*>(user_data)->ShouldDie();
+        auto inst = static_cast<ac::SharedKeepAlive<ManagerStub>*>(user_data)->ShouldDie();
 
         gchar *path = nullptr;
         GError *error = nullptr;
         if (!wpa_supplicant_fi_w1_wpa_supplicant1_call_create_interface_finish(inst->proxy_.get(), &path, res, &error)) {
-            MCS_ERROR("Failed to create interface: %s", error->message);
+            AC_ERROR("Failed to create interface: %s", error->message);
             g_error_free(error);
 
             if (auto sp = inst->delegate_.lock())
@@ -184,7 +184,7 @@ void ManagerStub::CreateInterface(const std::string &interface_name) {
 
             return;
         }
-    }, new mcs::SharedKeepAlive<ManagerStub>{shared_from_this()});
+    }, new ac::SharedKeepAlive<ManagerStub>{shared_from_this()});
 }
 
 bool ManagerStub::IsP2PSupported() const {

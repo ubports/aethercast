@@ -22,8 +22,8 @@
 #include <common/dbusfixture.h>
 #include <common/dbusnameowner.h>
 
-#include <mcs/utils.h>
-#include <mcs/logger.h>
+#include <ac/utils.h>
+#include <ac/logger.h>
 
 #include <w11tng/interfaceselector.h>
 
@@ -31,11 +31,11 @@
 
 namespace {
 class InterfaceSelectorFixture : public ::testing::Test,
-                        public mcs::testing::DBusFixture,
-                        public mcs::testing::DBusNameOwner {
+                        public ac::testing::DBusFixture,
+                        public ac::testing::DBusNameOwner {
 public:
     InterfaceSelectorFixture() :
-        mcs::testing::DBusNameOwner("fi.w1.wpa_supplicant1") {
+        ac::testing::DBusNameOwner("fi.w1.wpa_supplicant1") {
     }
 };
 
@@ -59,9 +59,9 @@ public:
 
 private:
     w11tng::testing::InterfaceSkeleton::Ptr CreateInterface(bool p2p_support) {
-        auto interface = std::make_shared<w11tng::testing::InterfaceSkeleton>(mcs::Utils::Sprintf("/interface_%d", interface_counter_));
+        auto interface = std::make_shared<w11tng::testing::InterfaceSkeleton>(ac::Utils::Sprintf("/interface_%d", interface_counter_));
         interface->SetDriver("nl80211");
-        interface->SetIfname(mcs::Utils::Sprintf("wlan%d", interface_counter_));
+        interface->SetIfname(ac::Utils::Sprintf("wlan%d", interface_counter_));
         auto value = CreateCapabilities(p2p_support);
         interface->SetCapabilities(value);
         interface_counter_++;
@@ -110,11 +110,11 @@ TEST_F(InterfaceSelectorFixture, ProcessWithNoInterfaces) {
 
     selector->Process(std::vector<std::string>{});
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 }
 
 TEST_F(InterfaceSelectorFixture, NoSelectableInterfaceAvailable) {
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     auto selector = w11tng::InterfaceSelector::Create();
     EXPECT_TRUE(!!selector);
@@ -125,15 +125,15 @@ TEST_F(InterfaceSelectorFixture, NoSelectableInterfaceAvailable) {
 
     selector->SetDelegate(delegate);
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     AvailableInterfaces ifaces(5, 0);
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     selector->Process(ifaces.ObjectPaths());
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 }
 
 TEST_F(InterfaceSelectorFixture, MultipleSelectableInterfaces) {
@@ -146,13 +146,13 @@ TEST_F(InterfaceSelectorFixture, MultipleSelectableInterfaces) {
 
     selector->SetDelegate(delegate);
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     AvailableInterfaces ifaces(2, 2);
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     selector->Process(ifaces.ObjectPaths());
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 }

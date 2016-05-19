@@ -25,8 +25,8 @@
 #include <core/posix/exec.h>
 #include <core/posix/this_process.h>
 
-#include <mcs/glib_wrapper.h>
-#include <mcs/scoped_gobject.h>
+#include <ac/glib_wrapper.h>
+#include <ac/scoped_gobject.h>
 
 #include "glibhelpers.h"
 #include "dbusfixture.h"
@@ -73,7 +73,7 @@ boost::filesystem::path timeout()
 }
 }
 
-struct mcs::testing::DBusFixture::Private
+struct ac::testing::DBusFixture::Private
 {
     struct System
     {
@@ -109,7 +109,7 @@ struct mcs::testing::DBusFixture::Private
             std::vector<std::string> argv
             {
                 "--kill-after=5",
-                std::to_string(mcs::testing::DBusFixture::default_daemon_timeout().count()),
+                std::to_string(ac::testing::DBusFixture::default_daemon_timeout().count()),
                 dbus_daemon().native(),
                 "--config-file",
                 config_path.string(),
@@ -150,23 +150,23 @@ struct mcs::testing::DBusFixture::Private
 
             // Give GLib a iteration to cleanup and perform all async handling
             // for any occuring events when the dbus daemon disconnects.
-            mcs::testing::RunMainLoopIteration();
+            ac::testing::RunMainLoopIteration();
         }
 
         core::posix::ChildProcess daemon = core::posix::ChildProcess::invalid();
         std::string address;
     } system;
 
-    mcs::ScopedGObject<GDBusConnection> connection_;
+    ac::ScopedGObject<GDBusConnection> connection_;
 };
 
-mcs::testing::DBusFixture::Seconds& mcs::testing::DBusFixture::default_daemon_timeout()
+ac::testing::DBusFixture::Seconds& ac::testing::DBusFixture::default_daemon_timeout()
 {
-    static mcs::testing::DBusFixture::Seconds instance{60};
+    static ac::testing::DBusFixture::Seconds instance{60};
     return instance;
 }
 
-mcs::testing::DBusFixture::DBusFixture()
+ac::testing::DBusFixture::DBusFixture()
     : d(new Private{Private::System{}})
 {
     // The connection object we retrieve here is the one all others will
@@ -179,11 +179,11 @@ mcs::testing::DBusFixture::DBusFixture()
     g_dbus_connection_set_exit_on_close(d->connection_.get(), FALSE);
 }
 
-mcs::testing::DBusFixture::~DBusFixture()
+ac::testing::DBusFixture::~DBusFixture()
 {
 }
 
-std::string mcs::testing::DBusFixture::system_bus_address()
+std::string ac::testing::DBusFixture::system_bus_address()
 {
     return d->system.address;
 }

@@ -39,28 +39,28 @@ namespace serialization {
 template<class Archive>
 void load(
         Archive & ar,
-        mcs::testing::Benchmark::Result::Timing::Seconds& duration,
+        ac::testing::Benchmark::Result::Timing::Seconds& duration,
         const unsigned int)
 {
-    mcs::testing::Benchmark::Result::Timing::Seconds::rep value;
+    ac::testing::Benchmark::Result::Timing::Seconds::rep value;
     ar & boost::serialization::make_nvp(kNameForSeconds, value);
-    duration = mcs::testing::Benchmark::Result::Timing::Seconds{value};
+    duration = ac::testing::Benchmark::Result::Timing::Seconds{value};
 }
 
 template<class Archive>
 void save(
         Archive & ar,
-        const mcs::testing::Benchmark::Result::Timing::Seconds& duration,
+        const ac::testing::Benchmark::Result::Timing::Seconds& duration,
         const unsigned int)
 {
-    mcs::testing::Benchmark::Result::Timing::Seconds::rep value = duration.count();
+    ac::testing::Benchmark::Result::Timing::Seconds::rep value = duration.count();
     ar & boost::serialization::make_nvp(kNameForSeconds, value);
 }
 
 template<class Archive>
 void serialize(
         Archive & ar,
-        mcs::testing::Benchmark::Result::Timing::Seconds& duration,
+        ac::testing::Benchmark::Result::Timing::Seconds& duration,
         const unsigned int version)
 {
     boost::serialization::split_free(ar, duration, version);
@@ -70,7 +70,7 @@ template<class Archive>
 void serialize(
         Archive & ar,
         std::pair<
-            mcs::testing::Benchmark::Result::Timing::Seconds,
+            ac::testing::Benchmark::Result::Timing::Seconds,
             double
         >& pair,
         const unsigned int)
@@ -80,7 +80,7 @@ void serialize(
 }
 
 template<class Archive>
-void serialize(Archive & ar, mcs::testing::Benchmark::Result& result, const unsigned int)
+void serialize(Archive & ar, ac::testing::Benchmark::Result& result, const unsigned int)
 {
     ar & boost::serialization::make_nvp("sample_size", result.sample_size);
     ar & boost::serialization::make_nvp("timing.min", result.timing.min);
@@ -92,7 +92,7 @@ void serialize(Archive & ar, mcs::testing::Benchmark::Result& result, const unsi
 } // namespace boost
 } // namespace serialization
 
-namespace mcs {
+namespace ac {
 namespace testing {
 
 void Benchmark::Result::load_from_xml(std::istream& in)
@@ -240,4 +240,4 @@ std::ostream& operator<<(std::ostream& out, const Benchmark::Result& result)
 }
 
 } // namespace testing
-} // namespace mcs
+} // namespace ac

@@ -17,9 +17,9 @@
 
 #include <sstream>
 
-#include <mcs/keep_alive.h>
-#include <mcs/logger.h>
-#include <mcs/utils.h>
+#include <ac/keep_alive.h>
+#include <ac/logger.h>
+#include <ac/utils.h>
 
 #include "peerstub.h"
 
@@ -35,7 +35,7 @@ PeerStub::Ptr PeerStub::FinalizeConstruction(const std::string &object_path) {
     GError *error = nullptr;
     connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
     if (!connection_) {
-        MCS_ERROR("Failed to connect to system bus: %s", error->message);
+        AC_ERROR("Failed to connect to system bus: %s", error->message);
         g_error_free(error);
         return sp;
     }
@@ -46,12 +46,12 @@ PeerStub::Ptr PeerStub::FinalizeConstruction(const std::string &object_path) {
                                   nullptr,
                                   [](GObject *source, GAsyncResult *res, gpointer user_data) {
 
-        auto inst = static_cast<mcs::SharedKeepAlive<PeerStub>*>(user_data)->ShouldDie();
+        auto inst = static_cast<ac::SharedKeepAlive<PeerStub>*>(user_data)->ShouldDie();
 
         GError *error = nullptr;
         inst->proxy_.reset(wpa_supplicant_peer_proxy_new_finish(res, &error));
         if (!inst->proxy_) {
-            MCS_ERROR("Failed to connect with Peer proxy: %s", error->message);
+            AC_ERROR("Failed to connect with Peer proxy: %s", error->message);
             g_error_free(error);
             return;
         }
@@ -62,13 +62,13 @@ PeerStub::Ptr PeerStub::FinalizeConstruction(const std::string &object_path) {
         if (auto sp = inst->delegate_.lock())
             sp->OnPeerReady();
 
-    }, new mcs::SharedKeepAlive<PeerStub>{shared_from_this()});
+    }, new ac::SharedKeepAlive<PeerStub>{shared_from_this()});
 
     return sp;
 }
 
 void PeerStub::OnPropertyChanged(GObject *source, GParamSpec *spec, gpointer user_data) {
-    auto inst = static_cast<mcs::WeakKeepAlive<PeerStub>*>(user_data)->GetInstance().lock();
+    auto inst = static_cast<ac::WeakKeepAlive<PeerStub>*>(user_data)->GetInstance().lock();
 
     if (not inst)
         return;
@@ -78,13 +78,13 @@ void PeerStub::OnPropertyChanged(GObject *source, GParamSpec *spec, gpointer use
 
 void PeerStub::ConnectSignals() {
     g_signal_connect_data(proxy_.get(), "notify::device-name",
-                          G_CALLBACK(&PeerStub::OnPropertyChanged), new mcs::WeakKeepAlive<PeerStub>(shared_from_this()),
-                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<PeerStub>*>(data); },
+                          G_CALLBACK(&PeerStub::OnPropertyChanged), new ac::WeakKeepAlive<PeerStub>(shared_from_this()),
+                          [](gpointer data, GClosure *) { delete static_cast<ac::WeakKeepAlive<PeerStub>*>(data); },
                           GConnectFlags(0));
 
     g_signal_connect_data(proxy_.get(), "notify::device-address",
-                          G_CALLBACK(&PeerStub::OnPropertyChanged), new mcs::WeakKeepAlive<PeerStub>(shared_from_this()),
-                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<PeerStub>*>(data); },
+                          G_CALLBACK(&PeerStub::OnPropertyChanged), new ac::WeakKeepAlive<PeerStub>(shared_from_this()),
+                          [](gpointer data, GClosure *) { delete static_cast<ac::WeakKeepAlive<PeerStub>*>(data); },
                           GConnectFlags(0));
 
 }
@@ -95,7 +95,7 @@ std::string ByteArrayToMacAddress(const gchar *data) {
 
     std::stringstream ss;
     for (int n = 0; n < 6; n++) {
-        ss << mcs::Utils::Sprintf("%02x", (uint16_t) (data[n] & 0xff));
+        ss << ac::Utils::Sprintf("%02x", (uint16_t) (data[n] & 0xff));
         //ss << buf;
         if (n < 5)
             ss << ":";
@@ -154,7 +154,7 @@ void PeerStub::ResetDelegate() {
     delegate_.reset();
 }
 
-mcs::MacAddress PeerStub::Address() const {
+ac::MacAddress PeerStub::Address() const {
     return address_;
 }
 

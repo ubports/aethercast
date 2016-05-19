@@ -23,12 +23,12 @@
 
 #include <boost/filesystem.hpp>
 
-#include <mcs/logger.h>
-#include <mcs/networkutils.h>
-#include <mcs/keep_alive.h>
-#include <mcs/scoped_gobject.h>
+#include <ac/logger.h>
+#include <ac/networkutils.h>
+#include <ac/keep_alive.h>
+#include <ac/scoped_gobject.h>
 
-#include <mcs/config.h>
+#include <ac/config.h>
 #include <w11tng/config.h>
 
 #include "dhcpclient.h"
@@ -46,8 +46,8 @@ DhcpClient::DhcpClient(const std::weak_ptr<Delegate> &delegate, const std::strin
     delegate_(delegate),
     interface_name_(interface_name) {
 
-    lease_file_path_ = mcs::Utils::Sprintf("%s/dhclient-%s-%s.leases",
-                                    mcs::kRuntimePath,
+    lease_file_path_ = ac::Utils::Sprintf("%s/dhclient-%s-%s.leases",
+                                    ac::kRuntimePath,
                                     boost::filesystem::unique_path().string(),
                                     interface_name_);
 }
@@ -56,17 +56,17 @@ DhcpClient::~DhcpClient() {
     ::unlink(lease_file_path_.c_str());
 }
 
-mcs::IpV4Address DhcpClient::LocalAddress() const {
+ac::IpV4Address DhcpClient::LocalAddress() const {
     return local_address_;
 }
 
-mcs::IpV4Address DhcpClient::RemoteAddress() const {
+ac::IpV4Address DhcpClient::RemoteAddress() const {
     return remote_address_;
 }
 
 void DhcpClient::Start() {
-    if (!mcs::Utils::CreateFile(lease_file_path_)) {
-        MCS_ERROR("Failed to create database for DHCP leases at %s",
+    if (!ac::Utils::CreateFile(lease_file_path_)) {
+        AC_ERROR("Failed to create database for DHCP leases at %s",
                   lease_file_path_);
         return;
     }

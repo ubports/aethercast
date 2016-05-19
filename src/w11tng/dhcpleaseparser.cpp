@@ -23,8 +23,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 
-#include <mcs/utils.h>
-#include <mcs/logger.h>
+#include <ac/utils.h>
+#include <ac/logger.h>
 
 #include <iostream>
 
@@ -47,22 +47,22 @@ std::vector<DhcpLeaseInfo> DhcpLeaseParser::FromFile(const std::string &path) {
         if (line.length() == 0)
             continue;
 
-        if (mcs::Utils::StringStartsWith(line, "#"))
+        if (ac::Utils::StringStartsWith(line, "#"))
             continue;
 
-        if (!in_lease && mcs::Utils::StringStartsWith(line, "lease")) {
+        if (!in_lease && ac::Utils::StringStartsWith(line, "lease")) {
             in_lease = true;
 
-            auto parts = mcs::Utils::StringSplit(line, ' ');
+            auto parts = ac::Utils::StringSplit(line, ' ');
             if (parts.size() == 3) {
                 // we have a client lease so extract the address
-                current_lease.fixed_address_ = mcs::IpV4Address::from_string(parts[1]);
+                current_lease.fixed_address_ = ac::IpV4Address::from_string(parts[1]);
             }
 
             continue;
         }
 
-        if (in_lease && mcs::Utils::StringStartsWith(line, "}")) {
+        if (in_lease && ac::Utils::StringStartsWith(line, "}")) {
             leases.push_back(current_lease);
             current_lease = DhcpLeaseInfo();
             in_lease = false;
@@ -100,15 +100,15 @@ std::vector<DhcpLeaseInfo> DhcpLeaseParser::FromFile(const std::string &path) {
             if (options.find("interface") != options.end())
                 current_lease.interface_ = options["interface"];
             else if (options.find("fixed-address") != options.end())
-                current_lease.fixed_address_ = mcs::IpV4Address::from_string(options["fixed-address"]);
+                current_lease.fixed_address_ = ac::IpV4Address::from_string(options["fixed-address"]);
             else if (options.find("routers") != options.end())
-                current_lease.gateway_ = mcs::IpV4Address::from_string(options["routers"]);
+                current_lease.gateway_ = ac::IpV4Address::from_string(options["routers"]);
 
             // As we're running in a network with only two peers the DHCP
             // service can be always taken as the gateway for us.
             if (current_lease.gateway_.is_unspecified() &&
                     options.find("dhcp-server-identifier") != options.end())
-                current_lease.gateway_ = mcs::IpV4Address::from_string(options["dhcp-server-identifier"]);
+                current_lease.gateway_ = ac::IpV4Address::from_string(options["dhcp-server-identifier"]);
         }
         catch (...) {
             // If we get an exception here its most likely due to one of

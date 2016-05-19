@@ -22,10 +22,10 @@
 
 #include <string>
 
-#include <mcs/glib_wrapper.h>
+#include <ac/glib_wrapper.h>
 
-#include <mcs/ip_v4_address.h>
-#include <mcs/non_copyable.h>
+#include <ac/ip_v4_address.h>
+#include <ac/non_copyable.h>
 
 #include "processexecutor.h"
 #include "filemonitor.h"
@@ -37,9 +37,9 @@ class DhcpServer : public std::enable_shared_from_this<DhcpServer>,
 public:
     typedef std::shared_ptr<DhcpServer> Ptr;
 
-    class Delegate : private mcs::NonCopyable {
+    class Delegate : private ac::NonCopyable {
     public:
-        virtual void OnDhcpAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) = 0;
+        virtual void OnDhcpAddressAssigned(const ac::IpV4Address &local_address, const ac::IpV4Address &remote_address) = 0;
         virtual void OnDhcpTerminated() = 0;
     };
 
@@ -47,7 +47,7 @@ public:
 
     ~DhcpServer();
 
-    mcs::IpV4Address LocalAddress() const;
+    ac::IpV4Address LocalAddress() const;
 
     void OnProcessTerminated() override;
     void OnFileChanged(const std::string &path) override;
@@ -64,7 +64,7 @@ private:
     std::string pid_file_path_;
     ProcessExecutor::Ptr executor_;
     FileMonitor::Ptr monitor_;
-    mcs::IpV4Address local_address_;
+    ac::IpV4Address local_address_;
 };
 }
 #endif

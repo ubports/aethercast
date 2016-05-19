@@ -28,9 +28,9 @@
 #include <iostream>
 #include <string>
 
-#include <mcs/logger.h>
-#include <mcs/report/reportfactory.h>
-#include <mcs/streaming/mpegtspacketizer.h>
+#include <ac/logger.h>
+#include <ac/report/reportfactory.h>
+#include <ac/streaming/mpegtspacketizer.h>
 
 namespace {
 static constexpr unsigned int kBufferSize = 100;
@@ -46,21 +46,21 @@ int main(int argc, char **argv) {
 
     int fin = ::open(argv[1], O_RDONLY);
     if (fin < 0) {
-        MCS_ERROR("Failed to open input file %s", argv[1]);
+        AC_ERROR("Failed to open input file %s", argv[1]);
         return -EINVAL;
     }
 
     int fout = ::open(argv[2], O_WRONLY | O_CREAT, 0755);
     if (fout < 0) {
-        MCS_ERROR("Failed to open output file %s", argv[1]);
+        AC_ERROR("Failed to open output file %s", argv[1]);
         return -EINVAL;
     }
 
-    auto report_factory = mcs::report::ReportFactory::Create();
+    auto report_factory = ac::report::ReportFactory::Create();
 
-    auto packetizer = mcs::streaming::MPEGTSPacketizer::Create(report_factory->CreatePacketizerReport());
+    auto packetizer = ac::streaming::MPEGTSPacketizer::Create(report_factory->CreatePacketizerReport());
 
-    int track_index = packetizer->AddTrack(mcs::streaming::MPEGTSPacketizer::TrackFormat{"video/avc"});
+    int track_index = packetizer->AddTrack(ac::streaming::MPEGTSPacketizer::TrackFormat{"video/avc"});
 
     int counter = 0;
 
@@ -69,27 +69,27 @@ int main(int argc, char **argv) {
 
         auto bytes_read = ::read(fin, inbuf, kBufferSize);
         if (bytes_read < 0) {
-            MCS_ERROR("Failed to read input data");
+            AC_ERROR("Failed to read input data");
             break;
         }
         else if (bytes_read == 0)
             break;
 
-        auto buffer = mcs::video::Buffer::Create(bytes_read, mcs::Utils::GetNowUs());
+        auto buffer = ac::video::Buffer::Create(bytes_read, ac::Utils::GetNowUs());
         ::memcpy(buffer->Data(), inbuf, bytes_read);
 
-        mcs::video::Buffer::Ptr outbuf;
+        ac::video::Buffer::Ptr outbuf;
 
         int flags = 0;
         if (!(counter % 100))
-            flags = mcs::streaming::MPEGTSPacketizer::kEmitPCR |
-                    mcs::streaming::MPEGTSPacketizer::kEmitPATandPMT;
+            flags = ac::streaming::MPEGTSPacketizer::kEmitPCR |
+                    ac::streaming::MPEGTSPacketizer::kEmitPATandPMT;
 
         packetizer->Packetize(track_index, buffer, &outbuf, flags);
 
         auto bytes_written = ::write(fout, outbuf->Data(), outbuf->Length());
         if (bytes_written < 0) {
-            MCS_ERROR("Failed to write output data");
+            AC_ERROR("Failed to write output data");
             break;
         }
 

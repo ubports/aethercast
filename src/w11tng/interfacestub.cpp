@@ -15,8 +15,8 @@
  *
  */
 
-#include <mcs/logger.h>
-#include <mcs/keep_alive.h>
+#include <ac/logger.h>
+#include <ac/keep_alive.h>
 
 #include "interfacestub.h"
 
@@ -32,7 +32,7 @@ InterfaceStub::Ptr InterfaceStub::FinalizeConstruction(const std::string &object
     GError *error = nullptr;
     connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
     if (!connection_) {
-        MCS_ERROR("Failed to connect to system bus: %s", error->message);
+        AC_ERROR("Failed to connect to system bus: %s", error->message);
         g_error_free(error);
         return sp;
     }
@@ -44,12 +44,12 @@ InterfaceStub::Ptr InterfaceStub::FinalizeConstruction(const std::string &object
                                        nullptr,
                                        [](GObject *source, GAsyncResult *res, gpointer user_data) {
 
-        auto inst = static_cast<mcs::SharedKeepAlive<InterfaceStub>*>(user_data)->ShouldDie();
+        auto inst = static_cast<ac::SharedKeepAlive<InterfaceStub>*>(user_data)->ShouldDie();
 
         GError *error = nullptr;
         inst->proxy_.reset(wpa_supplicant_interface_proxy_new_finish(res, &error));
         if (!inst->proxy_) {
-            MCS_ERROR("Failed to connect with Interface proxy: %s", error->message);
+            AC_ERROR("Failed to connect with Interface proxy: %s", error->message);
             g_error_free(error);
             return;
         }
@@ -57,7 +57,7 @@ InterfaceStub::Ptr InterfaceStub::FinalizeConstruction(const std::string &object
         if (auto sp = inst->delegate_.lock())
             sp->OnInterfaceReady(inst->ObjectPath());
 
-    }, new mcs::SharedKeepAlive<InterfaceStub>{shared_from_this()});
+    }, new ac::SharedKeepAlive<InterfaceStub>{shared_from_this()});
 
     return sp;
 }

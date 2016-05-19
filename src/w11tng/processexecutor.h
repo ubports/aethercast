@@ -22,16 +22,16 @@
 #include <string>
 #include <vector>
 
-#include <mcs/glib_wrapper.h>
+#include <ac/glib_wrapper.h>
 
-#include <mcs/non_copyable.h>
+#include <ac/non_copyable.h>
 
 namespace w11tng {
 class ProcessExecutor : public std::enable_shared_from_this<ProcessExecutor> {
 public:
     typedef std::shared_ptr<ProcessExecutor> Ptr;
 
-    class Delegate : public mcs::NonCopyable {
+    class Delegate : public ac::NonCopyable {
     public:
         virtual void OnProcessTerminated() = 0;
     };

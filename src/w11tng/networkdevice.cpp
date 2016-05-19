@@ -15,7 +15,7 @@
  *
  */
 
-#include <mcs/logger.h>
+#include <ac/logger.h>
 
 #include "networkdevice.h"
 
@@ -36,7 +36,7 @@ NetworkDevice::Ptr NetworkDevice::FinalizeConstruction() {
 NetworkDevice::NetworkDevice(const std::string &object_path) :
     object_path_(object_path),
     peer_(PeerStub::Create(object_path)),
-    state_(mcs::kIdle) {
+    state_(ac::kIdle) {
 }
 
 NetworkDevice::~NetworkDevice() {
@@ -57,7 +57,7 @@ void NetworkDevice::SyncWithPeer()
 }
 
 void NetworkDevice::OnPeerChanged() {
-    MCS_DEBUG("Peer properties changed");
+    AC_DEBUG("Peer properties changed");
     SyncWithPeer();
 
     if (auto sp = delegate_.lock())
@@ -71,11 +71,11 @@ void NetworkDevice::OnPeerReady() {
         sp->OnDeviceReady(shared_from_this());
 }
 
-void NetworkDevice::SetAddress(const mcs::MacAddress &address) {
+void NetworkDevice::SetAddress(const ac::MacAddress &address) {
     address_ = address;
 }
 
-void NetworkDevice::SetIpV4Address(const mcs::IpV4Address &address) {
+void NetworkDevice::SetIpV4Address(const ac::IpV4Address &address) {
     ip_address_ = address;
 }
 
@@ -83,11 +83,11 @@ void NetworkDevice::SetName(const std::string &name) {
     name_ = name;
 }
 
-void NetworkDevice::SetState(mcs::NetworkDeviceState state) {
+void NetworkDevice::SetState(ac::NetworkDeviceState state) {
     state_ = state;
 }
 
-void NetworkDevice::SetSupportedRoles(const std::vector<mcs::NetworkDeviceRole> roles) {
+void NetworkDevice::SetSupportedRoles(const std::vector<ac::NetworkDeviceRole> roles) {
     supported_roles_ = roles;
 }
 
@@ -95,11 +95,11 @@ void NetworkDevice::SetRole(const std::string &role) {
     role_ = role;
 }
 
-mcs::MacAddress NetworkDevice::Address() const {
+ac::MacAddress NetworkDevice::Address() const {
     return address_;
 }
 
-mcs::IpV4Address NetworkDevice::IPv4Address() const {
+ac::IpV4Address NetworkDevice::IPv4Address() const {
     return ip_address_;
 }
 
@@ -107,11 +107,11 @@ std::string NetworkDevice::Name() const {
     return name_;
 }
 
-mcs::NetworkDeviceState NetworkDevice::State() const {
+ac::NetworkDeviceState NetworkDevice::State() const {
     return state_;
 }
 
-std::vector<mcs::NetworkDeviceRole> NetworkDevice::SupportedRoles() const {
+std::vector<ac::NetworkDeviceRole> NetworkDevice::SupportedRoles() const {
     return supported_roles_;
 }
 

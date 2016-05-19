@@ -7,115 +7,115 @@ set(AETHERCAST_DHCP_HELPER "/usr/sbin/aethercast-dhcp-helper")
 set(DHCP_SERVER_PATH "/usr/sbin/dhcpd")
 set(DHCP_CLIENT_PATH "/sbin/dhclient")
 
-configure_file(mcs/config.h.in mcs/config.h @ONLY)
+configure_file(ac/config.h.in ac/config.h @ONLY)
 configure_file(w11tng/config.h.in w11tng/config.h @ONLY)
 
 set(HEADERS
-  mcs/glib_wrapper.h
+  ac/glib_wrapper.h
 
-  mcs/ip_v4_address.h
-  mcs/keep_alive.h
-  mcs/mac_address.h
-  mcs/shared_gobject.h
-  mcs/keep_alive.h
-  mcs/config.h
+  ac/ip_v4_address.h
+  ac/keep_alive.h
+  ac/mac_address.h
+  ac/shared_gobject.h
+  ac/keep_alive.h
+  ac/config.h
 
-  mcs/common/executable.h
-  mcs/common/executor.h
-  mcs/common/executorfactory.h
+  ac/common/executable.h
+  ac/common/executor.h
+  ac/common/executorfactory.h
 
-  mcs/network/types.h
+  ac/network/types.h
 
-  mcs/report/lttng/utils.h
-  mcs/report/lttng/encoderreport_tp.h
-  mcs/report/lttng/rendererreport_tp.h
-  mcs/report/lttng/packetizerreport_tp.h
-  mcs/report/lttng/senderreport_tp.h
+  ac/report/lttng/utils.h
+  ac/report/lttng/encoderreport_tp.h
+  ac/report/lttng/rendererreport_tp.h
+  ac/report/lttng/packetizerreport_tp.h
+  ac/report/lttng/senderreport_tp.h
 
-  mcs/video/encoderreport.h
-  mcs/video/rendererreport.h
-  mcs/video/packetizerreport.h
-  mcs/video/senderreport.h
-  mcs/video/bufferproducer.h
+  ac/video/encoderreport.h
+  ac/video/rendererreport.h
+  ac/video/packetizerreport.h
+  ac/video/senderreport.h
+  ac/video/bufferproducer.h
 
-  mcs/streaming/packetizer.h
+  ac/streaming/packetizer.h
 
   w11tng/config.h
 )
 
 set(SOURCES
-  mcs/types.cpp
-  mcs/utils.cpp
-  mcs/networkutils.cpp
-  mcs/mediamanagerfactory.cpp
-  mcs/basesourcemediamanager.cpp
-  mcs/logger.cpp
-  mcs/forwardingmiracastcontroller.cpp
-  mcs/forwardingnetworkdevice.cpp
-  mcs/miracastcontroller.cpp
-  mcs/miracastcontrollerskeleton.cpp
-  mcs/miracastservice.cpp
-  mcs/miracastsourcemanager.cpp
-  mcs/miracastsourceclient.cpp
-  mcs/networkmanager.cpp
-  mcs/networkmanagerfactory.cpp
-  mcs/networkdevice.cpp
-  mcs/dbushelpers.cpp
-  mcs/networkdeviceskeleton.cpp
-  mcs/dbuserrors.cpp
+  ac/types.cpp
+  ac/utils.cpp
+  ac/networkutils.cpp
+  ac/mediamanagerfactory.cpp
+  ac/basesourcemediamanager.cpp
+  ac/logger.cpp
+  ac/forwardingmiracastcontroller.cpp
+  ac/forwardingnetworkdevice.cpp
+  ac/miracastcontroller.cpp
+  ac/miracastcontrollerskeleton.cpp
+  ac/miracastservice.cpp
+  ac/miracastsourcemanager.cpp
+  ac/miracastsourceclient.cpp
+  ac/networkmanager.cpp
+  ac/networkmanagerfactory.cpp
+  ac/networkdevice.cpp
+  ac/dbushelpers.cpp
+  ac/networkdeviceskeleton.cpp
+  ac/dbuserrors.cpp
 
-  mcs/common/executorpool.cpp
-  mcs/common/threadedexecutor.cpp
-  mcs/common/threadedexecutorfactory.cpp
+  ac/common/executorpool.cpp
+  ac/common/threadedexecutor.cpp
+  ac/common/threadedexecutorfactory.cpp
 
-  mcs/network/stream.cpp
-  mcs/network/udpstream.cpp
+  ac/network/stream.cpp
+  ac/network/udpstream.cpp
 
-  mcs/report/reportfactory.cpp
-  mcs/report/reportfactory.h
+  ac/report/reportfactory.cpp
+  ac/report/reportfactory.h
 
-  mcs/report/null/nullreportfactory.cpp
-  mcs/report/null/encoderreport.cpp
-  mcs/report/null/rendererreport.cpp
-  mcs/report/null/packetizerreport.cpp
-  mcs/report/null/senderreport.cpp
-  mcs/report/logging/loggingreportfactory.cpp
-  mcs/report/logging/encoderreport.cpp
-  mcs/report/logging/rendererreport.cpp
-  mcs/report/logging/packetizerreport.cpp
-  mcs/report/logging/senderreport.cpp
-  mcs/report/lttng/lttngreportfactory.cpp
-  mcs/report/lttng/tracepointprovider.cpp
-  mcs/report/lttng/encoderreport.cpp
-  mcs/report/lttng/rendererreport.cpp
-  mcs/report/lttng/packetizerreport.cpp
-  mcs/report/lttng/senderreport.cpp
+  ac/report/null/nullreportfactory.cpp
+  ac/report/null/encoderreport.cpp
+  ac/report/null/rendererreport.cpp
+  ac/report/null/packetizerreport.cpp
+  ac/report/null/senderreport.cpp
+  ac/report/logging/loggingreportfactory.cpp
+  ac/report/logging/encoderreport.cpp
+  ac/report/logging/rendererreport.cpp
+  ac/report/logging/packetizerreport.cpp
+  ac/report/logging/senderreport.cpp
+  ac/report/lttng/lttngreportfactory.cpp
+  ac/report/lttng/tracepointprovider.cpp
+  ac/report/lttng/encoderreport.cpp
+  ac/report/lttng/rendererreport.cpp
+  ac/report/lttng/packetizerreport.cpp
+  ac/report/lttng/senderreport.cpp
 
-  mcs/video/videoformat.cpp
-  mcs/video/buffer.cpp
-  mcs/video/bufferqueue.cpp
-  mcs/video/utils.cpp
-  mcs/video/utils_from_android.cpp
-  mcs/video/baseencoder.cpp
-  mcs/video/h264analyzer.cpp
-  mcs/video/displayoutput.cpp
+  ac/video/videoformat.cpp
+  ac/video/buffer.cpp
+  ac/video/bufferqueue.cpp
+  ac/video/utils.cpp
+  ac/video/utils_from_android.cpp
+  ac/video/baseencoder.cpp
+  ac/video/h264analyzer.cpp
+  ac/video/displayoutput.cpp
 
-  mcs/streaming/transportsender.cpp
-  mcs/streaming/mpegtspacketizer.cpp
-  mcs/streaming/rtpsender.cpp
-  mcs/streaming/mediasender.cpp
+  ac/streaming/transportsender.cpp
+  ac/streaming/mpegtspacketizer.cpp
+  ac/streaming/rtpsender.cpp
+  ac/streaming/mediasender.cpp
 
-  mcs/mir/sourcemediamanager.cpp
-  mcs/mir/screencast.cpp
-  mcs/mir/streamrenderer.cpp
+  ac/mir/sourcemediamanager.cpp
+  ac/mir/screencast.cpp
+  ac/mir/streamrenderer.cpp
 
-  mcs/android/h264encoder.cpp
+  ac/android/h264encoder.cpp
 
-  mcs/systemcontroller.cpp
+  ac/systemcontroller.cpp
 
-  mcs/ubuntu/unity.cpp
-  mcs/ubuntu/systemcontroller.cpp
-  mcs/ubuntu/unitydisplaylock.cpp
+  ac/ubuntu/unity.cpp
+  ac/ubuntu/systemcontroller.cpp
+  ac/ubuntu/unitydisplaylock.cpp
 
   w11tng/networkmanager.cpp
   w11tng/rfkillmanager.cpp
@@ -178,7 +178,7 @@ target_link_libraries(aethercast-core
   -ldl
 )
 
-add_library(aethercast-lttng SHARED mcs/report/lttng/tracepoints.c)
+add_library(aethercast-lttng SHARED ac/report/lttng/tracepoints.c)
 target_link_libraries(aethercast-lttng
     ${LTTNG_UST_LIBRARIES}
 )
@@ -187,7 +187,7 @@ install(TARGETS aethercast-lttng
   LIBRARY DESTINATION ${AETHERCAST_TRACEPOINT_LIB_INSTALL_DIR}
 )
 
-add_executable(aethercast mcs/main.cpp)
+add_executable(aethercast ac/main.cpp)
 target_link_libraries(aethercast aethercast-core)
 
 install(

@@ -15,15 +15,15 @@
  *
  */
 
-#ifndef MCS_TOOLS_SIMPLESOURCE_H_
-#define MCS_TOOLS_SIMPLESOURCE_H_
+#ifndef AC_TOOLS_SIMPLESOURCE_H_
+#define AC_TOOLS_SIMPLESOURCE_H_
 
 #include <string>
 #include <memory>
 
-#include "mcs/basesourcemediamanager.h"
+#include "ac/basesourcemediamanager.h"
 
-namespace mcs {
+namespace ac {
 namespace tools {
 
 class SimpleSource {
@@ -47,6 +47,6 @@ private:
 };
 
 } // namespace tools
-} // namespace mcs
+} // namespace ac
 
 #endif
