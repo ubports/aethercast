@@ -21,19 +21,21 @@
 
 #include "ac/glib_wrapper.h"
 
-#include "ac/controllerskeleton.h"
 #include "ac/keep_alive.h"
 #include "ac/utils.h"
-#include "ac/dbushelpers.h"
 #include "ac/logger.h"
-#include "ac/dbuserrors.h"
+
+#include "ac/dbus/controllerskeleton.h"
+#include "ac/dbus/errors.h"
+#include "ac/dbus/helpers.h"
 
 namespace {
 constexpr const char *kManagerSkeletonInstanceKey{"controller-skeleton"};
 }
 
 namespace ac {
-std::shared_ptr<ControllerSkeleton> ControllerSkeleton::create(const std::shared_ptr<Controller> &controller) {
+namespace dbus {
+std::shared_ptr<ControllerSkeleton> ControllerSkeleton::Create(const std::shared_ptr<Controller> &controller) {
     return std::shared_ptr<ControllerSkeleton>(new ControllerSkeleton(controller))->FinalizeConstruction();
 }
 
@@ -59,7 +61,7 @@ void ControllerSkeleton::SyncProperties() {
     aethercast_interface_manager_set_state(manager_obj_.get(),
                                            NetworkDevice::StateToStr(State()).c_str());
 
-    auto capabilities = DBusHelpers::GenerateCapabilities(Capabilities());
+    auto capabilities = Helpers::GenerateCapabilities(Capabilities());
 
     aethercast_interface_manager_set_capabilities(manager_obj_.get(), capabilities);
 
@@ -277,4 +279,5 @@ std::shared_ptr<ControllerSkeleton> ControllerSkeleton::FinalizeConstruction() {
     SetDelegate(sp);
     return sp;
 }
+} // namespace dbus
 } // namespace ac

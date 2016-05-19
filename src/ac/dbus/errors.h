@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Canonical, Ltd.
+ * Copyright (C) 2016 Canonical, Ltd.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,25 +15,32 @@
  *
  */
 
-#ifndef DBUSHELPERS_H_
-#define DBUSHELPERS_H_
+#ifndef AC_DBUSERRORS_H_
+#define AC_DBUSERRORS_H_
 
-#include <functional>
-
+#include "ac/types.h"
 #include "ac/glib_wrapper.h"
 
-#include "ac/networkmanager.h"
-#include "ac/scoped_gobject.h"
-
 namespace ac {
+namespace dbus {
 
-struct DBusHelpers {
-    static gchar** GenerateCapabilities(const std::vector<NetworkManager::Capability> &capabilities);
-    static gchar** GenerateDeviceCapabilities(const std::vector<NetworkDeviceRole> &roles);
-    static void ParseDictionary(GVariant *properties, std::function<void(std::string, GVariant*)> callback, const std::string &key_filter = "");
-    static void ParseArray(GVariant *array, std::function<void(GVariant*)> callback);
-};
+#define AETHERCAST_ERROR (aethercast_error_quark())
+GQuark aethercast_error_quark(void);
 
+typedef enum {
+    AETHERCAST_ERROR_FAILED,
+    AETHERCAST_ERROR_ALREADY,
+    AETHERCAST_ERROR_PARAM_INVALID,
+    AETHERCAST_ERROR_INVALID_STATE,
+    AETHERCAST_ERROR_NOT_CONNECTED,
+    AETHERCAST_ERROR_NOT_READY,
+    AETHERCAST_ERROR_IN_PROGRESS,
+    AETHERCAST_N_ERRORS,
+} AethercastError;
+
+AethercastError AethercastErrorFromError(const Error &error);
+
+} // namespace dbus
 } // namespace ac
 
 #endif

@@ -17,7 +17,7 @@
 
 #include <gmock/gmock.h>
 
-#include <ac/controllerskeleton.h>
+#include <ac/dbus/controllerskeleton.h>
 
 namespace {
 struct MockController : public ac::Controller {
@@ -40,7 +40,7 @@ struct MockController : public ac::Controller {
 }
 
 TEST(ControllerSkeleton, ThrowsForNullptrOnConstruction) {
-    EXPECT_THROW(ac::ControllerSkeleton::create(ac::Controller::Ptr{}), std::logic_error);
+    EXPECT_THROW(ac::dbus::ControllerSkeleton::Create(ac::Controller::Ptr{}), std::logic_error);
 }
 
 TEST(ControllerSkeleton, ForwardsCallsToImpl) {
@@ -50,7 +50,7 @@ TEST(ControllerSkeleton, ForwardsCallsToImpl) {
 
     // Times(AtLeast(1)) as ControllerSkeleton::create(...) already calls it.
     // In addition, we have to account for the case where we encounter issues during
-    // construction of ac::ControllerSkeleton (such that a WPA supplicant connection
+    // construction of ac::dbus::ControllerSkeleton (such that a WPA supplicant connection
     // is never set up.
     EXPECT_CALL(*impl, SetDelegate(_)).Times(AtLeast(1));
     EXPECT_CALL(*impl, ResetDelegate()).Times(1);
@@ -64,7 +64,7 @@ TEST(ControllerSkeleton, ForwardsCallsToImpl) {
     EXPECT_CALL(*impl, Enabled()).Times(1).WillRepeatedly(Return(true));
     EXPECT_CALL(*impl, SetEnabled(false)).Times(1).WillRepeatedly(Return(ac::Error::kNone));
 
-    auto fmc = ac::ControllerSkeleton::create(impl);
+    auto fmc = ac::dbus::ControllerSkeleton::Create(impl);
     fmc->SetDelegate(std::shared_ptr<ac::Controller::Delegate>{});
     fmc->ResetDelegate();
     fmc->Connect(ac::NetworkDevice::Ptr{}, ac::ResultCallback{});

@@ -13,15 +13,14 @@ include_directories(
 
 AETHERCAST_ADD_TEST(mediamanagerfactory_tests mediamanagerfactory_tests.cpp)
 AETHERCAST_ADD_TEST(forwardingcontroller_tests forwardingcontroller_tests.cpp)
-AETHERCAST_ADD_TEST(controllerskeleton_tests controllerskeleton_tests.cpp)
 AETHERCAST_ADD_TEST(forwardingnetworkdevice_tests forwardingnetworkdevice_tests.cpp)
-AETHERCAST_ADD_TEST(networkdeviceskeleton_tests networkdeviceskeleton_tests.cpp)
 AETHERCAST_ADD_TEST(networkdevice_tests networkdevice_tests.cpp)
 AETHERCAST_ADD_TEST(networkmanagerfactory_tests networkmanagerfactory_tests.cpp)
 AETHERCAST_ADD_TEST(networkutils_tests networkutils_tests.cpp)
 
 add_subdirectory(acceptance_tests)
 add_subdirectory(integration_tests)
+add_subdirectory(dbus)
 add_subdirectory(streaming)
 add_subdirectory(video)
 add_subdirectory(mir)

@@ -1,0 +1,2 @@
+AETHERCAST_ADD_TEST(controllerskeleton_tests controllerskeleton_tests.cpp)
+AETHERCAST_ADD_TEST(networkdeviceskeleton_tests networkdeviceskeleton_tests.cpp)

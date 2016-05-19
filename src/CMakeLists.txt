@@ -53,16 +53,17 @@ set(SOURCES
   ac/forwardingcontroller.cpp
   ac/forwardingnetworkdevice.cpp
   ac/controller.cpp
-  ac/controllerskeleton.cpp
   ac/service.cpp
   ac/sourcemanager.cpp
   ac/sourceclient.cpp
   ac/networkmanager.cpp
   ac/networkmanagerfactory.cpp
   ac/networkdevice.cpp
-  ac/dbushelpers.cpp
-  ac/networkdeviceskeleton.cpp
-  ac/dbuserrors.cpp
+
+  ac/dbus/helpers.cpp
+  ac/dbus/errors.cpp
+  ac/dbus/controllerskeleton.cpp
+  ac/dbus/networkdeviceskeleton.cpp
 
   ac/common/executorpool.cpp
   ac/common/threadedexecutor.cpp

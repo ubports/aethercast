@@ -34,10 +34,11 @@
 #include "ac/keep_alive.h"
 #include "ac/logger.h"
 #include "ac/service.h"
-#include "ac/controllerskeleton.h"
 #include "ac/networkmanagerfactory.h"
 #include "ac/types.h"
 #include "ac/logger.h"
+
+#include "ac/dbus/controllerskeleton.h"
 
 namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.
@@ -163,7 +164,7 @@ int Service::Main(const Service::MainOptions &options) {
             setpriority(PRIO_PROCESS, 0, kProcessPriorityUrgentDisplay);
 
             service = ac::Service::Create();
-            mcsa = ac::ControllerSkeleton::create(service);
+            controller_skeleton = ac::dbus::ControllerSkeleton::Create(service);
         }
 
         ~Runtime() {
@@ -176,7 +177,7 @@ int Service::Main(const Service::MainOptions &options) {
 
         GMainLoop *ml = g_main_loop_new(nullptr, FALSE);
         ac::Service::Ptr service;
-        ac::ControllerSkeleton::Ptr mcsa;
+        ac::dbus::ControllerSkeleton::Ptr controller_skeleton;
     } rt;
 
     rt.Run();

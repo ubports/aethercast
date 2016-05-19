@@ -15,9 +15,10 @@
  *
  */
 
-#include "ac/dbuserrors.h"
+#include "ac/dbus/errors.h"
 
 namespace ac {
+namespace dbus {
 
 static const GDBusErrorEntry kAethercastErrorEntries[] = {
     { AETHERCAST_ERROR_FAILED, "org.aethercast.Error.Failed" },
@@ -61,4 +62,5 @@ AethercastError AethercastErrorFromError(const Error &error) {
     return AETHERCAST_ERROR_FAILED;
 }
 
+} // namespace dbus
 } // namespace ac

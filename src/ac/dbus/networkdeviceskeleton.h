@@ -28,13 +28,13 @@ extern "C" {
 #pragma GCC diagnostic pop
 }
 
-#include "forwardingnetworkdevice.h"
-#include "controller.h"
-#include "scoped_gobject.h"
-#include "shared_gobject.h"
+#include "ac/forwardingnetworkdevice.h"
+#include "ac/controller.h"
+#include "ac/scoped_gobject.h"
+#include "ac/shared_gobject.h"
 
 namespace ac {
-
+namespace dbus {
 class NetworkDeviceSkeleton : public std::enable_shared_from_this<NetworkDeviceSkeleton>,
                               public ForwardingNetworkDevice {
 public:
@@ -65,7 +65,7 @@ private:
     Controller::Ptr controller_;
     ScopedGObject<AethercastInterfaceDevice> device_iface_;
 };
-
+} // namespace dbus
 } // namespace ac
 
 #endif

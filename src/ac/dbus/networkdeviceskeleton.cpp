@@ -18,15 +18,16 @@
 #include <algorithm>
 #include <boost/concept_check.hpp>
 
-#include "ac/networkdeviceskeleton.h"
 #include "ac/utils.h"
 #include "ac/keep_alive.h"
 #include "ac/logger.h"
-#include "ac/dbushelpers.h"
-#include "ac/dbuserrors.h"
+
+#include "ac/dbus/networkdeviceskeleton.h"
+#include "ac/dbus/helpers.h"
+#include "ac/dbus/errors.h"
 
 namespace ac {
-
+namespace dbus {
 NetworkDeviceSkeleton::Ptr NetworkDeviceSkeleton::Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const Controller::Ptr &controller) {
     return std::shared_ptr<NetworkDeviceSkeleton>(new NetworkDeviceSkeleton(connection, path, device, controller))->FinalizeConstruction();
 }
@@ -65,7 +66,7 @@ void NetworkDeviceSkeleton::SyncProperties() {
     aethercast_interface_device_set_name(device_iface_.get(), Name().c_str());
     aethercast_interface_device_set_state(device_iface_.get(), NetworkDevice::StateToStr(State()).c_str());
 
-    auto capabilities = DBusHelpers::GenerateDeviceCapabilities(SupportedRoles());
+    auto capabilities = Helpers::GenerateDeviceCapabilities(SupportedRoles());
     aethercast_interface_device_set_capabilities(device_iface_.get(), capabilities);
     g_strfreev(capabilities);
 }
@@ -141,5 +142,5 @@ gboolean NetworkDeviceSkeleton::OnHandleDisconnect(AethercastInterfaceDevice *sk
 
     return TRUE;
 }
-
+} // namespace dbus
 } // namespace ac

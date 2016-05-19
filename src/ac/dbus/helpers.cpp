@@ -15,11 +15,12 @@
  *
  */
 
-#include "dbushelpers.h"
+#include "ac/dbus/helpers.h"
 
 namespace ac {
+namespace dbus {
 
-gchar** DBusHelpers::GenerateDeviceCapabilities(const std::vector<NetworkDeviceRole> &roles) {
+gchar** Helpers::GenerateDeviceCapabilities(const std::vector<NetworkDeviceRole> &roles) {
     gchar **capabilities = g_new0(gchar*, roles.size() + 1);
     int n = 0;
     for (auto role : roles)
@@ -28,7 +29,7 @@ gchar** DBusHelpers::GenerateDeviceCapabilities(const std::vector<NetworkDeviceR
     return capabilities;
 }
 
-gchar** DBusHelpers::GenerateCapabilities(const std::vector<NetworkManager::Capability> &capabilities) {
+gchar** Helpers::GenerateCapabilities(const std::vector<NetworkManager::Capability> &capabilities) {
     gchar** out_capabilities = g_new0(gchar*, capabilities.size() + 1);
     int n = 0;
     for (auto capability : capabilities) {
@@ -39,7 +40,7 @@ gchar** DBusHelpers::GenerateCapabilities(const std::vector<NetworkManager::Capa
     return out_capabilities;
 }
 
-void DBusHelpers::ParseDictionary(GVariant *properties, std::function<void(std::string, GVariant*)> callback, const std::string &key_filter) {
+void Helpers::ParseDictionary(GVariant *properties, std::function<void(std::string, GVariant*)> callback, const std::string &key_filter) {
     if (!callback || !properties)
         return;
 
@@ -61,7 +62,7 @@ void DBusHelpers::ParseDictionary(GVariant *properties, std::function<void(std::
     }
 }
 
-void DBusHelpers::ParseArray(GVariant *array, std::function<void(GVariant*)> callback) {
+void Helpers::ParseArray(GVariant *array, std::function<void(GVariant*)> callback) {
     if (!callback || !array)
         return;
 
@@ -71,6 +72,7 @@ void DBusHelpers::ParseArray(GVariant *array, std::function<void(GVariant*)> cal
     }
 }
 
+} // namespace dbus
 } // namespace ac
 
 

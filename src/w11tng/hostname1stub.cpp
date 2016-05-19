@@ -18,7 +18,7 @@
 #include <boost/concept_check.hpp>
 
 #include <ac/keep_alive.h>
-#include <ac/dbushelpers.h>
+#include <ac/dbus/helpers.h>
 
 #include "hostname1stub.h"
 
@@ -106,7 +106,7 @@ void Hostname1Stub::SyncProperties() {
 }
 
 void Hostname1Stub::ParseProperties(GVariant *properties) {
-    ac::DBusHelpers::ParseDictionary(properties, [&](const std::string &key, GVariant *value) {
+    ac::dbus::Helpers::ParseDictionary(properties, [&](const std::string &key, GVariant *value) {
         if (key == "Hostname")
             hostname_ = g_variant_get_string(g_variant_get_variant(value), nullptr) ? : "";
         else if (key == "StaticHostname")

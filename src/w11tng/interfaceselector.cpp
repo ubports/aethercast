@@ -17,7 +17,7 @@
 
 #include <ac/logger.h>
 #include <ac/keep_alive.h>
-#include <ac/dbushelpers.h>
+#include <ac/dbus/helpers.h>
 
 extern "C" {
 // Ignore all warnings coming from the external headers as we don't
@@ -105,8 +105,8 @@ void InterfaceSelector::TryNextInterface() {
             bool supports_p2p = false;
 
             auto capabilities = wpa_supplicant_interface_get_capabilities(proxy);
-            ac::DBusHelpers::ParseDictionary(capabilities, [&](const std::string &key, GVariant *value) {
-                ac::DBusHelpers::ParseArray(g_variant_get_variant(value), [&](GVariant *mode) {
+            ac::dbus::Helpers::ParseDictionary(capabilities, [&](const std::string &key, GVariant *value) {
+                ac::dbus::Helpers::ParseArray(g_variant_get_variant(value), [&](GVariant *mode) {
                     if (std::string(g_variant_get_string(mode, nullptr)) == "p2p")
                         supports_p2p = true;
                 });

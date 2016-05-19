@@ -33,9 +33,11 @@ extern "C" {
 
 #include "ac/scoped_gobject.h"
 #include "ac/forwardingcontroller.h"
-#include "ac/networkdeviceskeleton.h"
+
+#include "ac/dbus/networkdeviceskeleton.h"
 
 namespace ac {
+namespace dbus {
 class ControllerSkeleton : public std::enable_shared_from_this<ControllerSkeleton>,
                            public ForwardingController,
                            public Controller::Delegate {
@@ -44,7 +46,7 @@ public:
     static constexpr const char *kManagerPath{"/org/aethercast"};
     static constexpr const char *kManagerIface{"org.aethercast.Manager"};
 
-    static std::shared_ptr<ControllerSkeleton> create(const std::shared_ptr<Controller> &controller);
+    static std::shared_ptr<ControllerSkeleton> Create(const std::shared_ptr<Controller> &controller);
 
     ~ControllerSkeleton();
 
@@ -83,5 +85,7 @@ private:
     ScopedGObject<GDBusObjectManagerServer> object_manager_;
     std::unordered_map<std::string,NetworkDeviceSkeleton::Ptr> devices_;
 };
+} // namespace dbus
 } // namespace ac
+
 #endif

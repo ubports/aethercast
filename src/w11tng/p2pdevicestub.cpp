@@ -19,7 +19,7 @@
 
 #include <ac/logger.h>
 #include <ac/keep_alive.h>
-#include <ac/dbushelpers.h>
+#include <ac/dbus/helpers.h>
 
 #include "p2pdevicestub.h"
 
@@ -183,7 +183,7 @@ void P2PDeviceStub::OnGONegotiationSuccess(WpaSupplicantInterfaceP2PDevice *devi
     std::string peer_path;
     GroupOwnerNegotiationResult result;
 
-    ac::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
+    ac::dbus::Helpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
         if (name == PropertyToString(Property::kStatus)) {
             const auto v = g_variant_get_variant(value);
             if (g_variant_is_of_type(v, G_VARIANT_TYPE("i")))
@@ -229,7 +229,7 @@ void P2PDeviceStub::OnGONegotiationFailure(WpaSupplicantInterfaceP2PDevice *devi
     std::string peer_path;
     GroupOwnerNegotiationResult result;
 
-    ac::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
+    ac::dbus::Helpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
         if (name == "peer_object")
             peer_path = g_variant_get_string(g_variant_get_variant(value), nullptr);
         else if (name == "status")
@@ -252,7 +252,7 @@ void P2PDeviceStub::OnGroupStarted(WpaSupplicantInterfaceP2PDevice *device, GVar
     std::string group_object;
     std::string role;
 
-    ac::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
+    ac::dbus::Helpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
         if (name == "interface_object")
             interface_object = g_variant_get_string(g_variant_get_variant(value), nullptr);
         else if (name == "group_object")
@@ -271,7 +271,7 @@ void P2PDeviceStub::OnGroupFinished(WpaSupplicantInterfaceP2PDevice *device, GVa
     std::string interface_object;
     std::string group_object;
 
-    ac::DBusHelpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
+    ac::dbus::Helpers::ParseDictionary(properties, [&](const std::string &name, GVariant *value) {
         if (name == "interface_object")
             interface_object = g_variant_get_string(g_variant_get_variant(value), nullptr);
         else if (name == "group_object")
