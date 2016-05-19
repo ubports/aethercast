@@ -27,10 +27,10 @@
 #include "types.h"
 
 namespace ac {
-class MiracastController : private ac::NonCopyable
+class Controller : private ac::NonCopyable
 {
 public:
-    typedef std::shared_ptr<MiracastController> Ptr;
+    typedef std::shared_ptr<Controller> Ptr;
 
     class Delegate : private ac::NonCopyable {
     public:
@@ -64,7 +64,7 @@ public:
     virtual Error SetEnabled(bool enabled) = 0;
 
 protected:
-    MiracastController() = default;
+    Controller() = default;
 };
 } // namespace ac
 #endif

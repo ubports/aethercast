@@ -36,17 +36,17 @@ extern "C" {
 #include "ac/networkdeviceskeleton.h"
 
 namespace ac {
-class MiracastControllerSkeleton : public std::enable_shared_from_this<MiracastControllerSkeleton>,
-                                   public ForwardingMiracastController,
-                                   public MiracastController::Delegate {
+class ControllerSkeleton : public std::enable_shared_from_this<ControllerSkeleton>,
+                           public ForwardingController,
+                           public Controller::Delegate {
 public:
     static constexpr const char *kBusName{"org.aethercast"};
     static constexpr const char *kManagerPath{"/org/aethercast"};
     static constexpr const char *kManagerIface{"org.aethercast.Manager"};
 
-    static std::shared_ptr<MiracastControllerSkeleton> create(const std::shared_ptr<MiracastController> &controller);
+    static std::shared_ptr<ControllerSkeleton> create(const std::shared_ptr<Controller> &controller);
 
-    ~MiracastControllerSkeleton();
+    ~ControllerSkeleton();
 
     void OnStateChanged(NetworkDeviceState state) override;
     void OnDeviceFound(const NetworkDevice::Ptr &device) override;
@@ -69,8 +69,8 @@ private:
                                   const gchar *property_name, GVariant *variant,
                                   GError **error, gpointer user_data);
 
-    MiracastControllerSkeleton(const std::shared_ptr<MiracastController> &controller);
-    std::shared_ptr<MiracastControllerSkeleton> FinalizeConstruction();
+    ControllerSkeleton(const std::shared_ptr<Controller> &controller);
+    std::shared_ptr<ControllerSkeleton> FinalizeConstruction();
 
     void SyncProperties();
 

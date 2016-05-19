@@ -18,5 +18,5 @@
 #include "service.h"
 
 int main(int argc, char **argv) {
-    return ac::MiracastService::Main(ac::MiracastService::MainOptions::FromCommandLine(argc, argv));
+    return ac::Service::Main(ac::Service::MainOptions::FromCommandLine(argc, argv));
 }

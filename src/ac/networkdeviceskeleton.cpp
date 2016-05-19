@@ -27,11 +27,11 @@
 
 namespace ac {
 
-NetworkDeviceSkeleton::Ptr NetworkDeviceSkeleton::Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &controller) {
+NetworkDeviceSkeleton::Ptr NetworkDeviceSkeleton::Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const Controller::Ptr &controller) {
     return std::shared_ptr<NetworkDeviceSkeleton>(new NetworkDeviceSkeleton(connection, path, device, controller))->FinalizeConstruction();
 }
 
-NetworkDeviceSkeleton::NetworkDeviceSkeleton(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &controller) :
+NetworkDeviceSkeleton::NetworkDeviceSkeleton(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const Controller::Ptr &controller) :
     ForwardingNetworkDevice(device),
     connection_(connection),
     object_(make_shared_gobject(aethercast_interface_object_skeleton_new(path.c_str()))),
@@ -79,7 +79,7 @@ std::string NetworkDeviceSkeleton::Path() const {
 }
 
 // TODO(tvoss,morphis): Refactor ac::NetworkDevice to have Connect/Disconnect defined on its interfaces.
-// It feels quite dirty to require both an instance of ac::NetworkDevice and ac::MiracastController to
+// It feels quite dirty to require both an instance of ac::NetworkDevice and ac::Controller to
 // implement the connect/disconnect calls coming in via the bus. The complication then is the async handling of
 // the invocation, as we will likely have to reach out to WPASupplicant for example (which is dispatched via the same
 // event loop as we are). In addition, we should not start littering our public interfaces by handing down callbacks.

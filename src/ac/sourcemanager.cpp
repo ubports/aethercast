@@ -22,34 +22,34 @@
 #include "ac/logger.h"
 
 namespace ac {
-std::shared_ptr<MiracastSourceManager> MiracastSourceManager::Create(const ac::IpV4Address &address, unsigned short port) {
-    auto sp = std::shared_ptr<MiracastSourceManager>{new MiracastSourceManager{}};
+std::shared_ptr<SourceManager> SourceManager::Create(const ac::IpV4Address &address, unsigned short port) {
+    auto sp = std::shared_ptr<SourceManager>{new SourceManager{}};
     sp->Setup(address, port);
     return sp;
 }
 
-MiracastSourceManager::MiracastSourceManager() :
+SourceManager::SourceManager() :
     active_sink_(nullptr),
     socket_(nullptr),
     socket_source_(0) {
 }
 
-MiracastSourceManager::~MiracastSourceManager() {
+SourceManager::~SourceManager() {
     if (socket_source_ > 0) {
         g_source_remove(socket_source_);
         socket_source_ = 0;
     }
 }
 
-void MiracastSourceManager::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+void SourceManager::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
     delegate_ = delegate;
 }
 
-void MiracastSourceManager::ResetDelegate() {
+void SourceManager::ResetDelegate() {
     delegate_.reset();
 }
 
-bool MiracastSourceManager::Setup(const ac::IpV4Address &address, unsigned short port) {
+bool SourceManager::Setup(const ac::IpV4Address &address, unsigned short port) {
     GError *error = nullptr;
 
     if (socket_)
@@ -82,10 +82,10 @@ bool MiracastSourceManager::Setup(const ac::IpV4Address &address, unsigned short
         return false;
     }
 
-    g_source_set_callback(source, (GSourceFunc) &MiracastSourceManager::OnNewConnection,
-                          new WeakKeepAlive<MiracastSourceManager>(shared_from_this()),
+    g_source_set_callback(source, (GSourceFunc) &SourceManager::OnNewConnection,
+                          new WeakKeepAlive<SourceManager>(shared_from_this()),
                           [](gpointer data) {
-                              delete static_cast<WeakKeepAlive<MiracastSourceManager>*>(data);
+                              delete static_cast<WeakKeepAlive<SourceManager>*>(data);
                           });
 
     socket_source_ = g_source_attach(source, nullptr);
@@ -106,8 +106,8 @@ bool MiracastSourceManager::Setup(const ac::IpV4Address &address, unsigned short
     return true;
 }
 
-gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
-    auto inst = static_cast<WeakKeepAlive<MiracastSourceManager>*>(user_data)->GetInstance().lock();
+gboolean SourceManager::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
+    auto inst = static_cast<WeakKeepAlive<SourceManager>*>(user_data)->GetInstance().lock();
 
     AC_DEBUG("");
 
@@ -133,13 +133,13 @@ gboolean MiracastSourceManager::OnNewConnection(GSocket *socket, GIOCondition  c
         return TRUE;
     }
 
-    inst->active_sink_ = MiracastSourceClient::Create(ScopedGObject<GSocket>{client_socket}, inst->local_address_);
+    inst->active_sink_ = SourceClient::Create(ScopedGObject<GSocket>{client_socket}, inst->local_address_);
     inst->active_sink_->SetDelegate(inst->shared_from_this());
 
     return TRUE;
 }
 
-void MiracastSourceManager::OnConnectionClosed() {
+void SourceManager::OnConnectionClosed() {
     if (auto sp = delegate_.lock())
         sp->OnClientDisconnected();
 }

@@ -39,33 +39,33 @@ static int send_cseq = 0;
 }
 
 namespace ac {
-std::shared_ptr<MiracastSourceClient> MiracastSourceClient::Create(ScopedGObject<GSocket>&& socket, const ac::IpV4Address &local_address) {
-    std::shared_ptr<MiracastSourceClient> sp{new MiracastSourceClient{std::move(socket), local_address}};
+std::shared_ptr<SourceClient> SourceClient::Create(ScopedGObject<GSocket>&& socket, const ac::IpV4Address &local_address) {
+    std::shared_ptr<SourceClient> sp{new SourceClient{std::move(socket), local_address}};
     return sp->FinalizeConstruction();
 }
 
-MiracastSourceClient::MiracastSourceClient(ScopedGObject<GSocket>&& socket, const ac::IpV4Address &local_address) :
+SourceClient::SourceClient(ScopedGObject<GSocket>&& socket, const ac::IpV4Address &local_address) :
     socket_(std::move(socket)),
     socket_source_(0),
     local_address_(local_address) {
 }
 
-MiracastSourceClient::~MiracastSourceClient() {
+SourceClient::~SourceClient() {
     if (socket_source_ > 0)
         g_source_remove(socket_source_);
 
     ReleaseTimers();
 }
 
-void MiracastSourceClient::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
+void SourceClient::SetDelegate(const std::weak_ptr<Delegate> &delegate) {
     delegate_ = delegate;
 }
 
-void MiracastSourceClient::ResetDelegate() {
+void SourceClient::ResetDelegate() {
     delegate_.reset();
 }
 
-void MiracastSourceClient::DumpRtsp(const std::string &prefix, const std::string &data) {
+void SourceClient::DumpRtsp(const std::string &prefix, const std::string &data) {
     static bool enabled = getenv("MIRACAST_RTSP_DEBUG") != nullptr;
 
     if (!enabled)
@@ -76,7 +76,7 @@ void MiracastSourceClient::DumpRtsp(const std::string &prefix, const std::string
         WARNING("RTSP: %s: %s", prefix.c_str(), current.c_str());
 }
 
-void MiracastSourceClient::SendRTSPData(const std::string &data) {
+void SourceClient::SendRTSPData(const std::string &data) {
     DumpRtsp("OUT", data);
     GError *error = nullptr;
     auto bytes_written = g_socket_send(socket_.get(), data.c_str(), data.length(), nullptr, &error);
@@ -87,11 +87,11 @@ void MiracastSourceClient::SendRTSPData(const std::string &data) {
     }
 }
 
-std::string MiracastSourceClient::GetLocalIPAddress() const {
+std::string SourceClient::GetLocalIPAddress() const {
     return local_address_.to_string();
 }
 
-int MiracastSourceClient::GetNextCSeq(int *initial_peer_cseq) const {
+int SourceClient::GetNextCSeq(int *initial_peer_cseq) const {
     ++send_cseq;
     if (initial_peer_cseq && send_cseq == *initial_peer_cseq)
         send_cseq *= 2;
@@ -100,20 +100,20 @@ int MiracastSourceClient::GetNextCSeq(int *initial_peer_cseq) const {
 
 class TimerCallbackData {
 public:
-    TimerCallbackData(MiracastSourceClient *delegate) :
+    TimerCallbackData(SourceClient *delegate) :
         delegate_(delegate),
         id_(0) {
     }
 
     guint id_;
-    MiracastSourceClient *delegate_;
+    SourceClient *delegate_;
 };
 
-uint MiracastSourceClient::CreateTimer(int seconds) {
+uint SourceClient::CreateTimer(int seconds) {
     auto data = new TimerCallbackData(this);
     auto id = g_timeout_add_seconds_full(G_PRIORITY_DEFAULT, seconds,
-                                         &MiracastSourceClient::OnTimeout, data,
-                                         &MiracastSourceClient::OnTimeoutRemove);
+                                         &SourceClient::OnTimeout, data,
+                                         &SourceClient::OnTimeoutRemove);
     if (id > 0) {
         data->id_ = id;
         timers_.push_back(id);
@@ -124,7 +124,7 @@ uint MiracastSourceClient::CreateTimer(int seconds) {
     return id;
 }
 
-void MiracastSourceClient::ReleaseTimer(uint timer_id) {
+void SourceClient::ReleaseTimer(uint timer_id) {
     if (timer_id <= 0)
         return;
 
@@ -133,20 +133,20 @@ void MiracastSourceClient::ReleaseTimer(uint timer_id) {
         g_source_remove(*it);
 }
 
-void MiracastSourceClient::ReleaseTimers() {
+void SourceClient::ReleaseTimers() {
     for (auto timer : timers_)
         g_source_remove(timer);
 
     timers_.clear();
 }
 
-gboolean MiracastSourceClient::OnTimeout(gpointer user_data) {
+gboolean SourceClient::OnTimeout(gpointer user_data) {
     auto data = static_cast<TimerCallbackData*>(user_data);
     data->delegate_->source_->OnTimerEvent(data->id_);
     return FALSE;
 }
 
-void MiracastSourceClient::OnTimeoutRemove(gpointer user_data) {
+void SourceClient::OnTimeoutRemove(gpointer user_data) {
     auto data = static_cast<TimerCallbackData*>(user_data);
     auto& timers = data->delegate_->timers_;
     auto it = std::find(timers.begin(), timers.end(), data->id_);
@@ -155,8 +155,8 @@ void MiracastSourceClient::OnTimeoutRemove(gpointer user_data) {
     delete data;
 }
 
-gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  cond, gpointer user_data) {
-    auto inst = static_cast<WeakKeepAlive<MiracastSourceClient>*>(user_data)->GetInstance().lock();
+gboolean SourceClient::OnIncomingData(GSocket *socket, GIOCondition  cond, gpointer user_data) {
+    auto inst = static_cast<WeakKeepAlive<SourceClient>*>(user_data)->GetInstance().lock();
 
     if (cond == G_IO_ERR || cond == G_IO_HUP) {
         if (auto sp = inst->delegate_.lock())
@@ -180,7 +180,7 @@ gboolean MiracastSourceClient::OnIncomingData(GSocket *socket, GIOCondition  con
     return TRUE;
 }
 
-std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction() {
+std::shared_ptr<SourceClient> SourceClient::FinalizeConstruction() {
     auto sp = shared_from_this();
 
     GError *error = nullptr;
@@ -205,9 +205,9 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
         return sp;
     }
 
-    g_source_set_callback(source, (GSourceFunc) &MiracastSourceClient::OnIncomingData,
-                          new WeakKeepAlive<MiracastSourceClient>{sp},
-                          [](gpointer data) { delete static_cast<WeakKeepAlive<MiracastSourceClient>*>(data); });
+    g_source_set_callback(source, (GSourceFunc) &SourceClient::OnIncomingData,
+                          new WeakKeepAlive<SourceClient>{sp},
+                          [](gpointer data) { delete static_cast<WeakKeepAlive<SourceClient>*>(data); });
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
         WARNING("Failed to attach source to mainloop");
@@ -225,16 +225,16 @@ std::shared_ptr<MiracastSourceClient> MiracastSourceClient::FinalizeConstruction
     return sp;
 }
 
-void MiracastSourceClient::NotifyConnectionClosed() {
+void SourceClient::NotifyConnectionClosed() {
     if (auto sp = delegate_.lock())
         sp->OnConnectionClosed();
 }
 
-void MiracastSourceClient::OnSourceNetworkError() {
+void SourceClient::OnSourceNetworkError() {
     NotifyConnectionClosed();
 }
 
-void MiracastSourceClient::ErrorOccurred(wds::ErrorType error) {
+void SourceClient::ErrorOccurred(wds::ErrorType error) {
     if (error != wds::ErrorType::TimeoutError)
         return;
 
@@ -243,7 +243,7 @@ void MiracastSourceClient::ErrorOccurred(wds::ErrorType error) {
     NotifyConnectionClosed();
 }
 
-void MiracastSourceClient::SessionCompleted() {
+void SourceClient::SessionCompleted() {
     AC_DEBUG("");
 }
 

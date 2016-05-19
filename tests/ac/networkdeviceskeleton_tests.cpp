@@ -22,7 +22,7 @@
 #include "mock_network_device.h"
 
 TEST(NetworkDeviceSkeleton, ThrowsForNullptrOnConstruction) {
-    EXPECT_THROW(ac::NetworkDeviceSkeleton::Create(ac::SharedGObject<GDBusConnection>(), "/", ac::NetworkDevice::Ptr{}, ac::MiracastController::Ptr{}), std::logic_error);
+    EXPECT_THROW(ac::NetworkDeviceSkeleton::Create(ac::SharedGObject<GDBusConnection>(), "/", ac::NetworkDevice::Ptr{}, ac::Controller::Ptr{}), std::logic_error);
 }
 
 TEST(NetworkDeviceSkeleton, ForwardsCallsToImpl) {
@@ -42,7 +42,7 @@ TEST(NetworkDeviceSkeleton, ForwardsCallsToImpl) {
     EXPECT_CALL(*impl, State()).Times(AtLeast(1)).WillRepeatedly(Return(state));
     EXPECT_CALL(*impl, SupportedRoles()).Times(AtLeast(1)).WillRepeatedly(Return(roles));
 
-    auto nds = ac::NetworkDeviceSkeleton::Create(ac::SharedGObject<GDBusConnection>(), "/", impl, ac::MiracastController::Ptr{});
+    auto nds = ac::NetworkDeviceSkeleton::Create(ac::SharedGObject<GDBusConnection>(), "/", impl, ac::Controller::Ptr{});
 
     EXPECT_EQ(address, nds->Address());
     EXPECT_EQ(ipV4Address, nds->IPv4Address());

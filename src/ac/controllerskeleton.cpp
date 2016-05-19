@@ -33,19 +33,19 @@ constexpr const char *kManagerSkeletonInstanceKey{"controller-skeleton"};
 }
 
 namespace ac {
-std::shared_ptr<MiracastControllerSkeleton> MiracastControllerSkeleton::create(const std::shared_ptr<MiracastController> &controller) {
-    return std::shared_ptr<MiracastControllerSkeleton>(new MiracastControllerSkeleton(controller))->FinalizeConstruction();
+std::shared_ptr<ControllerSkeleton> ControllerSkeleton::create(const std::shared_ptr<Controller> &controller) {
+    return std::shared_ptr<ControllerSkeleton>(new ControllerSkeleton(controller))->FinalizeConstruction();
 }
 
-MiracastControllerSkeleton::MiracastControllerSkeleton(const std::shared_ptr<MiracastController> &controller) :
-    ForwardingMiracastController(controller),
+ControllerSkeleton::ControllerSkeleton(const std::shared_ptr<Controller> &controller) :
+    ForwardingController(controller),
     manager_obj_(nullptr),
     bus_connection_(nullptr),
     bus_id_(0),
     object_manager_(nullptr) {
 }
 
-MiracastControllerSkeleton::~MiracastControllerSkeleton() {
+ControllerSkeleton::~ControllerSkeleton() {
     if (bus_id_ > 0)
         g_bus_unown_name(bus_id_);
 
@@ -55,7 +55,7 @@ MiracastControllerSkeleton::~MiracastControllerSkeleton() {
     // as we own the object emitting those signals.
 }
 
-void MiracastControllerSkeleton::SyncProperties() {
+void ControllerSkeleton::SyncProperties() {
     aethercast_interface_manager_set_state(manager_obj_.get(),
                                            NetworkDevice::StateToStr(State()).c_str());
 
@@ -69,7 +69,7 @@ void MiracastControllerSkeleton::SyncProperties() {
     aethercast_interface_manager_set_enabled(manager_obj_.get(), Enabled());
 }
 
-void MiracastControllerSkeleton::OnStateChanged(NetworkDeviceState state) {
+void ControllerSkeleton::OnStateChanged(NetworkDeviceState state) {
     if (!manager_obj_)
         return;
 
@@ -77,14 +77,14 @@ void MiracastControllerSkeleton::OnStateChanged(NetworkDeviceState state) {
                                            NetworkDevice::StateToStr(State()).c_str());
 }
 
-std::string MiracastControllerSkeleton::GenerateDevicePath(const NetworkDevice::Ptr &device) const {
+std::string ControllerSkeleton::GenerateDevicePath(const NetworkDevice::Ptr &device) const {
     std::string address = device->Address();
     std::replace(address.begin(), address.end(), ':', '_');
     // FIXME using kManagerPath doesn't seem to work. Fails at link time ...
     return ac::Utils::Sprintf("/org/aethercast/dev_%s", address.c_str());
 }
 
-void MiracastControllerSkeleton::OnDeviceFound(const NetworkDevice::Ptr &device) {
+void ControllerSkeleton::OnDeviceFound(const NetworkDevice::Ptr &device) {
     DEBUG("device %s", device->Address().c_str());
 
     auto path = GenerateDevicePath(device);
@@ -94,7 +94,7 @@ void MiracastControllerSkeleton::OnDeviceFound(const NetworkDevice::Ptr &device)
     g_dbus_object_manager_server_export(object_manager_.get(), adapter->DBusObject());
 }
 
-void MiracastControllerSkeleton::OnDeviceLost(const NetworkDevice::Ptr &device) {
+void ControllerSkeleton::OnDeviceLost(const NetworkDevice::Ptr &device) {
     auto iter = devices_.find(device->Address());
     if (iter == devices_.end())
         return;
@@ -104,7 +104,7 @@ void MiracastControllerSkeleton::OnDeviceLost(const NetworkDevice::Ptr &device) 
     devices_.erase(iter);
 }
 
-void MiracastControllerSkeleton::OnDeviceChanged(const NetworkDevice::Ptr &peer) {
+void ControllerSkeleton::OnDeviceChanged(const NetworkDevice::Ptr &peer) {
     auto iter = devices_.find(peer->Address());
     if (iter == devices_.end())
         return;
@@ -112,7 +112,7 @@ void MiracastControllerSkeleton::OnDeviceChanged(const NetworkDevice::Ptr &peer)
     iter->second->SyncProperties();
 }
 
-void MiracastControllerSkeleton::OnChanged() {
+void ControllerSkeleton::OnChanged() {
     SyncProperties();
 }
 
@@ -125,7 +125,7 @@ static std::string HyphenNameFromPropertyName(const std::string &property_name) 
     return hyphen_name;
 }
 
-gboolean MiracastControllerSkeleton::OnSetProperty(GDBusConnection *connection, const gchar *sender,
+gboolean ControllerSkeleton::OnSetProperty(GDBusConnection *connection, const gchar *sender,
                                                    const gchar *object_path, const gchar *interface_name,
                                                    const gchar *property_name, GVariant *variant,
                                                    GError **error, gpointer user_data) {
@@ -149,7 +149,7 @@ gboolean MiracastControllerSkeleton::OnSetProperty(GDBusConnection *connection, 
     if (inst && hyphen_name == "enabled" &&
         g_variant_is_of_type(variant, G_VARIANT_TYPE_BOOLEAN)) {
 
-        auto thiz = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(inst)->GetInstance().lock();
+        auto thiz = static_cast<WeakKeepAlive<ControllerSkeleton>*>(inst)->GetInstance().lock();
         if (!thiz) {
             g_set_error(error, AETHERCAST_ERROR, AETHERCAST_ERROR_INVALID_STATE, "Invalid state");
             return FALSE;
@@ -170,29 +170,29 @@ gboolean MiracastControllerSkeleton::OnSetProperty(GDBusConnection *connection, 
     return TRUE;
 }
 
-void MiracastControllerSkeleton::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
-    auto inst = static_cast<SharedKeepAlive<MiracastControllerSkeleton>*>(user_data)->ShouldDie();
+void ControllerSkeleton::OnNameAcquired(GDBusConnection *connection, const gchar *name, gpointer user_data) {
+    auto inst = static_cast<SharedKeepAlive<ControllerSkeleton>*>(user_data)->ShouldDie();
 
     inst->manager_obj_.reset(aethercast_interface_manager_skeleton_new());
     g_object_set_data(G_OBJECT(inst->manager_obj_.get()), kManagerSkeletonInstanceKey,
-                      new WeakKeepAlive<MiracastControllerSkeleton>(inst));
+                      new WeakKeepAlive<ControllerSkeleton>(inst));
 
     // We override the property setter method of the skeleton's vtable
     // here to apply some more policy decisions when the user sets
     // specific properties which are state dependent.
     auto vtable = g_dbus_interface_skeleton_get_vtable(G_DBUS_INTERFACE_SKELETON(inst->manager_obj_.get()));
-    vtable->set_property = &MiracastControllerSkeleton::OnSetProperty;
+    vtable->set_property = &ControllerSkeleton::OnSetProperty;
 
     g_signal_connect_data(inst->manager_obj_.get(), "handle-scan",
-                     G_CALLBACK(&MiracastControllerSkeleton::OnHandleScan),
-                     new WeakKeepAlive<MiracastControllerSkeleton>(inst),
-                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(data); },
+                     G_CALLBACK(&ControllerSkeleton::OnHandleScan),
+                     new WeakKeepAlive<ControllerSkeleton>(inst),
+                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<ControllerSkeleton>*>(data); },
                      GConnectFlags(0));
 
     g_signal_connect_data(inst->manager_obj_.get(), "handle-disconnect-all",
-                     G_CALLBACK(&MiracastControllerSkeleton::OnHandleDisconnectAll),
-                     new WeakKeepAlive<MiracastControllerSkeleton>(inst),
-                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(data); },
+                     G_CALLBACK(&ControllerSkeleton::OnHandleDisconnectAll),
+                     new WeakKeepAlive<ControllerSkeleton>(inst),
+                     [](gpointer data, GClosure *) { delete static_cast<WeakKeepAlive<ControllerSkeleton>*>(data); },
                      GConnectFlags(0));
 
     inst->SyncProperties();
@@ -206,10 +206,10 @@ void MiracastControllerSkeleton::OnNameAcquired(GDBusConnection *connection, con
     INFO("Registered bus name %s", name);
 }
 
-gboolean MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *skeleton,
+gboolean ControllerSkeleton::OnHandleScan(AethercastInterfaceManager *skeleton,
                                               GDBusMethodInvocation *invocation, gpointer user_data) {
     boost::ignore_unused_variable_warning(skeleton);
-    auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
+    auto inst = static_cast<WeakKeepAlive<ControllerSkeleton>*>(user_data)->GetInstance().lock();
 
     if (not inst) {
         g_dbus_method_invocation_return_error(invocation, AETHERCAST_ERROR,
@@ -231,10 +231,10 @@ gboolean MiracastControllerSkeleton::OnHandleScan(AethercastInterfaceManager *sk
     return TRUE;
 }
 
-gboolean MiracastControllerSkeleton::OnHandleDisconnectAll(AethercastInterfaceManager *skeleton,
+gboolean ControllerSkeleton::OnHandleDisconnectAll(AethercastInterfaceManager *skeleton,
                                                            GDBusMethodInvocation *invocation, gpointer user_data) {
     boost::ignore_unused_variable_warning(skeleton);
-    const auto inst = static_cast<WeakKeepAlive<MiracastControllerSkeleton>*>(user_data)->GetInstance().lock();
+    const auto inst = static_cast<WeakKeepAlive<ControllerSkeleton>*>(user_data)->GetInstance().lock();
 
     if (not inst) {
         g_dbus_method_invocation_return_error(invocation, AETHERCAST_ERROR,
@@ -258,7 +258,7 @@ gboolean MiracastControllerSkeleton::OnHandleDisconnectAll(AethercastInterfaceMa
     return TRUE;
 }
 
-std::shared_ptr<MiracastControllerSkeleton> MiracastControllerSkeleton::FinalizeConstruction() {
+std::shared_ptr<ControllerSkeleton> ControllerSkeleton::FinalizeConstruction() {
     auto sp = shared_from_this();
 
     GError *error = nullptr;
@@ -270,7 +270,7 @@ std::shared_ptr<MiracastControllerSkeleton> MiracastControllerSkeleton::Finalize
     }
 
     bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, kBusName, G_BUS_NAME_OWNER_FLAGS_NONE,
-                   nullptr, &MiracastControllerSkeleton::OnNameAcquired, nullptr, new SharedKeepAlive<MiracastControllerSkeleton>{sp}, nullptr);
+                   nullptr, &ControllerSkeleton::OnNameAcquired, nullptr, new SharedKeepAlive<ControllerSkeleton>{sp}, nullptr);
     if (bus_id_ == 0)
         WARNING("Failed to register bus name");
 

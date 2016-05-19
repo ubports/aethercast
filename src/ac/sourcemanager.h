@@ -28,8 +28,8 @@
 #include "ac/ip_v4_address.h"
 
 namespace ac {
-class MiracastSourceManager : public std::enable_shared_from_this<MiracastSourceManager>,
-                       public MiracastSourceClient::Delegate {
+class SourceManager : public std::enable_shared_from_this<SourceManager>,
+                      public SourceClient::Delegate {
 public:
     class Delegate : private ac::NonCopyable {
     public:
@@ -39,9 +39,9 @@ public:
         Delegate() = default;
     };
 
-    static std::shared_ptr<MiracastSourceManager> Create(const ac::IpV4Address &address, unsigned short port);
+    static std::shared_ptr<SourceManager> Create(const ac::IpV4Address &address, unsigned short port);
 
-    ~MiracastSourceManager();
+    ~SourceManager();
 
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
@@ -52,7 +52,7 @@ public:
 private:
     static gboolean OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data);
 
-    MiracastSourceManager();
+    SourceManager();
 
     bool Setup(const ac::IpV4Address &address, unsigned short port);
 
@@ -60,7 +60,7 @@ private:
     std::weak_ptr<Delegate> delegate_;
     ScopedGObject<GSocket> socket_;
     guint socket_source_;
-    std::shared_ptr<MiracastSourceClient> active_sink_;
+    std::shared_ptr<SourceClient> active_sink_;
     ac::IpV4Address local_address_;
 };
 } // namespace ac

@@ -21,10 +21,10 @@
 #include "ac/controller.h"
 
 namespace ac {
-class ForwardingMiracastController : public MiracastController
+class ForwardingController : public Controller
 {
 public:
-    explicit ForwardingMiracastController(const MiracastController::Ptr& fwd);
+    explicit ForwardingController(const Controller::Ptr& fwd);
 
     virtual void SetDelegate(const std::weak_ptr<Delegate> &delegate) override;
     virtual void ResetDelegate() override;
@@ -44,7 +44,7 @@ public:
     virtual Error SetEnabled(bool enabled) override;
 
 private:
-    MiracastController::Ptr fwd_;
+    Controller::Ptr fwd_;
 };
 } // namespace ac
 #endif

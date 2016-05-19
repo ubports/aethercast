@@ -20,8 +20,8 @@
 #include <ac/forwardingcontroller.h>
 
 namespace {
-struct MockMiracastController : public ac::MiracastController {
-    MOCK_METHOD1(SetDelegate, void(const std::weak_ptr<ac::MiracastController::Delegate> &));
+struct MockController : public ac::Controller {
+    MOCK_METHOD1(SetDelegate, void(const std::weak_ptr<ac::Controller::Delegate> &));
     MOCK_METHOD0(ResetDelegate, void());
 
     MOCK_METHOD2(Connect, void(const ac::NetworkDevice::Ptr &, ac::ResultCallback));
@@ -39,14 +39,14 @@ struct MockMiracastController : public ac::MiracastController {
 };
 }
 
-TEST(ForwardingMiracastController, ThrowsForNullptrOnConstruction) {
-    EXPECT_THROW(ac::ForwardingMiracastController(ac::MiracastController::Ptr{}), std::logic_error);
+TEST(ForwardingController, ThrowsForNullptrOnConstruction) {
+    EXPECT_THROW(ac::ForwardingController(ac::Controller::Ptr{}), std::logic_error);
 }
 
-TEST(ForwardingMiracastController, ForwardsCallsToImpl) {
+TEST(ForwardingController, ForwardsCallsToImpl) {
     using namespace testing;
 
-    auto impl = std::make_shared<MockMiracastController>();
+    auto impl = std::make_shared<MockController>();
 
     EXPECT_CALL(*impl, SetDelegate(_)).Times(1);
     EXPECT_CALL(*impl, ResetDelegate()).Times(1);
@@ -60,8 +60,8 @@ TEST(ForwardingMiracastController, ForwardsCallsToImpl) {
     EXPECT_CALL(*impl, Enabled()).Times(1).WillRepeatedly(Return(true));
     EXPECT_CALL(*impl, SetEnabled(false)).Times(1).WillRepeatedly(Return(ac::Error::kNone));
 
-    ac::ForwardingMiracastController fmc{impl};
-    fmc.SetDelegate(std::shared_ptr<ac::MiracastController::Delegate>{});
+    ac::ForwardingController fmc{impl};
+    fmc.SetDelegate(std::shared_ptr<ac::Controller::Delegate>{});
     fmc.ResetDelegate();
     fmc.Connect(ac::NetworkDevice::Ptr{}, ac::ResultCallback{});
     fmc.Disconnect(ac::NetworkDevice::Ptr{}, ac::ResultCallback{});

@@ -40,7 +40,7 @@ class NetworkDeviceSkeleton : public std::enable_shared_from_this<NetworkDeviceS
 public:
     typedef std::shared_ptr<NetworkDeviceSkeleton> Ptr;
 
-    static NetworkDeviceSkeleton::Ptr Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &controller);
+    static NetworkDeviceSkeleton::Ptr Create(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const Controller::Ptr &controller);
 
     GDBusObjectSkeleton* DBusObject() const;
     std::string Path() const;
@@ -54,7 +54,7 @@ private:
                                    gpointer user_data);
 
 private:
-    NetworkDeviceSkeleton(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const MiracastController::Ptr &service);
+    NetworkDeviceSkeleton(const SharedGObject<GDBusConnection> &connection, const std::string &path, const NetworkDevice::Ptr &device, const Controller::Ptr &service);
 
     std::shared_ptr<NetworkDeviceSkeleton> FinalizeConstruction();
 
@@ -62,7 +62,7 @@ private:
     SharedGObject<GDBusConnection> connection_;
     SharedGObject<AethercastInterfaceObjectSkeleton> object_;
     std::string path_;
-    MiracastController::Ptr controller_;
+    Controller::Ptr controller_;
     ScopedGObject<AethercastInterfaceDevice> device_iface_;
 };
 

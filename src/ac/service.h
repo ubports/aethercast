@@ -34,16 +34,16 @@
 #include "ac/systemcontroller.h"
 
 namespace ac {
-class MiracastService : public MiracastController,
-                        public std::enable_shared_from_this<MiracastService>,
-                        public NetworkManager::Delegate,
-                        public MiracastSourceManager::Delegate
+class Service : public Controller,
+                public std::enable_shared_from_this<Service>,
+                public NetworkManager::Delegate,
+                public SourceManager::Delegate
 {
 public:
     static constexpr const uint kVersionMajor = 0;
     static constexpr const uint kVersionMinor = 1;
 
-    typedef std::shared_ptr<MiracastService> Ptr;
+    typedef std::shared_ptr<Service> Ptr;
 
     struct MainOptions {
         static MainOptions FromCommandLine(int argc, char** argv);
@@ -54,11 +54,11 @@ public:
 
     static int Main(const MainOptions &options);
 
-    static std::shared_ptr<MiracastService> Create();
+    static std::shared_ptr<Service> Create();
 
-    ~MiracastService();
+    ~Service();
 
-    void SetDelegate(const std::weak_ptr<MiracastController::Delegate> &delegate);
+    void SetDelegate(const std::weak_ptr<Controller::Delegate> &delegate);
     void ResetDelegate();
 
     void Connect(const NetworkDevice::Ptr &device, ResultCallback callback);
@@ -91,8 +91,8 @@ private:
     static gboolean OnIdleTimer(gpointer user_data);
 
 private:
-    MiracastService();
-    std::shared_ptr<MiracastService> FinalizeConstruction();
+    Service();
+    std::shared_ptr<Service> FinalizeConstruction();
 
     void AdvanceState(NetworkDeviceState new_state);
     void FinishConnectAttempt(ac::Error error = ac::Error::kNone);
@@ -108,9 +108,9 @@ private:
     void SaveState();
 
 private:
-    std::weak_ptr<MiracastController::Delegate> delegate_;
+    std::weak_ptr<Controller::Delegate> delegate_;
     std::shared_ptr<NetworkManager> network_manager_;
-    std::shared_ptr<MiracastSourceManager> source_;
+    std::shared_ptr<SourceManager> source_;
     NetworkDeviceState current_state_;
     NetworkDevice::Ptr current_device_;
     ResultCallback connect_callback_;

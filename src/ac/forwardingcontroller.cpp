@@ -20,53 +20,53 @@
 #include "ac/forwardingcontroller.h"
 
 namespace ac {
-ForwardingMiracastController::ForwardingMiracastController(const MiracastController::Ptr& fwd) : fwd_{fwd} {
+ForwardingController::ForwardingController(const Controller::Ptr& fwd) : fwd_{fwd} {
     if (not fwd_) {
-        throw std::logic_error{"Cannot operate without a valid MiracastController instance."};
+        throw std::logic_error{"Cannot operate without a valid controller instance."};
     }
 }
 
-void ForwardingMiracastController::SetDelegate(const std::weak_ptr<MiracastController::Delegate> &delegate) {
+void ForwardingController::SetDelegate(const std::weak_ptr<Controller::Delegate> &delegate) {
     fwd_->SetDelegate(delegate);
 }
 
-void ForwardingMiracastController::ResetDelegate() {
+void ForwardingController::ResetDelegate() {
     fwd_->ResetDelegate();
 }
 
-void ForwardingMiracastController::Connect(const NetworkDevice::Ptr &device, ResultCallback callback) {
+void ForwardingController::Connect(const NetworkDevice::Ptr &device, ResultCallback callback) {
     fwd_->Connect(device, callback);
 }
 
-void ForwardingMiracastController::Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback) {
+void ForwardingController::Disconnect(const NetworkDevice::Ptr &device, ResultCallback callback) {
     fwd_->Disconnect(device, callback);
 }
 
-void ForwardingMiracastController::DisconnectAll(ResultCallback callback) {
+void ForwardingController::DisconnectAll(ResultCallback callback) {
     fwd_->DisconnectAll(callback);
 }
 
-ac::Error ForwardingMiracastController::Scan(const std::chrono::seconds &timeout) {
+ac::Error ForwardingController::Scan(const std::chrono::seconds &timeout) {
     return fwd_->Scan(timeout);
 }
 
-NetworkDeviceState ForwardingMiracastController::State() const {
+NetworkDeviceState ForwardingController::State() const {
     return fwd_->State();
 }
 
-std::vector<NetworkManager::Capability> ForwardingMiracastController::Capabilities() const {
+std::vector<NetworkManager::Capability> ForwardingController::Capabilities() const {
     return fwd_->Capabilities();
 }
 
-bool ForwardingMiracastController::Scanning() const {
+bool ForwardingController::Scanning() const {
     return fwd_->Scanning();
 }
 
-bool ForwardingMiracastController::Enabled() const {
+bool ForwardingController::Enabled() const {
     return fwd_->Enabled();
 }
 
-Error ForwardingMiracastController::SetEnabled(bool enabled) {
+Error ForwardingController::SetEnabled(bool enabled) {
     return fwd_->SetEnabled(enabled);
 }
 }

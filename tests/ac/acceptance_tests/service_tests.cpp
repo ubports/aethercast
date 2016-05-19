@@ -27,13 +27,13 @@
 #include "did_exit_cleanly.h"
 
 namespace {
-class MiracastService : public ::testing::TestWithParam<core::posix::Signal> {
+class Service : public ::testing::TestWithParam<core::posix::Signal> {
 };
 }
 
-TEST_P(MiracastService, DISABLED_ExitsCleanlyForSigIntAndSigTerm) {
+TEST_P(Service, DISABLED_ExitsCleanlyForSigIntAndSigTerm) {
     auto service = core::posix::fork([]() {
-        auto result = ac::MiracastService::Main(ac::MiracastService::MainOptions{false, false});
+        auto result = ac::Service::Main(ac::Service::MainOptions{false, false});
         return static_cast<core::posix::exit::Status>(result);
     }, core::posix::StandardStream::empty);
 
@@ -44,5 +44,5 @@ TEST_P(MiracastService, DISABLED_ExitsCleanlyForSigIntAndSigTerm) {
 }
 
 INSTANTIATE_TEST_CASE_P(ShutdownBehavior,
-                        MiracastService,
+                        Service,
                         ::testing::Values(core::posix::Signal::sig_int, core::posix::Signal::sig_term));

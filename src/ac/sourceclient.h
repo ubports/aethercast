@@ -37,19 +37,19 @@
 namespace ac {
 class TimerCallbackData;
 
-class MiracastSourceClient : public std::enable_shared_from_this<MiracastSourceClient>,
-                             public wds::Peer::Delegate,
-                             public wds::Peer::Observer,
-                             public BaseSourceMediaManager::Delegate {
+class SourceClient : public std::enable_shared_from_this<SourceClient>,
+                     public wds::Peer::Delegate,
+                     public wds::Peer::Observer,
+                     public BaseSourceMediaManager::Delegate {
 public:
     class Delegate : private ac::NonCopyable {
     public:
         virtual void OnConnectionClosed() = 0;
     };
 
-    static std::shared_ptr<MiracastSourceClient> Create(ScopedGObject<GSocket>&& socket, const ac::IpV4Address &local_address);
+    static std::shared_ptr<SourceClient> Create(ScopedGObject<GSocket>&& socket, const ac::IpV4Address &local_address);
 
-    ~MiracastSourceClient();
+    ~SourceClient();
 
     void SetDelegate(const std::weak_ptr<Delegate>& delegate);
     void ResetDelegate();
@@ -74,8 +74,8 @@ public:
                                      gpointer user_data);
 
 private:
-    MiracastSourceClient(ScopedGObject<GSocket>&& socket, const ac::IpV4Address &local_address);
-    std::shared_ptr<MiracastSourceClient> FinalizeConstruction();
+    SourceClient(ScopedGObject<GSocket>&& socket, const ac::IpV4Address &local_address);
+    std::shared_ptr<SourceClient> FinalizeConstruction();
 
     void DumpRtsp(const std::string &prefix, const std::string &data);
     void ReleaseTimers();

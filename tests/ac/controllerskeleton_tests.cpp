@@ -20,8 +20,8 @@
 #include <ac/controllerskeleton.h>
 
 namespace {
-struct MockMiracastController : public ac::MiracastController {
-    MOCK_METHOD1(SetDelegate, void(const std::weak_ptr<ac::MiracastController::Delegate> &));
+struct MockController : public ac::Controller {
+    MOCK_METHOD1(SetDelegate, void(const std::weak_ptr<ac::Controller::Delegate> &));
     MOCK_METHOD0(ResetDelegate, void());
 
     MOCK_METHOD2(Connect, void(const ac::NetworkDevice::Ptr &, ac::ResultCallback));
@@ -39,18 +39,18 @@ struct MockMiracastController : public ac::MiracastController {
 };
 }
 
-TEST(MiracastControllerSkeleton, ThrowsForNullptrOnConstruction) {
-    EXPECT_THROW(ac::MiracastControllerSkeleton::create(ac::MiracastController::Ptr{}), std::logic_error);
+TEST(ControllerSkeleton, ThrowsForNullptrOnConstruction) {
+    EXPECT_THROW(ac::ControllerSkeleton::create(ac::Controller::Ptr{}), std::logic_error);
 }
 
-TEST(MiracastControllerSkeleton, ForwardsCallsToImpl) {
+TEST(ControllerSkeleton, ForwardsCallsToImpl) {
     using namespace testing;
 
-    auto impl = std::make_shared<MockMiracastController>();
+    auto impl = std::make_shared<MockController>();
 
-    // Times(AtLeast(1)) as MiracastControllerSkeleton::create(...) already calls it.
+    // Times(AtLeast(1)) as ControllerSkeleton::create(...) already calls it.
     // In addition, we have to account for the case where we encounter issues during
-    // construction of ac::MiracastControllerSkeleton (such that a WPA supplicant connection
+    // construction of ac::ControllerSkeleton (such that a WPA supplicant connection
     // is never set up.
     EXPECT_CALL(*impl, SetDelegate(_)).Times(AtLeast(1));
     EXPECT_CALL(*impl, ResetDelegate()).Times(1);
@@ -64,8 +64,8 @@ TEST(MiracastControllerSkeleton, ForwardsCallsToImpl) {
     EXPECT_CALL(*impl, Enabled()).Times(1).WillRepeatedly(Return(true));
     EXPECT_CALL(*impl, SetEnabled(false)).Times(1).WillRepeatedly(Return(ac::Error::kNone));
 
-    auto fmc = ac::MiracastControllerSkeleton::create(impl);
-    fmc->SetDelegate(std::shared_ptr<ac::MiracastController::Delegate>{});
+    auto fmc = ac::ControllerSkeleton::create(impl);
+    fmc->SetDelegate(std::shared_ptr<ac::Controller::Delegate>{});
     fmc->ResetDelegate();
     fmc->Connect(ac::NetworkDevice::Ptr{}, ac::ResultCallback{});
     fmc->Disconnect(ac::NetworkDevice::Ptr{}, ac::ResultCallback{});
