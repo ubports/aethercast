@@ -21,7 +21,7 @@
 
 #include "ac/glib_wrapper.h"
 
-#include "ac/miracastcontrollerskeleton.h"
+#include "ac/controllerskeleton.h"
 #include "ac/keep_alive.h"
 #include "ac/utils.h"
 #include "ac/dbushelpers.h"
@@ -29,7 +29,7 @@
 #include "ac/dbuserrors.h"
 
 namespace {
-constexpr const char *kManagerSkeletonInstanceKey{"miracast-controller-skeleton"};
+constexpr const char *kManagerSkeletonInstanceKey{"controller-skeleton"};
 }
 
 namespace ac {

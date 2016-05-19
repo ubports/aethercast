@@ -15,10 +15,10 @@
  *
  */
 
-#ifndef FORWARDING_MIRACAST_CONTROLLER_H_
-#define FORWARDING_MIRACAST_CONTROLLER_H_
+#ifndef AC_FORWARDING_MIRACAST_CONTROLLER_H_
+#define AC_FORWARDING_MIRACAST_CONTROLLER_H_
 
-#include "miracastcontroller.h"
+#include "ac/controller.h"
 
 namespace ac {
 class ForwardingMiracastController : public MiracastController

@@ -22,15 +22,15 @@
 #include <algorithm>
 #include <vector>
 
-#include "keep_alive.h"
-#include "logger.h"
-#include "miracastsourceclient.h"
-#include "ac/mir/sourcemediamanager.h"
-#include "mediamanagerfactory.h"
+#include "ac/keep_alive.h"
+#include "ac/logger.h"
+#include "ac/sourceclient.h"
+#include "ac/mediamanagerfactory.h"
+#include "ac/networkutils.h"
+#include "ac/utils.h"
+#include "ac/logger.h"
 
-#include "networkutils.h"
-#include "utils.h"
-#include "logging.h"
+#include "ac/mir/sourcemediamanager.h"
 
 #include "ac/network/udpstream.h"
 

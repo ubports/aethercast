@@ -17,7 +17,7 @@
 
 #include <thread>
 
-#include <ac/miracastservice.h>
+#include <ac/service.h>
 #include <wds/sink.h>
 
 #include <gtest/gtest.h>

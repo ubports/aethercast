@@ -29,11 +29,9 @@
 #include <wds/media_manager.h>
 
 #include "ac/glib_wrapper.h"
-
 #include "ac/ip_v4_address.h"
 #include "ac/non_copyable.h"
 #include "ac/scoped_gobject.h"
-
 #include "ac/basesourcemediamanager.h"
 
 namespace ac {

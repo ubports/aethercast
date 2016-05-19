@@ -17,7 +17,7 @@
 
 #include <gmock/gmock.h>
 
-#include <ac/miracastcontrollerskeleton.h>
+#include <ac/forwardingcontroller.h>
 
 namespace {
 struct MockMiracastController : public ac::MiracastController {
@@ -39,20 +39,16 @@ struct MockMiracastController : public ac::MiracastController {
 };
 }
 
-TEST(MiracastControllerSkeleton, ThrowsForNullptrOnConstruction) {
-    EXPECT_THROW(ac::MiracastControllerSkeleton::create(ac::MiracastController::Ptr{}), std::logic_error);
+TEST(ForwardingMiracastController, ThrowsForNullptrOnConstruction) {
+    EXPECT_THROW(ac::ForwardingMiracastController(ac::MiracastController::Ptr{}), std::logic_error);
 }
 
-TEST(MiracastControllerSkeleton, ForwardsCallsToImpl) {
+TEST(ForwardingMiracastController, ForwardsCallsToImpl) {
     using namespace testing;
 
     auto impl = std::make_shared<MockMiracastController>();
 
-    // Times(AtLeast(1)) as MiracastControllerSkeleton::create(...) already calls it.
-    // In addition, we have to account for the case where we encounter issues during
-    // construction of ac::MiracastControllerSkeleton (such that a WPA supplicant connection
-    // is never set up.
-    EXPECT_CALL(*impl, SetDelegate(_)).Times(AtLeast(1));
+    EXPECT_CALL(*impl, SetDelegate(_)).Times(1);
     EXPECT_CALL(*impl, ResetDelegate()).Times(1);
     EXPECT_CALL(*impl, Connect(_,_)).Times(1);
     EXPECT_CALL(*impl, Disconnect(_,_)).Times(1);
@@ -64,18 +60,16 @@ TEST(MiracastControllerSkeleton, ForwardsCallsToImpl) {
     EXPECT_CALL(*impl, Enabled()).Times(1).WillRepeatedly(Return(true));
     EXPECT_CALL(*impl, SetEnabled(false)).Times(1).WillRepeatedly(Return(ac::Error::kNone));
 
-    auto fmc = ac::MiracastControllerSkeleton::create(impl);
-    fmc->SetDelegate(std::shared_ptr<ac::MiracastController::Delegate>{});
-    fmc->ResetDelegate();
-    fmc->Connect(ac::NetworkDevice::Ptr{}, ac::ResultCallback{});
-    fmc->Disconnect(ac::NetworkDevice::Ptr{}, ac::ResultCallback{});
-    fmc->DisconnectAll(ac::ResultCallback{});
-    fmc->Scan(std::chrono::seconds{10});
-    fmc->State();
-    fmc->Capabilities();
-    fmc->Scanning();
-    fmc->Enabled();
-    fmc->SetEnabled(false);
-
-    Mock::AllowLeak(impl.get());
+    ac::ForwardingMiracastController fmc{impl};
+    fmc.SetDelegate(std::shared_ptr<ac::MiracastController::Delegate>{});
+    fmc.ResetDelegate();
+    fmc.Connect(ac::NetworkDevice::Ptr{}, ac::ResultCallback{});
+    fmc.Disconnect(ac::NetworkDevice::Ptr{}, ac::ResultCallback{});
+    fmc.DisconnectAll(ac::ResultCallback{});
+    fmc.Scan(std::chrono::seconds{10});
+    fmc.State();
+    fmc.Capabilities();
+    fmc.Scanning();
+    fmc.Enabled();
+    fmc.SetEnabled(false);
 }

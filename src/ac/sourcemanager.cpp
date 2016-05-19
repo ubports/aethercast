@@ -15,11 +15,11 @@
  *
  */
 
-#include "keep_alive.h"
-#include "logger.h"
-#include "miracastsourcemanager.h"
-#include "miracastsourceclient.h"
-#include "logging.h"
+#include "ac/keep_alive.h"
+#include "ac/logger.h"
+#include "ac/sourcemanager.h"
+#include "ac/sourceclient.h"
+#include "ac/logger.h"
 
 namespace ac {
 std::shared_ptr<MiracastSourceManager> MiracastSourceManager::Create(const ac::IpV4Address &address, unsigned short port) {

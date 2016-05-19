@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef MIRACAST_SERVICE_H_
-#define MIRACAST_SERVICE_H_
+#ifndef AC_SERVICE_H_
+#define AC_SERVICE_H_
 
 #include <boost/noncopyable.hpp>
 
@@ -25,14 +25,13 @@
 #include <chrono>
 
 #include "ac/glib_wrapper.h"
-
-#include "miracastcontroller.h"
-#include "miracastsourcemanager.h"
-#include "networkmanager.h"
-#include "networkdevice.h"
-#include "non_copyable.h"
-#include "types.h"
-#include "systemcontroller.h"
+#include "ac/controller.h"
+#include "ac/sourcemanager.h"
+#include "ac/networkmanager.h"
+#include "ac/networkdevice.h"
+#include "ac/non_copyable.h"
+#include "ac/types.h"
+#include "ac/systemcontroller.h"
 
 namespace ac {
 class MiracastService : public MiracastController,

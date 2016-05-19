@@ -31,13 +31,13 @@
 #include <wds/logging.h>
 
 #include "ac/config.h"
-#include "keep_alive.h"
-#include "logger.h"
-#include "miracastservice.h"
-#include "miracastcontrollerskeleton.h"
-#include "networkmanagerfactory.h"
-#include "types.h"
-#include "logging.h"
+#include "ac/keep_alive.h"
+#include "ac/logger.h"
+#include "ac/service.h"
+#include "ac/controllerskeleton.h"
+#include "ac/networkmanagerfactory.h"
+#include "ac/types.h"
+#include "ac/logger.h"
 
 namespace {
 // TODO(morphis, tvoss): Expose the port as a construction-time parameter.
@@ -509,4 +509,4 @@ void MiracastService::Shutdown() {
     SetEnabledInternal(false, true);
 }
 
-} // namespace miracast
+} // namespace ac

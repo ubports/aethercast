@@ -29,7 +29,7 @@ extern "C" {
 }
 
 #include "forwardingnetworkdevice.h"
-#include "miracastcontroller.h"
+#include "controller.h"
 #include "scoped_gobject.h"
 #include "shared_gobject.h"
 

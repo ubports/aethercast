@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef MIRACAST_CONTROLLER_H_
-#define MIRACAST_CONTROLLER_H_
+#ifndef AC_CONTROLLER_H_
+#define AC_CONTROLLER_H_
 
 #include <chrono>
 #include <memory>

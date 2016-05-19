@@ -15,9 +15,9 @@
  *
  */
 
-#include "forwardingmiracastcontroller.h"
-
 #include <stdexcept>
+
+#include "ac/forwardingcontroller.h"
 
 namespace ac {
 ForwardingMiracastController::ForwardingMiracastController(const MiracastController::Ptr& fwd) : fwd_{fwd} {

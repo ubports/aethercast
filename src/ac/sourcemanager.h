@@ -23,10 +23,9 @@
 #include <boost/noncopyable.hpp>
 
 #include "ac/glib_wrapper.h"
-
-#include "miracastsourceclient.h"
-#include "scoped_gobject.h"
-#include "ip_v4_address.h"
+#include "ac/sourceclient.h"
+#include "ac/scoped_gobject.h"
+#include "ac/ip_v4_address.h"
 
 namespace ac {
 class MiracastSourceManager : public std::enable_shared_from_this<MiracastSourceManager>,

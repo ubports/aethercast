@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef MIRACASTSERVICEADAPTOR_H_
-#define MIRACASTSERVICEADAPTOR_H_
+#ifndef AC_CONTROLLERSKELETON_H_
+#define AC_CONTROLLERSKELETON_H_
 
 extern "C" {
 // Ignore all warnings coming from the external headers as we don't
@@ -31,10 +31,9 @@ extern "C" {
 #include <memory>
 #include <unordered_map>
 
-#include "scoped_gobject.h"
-
-#include "forwardingmiracastcontroller.h"
-#include "networkdeviceskeleton.h"
+#include "ac/scoped_gobject.h"
+#include "ac/forwardingcontroller.h"
+#include "ac/networkdeviceskeleton.h"
 
 namespace ac {
 class MiracastControllerSkeleton : public std::enable_shared_from_this<MiracastControllerSkeleton>,

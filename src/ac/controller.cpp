@@ -15,8 +15,4 @@
  *
  */
 
-#include "service.h"
-
-int main(int argc, char **argv) {
-    return ac::MiracastService::Main(ac::MiracastService::MainOptions::FromCommandLine(argc, argv));
-}
+#include "controller.h"

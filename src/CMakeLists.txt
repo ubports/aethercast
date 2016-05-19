@@ -50,13 +50,13 @@ set(SOURCES
   ac/mediamanagerfactory.cpp
   ac/basesourcemediamanager.cpp
   ac/logger.cpp
-  ac/forwardingmiracastcontroller.cpp
+  ac/forwardingcontroller.cpp
   ac/forwardingnetworkdevice.cpp
-  ac/miracastcontroller.cpp
-  ac/miracastcontrollerskeleton.cpp
-  ac/miracastservice.cpp
-  ac/miracastsourcemanager.cpp
-  ac/miracastsourceclient.cpp
+  ac/controller.cpp
+  ac/controllerskeleton.cpp
+  ac/service.cpp
+  ac/sourcemanager.cpp
+  ac/sourceclient.cpp
   ac/networkmanager.cpp
   ac/networkmanagerfactory.cpp
   ac/networkdevice.cpp

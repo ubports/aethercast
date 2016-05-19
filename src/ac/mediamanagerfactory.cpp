@@ -17,11 +17,12 @@
 
 #include <string.h>
 
-#include "logger.h"
-#include "mediamanagerfactory.h"
-#include "mir/sourcemediamanager.h"
-#include "utils.h"
-#include "logging.h"
+#include "ac/logger.h"
+#include "ac/mediamanagerfactory.h"
+#include "ac/utils.h"
+#include "ac/logger.h"
+
+#include "ac/mir/sourcemediamanager.h"
 
 #include "ac/common/threadedexecutorfactory.h"
 
