@@ -70,11 +70,6 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
         return false;
     }
 
-    if (NetworkUtils::MakeSocketNonBlocking(socket_) < 0) {
-        MCS_ERROR("Failed to make socket non blocking");
-        return false;
-    }
-
     struct sockaddr_in addr;
     memset(addr.sin_zero, 0, sizeof(addr.sin_zero));
     addr.sin_family = AF_INET;
@@ -107,23 +102,14 @@ bool UdpStream::Connect(const std::string &address, const Port &port) {
     return true;
 }
 
-bool UdpStream::WaitUntilReady() {
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(socket_, &fds);
-
-    const int ret = ::select(socket_ + 1, nullptr, &fds, nullptr, nullptr);
-    if (ret < 0 || !FD_ISSET(socket_, &fds))
-        return false;
-
-    return true;
-}
-
 Stream::Error UdpStream::Write(const uint8_t *data, unsigned int size,
                                const mcs::TimestampUs &timestamp) {
 
     boost::ignore_unused_variable_warning(timestamp);
 
+    // Note this is a blocking socket. However, this is a datagram socket and
+    // any blocking due to a full sending buffer will be very short. Also, we
+    // have a dedicated thread to call Write().
     auto bytes_sent = ::send(socket_, data, size, 0);
 
     // If we get an error back which relates to a possible congested

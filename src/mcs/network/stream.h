@@ -40,8 +40,6 @@ public:
 
     virtual bool Connect(const std::string &address, const Port &port) = 0;
 
-    virtual bool WaitUntilReady() = 0;
-
     virtual Error Write(const uint8_t *data, unsigned int size,
                         const mcs::TimestampUs &timestamp = 0) = 0;
 

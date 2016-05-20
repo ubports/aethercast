@@ -27,7 +27,6 @@ namespace {
 class MockOutputStream : public mcs::network::Stream {
 public:
     MOCK_METHOD2(Connect, bool(const std::string&, const mcs::network::Port&));
-    MOCK_METHOD0(WaitUntilReady, bool());
     MOCK_METHOD3(Write, mcs::network::Stream::Error(const uint8_t*, unsigned int, const mcs::TimestampUs&));
     MOCK_CONST_METHOD0(LocalPort, mcs::network::Port());
     MOCK_CONST_METHOD0(MaxUnitSize, std::uint32_t());

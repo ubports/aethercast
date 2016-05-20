@@ -68,9 +68,6 @@ bool RTPSender::Execute() {
     if (!queue_->WaitToBeFilled())
         return true;
 
-    if (!stream_->WaitUntilReady())
-        return true;
-
     queue_->Lock();
 
     while(true) {

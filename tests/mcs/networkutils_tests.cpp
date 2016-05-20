@@ -29,12 +29,3 @@ TEST(NetworkUtils_PickRandomPort, PicksPortsInRange) {
         EXPECT_GE(mcs::NetworkUtils::kMaxUserPort, port);
     }
 }
-
-TEST(NetworkUtils_MakeSocketNonBlocking, SocketFlagsCorrectlySet) {
-    const auto sock = ::socket(AF_INET, SOCK_DGRAM, 0);
-
-    EXPECT_EQ(0, mcs::NetworkUtils::MakeSocketNonBlocking(sock));
-
-    const auto flags = ::fcntl(sock, F_GETFL, 0);
-    EXPECT_TRUE(flags & O_NONBLOCK);
-}
