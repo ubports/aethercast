@@ -1,3 +1,12 @@
+aethercast (0.1+16.10.20160520.1-0ubuntu1) yakkety; urgency=medium
+
+  * Some times socket output buffer was full and sending returned an
+    EAGAIN error. Solved by making the socket blocking, as anyway we
+    have a dedicated thread for sending and you will not be blocked in a
+    datagram socket for long. LP: #1579773. (LP: #1579773)
+
+ -- Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>  Fri, 20 May 2016 08:17:44 +0000
+
 aethercast (0.1+16.04.20160506.1-0ubuntu1) xenial; urgency=medium
 
   [ Alfonso Sanchez-Beato ]

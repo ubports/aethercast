@@ -55,7 +55,6 @@ static constexpr const char *kNullIpAddress{"0.0.0.0"};
 class MockStream : public ac::network::Stream {
 public:
     MOCK_METHOD2(Connect, bool(const std::string &address, const ac::network::Port &port));
-    MOCK_METHOD0(WaitUntilReady, bool());
     MOCK_METHOD3(Write, ac::network::Stream::Error(const uint8_t*, unsigned int, const ac::TimestampUs&));
     MOCK_CONST_METHOD0(LocalPort, ac::network::Port());
     MOCK_CONST_METHOD0(MaxUnitSize, std::uint32_t());
@@ -106,9 +105,6 @@ public:
             .WillRepeatedly(Return(1234));
 
         EXPECT_CALL(*output_stream, Connect(_, _))
-            .WillRepeatedly(Return(true));
-
-        EXPECT_CALL(*output_stream, WaitUntilReady())
             .WillRepeatedly(Return(true));
 
         EXPECT_CALL(*output_stream, Write(_, _, _))

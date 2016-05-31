@@ -327,17 +327,4 @@ ac::network::Port NetworkUtils::PickRandomPort() {
     return static_cast<ac::network::Port>(distribution(generator));
 }
 
-int NetworkUtils::MakeSocketNonBlocking(int socket) {
-    if (socket < 0)
-        return -EINVAL;
-
-    int flags = fcntl(socket, F_GETFL, 0);
-    if (flags < 0)
-        flags = 0;
-    const int res = fcntl(socket, F_SETFL, flags | O_NONBLOCK);
-    if (res < 0)
-        return -errno;
-    return 0;
-}
-
 } // namespace ac

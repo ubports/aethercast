@@ -34,8 +34,6 @@ public:
 
     bool Connect(const std::string &address, const Port &port) override;
 
-    bool WaitUntilReady() override;
-
     Error Write(const uint8_t *data, unsigned int size,
                 const ac::TimestampUs &timestamp = 0) override;
 
