@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef MCS_CONFIG_H_
-#define MCS_CONFIG_H_
+#ifndef AC_CONFIG_H_
+#define AC_CONFIG_H_
 
 namespace ac {
 // FIXME(morphis) Make both paths be configured from cmake with the

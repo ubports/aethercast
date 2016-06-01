@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef MCS_TESTS_INTEGRATION_CONFIG_H_
-#define MCS_TESTS_INTEGRATION_CONFIG_H_
+#ifndef AC_TESTS_INTEGRATION_CONFIG_H_
+#define AC_TESTS_INTEGRATION_CONFIG_H_
 
 namespace ac {
 namespace testing {
@@ -24,6 +24,6 @@ namespace stream_performance {
 constexpr const char *kReferenceResultFile{"@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATAROOTDIR@/aethercast/tests/integration/stream-performance-reference.xml"};
 } // namespace stream_performance
 } // namespace testing
-} // namespace mcs
+} // namespace ac
 
 #endif

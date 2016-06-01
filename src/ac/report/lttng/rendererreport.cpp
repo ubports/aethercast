@@ -26,11 +26,11 @@ namespace report {
 namespace lttng {
 
 void RendererReport::BeganFrame() {
-    mcs_tracepoint(aethercast_renderer, began_frame, 0);
+    ac_tracepoint(aethercast_renderer, began_frame, 0);
 }
 
 void RendererReport::FinishedFrame(const TimestampUs &timestamp) {
-    mcs_tracepoint(aethercast_renderer, finished_frame, timestamp);
+    ac_tracepoint(aethercast_renderer, finished_frame, timestamp);
 }
 
 } // namespace lttng

@@ -26,23 +26,23 @@ namespace report {
 namespace lttng {
 
 void EncoderReport::Started() {
-    mcs_tracepoint(aethercast_encoder, started, 0);
+    ac_tracepoint(aethercast_encoder, started, 0);
 }
 
 void EncoderReport::Stopped() {
-    mcs_tracepoint(aethercast_encoder, stopped, 0);
+    ac_tracepoint(aethercast_encoder, stopped, 0);
 }
 
 void EncoderReport::BeganFrame(const ac::TimestampUs &timestamp) {
-    mcs_tracepoint(aethercast_encoder, began_frame, timestamp);
+    ac_tracepoint(aethercast_encoder, began_frame, timestamp);
 }
 
 void EncoderReport::FinishedFrame(const ac::TimestampUs &timestamp) {
-    mcs_tracepoint(aethercast_encoder, finished_frame, timestamp);
+    ac_tracepoint(aethercast_encoder, finished_frame, timestamp);
 }
 
 void EncoderReport::ReceivedInputBuffer(const ac::TimestampUs &timestamp) {
-    mcs_tracepoint(aethercast_encoder, received_input_buffer, timestamp);
+    ac_tracepoint(aethercast_encoder, received_input_buffer, timestamp);
 }
 
 } // namespace logging

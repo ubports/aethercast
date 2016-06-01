@@ -26,7 +26,7 @@ namespace report {
 namespace lttng {
 
 void SenderReport::SentPacket(const TimestampUs &timestamp, const size_t &size) {
-    mcs_tracepoint(aethercast_sender, sent_packet, timestamp, size);
+    ac_tracepoint(aethercast_sender, sent_packet, timestamp, size);
 }
 
 } // namespace lttng

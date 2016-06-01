@@ -10,7 +10,6 @@ include_directories(
   ${ANDROID_HEADERS_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/
   ${CMAKE_SOURCE_DIR}/src
-  ${CMAKE_SOURCE_DIR}/src/mcs
   ${CMAKE_SOURCE_DIR}/tests
   ${CMAKE_SOURCE_DIR}/tests/3rd_party/process-cpp-minimal/include
   # We have to pull in generated header files.

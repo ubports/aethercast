@@ -100,10 +100,10 @@ std::ostream& operator<<(std::ostream& out, Logger::Severity severity);
 // operator<< inserts location into out.
 std::ostream& operator<<(std::ostream& out, const Logger::Location &location);
 
-// Log returns the mcs-wide configured logger instance.
+// Log returns the ac-wide configured logger instance.
 // Save to call before/after main.
 Logger& Log();
-// SetLog installs the given logger as mcs-wide default logger.
+// SetLog installs the given logger as ac-wide default logger.
 void SetLogger(const std::shared_ptr<Logger>& logger);
 
 #define TRACE(...) Log().Tracef(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)

@@ -27,6 +27,6 @@
 #define AC_LTTNG_VOID_TRACE_POINT(comp, name) \
     TRACEPOINT_EVENT_INSTANCE(comp, dummy_event, name, TP_ARGS(int,empty))
 
-#define mcs_tracepoint(c, ...) tracepoint(c, __VA_ARGS__)
+#define ac_tracepoint(c, ...) tracepoint(c, __VA_ARGS__)
 
 #endif

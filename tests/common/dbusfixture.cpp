@@ -97,7 +97,7 @@ struct ac::testing::DBusFixture::Private
             };
 
             auto config_path = boost::filesystem::temp_directory_path();
-            config_path += "/mcs-dbus-system-";
+            config_path += "/ac-dbus-system-";
             config_path += boost::filesystem::unique_path();
 
             std::ofstream file_stream;

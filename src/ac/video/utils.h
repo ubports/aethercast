@@ -28,6 +28,6 @@ bool GetNextNALUnit(const uint8_t **_data, size_t *_size, const uint8_t **nalSta
                     size_t *nalSize, bool startCodeFollows);
 
 } // video
-} // mcs
+} // ac
 
 #endif

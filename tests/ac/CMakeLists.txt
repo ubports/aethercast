@@ -6,8 +6,6 @@ include_directories(
   ${GST_INCLUDE_DIRS}
   ${WDS_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/src
-  ${CMAKE_SOURCE_DIR}/src/mcs
-  ${CMAKE_SOURCE_DIR}/src/mcs/w11t/gdhcp
   ${CMAKE_BINARY_DIR}
 )
 

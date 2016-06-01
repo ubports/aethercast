@@ -114,7 +114,7 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
 
     output_.refresh_rate = display_mode->refresh_rate;
 
-    AC_INFO("Selected output ID %i [(%ix%i)+(%ix%i)] orientation %d",
+    INFO("Selected output ID %i [(%ix%i)+(%ix%i)] orientation %d",
              output_index,
              display_mode->vertical_resolution,
              display_mode->horizontal_resolution,
