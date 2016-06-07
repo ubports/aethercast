@@ -80,7 +80,7 @@ std::vector<wds::H264VideoCodec> BaseSourceMediaManager::GetH264VideoCodecs() {
         wds::H264VideoCodec codec1(wds::CBP, wds::k3_1, cea_rr, vesa_rr, hh_rr);
         codecs.push_back(codec1);
 
-        DEBUG("Video codecs supported by us:");
+        AC_DEBUG("Video codecs supported by us:");
         for (auto c : codecs)
             ac::video::DumpVideoCodec(c);
     }
@@ -91,10 +91,10 @@ std::vector<wds::H264VideoCodec> BaseSourceMediaManager::GetH264VideoCodecs() {
 bool BaseSourceMediaManager::InitOptimalVideoFormat(const wds::NativeVideoFormat& sink_native_format,
     const std::vector<wds::H264VideoCodec>& sink_supported_codecs) {
 
-    DEBUG("Sink native resolution:");
+    AC_DEBUG("Sink native resolution:");
     ac::video::DumpNativeFormat(sink_native_format);
 
-    DEBUG("Sink supports the following codecs:");
+    AC_DEBUG("Sink supports the following codecs:");
     for (auto sink_codec : sink_supported_codecs) {
         ac::video::DumpVideoCodec(sink_codec);
     }
@@ -111,11 +111,11 @@ bool BaseSourceMediaManager::InitOptimalVideoFormat(const wds::NativeVideoFormat
         format_.rate_resolution = wds::CEA1280x720p30;
 
     if (!success) {
-        ERROR("Failed to select proper video format");
+        AC_ERROR("Failed to select proper video format");
         return false;
     }
 
-    DEBUG("Found optimal video format:");
+    AC_DEBUG("Found optimal video format:");
     ac::video::DumpVideoFormat(format_);
 
     return Configure();
@@ -139,7 +139,7 @@ wds::AudioCodec BaseSourceMediaManager::GetOptimalAudioFormat() const {
 }
 
 void BaseSourceMediaManager::SendIDRPicture() {
-    WARNING("Unimplemented IDR picture request");
+    AC_WARNING("Unimplemented IDR picture request");
 }
 
 std::string BaseSourceMediaManager::GetSessionId() const {

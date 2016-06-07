@@ -58,27 +58,27 @@ bool SourceManager::Setup(const ac::IpV4Address &address, unsigned short port) {
     ScopedGObject<GSocket> socket{g_socket_new(G_SOCKET_FAMILY_IPV4, G_SOCKET_TYPE_STREAM, G_SOCKET_PROTOCOL_TCP, &error)};
 
     if (!socket) {
-        WARNING("Failed to setup socket for incoming source connections: %s", error->message);
+        AC_WARNING("Failed to setup socket for incoming source connections: %s", error->message);
         g_error_free(error);
         return false;
     }
 
     auto addr = g_inet_socket_address_new_from_string(address.to_string().c_str(), port);
     if (!g_socket_bind(socket.get(), addr, TRUE, &error)) {
-        WARNING("Failed to setup socket for incoming source connections: %s", error->message);
+        AC_WARNING("Failed to setup socket for incoming source connections: %s", error->message);
         g_error_free(error);
         return false;
     }
 
     if (!g_socket_listen(socket.get(), &error)) {
-        WARNING("Failed start listening for incoming connections: %s", error->message);
+        AC_WARNING("Failed start listening for incoming connections: %s", error->message);
         g_error_free(error);
         return false;
     }
 
     auto source = g_socket_create_source(socket.get(), G_IO_IN, nullptr);
     if (!source) {
-        WARNING("Failed to setup listener for incoming connections");
+        AC_WARNING("Failed to setup listener for incoming connections");
         return false;
     }
 
@@ -90,14 +90,14 @@ bool SourceManager::Setup(const ac::IpV4Address &address, unsigned short port) {
 
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
-        WARNING("Failed to attach source to mainloop");
+        AC_WARNING("Failed to attach source to mainloop");
         g_source_unref(source);
         return false;
     }
 
     g_source_unref(source);
 
-    DEBUG("Successfully setup source on %s:%d and awaiting incoming connection requests", address.to_string(), port);
+    AC_DEBUG("Successfully setup source on %s:%d and awaiting incoming connection requests", address.to_string(), port);
 
     local_address_ = address;
 
@@ -109,7 +109,7 @@ bool SourceManager::Setup(const ac::IpV4Address &address, unsigned short port) {
 gboolean SourceManager::OnNewConnection(GSocket *socket, GIOCondition  cond, gpointer user_data) {
     auto inst = static_cast<WeakKeepAlive<SourceManager>*>(user_data)->GetInstance().lock();
 
-    DEBUG("");
+    AC_DEBUG("");
 
     // The callback context was deleted while the wait for connection was active.
     // Hardly anything we can do about it except for returning early.
@@ -119,7 +119,7 @@ gboolean SourceManager::OnNewConnection(GSocket *socket, GIOCondition  cond, gpo
     GError *error = nullptr;
     auto client_socket = g_socket_accept(inst->socket_.get(), NULL, &error);
     if (!client_socket) {
-        WARNING("Failed to accept incoming connection: %s", error->message);
+        AC_WARNING("Failed to accept incoming connection: %s", error->message);
         g_error_free(error);
         g_object_unref(client_socket);
         return TRUE;

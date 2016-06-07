@@ -208,47 +208,47 @@ std::string ProfileToString(wds::H264Profile profile) {
 void DumpVideoCodec(const wds::H264VideoCodec &codec) {
     int i = 0;
 
-    DEBUG(" profile: %s", ProfileToString(codec.profile));
-    DEBUG(" level: %s", LevelToString(codec.level));
+    AC_DEBUG(" profile: %s", ProfileToString(codec.profile));
+    AC_DEBUG(" level: %s", LevelToString(codec.level));
 
-    DEBUG(" CEA resolutions: ");
+    AC_DEBUG(" CEA resolutions: ");
     for (i = wds::CEA640x480p60; i <= wds::CEA1920x1080p24; ++i)
         if (codec.cea_rr.test(i))
-            DEBUG("  %s", CEARatesAndResolutionsToString(static_cast<wds::CEARatesAndResolutions>(i)).c_str());
+            AC_DEBUG("  %s", CEARatesAndResolutionsToString(static_cast<wds::CEARatesAndResolutions>(i)).c_str());
 
-    DEBUG(" VESA resolutions: ");
+    AC_DEBUG(" VESA resolutions: ");
     for (i = wds::VESA800x600p30; i <= wds::VESA1920x1200p30; ++i)
         if (codec.vesa_rr.test(i))
-            DEBUG("  %s", VESARatesAndResolutionsToString(static_cast<wds::VESARatesAndResolutions>(i)).c_str());
+            AC_DEBUG("  %s", VESARatesAndResolutionsToString(static_cast<wds::VESARatesAndResolutions>(i)).c_str());
 
-    DEBUG(" HH resolutions: ");
+    AC_DEBUG(" HH resolutions: ");
     for (i = wds::HH800x480p30; i <= wds::HH848x480p60; ++i)
         if (codec.hh_rr.test(i))
-            DEBUG("  %s", HHRatesAndResolutionsToString(static_cast<wds::HHRatesAndResolutions>(i)).c_str());
+            AC_DEBUG("  %s", HHRatesAndResolutionsToString(static_cast<wds::HHRatesAndResolutions>(i)).c_str());
 }
 
 void DumpVideoFormat(const wds::H264VideoFormat &format) {
-    DEBUG(" profile: %s", ProfileToString(format.profile));
-    DEBUG(" level: %s", LevelToString(format.level));
-    DEBUG(" resolution type: %s", ResolutionTypeToString(format.type));
+    AC_DEBUG(" profile: %s", ProfileToString(format.profile));
+    AC_DEBUG(" level: %s", LevelToString(format.level));
+    AC_DEBUG(" resolution type: %s", ResolutionTypeToString(format.type));
 
     if (format.type == wds::CEA)
-        DEBUG("resolution: %s", CEARatesAndResolutionsToString(static_cast<wds::CEARatesAndResolutions>(format.rate_resolution)));
+        AC_DEBUG("resolution: %s", CEARatesAndResolutionsToString(static_cast<wds::CEARatesAndResolutions>(format.rate_resolution)));
     if (format.type == wds::VESA)
-        DEBUG("resolution: %s", VESARatesAndResolutionsToString(static_cast<wds::VESARatesAndResolutions>(format.rate_resolution)));
+        AC_DEBUG("resolution: %s", VESARatesAndResolutionsToString(static_cast<wds::VESARatesAndResolutions>(format.rate_resolution)));
     if (format.type == wds::HH)
-        DEBUG("resolution: %s", HHRatesAndResolutionsToString(static_cast<wds::HHRatesAndResolutions>(format.rate_resolution)));
+        AC_DEBUG("resolution: %s", HHRatesAndResolutionsToString(static_cast<wds::HHRatesAndResolutions>(format.rate_resolution)));
 }
 
 void DumpNativeFormat(const wds::NativeVideoFormat &format) {
-    DEBUG(" resolution type: %s", ResolutionTypeToString(format.type));
+    AC_DEBUG(" resolution type: %s", ResolutionTypeToString(format.type));
 
     if (format.type == wds::CEA)
-        DEBUG("resolution: %s", CEARatesAndResolutionsToString((static_cast<wds::CEARatesAndResolutions>(format.rate_resolution))));
+        AC_DEBUG("resolution: %s", CEARatesAndResolutionsToString((static_cast<wds::CEARatesAndResolutions>(format.rate_resolution))));
     if (format.type == wds::VESA)
-        DEBUG("resolution: %s", VESARatesAndResolutionsToString(static_cast<wds::VESARatesAndResolutions>(format.rate_resolution)));
+        AC_DEBUG("resolution: %s", VESARatesAndResolutionsToString(static_cast<wds::VESARatesAndResolutions>(format.rate_resolution)));
     if (format.type == wds::HH)
-        DEBUG("resolution: %s", HHRatesAndResolutionsToString(static_cast<wds::HHRatesAndResolutions>(format.rate_resolution)));
+        AC_DEBUG("resolution: %s", HHRatesAndResolutionsToString(static_cast<wds::HHRatesAndResolutions>(format.rate_resolution)));
 }
 
 std::string ExtractH264Profile(const wds::H264VideoFormat &format) {

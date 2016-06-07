@@ -54,7 +54,7 @@ std::shared_ptr<NetworkDeviceSkeleton> NetworkDeviceSkeleton::FinalizeConstructi
     SyncProperties();
 
     if (!object_)
-        ERROR("Failed to create object for device %s", Address());
+        AC_ERROR("Failed to create object for device %s", Address());
     else
         aethercast_interface_object_skeleton_set_device(object_.get(), device_iface_.get());
 

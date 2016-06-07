@@ -87,7 +87,7 @@ std::string ControllerSkeleton::GenerateDevicePath(const NetworkDevice::Ptr &dev
 }
 
 void ControllerSkeleton::OnDeviceFound(const NetworkDevice::Ptr &device) {
-    DEBUG("device %s", device->Address().c_str());
+    AC_DEBUG("device %s", device->Address().c_str());
 
     auto path = GenerateDevicePath(device);
     auto adapter = NetworkDeviceSkeleton::Create(bus_connection_, path , device, shared_from_this());
@@ -205,7 +205,7 @@ void ControllerSkeleton::OnNameAcquired(GDBusConnection *connection, const gchar
     inst->object_manager_.reset(g_dbus_object_manager_server_new(kManagerPath));
     g_dbus_object_manager_server_set_connection(inst->object_manager_.get(), connection);
 
-    INFO("Registered bus name %s", name);
+    AC_INFO("Registered bus name %s", name);
 }
 
 gboolean ControllerSkeleton::OnHandleScan(AethercastInterfaceManager *skeleton,
@@ -219,7 +219,7 @@ gboolean ControllerSkeleton::OnHandleScan(AethercastInterfaceManager *skeleton,
         return TRUE;
     }
 
-    INFO("Scanning for remote devices");
+    AC_INFO("Scanning for remote devices");
 
     const auto error = inst->Scan();
     if (error != ac::Error::kNone) {
@@ -266,7 +266,7 @@ std::shared_ptr<ControllerSkeleton> ControllerSkeleton::FinalizeConstruction() {
     GError *error = nullptr;
     bus_connection_ = make_shared_gobject(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
     if (!bus_connection_) {
-        ERROR("Failed to connect with system bus: %s", error->message);
+        AC_ERROR("Failed to connect with system bus: %s", error->message);
         g_error_free(error);
         return sp;
     }
@@ -274,7 +274,7 @@ std::shared_ptr<ControllerSkeleton> ControllerSkeleton::FinalizeConstruction() {
     bus_id_ = g_bus_own_name(G_BUS_TYPE_SYSTEM, kBusName, G_BUS_NAME_OWNER_FLAGS_NONE,
                    nullptr, &ControllerSkeleton::OnNameAcquired, nullptr, new SharedKeepAlive<ControllerSkeleton>{sp}, nullptr);
     if (bus_id_ == 0)
-        WARNING("Failed to register bus name");
+        AC_WARNING("Failed to register bus name");
 
     SetDelegate(sp);
     return sp;

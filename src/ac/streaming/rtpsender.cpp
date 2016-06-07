@@ -91,7 +91,7 @@ bool RTPSender::Execute() {
 
 bool RTPSender::Queue(const video::Buffer::Ptr &packets) {
     if (packets->Length() % kMPEGTSPacketSize != 0) {
-        WARNING("Packet buffer has an invalid length %d", packets->Length());
+        AC_WARNING("Packet buffer has an invalid length %d", packets->Length());
         return false;
     }
 

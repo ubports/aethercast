@@ -105,13 +105,6 @@ std::ostream& operator<<(std::ostream& out, const Logger::Location &location);
 Logger& Log();
 // SetLog installs the given logger as ac-wide default logger.
 void SetLogger(const std::shared_ptr<Logger>& logger);
-
-#define TRACE(...) Log().Tracef(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
-#define DEBUG(...) Log().Debugf(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
-#define INFO(...) Log().Infof(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
-#define WARNING(...) Log().Warningf(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
-#define ERROR(...) Log().Errorf(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
-#define FATAL(...) Log().Fatalf(Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)
 }
 
 #define AC_TRACE(...) ac::Log().Tracef(ac::Logger::Location{__FILE__, __FUNCTION__, __LINE__}, __VA_ARGS__)

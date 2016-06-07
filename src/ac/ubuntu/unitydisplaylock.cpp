@@ -35,7 +35,7 @@ UnityDisplayLock::UnityDisplayLock() :
     GError *error = nullptr;
     connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
     if (!connection_) {
-        ERROR("Failed to connect to system bus: %s", error->message);
+        AC_ERROR("Failed to connect to system bus: %s", error->message);
         g_error_free(error);
         return;
     }
@@ -68,7 +68,7 @@ void UnityDisplayLock::Acquire(DisplayState state) {
         GError *error = nullptr;
         auto result = g_dbus_connection_call_finish(thiz->connection_.get(), res, &error);
         if (!result) {
-            ERROR("Failed to acquire display lock: %s", error->message);
+            AC_ERROR("Failed to acquire display lock: %s", error->message);
             g_error_free(error);
             return;
         }
@@ -76,7 +76,7 @@ void UnityDisplayLock::Acquire(DisplayState state) {
         thiz->cookie_ = g_variant_get_int32(g_variant_get_child_value(result, 0));
         thiz->ref_count_ = 1;
 
-        DEBUG("Successfully locked display (cookie %d)", thiz->cookie_);
+        AC_DEBUG("Successfully locked display (cookie %d)", thiz->cookie_);
 
     }, new ac::SharedKeepAlive<UnityDisplayLock>{shared_from_this()});
 }
@@ -102,7 +102,7 @@ void UnityDisplayLock::ReleaseInternal() {
         GError *error = nullptr;
         auto result = g_dbus_connection_call_finish(thiz->connection_.get(), res, &error);
         if (!result) {
-            ERROR("Failed to acquire display lock: %s", error->message);
+            AC_ERROR("Failed to acquire display lock: %s", error->message);
             g_error_free(error);
             return;
         }
@@ -110,7 +110,7 @@ void UnityDisplayLock::ReleaseInternal() {
         thiz->cookie_ = 0;
         thiz->ref_count_ = 0;
 
-        DEBUG("Successfully unlocked display");
+        AC_DEBUG("Successfully unlocked display");
 
     }, new ac::SharedKeepAlive<UnityDisplayLock>{shared_from_this()});
 }

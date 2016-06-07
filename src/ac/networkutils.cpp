@@ -262,7 +262,7 @@ int NetworkUtils::ResetInterface(int index)
     addr = (struct sockaddr_in *)&addr_ifr.ifr_addr;
     addr->sin_family = AF_INET;
     if (ioctl(sk, SIOCSIFADDR, &addr_ifr) < 0)
-        WARNING("Could not clear IPv4 address of interface with index %d", index);
+        AC_WARNING("Could not clear IPv4 address of interface with index %d", index);
 
 done:
     close(sk);

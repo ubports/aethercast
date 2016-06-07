@@ -66,14 +66,14 @@ void SourceClient::ResetDelegate() {
 }
 
 void SourceClient::DumpRtsp(const std::string &prefix, const std::string &data) {
-    static bool enabled = getenv("MIRACAST_RTSP_DEBUG") != nullptr;
+    static bool enabled = getenv("MIRACAST_RTSP_AC_DEBUG") != nullptr;
 
     if (!enabled)
         return;
 
     auto lines = Utils::StringSplit(data, '\n');
     for (auto current : lines)
-        WARNING("RTSP: %s: %s", prefix.c_str(), current.c_str());
+        AC_WARNING("RTSP: %s: %s", prefix.c_str(), current.c_str());
 }
 
 void SourceClient::SendRTSPData(const std::string &data) {
@@ -81,7 +81,7 @@ void SourceClient::SendRTSPData(const std::string &data) {
     GError *error = nullptr;
     auto bytes_written = g_socket_send(socket_.get(), data.c_str(), data.length(), nullptr, &error);
     if (bytes_written < 0) {
-        WARNING("Failed to write data to RTSP client: %s", error->message);
+        AC_WARNING("Failed to write data to RTSP client: %s", error->message);
         g_error_free(error);
         return;
     }
@@ -186,14 +186,14 @@ std::shared_ptr<SourceClient> SourceClient::FinalizeConstruction() {
     GError *error = nullptr;
     auto address = g_socket_get_remote_address(socket_.get(), &error);
     if (error) {
-        WARNING("Failed to receive address from socket: %s", error->message);
+        AC_WARNING("Failed to receive address from socket: %s", error->message);
         g_error_free(error);
         return sp;
     }
 
     auto inet_address = g_inet_socket_address_get_address(G_INET_SOCKET_ADDRESS(address));
     if (!inet_address) {
-        WARNING("Failed to determine client address");
+        AC_WARNING("Failed to determine client address");
         return sp;
     }
 
@@ -201,7 +201,7 @@ std::shared_ptr<SourceClient> SourceClient::FinalizeConstruction() {
 
     auto source = g_socket_create_source(socket_.get(), static_cast<GIOCondition>((G_IO_IN | G_IO_HUP | G_IO_ERR)), nullptr);
     if (!source) {
-        WARNING("Failed to setup event listener for source client");
+        AC_WARNING("Failed to setup event listener for source client");
         return sp;
     }
 
@@ -210,7 +210,7 @@ std::shared_ptr<SourceClient> SourceClient::FinalizeConstruction() {
                           [](gpointer data) { delete static_cast<WeakKeepAlive<SourceClient>*>(data); });
     socket_source_ = g_source_attach(source, nullptr);
     if (socket_source_ == 0) {
-        WARNING("Failed to attach source to mainloop");
+        AC_WARNING("Failed to attach source to mainloop");
         g_source_unref(source);
         return sp;
     }
@@ -238,13 +238,13 @@ void SourceClient::ErrorOccurred(wds::ErrorType error) {
     if (error != wds::ErrorType::TimeoutError)
         return;
 
-    ERROR("Detected RTSP timeout; disconnecting ..");
+    AC_ERROR("Detected RTSP timeout; disconnecting ..");
 
     NotifyConnectionClosed();
 }
 
 void SourceClient::SessionCompleted() {
-    DEBUG("");
+    AC_DEBUG("");
 }
 
 } // namespace ac

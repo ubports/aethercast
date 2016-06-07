@@ -36,7 +36,7 @@ ThreadedExecutor::~ThreadedExecutor() {
 void ThreadedExecutor::ThreadWorker() {
     if (executable_->Name().length() > 0) {
         ac::Utils::SetThreadName(executable_->Name());
-        DEBUG("Started threaded executor %s", executable_->Name());
+        AC_DEBUG("Started threaded executor %s", executable_->Name());
     }
 
     while (running_) {
@@ -64,7 +64,7 @@ bool ThreadedExecutor::Stop() {
         return false;
 
     if (!executable_->Stop())
-        ERROR("Failed to stop exutable");
+        AC_ERROR("Failed to stop exutable");
 
     thread_.join();
 

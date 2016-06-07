@@ -27,59 +27,59 @@
 namespace ac {
 
 void NullNetworkManager::SetDelegate(Delegate * delegate) {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
 }
 
 bool NullNetworkManager::Setup() {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
     return false;
 }
 
 void NullNetworkManager::Release() {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
 }
 
 void NullNetworkManager::Scan(const std::chrono::seconds &timeout) {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
 }
 
 bool NullNetworkManager::Connect(const NetworkDevice::Ptr &device) {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
     return false;
 }
 
 bool NullNetworkManager::Disconnect(const NetworkDevice::Ptr &device) {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
     return false;
 }
 
 std::vector<NetworkDevice::Ptr> NullNetworkManager::Devices() const {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
     return std::vector<NetworkDevice::Ptr>();
 }
 
 IpV4Address NullNetworkManager::LocalAddress() const {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
     return IpV4Address();
 }
 
 bool NullNetworkManager::Running() const {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
     return false;
 }
 
 bool NullNetworkManager::Scanning() const {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
     return false;
 }
 
 bool NullNetworkManager::Ready() const {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
     return false;
 }
 
 void NullNetworkManager::SetCapabilities(const std::vector<Capability> &capabilities) {
-    ERROR("Not implemented");
+    AC_ERROR("Not implemented");
 }
 
 std::vector<NetworkManager::Capability> NullNetworkManager::Capabilities() const {
@@ -89,7 +89,7 @@ std::vector<NetworkManager::Capability> NullNetworkManager::Capabilities() const
 NetworkManager::Ptr NetworkManagerFactory::Create(const std::string &type) {
     auto final_type = type.length() > 0 ? type : Utils::GetEnvValue("AETHERCAST_NETWORK_MANAGER");
 
-    DEBUG("Creating network manager of type %s", final_type.length() > 0 ? final_type : "w11tng");
+    AC_DEBUG("Creating network manager of type %s", final_type.length() > 0 ? final_type : "w11tng");
 
     // We will always default to the w11t implementation if no invalid
     // type is specified.

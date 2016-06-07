@@ -106,7 +106,7 @@ int Service::Main(const Service::MainOptions &options) {
             // things a small amount of time to perform their shutdown jobs.
             thiz->service->Shutdown();
 
-            DEBUG("Exiting");
+            AC_DEBUG("Exiting");
 
             g_timeout_add_seconds(kShutdownGracePreriod.count(), [](gpointer user_data) {
                 auto thiz = static_cast<Runtime*>(user_data);
@@ -334,7 +334,7 @@ void Service::OnClientDisconnected() {
 }
 
 void Service::AdvanceState(NetworkDeviceState new_state) {
-    DEBUG("new state %s current state %s",
+    AC_DEBUG("new state %s current state %s",
           ac::NetworkDevice::StateToStr(new_state),
           ac::NetworkDevice::StateToStr(current_state_));
 
@@ -381,7 +381,7 @@ void Service::OnChanged() {
 }
 
 void Service::OnDeviceStateChanged(const NetworkDevice::Ptr &device) {
-    DEBUG("Device state changed: address %s new state %s",
+    AC_DEBUG("Device state changed: address %s new state %s",
           device->Address(),
           ac::NetworkDevice::StateToStr(device->State()));
 
@@ -438,13 +438,13 @@ void Service::FinishConnectAttempt(ac::Error error) {
 
 void Service::Connect(const NetworkDevice::Ptr &device, ResultCallback callback) {
     if (!enabled_) {
-        DEBUG("Not ready");
+        AC_DEBUG("Not ready");
         callback(Error::kNotReady);
         return;
     }
 
     if (current_device_) {
-        DEBUG("Tried to connect again while we're already trying to connect a device");
+        AC_DEBUG("Tried to connect again while we're already trying to connect a device");
         callback(Error::kAlready);
         return;
     }
@@ -454,10 +454,10 @@ void Service::Connect(const NetworkDevice::Ptr &device, ResultCallback callback)
         return;
     }
 
-    DEBUG("address %s", device->Address());
+    AC_DEBUG("address %s", device->Address());
 
     if (!network_manager_->Connect(device)) {
-        DEBUG("Failed to connect remote device");
+        AC_DEBUG("Failed to connect remote device");
         callback(Error::kFailed);
         return;
     }

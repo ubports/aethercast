@@ -179,7 +179,7 @@ bool H264Encoder::Configure(const Config &config) {
     if (encoder_)
         return false;
 
-    DEBUG("configuring with %dx%d@%d", config.width, config.height, config.framerate);
+    AC_DEBUG("configuring with %dx%d@%d", config.width, config.height, config.framerate);
 
     auto format = media_message_create();
     if (!format)
@@ -229,14 +229,14 @@ bool H264Encoder::Configure(const Config &config) {
 
     auto source = media_source_create();
     if (!source) {
-        ERROR("Failed to create media input source for encoder");
+        AC_ERROR("Failed to create media input source for encoder");
         media_message_release(format);
         return false;
     }
 
     auto source_format = media_meta_data_create();
     if (!source_format) {
-        ERROR("Failed to create media meta data for encoder source");
+        AC_ERROR("Failed to create media meta data for encoder source");
         media_message_release(format);
         media_source_release(source);
         return false;
@@ -282,7 +282,7 @@ bool H264Encoder::Configure(const Config &config) {
     // needed.
     encoder_ = media_codec_source_create(format, source, 0);
     if (!encoder_) {
-        ERROR("Failed to create encoder instance");
+        AC_ERROR("Failed to create encoder instance");
         media_meta_data_release(source_format);
         media_message_release(format);
         media_source_release(source);
@@ -293,7 +293,7 @@ bool H264Encoder::Configure(const Config &config) {
     format_ = format;
     source_format_ = source_format;
 
-    DEBUG("Configured encoder succesfully");
+    AC_DEBUG("Configured encoder succesfully");
 
     return true;
 }
@@ -308,7 +308,7 @@ bool H264Encoder::Start() {
     running_ = true;
 
     if (!media_codec_source_start(encoder_)) {
-        ERROR("Failed to start encoder");
+        AC_ERROR("Failed to start encoder");
         running_ = false;
         return false;
     }
@@ -322,7 +322,7 @@ int H264Encoder::OnSourceStart(MediaMetaDataWrapper *meta, void *user_data) {
     boost::ignore_unused_variable_warning(meta);
     boost::ignore_unused_variable_warning(user_data);
 
-    DEBUG("");
+    AC_DEBUG("");
 
     return 0;
 }
@@ -330,7 +330,7 @@ int H264Encoder::OnSourceStart(MediaMetaDataWrapper *meta, void *user_data) {
 int H264Encoder::OnSourceStop(void *user_data) {
     boost::ignore_unused_variable_warning(user_data);
 
-    DEBUG("");
+    AC_DEBUG("");
 
     return 0;
 }
@@ -338,14 +338,14 @@ int H264Encoder::OnSourceStop(void *user_data) {
 int H264Encoder::OnSourcePause(void *user_data) {
     boost::ignore_unused_variable_warning(user_data);
 
-    DEBUG("");
+    AC_DEBUG("");
 
     return 0;
 }
 
 MediaBufferWrapper* H264Encoder::PackBuffer(const ac::video::Buffer::Ptr &input_buffer, const ac::TimestampUs &timestamp) {
     if (!input_buffer->NativeHandle()) {
-        WARNING("Ignoring buffer without native handle");
+        AC_WARNING("Ignoring buffer without native handle");
         return nullptr;
     }
 
@@ -424,7 +424,7 @@ void H264Encoder::OnBufferReturned(MediaBufferWrapper *buffer, void *user_data) 
     }
 
     if (iter == thiz->pending_buffers_.end()) {
-        WARNING("Didn't remember returned buffer!?");
+        AC_WARNING("Didn't remember returned buffer!?");
         return;
     }
 
@@ -456,13 +456,13 @@ bool H264Encoder::DoesBufferContainCodecConfig(MediaBufferWrapper *buffer) {
 
 bool H264Encoder::Execute() {
     if (!running_) {
-        ERROR("Tried to execute encoder while not started");
+        AC_ERROR("Tried to execute encoder while not started");
         return false;
     }
 
     MediaBufferWrapper *buffer = nullptr;
     if (!media_codec_source_read(encoder_, &buffer)) {
-        ERROR("Failed to read a new buffer from encoder");
+        AC_ERROR("Failed to read a new buffer from encoder");
         return false;
     }
 
@@ -512,7 +512,7 @@ void H264Encoder::SendIDRFrame() {
     if (!encoder_)
         return;
 
-    DEBUG("");
+    AC_DEBUG("");
 
     media_codec_source_request_idr_frame(encoder_);
 }

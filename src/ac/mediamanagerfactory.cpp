@@ -35,24 +35,24 @@
 namespace ac {
 
 void NullSourceMediaManager::Play() {
-    WARNING("NullSourceMediaManager: Not implemented");
+    AC_WARNING("NullSourceMediaManager: Not implemented");
 }
 
 void NullSourceMediaManager::Pause() {
-    WARNING("NullSourceMediaManager: Not implemented");
+    AC_WARNING("NullSourceMediaManager: Not implemented");
 }
 
 void NullSourceMediaManager::Teardown() {
-    WARNING("NullSourceMediaManager: Not implemented");
+    AC_WARNING("NullSourceMediaManager: Not implemented");
 }
 
 bool NullSourceMediaManager::IsPaused() const {
-    WARNING("NullSourceMediaManager: Not implemented");
+    AC_WARNING("NullSourceMediaManager: Not implemented");
     return false;
 }
 
 bool NullSourceMediaManager::Configure() {
-    WARNING("NullSourceMediaManager: Not implemented");
+    AC_WARNING("NullSourceMediaManager: Not implemented");
     return false;
 }
 
@@ -62,7 +62,7 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
     if (type.length() == 0)
         type = "mir";
 
-    DEBUG("Creating source media manager of type %s", type.c_str());
+    AC_DEBUG("Creating source media manager of type %s", type.c_str());
 
     if (type == "mir") {
         const auto executor_factory = std::make_shared<common::ThreadedExecutorFactory>();
