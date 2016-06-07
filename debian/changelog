@@ -1,3 +1,11 @@
+aethercast (0.1+16.10.20160607-0ubuntu1) yakkety; urgency=medium
+
+  [ Simon Fels ]
+  * Enable builds on arm64
+  * Cleanup various things
+
+ -- morphis <simon.fels@canonical.com>  Tue, 07 Jun 2016 08:27:42 +0000
+
 aethercast (0.1+16.10.20160520.1-0ubuntu1) yakkety; urgency=medium
 
   * Some times socket output buffer was full and sending returned an
