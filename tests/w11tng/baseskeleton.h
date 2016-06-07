@@ -18,8 +18,8 @@
 #ifndef W11TNG_TESTING_BASE_SKELETON_H_
 #define W11TNG_TESTING_BASE_SKELETON_H_
 
-#include <mcs/glib_wrapper.h>
-#include <mcs/scoped_gobject.h>
+#include <ac/glib_wrapper.h>
+#include <ac/scoped_gobject.h>
 
 extern "C" {
 // Ignore all warnings coming from the external headers as we don't
@@ -43,9 +43,9 @@ public:
     std::string ObjectPath() const;
 
 protected:
-    mcs::ScopedGObject<GDBusConnection> bus_connection_;
-    mcs::ScopedGObject<WpaSupplicantObjectProxy> proxy_;
-    mcs::ScopedGObject<T> skeleton_;
+    ac::ScopedGObject<GDBusConnection> bus_connection_;
+    ac::ScopedGObject<WpaSupplicantObjectProxy> proxy_;
+    ac::ScopedGObject<T> skeleton_;
 };
 
 } // namespace testing

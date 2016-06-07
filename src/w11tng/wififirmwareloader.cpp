@@ -17,9 +17,9 @@
 
 #include <chrono>
 
-#include <mcs/logger.h>
-#include <mcs/networkutils.h>
-#include <mcs/utils.h>
+#include <ac/logger.h>
+#include <ac/networkutils.h>
+#include <ac/utils.h>
 
 #include "wififirmwareloader.h"
 
@@ -43,7 +43,7 @@ void WiFiFirmwareLoader::SetInterfaceName(const std::string &interface_name) {
 }
 
 bool WiFiFirmwareLoader::IsNeeded() {
-    auto path = mcs::Utils::Sprintf("/sys/class/net/%s/uevent", interface_name_.c_str());
+    auto path = ac::Utils::Sprintf("/sys/class/net/%s/uevent", interface_name_.c_str());
     return !g_file_test(path.c_str(), (GFileTest) (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR));
 }
 
@@ -83,7 +83,7 @@ void WiFiFirmwareLoader::OnInterfaceFirmwareSet(GDBusConnection *conn, GAsyncRes
 
     GVariant *result = g_dbus_connection_call_finish(conn, res, &error);
     if (!result) {
-        MCS_WARNING("Failed to load required WiFi firmware: %s", error->message);
+        AC_WARNING("Failed to load required WiFi firmware: %s", error->message);
         g_error_free(error);
         timeout = std::chrono::milliseconds(2000);
     }

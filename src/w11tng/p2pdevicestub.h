@@ -23,9 +23,9 @@
 #include <unordered_map>
 #include <set>
 
-#include <mcs/non_copyable.h>
+#include <ac/non_copyable.h>
 
-#include <mcs/glib_wrapper.h>
+#include <ac/glib_wrapper.h>
 
 extern "C" {
 // Ignore all warnings coming from the external headers as we don't
@@ -37,8 +37,8 @@ extern "C" {
 #pragma GCC diagnostic pop
 }
 
-#include <mcs/shared_gobject.h>
-#include <mcs/scoped_gobject.h>
+#include <ac/shared_gobject.h>
+#include <ac/scoped_gobject.h>
 
 #include "networkdevice.h"
 
@@ -103,7 +103,7 @@ public:
         WpsMethod wps_method;
     };
 
-    class Delegate : public mcs::NonCopyable {
+    class Delegate : public ac::NonCopyable {
     public:
         virtual void OnDeviceFound(const std::string &path) = 0;
         virtual void OnDeviceLost(const std::string &path) = 0;
@@ -162,8 +162,8 @@ private:
 
 private:
     std::weak_ptr<P2PDeviceStub::Delegate> delegate_;
-    mcs::ScopedGObject<GDBusConnection> connection_;
-    mcs::ScopedGObject<WpaSupplicantInterfaceP2PDevice> proxy_;
+    ac::ScopedGObject<GDBusConnection> connection_;
+    ac::ScopedGObject<WpaSupplicantInterfaceP2PDevice> proxy_;
     std::chrono::seconds scan_timeout_;
     guint scan_timeout_source_;
     std::unordered_map<std::string,w11tng::NetworkDevice::Ptr> devices_;

@@ -1,7 +1,3 @@
-# We have to make sure that this directory exists.
-# Otherwise, GDBUS_CODEGEN_EXECUTABLE fails.
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mcs)
-
 # We can't control what gdbus-codegen produces so we have to live with the
 # fact that it produces code which doesn't pass -Werror
 set(CMAKE_C_FLAGS "-Wall")

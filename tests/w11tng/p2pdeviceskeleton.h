@@ -18,7 +18,7 @@
 #ifndef W11TNG_TESTING_P2PDEVICE_SKELETON_H_
 #define W11TNG_TESTING_P2PDEVICE_SKELETON_H_
 
-#include <mcs/non_copyable.h>
+#include <ac/non_copyable.h>
 
 #include "baseskeleton.h"
 
@@ -32,7 +32,7 @@ class P2PDeviceSkeleton : public std::enable_shared_from_this<P2PDeviceSkeleton>
 public:
     typedef std::shared_ptr<P2PDeviceSkeleton> Ptr;
 
-    class Delegate : public mcs::NonCopyable {
+    class Delegate : public ac::NonCopyable {
     public:
         virtual void OnFind() = 0;
         virtual void OnStopFind() = 0;

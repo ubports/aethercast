@@ -32,11 +32,11 @@ using namespace ::testing;
 
 namespace {
 class P2PDeviceStubFixture : public Test,
-                        public mcs::testing::DBusFixture,
-                        public mcs::testing::DBusNameOwner {
+                        public ac::testing::DBusFixture,
+                        public ac::testing::DBusNameOwner {
 public:
     P2PDeviceStubFixture() :
-        mcs::testing::DBusNameOwner("fi.w1.wpa_supplicant1") {
+        ac::testing::DBusNameOwner("fi.w1.wpa_supplicant1") {
     }
 };
 
@@ -92,7 +92,7 @@ TEST_F(P2PDeviceStubFixture, ConstructionAndSetup) {
     EXPECT_FALSE(stub->Connected());
     EXPECT_FALSE(stub->Scanning());
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     EXPECT_TRUE(stub->Connected());
     EXPECT_FALSE(stub->Scanning());
@@ -110,7 +110,7 @@ TEST_F(P2PDeviceStubFixture, DeviceFound) {
     auto stub = w11tng::P2PDeviceStub::Create("/device_1", delegate);
     EXPECT_TRUE(!!stub);
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     EXPECT_TRUE(stub->Connected());
 
@@ -119,7 +119,7 @@ TEST_F(P2PDeviceStubFixture, DeviceFound) {
     skeleton->EmitDeviceFound("/peer_1");
     skeleton->EmitDeviceFound("/peer_1");
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 }
 
 
@@ -135,7 +135,7 @@ TEST_F(P2PDeviceStubFixture, DeviceLost) {
     auto stub = w11tng::P2PDeviceStub::Create("/device_1", delegate);
     EXPECT_TRUE(!!stub);
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     EXPECT_TRUE(stub->Connected());
 
@@ -144,7 +144,7 @@ TEST_F(P2PDeviceStubFixture, DeviceLost) {
     skeleton->EmitDeviceLost("/peer_1");
     skeleton->EmitDeviceLost("/peer_1");
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 }
 
 TEST_F(P2PDeviceStubFixture, AllOtherSignalsSuccessfullySent) {
@@ -169,12 +169,12 @@ TEST_F(P2PDeviceStubFixture, AllOtherSignalsSuccessfullySent) {
 
     auto skeleton = w11tng::testing::P2PDeviceSkeleton::Create("/device_1");
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     auto stub = w11tng::P2PDeviceStub::Create("/device_1", delegate);
     EXPECT_TRUE(!!stub);
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     const auto freqs = w11tng::P2PDeviceStub::FrequencyList{1,2,3};
 
@@ -185,7 +185,7 @@ TEST_F(P2PDeviceStubFixture, AllOtherSignalsSuccessfullySent) {
     skeleton->EmitGroupFinished("/peer_1", "/interface_1");
     skeleton->EmitGroupRequest("/peer_1", 1337);
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     EXPECT_EQ(w11tng::P2PDeviceStub::Status::kSuccess, go_negotiation_success_result.status);
     EXPECT_EQ(1337, go_negotiation_success_result.oper_freq);
@@ -205,14 +205,14 @@ TEST_F(P2PDeviceStubFixture, FindAndTimeoutHandling) {
 
     auto skeleton = w11tng::testing::P2PDeviceSkeleton::Create("/device_1");
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     skeleton->SetDelegate(skeleton_delegate);
 
     auto stub = w11tng::P2PDeviceStub::Create("/device_1", stub_delegate);
     EXPECT_TRUE(!!stub);
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     EXPECT_TRUE(stub->Connected());
 
@@ -220,5 +220,5 @@ TEST_F(P2PDeviceStubFixture, FindAndTimeoutHandling) {
 
     // If we're waiting a bit longer here we will get the stop find
     // call the stub issues after the timeout.
-    mcs::testing::RunMainLoop(std::chrono::seconds{2});
+    ac::testing::RunMainLoop(std::chrono::seconds{2});
 }

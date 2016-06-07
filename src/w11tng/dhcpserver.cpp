@@ -23,10 +23,10 @@
 
 #include <boost/filesystem.hpp>
 
-#include <mcs/config.h>
-#include <mcs/logger.h>
-#include <mcs/networkutils.h>
-#include <mcs/keep_alive.h>
+#include <ac/config.h>
+#include <ac/logger.h>
+#include <ac/networkutils.h>
+#include <ac/keep_alive.h>
 
 #include <w11tng/config.h>
 
@@ -45,17 +45,17 @@ DhcpServer::DhcpServer(const std::weak_ptr<Delegate> &delegate, const std::strin
     delegate_(delegate),
     interface_name_(interface_name) {
 
-    lease_file_path_ = mcs::Utils::Sprintf("%s/dhcpd-%s-%s.leases",
-                                           mcs::kRuntimePath,
+    lease_file_path_ = ac::Utils::Sprintf("%s/dhcpd-%s-%s.leases",
+                                           ac::kRuntimePath,
                                            boost::filesystem::unique_path().string(),
                                            interface_name);
 
-    pid_file_path_ = mcs::Utils::Sprintf("%s/dhcpd-%s.pid",
-                                         mcs::kRuntimePath,
+    pid_file_path_ = ac::Utils::Sprintf("%s/dhcpd-%s.pid",
+                                         ac::kRuntimePath,
                                          interface_name_);
 
 
-    local_address_ = mcs::IpV4Address::from_string("192.168.7.1");
+    local_address_ = ac::IpV4Address::from_string("192.168.7.1");
 }
 
 DhcpServer::~DhcpServer() {
@@ -65,12 +65,12 @@ DhcpServer::~DhcpServer() {
 
 void DhcpServer::Start() {
     if (boost::filesystem::is_regular(pid_file_path_)) {
-        MCS_ERROR("DHCP server already running");
+        AC_ERROR("DHCP server already running");
         return;
     }
 
-    if (!mcs::Utils::CreateFile(lease_file_path_)) {
-        MCS_ERROR("Failed to create database for DHCP leases at %s",
+    if (!ac::Utils::CreateFile(lease_file_path_)) {
+        AC_ERROR("Failed to create database for DHCP leases at %s",
                   lease_file_path_);
         return;
     }
@@ -81,18 +81,18 @@ void DhcpServer::Start() {
     const char *broadcast = "192.168.7.255";
     unsigned char prefixlen = 24;
 
-    auto interface_index = mcs::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
+    auto interface_index = ac::NetworkUtils::RetrieveInterfaceIndex(interface_name_.c_str());
     if (interface_index < 0)
-        MCS_ERROR("Failed to determine index of network interface: %s", interface_name_);
+        AC_ERROR("Failed to determine index of network interface: %s", interface_name_);
 
-    if (mcs::NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, interface_index,
+    if (ac::NetworkUtils::ModifyInterfaceAddress(RTM_NEWADDR, NLM_F_REPLACE | NLM_F_ACK, interface_index,
                                     AF_INET, local_address_.to_string().c_str(),
                                     NULL, prefixlen, broadcast) < 0) {
-        MCS_ERROR("Failed to assign network address for %s", interface_name_);
+        AC_ERROR("Failed to assign network address for %s", interface_name_);
         return;
     }
 
-    MCS_DEBUG("Assigned network address %s", local_address_.to_string());
+    AC_DEBUG("Assigned network address %s", local_address_.to_string());
 
     std::vector<std::string> argv = {
         "-f", "-4",
@@ -122,7 +122,7 @@ void DhcpServer::OnFileChanged(const std::string &path) {
         sp->OnDhcpAddressAssigned(local_address_, actual_lease.FixedAddress());
 }
 
-mcs::IpV4Address DhcpServer::LocalAddress() const {
+ac::IpV4Address DhcpServer::LocalAddress() const {
     return local_address_;
 }
 

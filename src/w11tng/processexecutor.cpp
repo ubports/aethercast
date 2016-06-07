@@ -17,8 +17,8 @@
 
 #include <sys/prctl.h>
 
-#include <mcs/logger.h>
-#include <mcs/keep_alive.h>
+#include <ac/logger.h>
+#include <ac/keep_alive.h>
 
 #include "processexecutor.h"
 
@@ -39,7 +39,7 @@ ProcessExecutor::Ptr ProcessExecutor::FinalizeConstruction(const std::string &pa
     g_ptr_array_add(arguments, nullptr);
 
     auto cmdline = g_strjoinv(" ", reinterpret_cast<gchar**>(arguments->pdata));
-    MCS_DEBUG("Running with: %s", cmdline);
+    AC_DEBUG("Running with: %s", cmdline);
     g_free(cmdline);
 
     GError *error = nullptr;
@@ -48,7 +48,7 @@ ProcessExecutor::Ptr ProcessExecutor::FinalizeConstruction(const std::string &pa
                        [](gpointer user_data) { prctl(PR_SET_PDEATHSIG, SIGKILL); }, nullptr,
                        &pid_, &error)) {
 
-        MCS_ERROR("Failed to spawn DHCP server: %s", error->message);
+        AC_ERROR("Failed to spawn DHCP server: %s", error->message);
         g_error_free(error);
         g_ptr_array_free(arguments, FALSE);
         return sp;
@@ -57,12 +57,12 @@ ProcessExecutor::Ptr ProcessExecutor::FinalizeConstruction(const std::string &pa
     g_ptr_array_free(arguments, FALSE);
 
     process_watch_ = g_child_watch_add_full(0, pid_, [](GPid pid, gint status, gpointer user_data) {
-        auto thiz = static_cast<mcs::WeakKeepAlive<ProcessExecutor>*>(user_data)->GetInstance().lock();
+        auto thiz = static_cast<ac::WeakKeepAlive<ProcessExecutor>*>(user_data)->GetInstance().lock();
 
         if (!WIFEXITED(status))
-            MCS_WARNING("DHCP server (pid %d) exited with status %d", pid, status);
+            AC_WARNING("DHCP server (pid %d) exited with status %d", pid, status);
         else
-            MCS_DEBUG("DHCP server successfully terminated");
+            AC_DEBUG("DHCP server successfully terminated");
 
         if (not thiz)
             return;
@@ -73,8 +73,8 @@ ProcessExecutor::Ptr ProcessExecutor::FinalizeConstruction(const std::string &pa
 
         if (auto sp = thiz->delegate_.lock())
             sp->OnProcessTerminated();
-    }, new mcs::WeakKeepAlive<ProcessExecutor>(shared_from_this()),
-    [](gpointer data) { delete static_cast<mcs::WeakKeepAlive<ProcessExecutor>*>(data); });
+    }, new ac::WeakKeepAlive<ProcessExecutor>(shared_from_this()),
+    [](gpointer data) { delete static_cast<ac::WeakKeepAlive<ProcessExecutor>*>(data); });
 
 
     return sp;

@@ -15,13 +15,13 @@
  *
  */
 
-#include "mcs/utils.h"
-#include "mcs/mediamanagerfactory.h"
-#include "mcs/network/udpstream.h"
+#include "ac/utils.h"
+#include "ac/mediamanagerfactory.h"
+#include "ac/network/udpstream.h"
 
 #include "simplesource.h"
 
-namespace mcs {
+namespace ac {
 namespace tools {
 
 SimpleSource::Ptr SimpleSource::Create(const std::string &remote_address, int port) {
@@ -29,7 +29,7 @@ SimpleSource::Ptr SimpleSource::Create(const std::string &remote_address, int po
 }
 
 SimpleSource::SimpleSource(const std::string &remote_address, int port) :
-    media_manager_(mcs::MediaManagerFactory::CreateSource(remote_address, std::make_shared<mcs::network::UdpStream>())) {
+    media_manager_(ac::MediaManagerFactory::CreateSource(remote_address, std::make_shared<ac::network::UdpStream>())) {
 
     wds::RateAndResolutionsBitmap cea_rr;
     wds::RateAndResolutionsBitmap vesa_rr;
@@ -71,4 +71,4 @@ void SimpleSource::Stop() {
 }
 
 } // namespace tools
-} // namespace mcs
+} // namespace ac

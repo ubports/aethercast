@@ -15,12 +15,12 @@
  *
  */
 
-#include <mcs/glib_wrapper.h>
+#include <ac/glib_wrapper.h>
 
 #include "dbusnameowner.h"
 #include "glibhelpers.h"
 
-namespace mcs {
+namespace ac {
 namespace testing {
 
 DBusNameOwner::DBusNameOwner(const std::string &name) {
@@ -40,4 +40,4 @@ DBusNameOwner::~DBusNameOwner() {
 }
 
 } // namespace testing
-} // namespace mcs
+} // namespace ac

@@ -23,7 +23,7 @@
 
 #include <gio/gio.h>
 
-#include <mcs/scoped_gobject.h>
+#include <ac/scoped_gobject.h>
 
 namespace w11tng {
 
@@ -33,7 +33,7 @@ class InterfaceSelector : public std::enable_shared_from_this<InterfaceSelector>
 public:
     static constexpr const char *kBusName{"fi.w1.wpa_supplicant1"};
 
-    class Delegate : mcs::NonCopyable {
+    class Delegate : ac::NonCopyable {
     public:
         virtual void OnInterfaceSelectionDone(const std::string &path) = 0;
     };
@@ -57,7 +57,7 @@ private:
 
 private:
     std::weak_ptr<Delegate> delegate_;
-    mcs::ScopedGObject<GDBusConnection> connection_;
+    ac::ScopedGObject<GDBusConnection> connection_;
     std::vector<std::string> interfaces_;
 };
 

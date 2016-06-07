@@ -26,7 +26,7 @@ namespace {
 static constexpr const char* kVethNameTemplate{"vethXXXXXX"};
 }
 
-namespace mcs {
+namespace ac {
 namespace testing {
 
 VirtualNetwork::VirtualNetwork() :
@@ -52,5 +52,5 @@ std::string VirtualNetwork::Endpoint2() const {
 }
 
 } // namespace testing
-} // namespace mcs
+} // namespace ac
 

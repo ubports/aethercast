@@ -20,9 +20,9 @@
 #include <algorithm>
 #include <sstream>
 
-#include <mcs/logger.h>
-#include <mcs/keep_alive.h>
-#include <mcs/networkutils.h>
+#include <ac/logger.h>
+#include <ac/keep_alive.h>
+#include <ac/networkutils.h>
 
 #include "networkmanager.h"
 #include "informationelement.h"
@@ -36,7 +36,7 @@ static constexpr std::int32_t kSourceGoIntent = 7;
 
 namespace w11tng {
 
-mcs::NetworkManager::Ptr NetworkManager::Create() {
+ac::NetworkManager::Ptr NetworkManager::Create() {
     return std::shared_ptr<NetworkManager>(new NetworkManager())->FinalizeConstruction();
 }
 
@@ -46,7 +46,7 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
     GError *error = nullptr;
     connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
     if (!connection_) {
-        MCS_ERROR("Failed to connect to system bus: %s", error->message);
+        AC_ERROR("Failed to connect to system bus: %s", error->message);
         g_error_free(error);
         return sp;
     }
@@ -59,7 +59,7 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
 
 NetworkManager::NetworkManager() :
     firmware_loader_("", this),
-    dedicated_p2p_interface_(mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE")),
+    dedicated_p2p_interface_(ac::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE")),
     session_available_(true) {
 }
 
@@ -71,7 +71,7 @@ void NetworkManager::OnServiceFound(GDBusConnection *connection, const gchar *na
     boost::ignore_unused_variable_warning(name);
     boost::ignore_unused_variable_warning(name_owner);
 
-    auto inst = static_cast<mcs::WeakKeepAlive<NetworkManager>*>(user_data)->GetInstance().lock();
+    auto inst = static_cast<ac::WeakKeepAlive<NetworkManager>*>(user_data)->GetInstance().lock();
 
     if (not inst)
         return;
@@ -83,7 +83,7 @@ void NetworkManager::OnServiceLost(GDBusConnection *connection, const gchar *nam
     boost::ignore_unused_variable_warning(connection);
     boost::ignore_unused_variable_warning(name);
 
-    auto inst = static_cast<mcs::WeakKeepAlive<NetworkManager>*>(user_data)->GetInstance().lock();
+    auto inst = static_cast<ac::WeakKeepAlive<NetworkManager>*>(user_data)->GetInstance().lock();
 
     if (not inst)
         return;
@@ -92,16 +92,16 @@ void NetworkManager::OnServiceLost(GDBusConnection *connection, const gchar *nam
 }
 
 void NetworkManager::Initialize(bool firmware_loading) {
-    MCS_DEBUG("");
+    AC_DEBUG("");
 
-    if (firmware_loading && mcs::Utils::GetEnvValue("AETHERCAST_NEED_FIRMWARE") == "1") {
-        auto interface_name = mcs::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE");
+    if (firmware_loading && ac::Utils::GetEnvValue("AETHERCAST_NEED_FIRMWARE") == "1") {
+        auto interface_name = ac::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE");
         if (interface_name.length() == 0)
             interface_name = "p2p0";
 
         firmware_loader_.SetInterfaceName(interface_name);
         if (firmware_loader_.IsNeeded()) {
-            MCS_DEBUG("Loading WiFi firmware for interface %s", interface_name);
+            AC_DEBUG("Loading WiFi firmware for interface %s", interface_name);
             firmware_loader_.TryLoad();
             return;
         }
@@ -119,7 +119,7 @@ void NetworkManager::Initialize(bool firmware_loading) {
 }
 
 void NetworkManager::Release() {
-    MCS_DEBUG("");
+    AC_DEBUG("");
 
     for (auto &iter : devices_) {
         if (delegate_)
@@ -152,10 +152,10 @@ void NetworkManager::SetupInterface(const std::string &object_path) {
 }
 
 void NetworkManager::ReleaseInterface() {
-    MCS_DEBUG("");
+    AC_DEBUG("");
 
     if (current_device_) {
-        AdvanceDeviceState(current_device_, mcs::kDisconnected);
+        AdvanceDeviceState(current_device_, ac::kDisconnected);
         current_device_.reset();
         current_group_device_.reset();
         current_group_iface_.reset();
@@ -168,15 +168,15 @@ void NetworkManager::ReleaseInterface() {
         mgmt_interface_.reset();
 }
 
-void NetworkManager::SetDelegate(mcs::NetworkManager::Delegate *delegate) {
+void NetworkManager::SetDelegate(ac::NetworkManager::Delegate *delegate) {
     delegate_ = delegate;
 }
 
 bool NetworkManager::Setup() {
-    MCS_DEBUG("");
+    AC_DEBUG("");
 
     if (rfkill_manager_->IsBlocked(RfkillManager::Type::kWLAN)) {
-        MCS_ERROR("Can't setup network manager as WLAN is disabled");
+        AC_ERROR("Can't setup network manager as WLAN is disabled");
         return false;
     }
 
@@ -185,7 +185,7 @@ bool NetworkManager::Setup() {
                                    G_BUS_NAME_WATCHER_FLAGS_NONE,
                                    &NetworkManager::OnServiceFound,
                                    &NetworkManager::OnServiceLost,
-                                   new mcs::WeakKeepAlive<NetworkManager>(shared_from_this()),
+                                   new ac::WeakKeepAlive<NetworkManager>(shared_from_this()),
                                    nullptr);
 
     return true;
@@ -207,27 +207,27 @@ NetworkDevice::Ptr NetworkManager::FindDevice(const std::string &address) {
 }
 
 void NetworkManager::StartConnectTimeout() {
-    MCS_DEBUG("");
+    AC_DEBUG("");
 
     connect_timeout_ = g_timeout_add_seconds(kConnectTimeout.count(), [](gpointer user_data) {
-        auto inst = static_cast<mcs::SharedKeepAlive<NetworkManager>*>(user_data)->ShouldDie();
+        auto inst = static_cast<ac::SharedKeepAlive<NetworkManager>*>(user_data)->ShouldDie();
         if (not inst)
             return FALSE;
 
-        MCS_WARNING("Reached a timeout while trying to connect with remote %s", inst->current_device_->Address());
+        AC_WARNING("Reached a timeout while trying to connect with remote %s", inst->current_device_->Address());
 
         inst->connect_timeout_ = 0;
 
         // If the device is either already connected or trying to get an address
         // over DHCP we don't do anything. DHCP process will fail on its own after
         // some time and we will react on
-        if (inst->current_device_->State() == mcs::kConnected ||
-            inst->current_device_->State() == mcs::kConfiguration)
+        if (inst->current_device_->State() == ac::kConnected ||
+            inst->current_device_->State() == ac::kConfiguration)
             return FALSE;
 
         inst->p2p_device_->Cancel();
 
-        inst->AdvanceDeviceState(inst->current_device_, mcs::kFailure);
+        inst->AdvanceDeviceState(inst->current_device_, ac::kFailure);
 
         inst->current_device_.reset();
 
@@ -235,33 +235,33 @@ void NetworkManager::StartConnectTimeout() {
         // state so we don't have to care about terminating any group at this point.
 
         return FALSE;
-    }, new mcs::SharedKeepAlive<NetworkManager>{shared_from_this()});
+    }, new ac::SharedKeepAlive<NetworkManager>{shared_from_this()});
 }
 
 void NetworkManager::StopConnectTimeout() {
     if (connect_timeout_ == 0)
         return;
 
-    MCS_DEBUG("");
+    AC_DEBUG("");
 
     g_source_remove(connect_timeout_);
     connect_timeout_ = 0;
 }
 
-bool NetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
+bool NetworkManager::Connect(const ac::NetworkDevice::Ptr &device) {
     if (!p2p_device_ || current_device_)
         return false;
 
     if (!device)
         return false;
 
-    MCS_DEBUG("address %s", device->Address());
+    AC_DEBUG("address %s", device->Address());
 
     // Lets check here if we really own this device and if yes then we
     // select our own instance of it rather than relying on the input
     auto d = FindDevice(device->Address());
     if (!d) {
-        MCS_WARNING("Could not find instance for device %s", device->Address());
+        AC_WARNING("Could not find instance for device %s", device->Address());
         return false;
     }
 
@@ -272,7 +272,7 @@ bool NetworkManager::Connect(const mcs::NetworkDevice::Ptr &device) {
     if (!p2p_device_->Connect(d->ObjectPath(), kSourceGoIntent))
         return false;
 
-    current_device_->SetState(mcs::kAssociation);
+    current_device_->SetState(ac::kAssociation);
     if (delegate_)
         delegate_->OnDeviceStateChanged(current_device_);
 
@@ -320,7 +320,7 @@ std::string NetworkManager::SelectDeviceType() {
     else if (chassis == "watch")
         sub_category = "00FF";
 
-    return mcs::Utils::Sprintf("%s%s%s", category, oui, sub_category);
+    return ac::Utils::Sprintf("%s%s%s", category, oui, sub_category);
 }
 
 void NetworkManager::SyncDeviceConfiguration() {
@@ -333,7 +333,7 @@ void NetworkManager::SyncDeviceConfiguration() {
     p2p_device_->SetDeviceConfiguration(hostname, device_type);
 }
 
-bool NetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {
+bool NetworkManager::Disconnect(const ac::NetworkDevice::Ptr &device) {
     if (!p2p_device_ || !current_device_)
         return false;
 
@@ -347,8 +347,8 @@ bool NetworkManager::Disconnect(const mcs::NetworkDevice::Ptr &device) {
     return true;
 }
 
-std::vector<mcs::NetworkDevice::Ptr> NetworkManager::Devices() const {
-    std::vector<mcs::NetworkDevice::Ptr> values;
+std::vector<ac::NetworkDevice::Ptr> NetworkManager::Devices() const {
+    std::vector<ac::NetworkDevice::Ptr> values;
     std::transform(devices_.begin(), devices_.end(),
                    std::back_inserter(values),
                    [=](const std::pair<std::string,w11tng::NetworkDevice::Ptr> &value) {
@@ -357,15 +357,15 @@ std::vector<mcs::NetworkDevice::Ptr> NetworkManager::Devices() const {
     return values;
 }
 
-mcs::IpV4Address NetworkManager::LocalAddress() const {
-    mcs::IpV4Address address;
+ac::IpV4Address NetworkManager::LocalAddress() const {
+    ac::IpV4Address address;
 
     if (dhcp_server_)
         address = dhcp_server_->LocalAddress();
     else if (dhcp_client_)
         address = dhcp_client_->LocalAddress();
 
-    MCS_DEBUG("address %s", address);
+    AC_DEBUG("address %s", address);
 
     return address;
 }
@@ -388,7 +388,7 @@ void NetworkManager::OnP2PDeviceChanged() {
 }
 
 void NetworkManager::OnP2PDeviceReady() {
-    MCS_DEBUG("");
+    AC_DEBUG("");
     // Bring the device into a well known state
     p2p_device_->Flush();
     SyncDeviceConfiguration();
@@ -410,7 +410,7 @@ void NetworkManager::OnDeviceLost(const std::string &path) {
     if (devices_.find(path) == devices_.end())
         return;
 
-    MCS_DEBUG("peer %s", path);
+    AC_DEBUG("peer %s", path);
 
     auto device = devices_[path];
     devices_.erase(path);
@@ -425,21 +425,21 @@ void NetworkManager::OnDeviceLost(const std::string &path) {
         delegate_->OnDeviceLost(device);
 }
 
-void NetworkManager::AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::NetworkDeviceState state) {
+void NetworkManager::AdvanceDeviceState(const NetworkDevice::Ptr &device, ac::NetworkDeviceState state) {
     device->SetState(state);
 
-    if (state == mcs::kDisconnected) {
-        if (mcs::NetworkUtils::SendDriverPrivateCommand(mgmt_interface_->Ifname(),
+    if (state == ac::kDisconnected) {
+        if (ac::NetworkUtils::SendDriverPrivateCommand(mgmt_interface_->Ifname(),
                                                         BuildMiracastModeCommand(MiracastMode::kOff)) < 0)
-            MCS_DEBUG("Failed to disable WiFi driver miracast mode (not supported?)");
+            AC_DEBUG("Failed to disable WiFi driver miracast mode (not supported?)");
         else
-            MCS_DEBUG("Disabled WiFi driver miracast mode");
+            AC_DEBUG("Disabled WiFi driver miracast mode");
     }
 
     // When we're switching to be connected or disconnected we need to mark the
     // session as not being available to prevent anyone else to connect with us.
-    if (state == mcs::kConnected || state == mcs::kDisconnected) {
-        session_available_ = (state != mcs::kConnected);
+    if (state == ac::kConnected || state == ac::kDisconnected) {
+        session_available_ = (state != ac::kConnected);
         ConfigureFromCapabilities();
     }
 
@@ -448,7 +448,7 @@ void NetworkManager::AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::N
 }
 
 void NetworkManager::HandleConnectFailed() {
-    AdvanceDeviceState(current_device_, mcs::kFailure);
+    AdvanceDeviceState(current_device_, ac::kFailure);
     current_device_.reset();
     StopConnectTimeout();
 }
@@ -457,7 +457,7 @@ void NetworkManager::OnPeerConnectFailed() {
     if (!current_device_)
         return;
 
-    MCS_DEBUG("");
+    AC_DEBUG("");
 
     HandleConnectFailed();
 }
@@ -466,7 +466,7 @@ void NetworkManager::OnGroupOwnerNegotiationFailure(const std::string &peer_path
     if (!current_device_)
         return;
 
-    MCS_DEBUG("Connecting with peer %s failed: %s", peer_path, P2PDeviceStub::StatusToString(result.status));
+    AC_DEBUG("Connecting with peer %s failed: %s", peer_path, P2PDeviceStub::StatusToString(result.status));
 
     HandleConnectFailed();
 }
@@ -484,18 +484,18 @@ void NetworkManager::OnGroupOwnerNegotiationSuccess(const std::string &peer_path
         n++;
     }
 
-    MCS_DEBUG("peer %s selected oper freq %d wps_method %s",
+    AC_DEBUG("peer %s selected oper freq %d wps_method %s",
               peer_path, result.oper_freq, P2PDeviceStub::WpsMethodToString(result.wps_method));
-    MCS_DEBUG("intersect freqs [%s]", frequencies.str());
+    AC_DEBUG("intersect freqs [%s]", frequencies.str());
 }
 
 void NetworkManager::OnGroupStarted(const std::string &group_path, const std::string &interface_path, const std::string &role) {
     if (!current_device_)
         return;
 
-    MCS_DEBUG("group %s interface %s role %s", group_path, interface_path, role);
+    AC_DEBUG("group %s interface %s role %s", group_path, interface_path, role);
 
-    AdvanceDeviceState(current_device_, mcs::kConfiguration);
+    AdvanceDeviceState(current_device_, ac::kConfiguration);
 
     current_device_->SetRole(role);
 
@@ -512,7 +512,7 @@ void NetworkManager::OnGroupFinished(const std::string &group_path, const std::s
     if (!current_device_)
         return;
 
-    MCS_DEBUG("group %s interface %s", group_path, interface_path);
+    AC_DEBUG("group %s interface %s", group_path, interface_path);
 
     StopConnectTimeout();
 
@@ -522,12 +522,12 @@ void NetworkManager::OnGroupFinished(const std::string &group_path, const std::s
     current_group_iface_.reset();
     current_group_device_.reset();
 
-    AdvanceDeviceState(current_device_, mcs::kDisconnected);
+    AdvanceDeviceState(current_device_, ac::kDisconnected);
     current_device_.reset();
 }
 
 void NetworkManager::OnGroupRequest(const std::string &peer_path, int dev_passwd_id) {
-    MCS_DEBUG("peer %s dev_passwd_id %d", peer_path, dev_passwd_id);
+    AC_DEBUG("peer %s dev_passwd_id %d", peer_path, dev_passwd_id);
 
     // FIXME once we implement sink support we need to have this
     // respected as well
@@ -543,27 +543,27 @@ void NetworkManager::OnDeviceReady(const NetworkDevice::Ptr &device) {
         delegate_->OnDeviceFound(device);
 }
 
-void NetworkManager::OnDhcpAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) {
-    if (!current_device_ || current_device_->State() != mcs::kConfiguration)
+void NetworkManager::OnDhcpAddressAssigned(const ac::IpV4Address &local_address, const ac::IpV4Address &remote_address) {
+    if (!current_device_ || current_device_->State() != ac::kConfiguration)
         return;
 
-    MCS_DEBUG("local %s remote %s", local_address, remote_address);
+    AC_DEBUG("local %s remote %s", local_address, remote_address);
 
     current_device_->SetIpV4Address(remote_address);
 
     StopConnectTimeout();
 
-    AdvanceDeviceState(current_device_, mcs::kConnected);
+    AdvanceDeviceState(current_device_, ac::kConnected);
 }
 
 void NetworkManager::OnDhcpTerminated() {
-    if (!current_device_ || current_device_->State() != mcs::kConfiguration)
+    if (!current_device_ || current_device_->State() != ac::kConfiguration)
         return;
 
-    MCS_DEBUG("");
+    AC_DEBUG("");
 
     Disconnect(current_device_);
-    AdvanceDeviceState(current_device_, mcs::kFailure);
+    AdvanceDeviceState(current_device_, ac::kFailure);
 }
 
 void NetworkManager::OnFirmwareLoaded() {
@@ -579,7 +579,7 @@ void NetworkManager::OnInterfaceSelectionDone(const std::string &path) {
     if (path.length() == 0)
         return;
 
-    MCS_DEBUG("Found P2P interface %s", path);
+    AC_DEBUG("Found P2P interface %s", path);
     SetupInterface(path);
 }
 
@@ -626,7 +626,7 @@ void NetworkManager::ConfigureFromCapabilities() {
 
     auto device_type = GenerateWfdDeviceType();
 
-    MCS_DEBUG("device type %d session availability %d",
+    AC_DEBUG("device type %d session availability %d",
               device_type,
               session_available_);
 
@@ -661,7 +661,7 @@ void NetworkManager::OnManagerInterfaceAdded(const std::string &path) {
 }
 
 void NetworkManager::OnManagerInterfaceRemoved(const std::string &path) {
-    MCS_DEBUG("path %s", path);
+    AC_DEBUG("path %s", path);
 
     if (!p2p_device_)
         return;
@@ -690,11 +690,11 @@ void NetworkManager::OnManagementInterfaceReady() {
 }
 
 std::string NetworkManager::BuildMiracastModeCommand(MiracastMode mode) {
-    return mcs::Utils::Sprintf("MIRACAST %d", static_cast<int>(mode));
+    return ac::Utils::Sprintf("MIRACAST %d", static_cast<int>(mode));
 }
 
 void NetworkManager::OnGroupInterfaceReady() {
-    if (!current_device_ || current_device_->State() != mcs::kConfiguration)
+    if (!current_device_ || current_device_->State() != ac::kConfiguration)
         return;
 
     auto ifname = current_group_iface_->Ifname();
@@ -702,11 +702,11 @@ void NetworkManager::OnGroupInterfaceReady() {
     // Android WiFi drivers have a special mode build in when they should
     // perform well for Miracast which we enable here. If the command is
     // not available this is a no-op.
-    if (mcs::NetworkUtils::SendDriverPrivateCommand(mgmt_interface_->Ifname(),
+    if (ac::NetworkUtils::SendDriverPrivateCommand(mgmt_interface_->Ifname(),
                                                     BuildMiracastModeCommand(MiracastMode::kSource)) < 0)
-        MCS_WARNING("Failed to activate miracast mode of WiFi driver (not supported?)");
+        AC_WARNING("Failed to activate miracast mode of WiFi driver (not supported?)");
     else
-        MCS_DEBUG("Enabled WiFi driver miracast mode");
+        AC_DEBUG("Enabled WiFi driver miracast mode");
 
     auto sp = shared_from_this();
 
@@ -717,7 +717,7 @@ void NetworkManager::OnGroupInterfaceReady() {
 }
 
 void NetworkManager::OnHostnameChanged() {
-    MCS_DEBUG("");
+    AC_DEBUG("");
     SyncDeviceConfiguration();
 }
 

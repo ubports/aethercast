@@ -26,7 +26,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include "mcs/glib_wrapper.h"
+#include "ac/glib_wrapper.h"
 
 #include "application.h"
 
@@ -65,7 +65,7 @@ private:
 };
 }
 
-namespace mcs {
+namespace ac {
 namespace client {
 
 GMainLoop *Application::main_loop_ = nullptr;
@@ -561,4 +561,4 @@ void Application::OnObjectManagerCreated(GObject *object, GAsyncResult *res, gpo
 }
 
 } // namespace client
-} // namespace mcs
+} // namespace ac

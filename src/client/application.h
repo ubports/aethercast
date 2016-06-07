@@ -23,7 +23,7 @@
 #include <map>
 #include <functional>
 
-#include "mcs/glib_wrapper.h"
+#include "ac/glib_wrapper.h"
 
 extern "C" {
 // Ignore all warnings coming from the external headers as we don't
@@ -35,7 +35,7 @@ extern "C" {
 #pragma GCC diagnostic pop
 }
 
-namespace mcs {
+namespace ac {
 namespace client {
 
 class Application {
@@ -109,6 +109,6 @@ private:
 };
 
 } // namespace client
-} // namespace mcs
+} // namespace ac
 
 #endif

@@ -16,12 +16,12 @@
  * Authored by: Thomas Voß <thomas.voss@canonical.com>
  */
 
-#ifndef MCS_TESTING_COMMON_STATISTICS_H_
-#define MCS_TESTING_COMMON_STATISTICS_H_
+#ifndef AC_TESTING_COMMON_STATISTICS_H_
+#define AC_TESTING_COMMON_STATISTICS_H_
 
 #include <functional>
 
-namespace mcs {
+namespace ac {
 namespace testing {
 
 /**
@@ -125,15 +125,15 @@ struct AndersonDarlingTest
  *
  * \code
  *
- * mcs::testing::OutOfProcessBenchmark benchmark;
+ * ac::testing::OutOfProcessBenchmark benchmark;
  *
- *  mcs::testing::Result search_result;
- *  mcs::ActionMetadata meta_data{default_locale, default_form_factor};
+ *  ac::testing::Result search_result;
+ *  ac::ActionMetadata meta_data{default_locale, default_form_factor};
  *
  *  static const std::size_t sample_size{10};
  *  static const std::chrono::seconds per_trial_timeout{1};
  *
- *  mcs::testing::Benchmark::PreviewConfiguration config
+ *  ac::testing::Benchmark::PreviewConfiguration config
  *  {
  *      [search_result, meta_data]() { return std::make_pair(search_result, meta_data); },
  *      {
@@ -144,15 +144,15 @@ struct AndersonDarlingTest
  *
  * auto result = benchmark.for_preview(scope, config);
  *
- *  auto test_result = mcs::testing::StudentsTTest().one_sample(
+ *  auto test_result = ac::testing::StudentsTTest().one_sample(
  *              reference_preview_performance,
  *              result);
  *
- *  EXPECT_EQ(mcs::testing::HypothesisStatus::not_rejected,
+ *  EXPECT_EQ(ac::testing::HypothesisStatus::not_rejected,
  *            test_result.sample_mean_is_eq_to_reference(0.05));
- *  EXPECT_EQ(mcs::testing::HypothesisStatus::not_rejected,
+ *  EXPECT_EQ(ac::testing::HypothesisStatus::not_rejected,
  *            test_result.sample_mean_is_ge_than_reference(0.05));
- *  EXPECT_EQ(mcs::testing::HypothesisStatus::rejected,
+ *  EXPECT_EQ(ac::testing::HypothesisStatus::rejected,
  *            test_result.sample_mean_is_le_than_reference(0.05));
  * \endcode
  *
@@ -195,6 +195,6 @@ struct StudentsTTest
 };
 
 } // namespace testing
-} // namespace mcs
+} // namespace ac
 
 #endif

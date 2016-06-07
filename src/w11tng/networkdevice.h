@@ -20,8 +20,8 @@
 
 #include <memory>
 
-#include <mcs/networkdevice.h>
-#include <mcs/shared_gobject.h>
+#include <ac/networkdevice.h>
+#include <ac/shared_gobject.h>
 
 extern "C" {
 // Ignore all warnings coming from the external headers as we don't
@@ -38,12 +38,12 @@ extern "C" {
 namespace w11tng {
 
 class NetworkDevice : public std::enable_shared_from_this<NetworkDevice>,
-                      public mcs::NetworkDevice,
+                      public ac::NetworkDevice,
                       public PeerStub::Delegate {
 public:
     typedef std::shared_ptr<NetworkDevice> Ptr;
 
-    class Delegate : public mcs::NonCopyable {
+    class Delegate : public ac::NonCopyable {
     public:
         virtual void OnDeviceReady(const NetworkDevice::Ptr &device) = 0;
         virtual void OnDeviceChanged(const NetworkDevice::Ptr &device) = 0;
@@ -56,17 +56,17 @@ public:
     void SetDelegate(const std::weak_ptr<Delegate> delegate);
     void ResetDelegate();
 
-    void SetAddress(const mcs::MacAddress &address);
-    void SetIpV4Address(const mcs::IpV4Address &address);
+    void SetAddress(const ac::MacAddress &address);
+    void SetIpV4Address(const ac::IpV4Address &address);
     void SetName(const std::string &name);
-    void SetState(mcs::NetworkDeviceState state);
-    void SetSupportedRoles(const std::vector<mcs::NetworkDeviceRole> roles);
+    void SetState(ac::NetworkDeviceState state);
+    void SetSupportedRoles(const std::vector<ac::NetworkDeviceRole> roles);
 
-    mcs::MacAddress Address() const override;
-    mcs::IpV4Address IPv4Address() const override;
+    ac::MacAddress Address() const override;
+    ac::IpV4Address IPv4Address() const override;
     std::string Name() const override;
-    mcs::NetworkDeviceState State() const override;
-    std::vector<mcs::NetworkDeviceRole> SupportedRoles() const override;
+    ac::NetworkDeviceState State() const override;
+    std::vector<ac::NetworkDeviceRole> SupportedRoles() const override;
 
     std::string ObjectPath() const;
 
@@ -83,11 +83,11 @@ private:
 
 private:
     std::weak_ptr<Delegate> delegate_;
-    mcs::MacAddress address_;
-    mcs::IpV4Address ip_address_;
+    ac::MacAddress address_;
+    ac::IpV4Address ip_address_;
     std::string name_;
-    mcs::NetworkDeviceState state_;
-    std::vector<mcs::NetworkDeviceRole> supported_roles_;
+    ac::NetworkDeviceState state_;
+    std::vector<ac::NetworkDeviceRole> supported_roles_;
     std::string object_path_;
     std::shared_ptr<PeerStub> peer_;
     std::string role_;

@@ -18,8 +18,8 @@
 #include <memory>
 #include <iostream>
 
-#include "mcs/keep_alive.h"
-#include "mcs/logger.h"
+#include "ac/keep_alive.h"
+#include "ac/logger.h"
 
 #include "p2pdeviceskeleton.h"
 
@@ -30,12 +30,12 @@ P2PDeviceSkeleton::Ptr P2PDeviceSkeleton::FinalizeConstruction() {
     auto sp = shared_from_this();
 
     g_signal_connect_data(skeleton_.get(), "handle-find",
-         G_CALLBACK(&P2PDeviceSkeleton::OnHandleFind), new mcs::WeakKeepAlive<P2PDeviceSkeleton>(shared_from_this()),
-         [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<P2PDeviceSkeleton>*>(data); }, GConnectFlags(0));
+         G_CALLBACK(&P2PDeviceSkeleton::OnHandleFind), new ac::WeakKeepAlive<P2PDeviceSkeleton>(shared_from_this()),
+         [](gpointer data, GClosure *) { delete static_cast<ac::WeakKeepAlive<P2PDeviceSkeleton>*>(data); }, GConnectFlags(0));
 
     g_signal_connect_data(skeleton_.get(), "handle-stop-find",
-         G_CALLBACK(&P2PDeviceSkeleton::OnHandleStopFind), new mcs::WeakKeepAlive<P2PDeviceSkeleton>(shared_from_this()),
-         [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<P2PDeviceSkeleton>*>(data); }, GConnectFlags(0));
+         G_CALLBACK(&P2PDeviceSkeleton::OnHandleStopFind), new ac::WeakKeepAlive<P2PDeviceSkeleton>(shared_from_this()),
+         [](gpointer data, GClosure *) { delete static_cast<ac::WeakKeepAlive<P2PDeviceSkeleton>*>(data); }, GConnectFlags(0));
 
     return sp;
 }
@@ -52,9 +52,9 @@ P2PDeviceSkeleton::~P2PDeviceSkeleton() {
 }
 
 gboolean P2PDeviceSkeleton::OnHandleFind(WpaSupplicantInterfaceP2PDevice *device, GDBusMethodInvocation *invocation, GVariant *properties, gpointer user_data) {
-    auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceSkeleton>*>(user_data)->GetInstance().lock();
+    auto inst = static_cast<ac::WeakKeepAlive<P2PDeviceSkeleton>*>(user_data)->GetInstance().lock();
 
-    MCS_DEBUG("");
+    AC_DEBUG("");
 
     if (not inst) {
         g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");
@@ -70,9 +70,9 @@ gboolean P2PDeviceSkeleton::OnHandleFind(WpaSupplicantInterfaceP2PDevice *device
 }
 
 gboolean P2PDeviceSkeleton::OnHandleStopFind(WpaSupplicantInterfaceP2PDevice *device, GDBusMethodInvocation *invocation, gpointer user_data) {
-    auto inst = static_cast<mcs::WeakKeepAlive<P2PDeviceSkeleton>*>(user_data)->GetInstance().lock();
+    auto inst = static_cast<ac::WeakKeepAlive<P2PDeviceSkeleton>*>(user_data)->GetInstance().lock();
 
-    MCS_DEBUG("");
+    AC_DEBUG("");
 
     if (not inst) {
         g_dbus_method_invocation_return_error(invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Invalid state");

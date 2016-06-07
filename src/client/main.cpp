@@ -21,5 +21,5 @@
 #include "application.h"
 
 int main(int argc, char **argv) {
-    return mcs::client::Application::Main(mcs::client::Application::MainOptions::FromCommandLine(argc, argv));
+    return ac::client::Application::Main(ac::client::Application::MainOptions::FromCommandLine(argc, argv));
 }

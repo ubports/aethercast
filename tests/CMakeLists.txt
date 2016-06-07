@@ -10,7 +10,6 @@ include_directories(
   ${ANDROID_HEADERS_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/
   ${CMAKE_SOURCE_DIR}/src
-  ${CMAKE_SOURCE_DIR}/src/mcs
   ${CMAKE_SOURCE_DIR}/tests
   ${CMAKE_SOURCE_DIR}/tests/3rd_party/process-cpp-minimal/include
   # We have to pull in generated header files.
@@ -64,5 +63,5 @@ AETHERCAST_ADD_TEST(utilities_tests utilities_tests.cpp)
 AETHERCAST_ADD_TEST(scoped_gobject_tests scoped_gobject_tests.cpp)
 
 add_subdirectory(w11tng)
-add_subdirectory(mcs)
+add_subdirectory(ac)
 add_subdirectory(wds)

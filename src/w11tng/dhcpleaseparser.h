@@ -21,21 +21,21 @@
 #include <string>
 #include <vector>
 
-#include <mcs/glib_wrapper.h>
+#include <ac/glib_wrapper.h>
 
-#include <mcs/ip_v4_address.h>
+#include <ac/ip_v4_address.h>
 
 namespace w11tng {
 class DhcpLeaseInfo {
 public:
     std::string Interface() const { return interface_; }
-    mcs::IpV4Address FixedAddress() const { return fixed_address_; }
-    mcs::IpV4Address Gateway() const { return gateway_; }
+    ac::IpV4Address FixedAddress() const { return fixed_address_; }
+    ac::IpV4Address Gateway() const { return gateway_; }
 
 private:
     std::string interface_;
-    mcs::IpV4Address fixed_address_;
-    mcs::IpV4Address gateway_;
+    ac::IpV4Address fixed_address_;
+    ac::IpV4Address gateway_;
 
     friend class DhcpLeaseParser;
 };

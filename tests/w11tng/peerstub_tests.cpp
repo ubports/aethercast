@@ -30,11 +30,11 @@
 
 namespace {
 class PeerStubFixture : public ::testing::Test,
-                        public mcs::testing::DBusFixture,
-                        public mcs::testing::DBusNameOwner {
+                        public ac::testing::DBusFixture,
+                        public ac::testing::DBusNameOwner {
 public:
     PeerStubFixture() :
-        mcs::testing::DBusNameOwner("fi.w1.wpa_supplicant1") {
+        ac::testing::DBusNameOwner("fi.w1.wpa_supplicant1") {
     }
 };
 
@@ -58,7 +58,7 @@ TEST_F(PeerStubFixture, ConstructionAndProperties) {
 
     stub->SetDelegate(delegate);
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     EXPECT_EQ(stub->Address(), "00:00:00:00:00:00");
     EXPECT_EQ(stub->Name(), std::string(""));
@@ -66,7 +66,7 @@ TEST_F(PeerStubFixture, ConstructionAndProperties) {
     skeleton->SetAddress(std::vector<uint8_t>{ 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff });
     skeleton->SetName("Test Peer");
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     EXPECT_EQ(stub->Address(), "aa:bb:cc:dd:ee:ff");
     EXPECT_EQ(stub->Name(), std::string("Test Peer"));

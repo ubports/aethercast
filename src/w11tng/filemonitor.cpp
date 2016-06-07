@@ -15,7 +15,7 @@
  *
  */
 
-#include <mcs/keep_alive.h>
+#include <ac/keep_alive.h>
 
 #include "filemonitor.h"
 
@@ -29,21 +29,21 @@ FileMonitor::Ptr FileMonitor::FinalizeConstruction(const std::string &path) {
 
     auto file_to_watch = g_file_new_for_path(path.c_str());
     if (!file_to_watch) {
-        MCS_ERROR("Failed to access file at path %s", path);
+        AC_ERROR("Failed to access file at path %s", path);
         return sp;
     }
 
     GError *error = nullptr;
     monitor_.reset(g_file_monitor_file(file_to_watch, G_FILE_MONITOR_NONE, nullptr, &error));
     if (error) {
-        MCS_ERROR("Failed to create monitor for file %s: %s", path, error->message);
+        AC_ERROR("Failed to create monitor for file %s: %s", path, error->message);
         g_error_free(error);
         return sp;
     }
 
     g_signal_connect_data(monitor_.get(), "changed", G_CALLBACK(&FileMonitor::OnChanged),
-                          new mcs::WeakKeepAlive<FileMonitor>(shared_from_this()),
-                          [](gpointer data, GClosure *) { delete static_cast<mcs::WeakKeepAlive<FileMonitor>*>(data); },
+                          new ac::WeakKeepAlive<FileMonitor>(shared_from_this()),
+                          [](gpointer data, GClosure *) { delete static_cast<ac::WeakKeepAlive<FileMonitor>*>(data); },
                           GConnectFlags(0));
 
     return sp;
@@ -60,7 +60,7 @@ FileMonitor::~FileMonitor() {
 void FileMonitor::OnChanged(GFileMonitor *monitor, GFile *file, GFile *other_file,
                                 GFileMonitorEvent event_type, gpointer user_data) {
 
-    auto thiz = static_cast<mcs::WeakKeepAlive<FileMonitor>*>(user_data)->GetInstance().lock();
+    auto thiz = static_cast<ac::WeakKeepAlive<FileMonitor>*>(user_data)->GetInstance().lock();
 
     if (not thiz)
         return;

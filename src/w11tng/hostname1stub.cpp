@@ -17,8 +17,8 @@
 
 #include <boost/concept_check.hpp>
 
-#include <mcs/keep_alive.h>
-#include <mcs/dbushelpers.h>
+#include <ac/keep_alive.h>
+#include <ac/dbus/helpers.h>
 
 #include "hostname1stub.h"
 
@@ -34,7 +34,7 @@ Hostname1Stub::Ptr Hostname1Stub::FinalizeConstruction() {
     GError *error = nullptr;
     connection_.reset(g_bus_get_sync(G_BUS_TYPE_SYSTEM, nullptr, &error));
     if (!connection_) {
-        MCS_ERROR("Failed to connect to system bus: %s", error->message);
+        AC_ERROR("Failed to connect to system bus: %s", error->message);
         g_error_free(error);
         return sp;
     }
@@ -47,8 +47,8 @@ Hostname1Stub::Ptr Hostname1Stub::FinalizeConstruction() {
                                        nullptr,
                                        G_DBUS_SIGNAL_FLAGS_NONE,
                                        &Hostname1Stub::OnPropertiesChanged,
-                                       new mcs::WeakKeepAlive<Hostname1Stub>(shared_from_this()),
-                                       [](gpointer data) { delete static_cast<mcs::WeakKeepAlive<Hostname1Stub>*>(data); });
+                                       new ac::WeakKeepAlive<Hostname1Stub>(shared_from_this()),
+                                       [](gpointer data) { delete static_cast<ac::WeakKeepAlive<Hostname1Stub>*>(data); });
 
     SyncProperties();
 
@@ -66,7 +66,7 @@ void Hostname1Stub::OnPropertiesChanged(GDBusConnection *connection, const gchar
                                         const gchar *interface_name, const gchar *signal_name, GVariant *parameters,
                                         gpointer user_data) {
 
-    auto thiz = static_cast<mcs::WeakKeepAlive<Hostname1Stub>*>(user_data)->GetInstance().lock();
+    auto thiz = static_cast<ac::WeakKeepAlive<Hostname1Stub>*>(user_data)->GetInstance().lock();
 
     if (not thiz)
         return;
@@ -90,23 +90,23 @@ void Hostname1Stub::SyncProperties() {
                            nullptr,
                            [](GObject *source, GAsyncResult *res, gpointer user_data) {
 
-        auto thiz = static_cast<mcs::SharedKeepAlive<Hostname1Stub>*>(user_data)->ShouldDie();
+        auto thiz = static_cast<ac::SharedKeepAlive<Hostname1Stub>*>(user_data)->ShouldDie();
 
         GError *error = nullptr;
         auto result = g_dbus_connection_call_finish(thiz->connection_.get(), res, &error);
         if (!result) {
-            MCS_ERROR("Failed to query hostname service: %s", error->message);
+            AC_ERROR("Failed to query hostname service: %s", error->message);
             g_error_free(error);
             return;
         }
 
         thiz->ParseProperties(g_variant_get_child_value(result, 0));
 
-    }, new mcs::SharedKeepAlive<Hostname1Stub>{shared_from_this()});
+    }, new ac::SharedKeepAlive<Hostname1Stub>{shared_from_this()});
 }
 
 void Hostname1Stub::ParseProperties(GVariant *properties) {
-    mcs::DBusHelpers::ParseDictionary(properties, [&](const std::string &key, GVariant *value) {
+    ac::dbus::Helpers::ParseDictionary(properties, [&](const std::string &key, GVariant *value) {
         if (key == "Hostname")
             hostname_ = g_variant_get_string(g_variant_get_variant(value), nullptr) ? : "";
         else if (key == "StaticHostname")

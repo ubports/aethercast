@@ -15,17 +15,17 @@
  *
  */
 
-#ifndef MCS_TESTING_DBUSNAMEOWNER_H_
-#define MCS_TESTING_DBUSNAMEOWNER_H_
+#ifndef AC_TESTING_DBUSNAMEOWNER_H_
+#define AC_TESTING_DBUSNAMEOWNER_H_
 
 #include <glib.h>
 #include <gio/gio.h>
 
 #include <string>
 
-#include <mcs/scoped_gobject.h>
+#include <ac/scoped_gobject.h>
 
-namespace mcs {
+namespace ac {
 namespace testing {
 
 class DBusNameOwner {
@@ -35,10 +35,10 @@ public:
 
 private:
     guint id_;
-    mcs::ScopedGObject<GDBusConnection> connection_;
+    ac::ScopedGObject<GDBusConnection> connection_;
 };
 
 } // namespace testing
-} // namespace mcs
+} // namespace ac
 
 #endif

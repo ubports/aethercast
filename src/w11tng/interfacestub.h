@@ -20,10 +20,10 @@
 
 #include <vector>
 
-#include <mcs/shared_gobject.h>
-#include <mcs/scoped_gobject.h>
-#include <mcs/non_copyable.h>
-#include <mcs/mac_address.h>
+#include <ac/shared_gobject.h>
+#include <ac/scoped_gobject.h>
+#include <ac/non_copyable.h>
+#include <ac/mac_address.h>
 
 extern "C" {
 // Ignore all warnings coming from the external headers as we don't
@@ -43,7 +43,7 @@ public:
 
     typedef std::shared_ptr<InterfaceStub> Ptr;
 
-    class Delegate : public mcs::NonCopyable {
+    class Delegate : public ac::NonCopyable {
     public:
         virtual void OnInterfaceReady(const std::string &object_path) = 0;
     };
@@ -66,8 +66,8 @@ private:
 
 private:
     std::weak_ptr<Delegate> delegate_;
-    mcs::ScopedGObject<GDBusConnection> connection_;
-    mcs::ScopedGObject<WpaSupplicantInterface> proxy_;
+    ac::ScopedGObject<GDBusConnection> connection_;
+    ac::ScopedGObject<WpaSupplicantInterface> proxy_;
 };
 
 } // namespace w11tng

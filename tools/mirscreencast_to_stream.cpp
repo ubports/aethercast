@@ -28,8 +28,8 @@
 
 #include <boost/program_options.hpp>
 
-#include <mcs/logger.h>
-#include <mcs/glib_wrapper.h>
+#include <ac/logger.h>
+#include <ac/glib_wrapper.h>
 
 #include "simplesource.h"
 
@@ -38,10 +38,10 @@ static GMainLoop *main_loop = nullptr;
 namespace {
 const std::chrono::seconds kShutdownGracePreriod{1};
 const std::int16_t kProcessPriorityUrgentDisplay{-8};
-mcs::tools::SimpleSource::Ptr source;
+ac::tools::SimpleSource::Ptr source;
 
 static gboolean OnSignalRaised(gpointer user_data) {
-    MCS_DEBUG("Exiting");
+    AC_DEBUG("Exiting");
 
     g_timeout_add_seconds(kShutdownGracePreriod.count(), [](gpointer user_data) {
         g_main_loop_quit(main_loop);
@@ -103,9 +103,9 @@ int main(int argc, char **argv) {
     setpriority(PRIO_PROCESS, 0, kProcessPriorityUrgentDisplay);
 
     if (debug)
-        mcs::Log().Init(mcs::Logger::Severity::kDebug);
+        ac::Log().Init(ac::Logger::Severity::kDebug);
 
-    source = mcs::tools::SimpleSource::Create(remote_address, port);
+    source = ac::tools::SimpleSource::Create(remote_address, port);
     source->Start();
 
     g_main_loop_run(main_loop);

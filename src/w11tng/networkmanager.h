@@ -20,7 +20,7 @@
 
 #include <unordered_map>
 
-#include <mcs/networkmanager.h>
+#include <ac/networkmanager.h>
 
 #include "managerstub.h"
 #include "p2pdevicestub.h"
@@ -36,7 +36,7 @@
 namespace w11tng {
 
 class NetworkManager : public std::enable_shared_from_this<NetworkManager>,
-                       public mcs::NetworkManager,
+                       public ac::NetworkManager,
                        public P2PDeviceStub::Delegate,
                        public NetworkDevice::Delegate,
                        public w11tng::DhcpClient::Delegate,
@@ -50,21 +50,21 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>,
 public:
     static constexpr const char *kBusName{"fi.w1.wpa_supplicant1"};
 
-    static mcs::NetworkManager::Ptr Create();
+    static ac::NetworkManager::Ptr Create();
 
     ~NetworkManager();
 
-    void SetDelegate(mcs::NetworkManager::Delegate * delegate) override;
+    void SetDelegate(ac::NetworkManager::Delegate * delegate) override;
 
     bool Setup() override;
     void Release() override;
 
     void Scan(const std::chrono::seconds &timeout) override;
-    bool Connect(const mcs::NetworkDevice::Ptr &device) override;
-    bool Disconnect(const mcs::NetworkDevice::Ptr &device) override;
+    bool Connect(const ac::NetworkDevice::Ptr &device) override;
+    bool Disconnect(const ac::NetworkDevice::Ptr &device) override;
 
-    std::vector<mcs::NetworkDevice::Ptr> Devices() const override;
-    mcs::IpV4Address LocalAddress() const override;
+    std::vector<ac::NetworkDevice::Ptr> Devices() const override;
+    ac::IpV4Address LocalAddress() const override;
     bool Running() const override;
     bool Scanning() const override;
     bool Ready() const override;
@@ -86,7 +86,7 @@ public:
     void OnDeviceChanged(const NetworkDevice::Ptr &device) override;
     void OnDeviceReady(const NetworkDevice::Ptr &device) override;
 
-    void OnDhcpAddressAssigned(const mcs::IpV4Address &local_address, const mcs::IpV4Address &remote_address) override;
+    void OnDhcpAddressAssigned(const ac::IpV4Address &local_address, const ac::IpV4Address &remote_address) override;
     void OnDhcpTerminated();
 
     void OnFirmwareLoaded() override;
@@ -118,7 +118,7 @@ private:
     void ReleaseInternal();
     void ReleaseInterface();
     void SetupInterface(const std::string &object_path);
-    void AdvanceDeviceState(const NetworkDevice::Ptr &device, mcs::NetworkDeviceState state);
+    void AdvanceDeviceState(const NetworkDevice::Ptr &device, ac::NetworkDeviceState state);
     void ConfigureFromCapabilities();
 
     void StartConnectTimeout();
@@ -144,8 +144,8 @@ private:
     std::string BuildMiracastModeCommand(MiracastMode mode);
 
 private:
-    mcs::ScopedGObject<GDBusConnection> connection_;
-    mcs::NetworkManager::Delegate *delegate_;
+    ac::ScopedGObject<GDBusConnection> connection_;
+    ac::NetworkManager::Delegate *delegate_;
     std::shared_ptr<ManagerStub> manager_;
     std::shared_ptr<InterfaceStub> mgmt_interface_;
     std::shared_ptr<P2PDeviceStub> p2p_device_;

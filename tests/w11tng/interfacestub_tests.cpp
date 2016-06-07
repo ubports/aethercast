@@ -26,18 +26,18 @@
 #include <common/dbusfixture.h>
 #include <common/dbusnameowner.h>
 
-#include <mcs/keep_alive.h>
+#include <ac/keep_alive.h>
 #include <w11tng/interfacestub.h>
 
 #include "interfaceskeleton.h"
 
 namespace {
 class InterfaceStubFixture : public ::testing::Test,
-                        public mcs::testing::DBusFixture,
-                        public mcs::testing::DBusNameOwner {
+                        public ac::testing::DBusFixture,
+                        public ac::testing::DBusNameOwner {
 public:
     InterfaceStubFixture() :
-        mcs::testing::DBusNameOwner("fi.w1.wpa_supplicant1") {
+        ac::testing::DBusNameOwner("fi.w1.wpa_supplicant1") {
     }
 };
 
@@ -60,7 +60,7 @@ TEST_F(InterfaceStubFixture, ConstructionAndProperties) {
     EXPECT_TRUE(!!stub);
     stub->SetDelegate(delegate);
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     EXPECT_EQ(stub->Capabilities().size(), 0);
     EXPECT_EQ(stub->Driver(), "");
@@ -69,7 +69,7 @@ TEST_F(InterfaceStubFixture, ConstructionAndProperties) {
     skeleton->SetDriver("nl80211");
     skeleton->SetIfname("wlan0");
 
-    mcs::testing::RunMainLoop(std::chrono::seconds{1});
+    ac::testing::RunMainLoop(std::chrono::seconds{1});
 
     EXPECT_EQ(stub->Driver(), "nl80211");
     EXPECT_EQ(stub->Ifname(), "wlan0");

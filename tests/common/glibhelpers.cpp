@@ -15,20 +15,20 @@
  *
  */
 
-#include <mcs/keep_alive.h>
+#include <ac/keep_alive.h>
 
 #include "glibhelpers.h"
 
-namespace mcs {
+namespace ac {
 namespace testing {
 
 void RunMainLoop(const std::chrono::seconds &seconds) {
     std::shared_ptr<GMainLoop> loop(g_main_loop_new(g_main_context_default(), false), &g_main_loop_unref);
     g_timeout_add_seconds(seconds.count(), [](gpointer user_data) {
-        auto loop = static_cast<mcs::SharedKeepAlive<GMainLoop>*>(user_data)->ShouldDie();
+        auto loop = static_cast<ac::SharedKeepAlive<GMainLoop>*>(user_data)->ShouldDie();
         g_main_loop_quit(loop.get());
         return FALSE;
-    }, new mcs::SharedKeepAlive<GMainLoop>{loop});
+    }, new ac::SharedKeepAlive<GMainLoop>{loop});
     g_main_loop_run(loop.get());
 }
 
@@ -40,4 +40,4 @@ void RunMainLoopIteration() {
 
 
 } // namespace testing
-} // namespace mcs
+} // namespace ac
