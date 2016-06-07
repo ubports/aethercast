@@ -95,7 +95,7 @@ echo "Using AC_NDK_PATH: ${AC_NDK_PATH}"
 
 additional_repositories=
 if [ ${dist} == "vivid" ] ; then
-    additional_repositories="-r http://ppa.launchpad.net/ci-train-ppa-service/stable-phone-overlay/ubuntu -r http://ppa.launchpad.net/ci-train-ppa-service/landing-000/ubuntu"
+    additional_repositories="-r http://ppa.launchpad.net/ci-train-ppa-service/stable-phone-overlay/ubuntu"
 fi
 
 gcc_variant=
