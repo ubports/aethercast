@@ -41,6 +41,7 @@
 
 #include "tests/common/benchmark.h"
 #include "tests/common/statistics.h"
+#include "tests/common/glibhelpers.h"
 
 #include "tests/ac/integration_tests/config.h"
 
@@ -156,6 +157,9 @@ public:
 
         media_manager->InitOptimalVideoFormat(sink_native_format, sink_codecs);
         media_manager->Play();
+
+        // Need to run glib mainloop for a bit to
+        ac::testing::RunMainLoop(std::chrono::seconds{1});
 
         std::this_thread::sleep_for(config.duration);
 
