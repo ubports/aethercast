@@ -32,6 +32,8 @@
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/variance.hpp>
 
+#include <boost/filesystem.hpp>
+
 #include "ac/mediamanagerfactory.h"
 #include "ac/networkutils.h"
 #include "ac/utils.h"
@@ -46,6 +48,7 @@
 #include "tests/ac/integration_tests/config.h"
 
 namespace ba = boost::accumulators;
+namespace fs = boost::filesystem;
 
 using namespace ::testing;
 
@@ -176,7 +179,9 @@ public:
 TEST(StreamPerformance, EndToEndIsAcceptable) {
     ac::testing::Benchmark::Result reference_result;
 
-    std::ifstream in{ac::testing::stream_performance::kReferenceResultFile};
+    auto ref_path = ac::Utils::GetEnvValue("AETHERCAST_TESTS_REFERENCE_RESULTS",
+                                           ac::testing::stream_performance::kReferenceResultFile);
+    std::ifstream in{ref_path};
     reference_result.load_from_xml(in);
 
     StreamBenchmark benchmark;
