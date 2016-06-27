@@ -161,7 +161,7 @@ public:
         media_manager->InitOptimalVideoFormat(sink_native_format, sink_codecs);
         media_manager->Play();
 
-        // Need to run glib mainloop for a bit to
+        // Need to run glib mainloop for a bit to respect deferred pipeline startup
         ac::testing::RunMainLoop(std::chrono::seconds{1});
 
         std::this_thread::sleep_for(config.duration);
