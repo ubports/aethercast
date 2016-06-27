@@ -165,7 +165,7 @@ public:
 
         media_manager->Teardown();
 
-        system_controller->DisplayStateLock()->Acquire(ac::DisplayState::Off);
+        system_controller->DisplayStateLock()->Release(ac::DisplayState::Off);
 
         FillResultsFromStatistics(benchmark_result, stats);
         return benchmark_result;
