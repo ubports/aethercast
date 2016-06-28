@@ -22,7 +22,7 @@ script
 		urfkill_wlan=`getprop urfkill.hybris.wlan`
 		if [ "$iface" != "" ] ; then
 			export AETHERCAST_RFKILL_MANAGER=urfkill
-		endif
+		fi
 	fi
 
 	exec /usr/sbin/aethercast
