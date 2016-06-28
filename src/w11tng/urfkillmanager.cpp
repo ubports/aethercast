@@ -71,7 +71,7 @@ void URfkillManager::OnPropertiesChanged(GDBusConnection *connection, const gcha
     if (not thiz)
         return;
 
-    thiz->ParseProperties(parameters);
+    thiz->ParseProperties(g_variant_get_child_value(parameters, 1));
 }
 
 void URfkillManager::SyncProperties() {
@@ -80,7 +80,7 @@ void URfkillManager::SyncProperties() {
                            kObjectPath,
                            "org.freedesktop.DBus.Properties",
                            "GetAll",
-                           g_variant_new ("(s)", "org.freedesktop.URfkill"),
+                           g_variant_new ("(s)", "org.freedesktop.URfkill.Killswitch"),
                            G_VARIANT_TYPE("(a{sv})"),
                            G_DBUS_CALL_FLAGS_NONE,
                            -1, // Make sure we wait for the service being started up
@@ -107,7 +107,7 @@ void URfkillManager::ParseProperties(GVariant *properties) {
         if (key == "state") {
             const auto state = g_variant_get_int32(g_variant_get_variant(value));
             const auto type = Type::kWLAN;
-            block_status_[type] = (state == 0);
+            block_status_[type] = (state != 0);
             if (auto sp = delegate_.lock())
                 sp->OnRfkillChanged(type);
         }

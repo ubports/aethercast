@@ -29,7 +29,7 @@ class URfkillManager : public RfkillManager,
 public:
     static Ptr Create();
 
-    static constexpr const char* kBusName{"org.freedesktop.URfkill.Killswitch"};
+    static constexpr const char* kBusName{"org.freedesktop.URfkill"};
     static constexpr const char* kObjectPath{"/org/freedesktop/URfkill/WLAN"};
 
     ~URfkillManager();
