@@ -24,8 +24,9 @@
 #include <ac/keep_alive.h>
 #include <ac/networkutils.h>
 
-#include "networkmanager.h"
-#include "informationelement.h"
+#include "w11tng/networkmanager.h"
+#include "w11tng/informationelement.h"
+#include "w11tng/kernelrfkillmanager.h"
 
 namespace {
 // We take two minutes as timeout here which corresponds to what wpa
@@ -51,7 +52,7 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
         return sp;
     }
 
-    rfkill_manager_ = RfkillManager::Create();
+    rfkill_manager_ = KernelRfkillManager::Create();
     rfkill_manager_->SetDelegate(sp);
 
     return sp;

@@ -18,23 +18,13 @@
 #ifndef W11TNG_RFKILL_MANAGER_H_
 #define W11TNG_RFKILL_MANAGER_H_
 
-#include <memory>
-#include <map>
-
 #include "ac/non_copyable.h"
 #include "ac/glib_wrapper.h"
 
+#include <memory>
+
 namespace w11tng {
-
-template<typename T>
-struct GIOChannelDeleter {
-    void operator()(T *object) const {
-        if (object)
-            g_io_channel_unref(object);
-    }
-};
-
-class RfkillManager : public std::enable_shared_from_this<RfkillManager> {
+class RfkillManager {
 public:
     typedef std::shared_ptr<RfkillManager> Ptr;
 
@@ -53,29 +43,16 @@ public:
         virtual void OnRfkillChanged(const Type &type) = 0;
     };
 
-    static Ptr Create();
-
-    ~RfkillManager();
+    virtual ~RfkillManager();
 
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
 
-    bool IsBlocked(const Type &type);
+    virtual bool IsBlocked(const Type &type) = 0;
 
-private:
-    RfkillManager();
-
-    Ptr FinalizeConstruction();
-
-    bool ProcessRfkillEvents();
-
-    static gboolean OnRfkillEvent(GIOChannel *channel, GIOCondition cond, gpointer data);
-
-private:
+protected:
     std::weak_ptr<Delegate> delegate_;
-    std::unique_ptr<GIOChannel, GIOChannelDeleter<GIOChannel>> channel_;
-    guint watch_;
-    std::map<Type,bool> block_status_;
+
 };
 } // namespace w11tng
 
