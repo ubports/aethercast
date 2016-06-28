@@ -27,6 +27,7 @@
 #include "w11tng/networkmanager.h"
 #include "w11tng/informationelement.h"
 #include "w11tng/kernelrfkillmanager.h"
+#include "w11tng/urfkillmanager.h"
 
 namespace {
 // We take two minutes as timeout here which corresponds to what wpa
@@ -52,7 +53,12 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
         return sp;
     }
 
-    rfkill_manager_ = KernelRfkillManager::Create();
+    const auto type = ac::Utils::GetEnvValue("AETHERCAST_RFKILL_MANAGER");
+    if (type == "urfkill")
+        rfkill_manager_ = URfkillManager::Create();
+    else
+        rfkill_manager_ = KernelRfkillManager::Create();
+
     rfkill_manager_->SetDelegate(sp);
 
     return sp;
