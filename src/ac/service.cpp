@@ -404,7 +404,18 @@ void Service::OnDeviceFound(const NetworkDevice::Ptr &device) {
         sp->OnDeviceFound(device);
 }
 
+bool Service::IsConnecting() {
+    return current_state_ == kAssociation || current_state_ == kConfiguration;
+}
+
 void Service::OnDeviceLost(const NetworkDevice::Ptr &device) {
+    if (device == current_device_) {
+        if (IsConnecting())
+            AdvanceState(kFailure);
+        else
+            AdvanceState(kDisconnected);
+    }
+
     if (auto sp = delegate_.lock())
         sp->OnDeviceLost(device);
 }
@@ -456,15 +467,21 @@ void Service::Connect(const NetworkDevice::Ptr &device, ResultCallback callback)
 
     AC_DEBUG("address %s", device->Address());
 
+    // We have to set the current device already at this point to make sure
+    // that the state change callback which is triggered by the connect call
+    // below is advancing the manager state correctly which it doesn't when
+    // no current device is set.
+     current_device_ = device;
+
     if (!network_manager_->Connect(device)) {
         AC_DEBUG("Failed to connect remote device");
+        current_device_.reset();
         callback(Error::kFailed);
         return;
     }
 
     system_controller_->DisplayStateLock()->Acquire(ac::DisplayState::On);
 
-    current_device_ = device;
     connect_callback_ = callback;
 }
 
