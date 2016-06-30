@@ -26,19 +26,19 @@
 namespace {
 constexpr const char *kDevRfkillPath{"/dev/rfkill"};
 
+enum class RfkillOp : std::uint8_t {
+    kRfkillOpAdd = 0,
+    kRfkillOpDel = 1,
+    kRfkillOpChange = 2,
+    kRfkillOpChangeAll = 3,
+};
+
 struct RfkillEvent {
     uint32_t idx;
     uint8_t type;
-    uint8_t op;
+    RfkillOp op;
     uint8_t soft;
     uint8_t hard;
-};
-
-enum RfkillOp {
-    kRfkillOpAdd = 0,
-    kRfkillOpDel,
-    kRfkillOpChange,
-    kRfkillOpChangeAll,
 };
 }
 
@@ -137,9 +137,7 @@ gboolean KernelRfkillManager::OnRfkillEvent(GIOChannel *channel, GIOCondition co
 }
 
 bool KernelRfkillManager::IsBlocked(const Type &type) {
-    if (block_status_.find(type) == block_status_.end())
-        return false;
-
-    return block_status_[type];
+    auto it = block_status_.find(type);
+    return it == block_status_.end() ? false : it->second;
 }
 } // namespace w11tng

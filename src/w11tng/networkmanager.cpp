@@ -33,7 +33,7 @@ namespace {
 // We take two minutes as timeout here which corresponds to what wpa
 // takes for the group formation.
 static const std::chrono::seconds kConnectTimeout{120};
-static constexpr std::int32_t kSourceGoIntent = 7;
+static constexpr std::int32_t kSourceGoIntent = 13;
 }
 
 namespace w11tng {
@@ -53,13 +53,16 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
         return sp;
     }
 
-    const auto type = ac::Utils::GetEnvValue("AETHERCAST_RFKILL_MANAGER");
-    if (type == "urfkill")
-        rfkill_manager_ = URfkillManager::Create();
-    else
-        rfkill_manager_ = KernelRfkillManager::Create();
-
-    rfkill_manager_->SetDelegate(sp);
+    // We first check if urfkilld is running or not. If its not we fall back
+    // to just use the plain rfkill interface the kernel offers.
+    AC_DEBUG("Checking if URfkill is available ..");
+    urfkill_watch_ = g_bus_watch_name(G_BUS_TYPE_SYSTEM,
+          URfkillManager::kBusName,
+          G_BUS_NAME_WATCHER_FLAGS_NONE,
+          &NetworkManager::OnURfkillAvailable,
+          &NetworkManager::OnURfkillNotAvailable,
+          new ac::WeakKeepAlive<NetworkManager>(shared_from_this()),
+          [](gpointer data) { delete static_cast<ac::WeakKeepAlive<NetworkManager>*>(data); });
 
     return sp;
 }
@@ -67,7 +70,8 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
 NetworkManager::NetworkManager() :
     firmware_loader_("", this),
     dedicated_p2p_interface_(ac::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE")),
-    session_available_(true) {
+    session_available_(true),
+    urfkill_watch_(0) {
 }
 
 NetworkManager::~NetworkManager() {
@@ -99,12 +103,12 @@ void NetworkManager::OnServiceLost(GDBusConnection *connection, const gchar *nam
 }
 
 void NetworkManager::Initialize(bool firmware_loading) {
-    AC_DEBUG("");
-
     if (firmware_loading && ac::Utils::GetEnvValue("AETHERCAST_NEED_FIRMWARE") == "1") {
         auto interface_name = ac::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE");
-        if (interface_name.length() == 0)
+        if (interface_name.empty())
             interface_name = "p2p0";
+
+        AC_DEBUG("Firmware loading for interface '%s' requested", interface_name);
 
         firmware_loader_.SetInterfaceName(interface_name);
         if (firmware_loader_.IsNeeded()) {
@@ -123,6 +127,8 @@ void NetworkManager::Initialize(bool firmware_loading) {
 
     manager_ = ManagerStub::Create();
     manager_->SetDelegate(sp);
+
+    AC_DEBUG("Successfully initialized");
 }
 
 void NetworkManager::Release() {
@@ -180,12 +186,8 @@ void NetworkManager::SetDelegate(ac::NetworkManager::Delegate *delegate) {
 }
 
 bool NetworkManager::Setup() {
-    AC_DEBUG("");
-
-    if (rfkill_manager_->IsBlocked(RfkillManager::Type::kWLAN)) {
-        AC_ERROR("Can't setup network manager as WLAN is disabled");
+    if (!Ready())
         return false;
-    }
 
     g_bus_watch_name_on_connection(connection_.get(),
                                    kBusName,
@@ -196,6 +198,35 @@ bool NetworkManager::Setup() {
                                    nullptr);
 
     return true;
+}
+
+void NetworkManager::OnURfkillAvailable(GDBusConnection*, const gchar*, const gchar*, gpointer user_data) {
+    auto inst = static_cast<ac::WeakKeepAlive<NetworkManager>*>(user_data)->GetInstance().lock();
+    if (!inst)
+        return;
+
+    AC_DEBUG("URfkill is available");
+
+    inst->rfkill_manager_ = URfkillManager::Create();
+    inst->FinishRfkillInitialization();
+}
+
+void NetworkManager::OnURfkillNotAvailable(GDBusConnection*, const gchar*, gpointer user_data) {
+    auto inst = static_cast<ac::WeakKeepAlive<NetworkManager>*>(user_data)->GetInstance().lock();
+    if (!inst)
+        return;
+
+    AC_DEBUG("URfkill is not available, falling back to kernel rfkill manager");
+
+    inst->rfkill_manager_ = KernelRfkillManager::Create();
+    inst->FinishRfkillInitialization();
+}
+
+void NetworkManager::FinishRfkillInitialization() {
+    g_source_remove(urfkill_watch_);
+    urfkill_watch_ = 0;
+
+    rfkill_manager_->SetDelegate(shared_from_this());
 }
 
 void NetworkManager::Scan(const std::chrono::seconds &timeout) {
@@ -347,9 +378,11 @@ bool NetworkManager::Disconnect(const ac::NetworkDevice::Ptr &device) {
     if (!FindDevice(device->Address()))
         return false;
 
-    // This will trigger the GroupFinished signal where we will release
-    // all parts in order.
-    current_group_device_->Disconnect();
+    if (current_group_device_) {
+        // This will trigger the GroupFinished signal where we will release
+        // all parts in order.
+        current_group_device_->Disconnect();
+    }
 
     return true;
 }
@@ -386,6 +419,9 @@ bool NetworkManager::Scanning() const {
 }
 
 bool NetworkManager::Ready() const {
+    if (!rfkill_manager_)
+        return false;
+
     return !rfkill_manager_->IsBlocked(RfkillManager::Type::kWLAN);
 }
 

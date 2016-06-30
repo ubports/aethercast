@@ -28,7 +28,7 @@ class RfkillManager {
 public:
     typedef std::shared_ptr<RfkillManager> Ptr;
 
-    enum class Type {
+    enum class Type : std::uint32_t {
         kAll = 0,
         kWLAN,
         kBluetooth,

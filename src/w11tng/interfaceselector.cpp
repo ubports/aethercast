@@ -120,6 +120,10 @@ void InterfaceSelector::TryNextInterface() {
                     sp->OnInterfaceSelectionDone(g_dbus_proxy_get_object_path(G_DBUS_PROXY(proxy)));
                 return;
             }
+            else {
+                AC_DEBUG("Interface %s does not support P2p, ignoring.",
+                         g_dbus_proxy_get_object_path(G_DBUS_PROXY(proxy)));
+            }
 
             g_object_unref(proxy);
 

@@ -24,6 +24,10 @@
 #include <string.h>
 #include <errno.h>
 
+namespace {
+static constexpr int kInfiniteDbusWaitTimeout{-1};
+}
+
 namespace w11tng {
 URfkillManager::Ptr URfkillManager::Create() {
     return std::shared_ptr<URfkillManager>(new URfkillManager)->FinalizeConstruction();
@@ -83,10 +87,9 @@ void URfkillManager::SyncProperties() {
                            g_variant_new ("(s)", "org.freedesktop.URfkill.Killswitch"),
                            G_VARIANT_TYPE("(a{sv})"),
                            G_DBUS_CALL_FLAGS_NONE,
-                           -1, // Make sure we wait for the service being started up
+                           kInfiniteDbusWaitTimeout, // Make sure we wait for the service being started up
                            nullptr,
-                           [](GObject *source, GAsyncResult *res, gpointer user_data) {
-
+                           [](GObject*, GAsyncResult *res, gpointer user_data) {
         auto thiz = static_cast<ac::SharedKeepAlive<URfkillManager>*>(user_data)->ShouldDie();
 
         GError *error = nullptr;
@@ -115,9 +118,7 @@ void URfkillManager::ParseProperties(GVariant *properties) {
 }
 
 bool URfkillManager::IsBlocked(const Type &type) {
-    if (block_status_.find(type) == block_status_.end())
-        return false;
-
-    return block_status_[type];
+    auto it = block_status_.find(type);
+    return it == block_status_.end() ? false : it->second;
 }
 } // namespace w11tng
