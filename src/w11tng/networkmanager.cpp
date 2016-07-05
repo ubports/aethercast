@@ -249,10 +249,17 @@ void NetworkManager::StartConnectTimeout() {
 
     connect_timeout_ = g_timeout_add_seconds(kConnectTimeout.count(), [](gpointer user_data) {
         auto inst = static_cast<ac::SharedKeepAlive<NetworkManager>*>(user_data)->ShouldDie();
-        if (not inst)
+        if (!inst)
             return FALSE;
 
-        AC_WARNING("Reached a timeout while trying to connect with remote %s", inst->current_device_->Address());
+        if (!inst->current_device_) {
+            AC_WARNING("Reached a timeout while trying to connect with remote but"
+                       "no current device");
+            return FALSE;
+        }
+
+        AC_WARNING("Reached a timeout while trying to connect with remote %s",
+                   inst->current_device_->Address());
 
         inst->connect_timeout_ = 0;
 
