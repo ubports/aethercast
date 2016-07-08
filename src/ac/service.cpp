@@ -404,7 +404,7 @@ void Service::OnDeviceFound(const NetworkDevice::Ptr &device) {
         sp->OnDeviceFound(device);
 }
 
-bool Service::IsConnecting() {
+bool Service::IsConnecting() const {
     return current_state_ == kAssociation || current_state_ == kConfiguration;
 }
 

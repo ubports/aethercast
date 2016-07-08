@@ -136,7 +136,7 @@ gboolean KernelRfkillManager::OnRfkillEvent(GIOChannel *channel, GIOCondition co
     return static_cast<gboolean>(thiz->ProcessRfkillEvents());
 }
 
-bool KernelRfkillManager::IsBlocked(const Type &type) {
+bool KernelRfkillManager::IsBlocked(const Type &type) const {
     auto it = block_status_.find(type);
     return it == block_status_.end() ? false : it->second;
 }

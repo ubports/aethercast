@@ -117,7 +117,7 @@ void URfkillManager::ParseProperties(GVariant *properties) {
     });
 }
 
-bool URfkillManager::IsBlocked(const Type &type) {
+bool URfkillManager::IsBlocked(const Type &type) const {
     auto it = block_status_.find(type);
     return it == block_status_.end() ? false : it->second;
 }

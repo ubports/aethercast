@@ -48,7 +48,7 @@ public:
     void SetDelegate(const std::weak_ptr<Delegate> &delegate);
     void ResetDelegate();
 
-    virtual bool IsBlocked(const Type &type) = 0;
+    virtual bool IsBlocked(const Type &type) const = 0;
 
 protected:
     std::weak_ptr<Delegate> delegate_;

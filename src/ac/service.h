@@ -107,7 +107,7 @@ private:
     void LoadState();
     void SaveState();
 
-    bool IsConnecting();
+    bool IsConnecting() const;
 
 private:
     std::weak_ptr<Controller::Delegate> delegate_;

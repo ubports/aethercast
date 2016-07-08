@@ -34,7 +34,7 @@ public:
 
     ~URfkillManager();
 
-    bool IsBlocked(const Type &type) override;
+    bool IsBlocked(const Type &type) const override;
 
 private:
     URfkillManager();
