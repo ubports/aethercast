@@ -18,11 +18,6 @@ script
 			# the Android WiFi firmware loader should just pass through
 			export AETHERCAST_NEED_FIRMWARE=1
 		fi
-
-		urfkill_wlan=`getprop urfkill.hybris.wlan`
-		if [ "$iface" != "" ] ; then
-			export AETHERCAST_RFKILL_MANAGER=urfkill
-		fi
 	fi
 
 	exec /usr/sbin/aethercast
