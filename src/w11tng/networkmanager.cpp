@@ -33,7 +33,7 @@ namespace {
 // We take two minutes as timeout here which corresponds to what wpa
 // takes for the group formation.
 static const std::chrono::seconds kConnectTimeout{120};
-static constexpr std::int32_t kSourceGoIntent = 13;
+static constexpr std::int32_t kSourceGoIntent = 7;
 }
 
 namespace w11tng {
