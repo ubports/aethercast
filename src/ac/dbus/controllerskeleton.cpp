@@ -219,14 +219,14 @@ gboolean ControllerSkeleton::OnHandleScan(AethercastInterfaceManager *skeleton,
         return TRUE;
     }
 
-    AC_INFO("Scanning for remote devices");
-
     const auto error = inst->Scan();
     if (error != ac::Error::kNone) {
         g_dbus_method_invocation_return_error(invocation, AETHERCAST_ERROR,
             AethercastErrorFromError(error), "%s", ac::ErrorToString(error).c_str());
         return TRUE;
     }
+
+    AC_INFO("Scanning for remote devices");
 
     g_dbus_method_invocation_return_value(invocation, nullptr);
 
