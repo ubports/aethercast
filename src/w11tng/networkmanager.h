@@ -163,6 +163,7 @@ private:
     std::vector<Capability> capabilities_;
     Hostname1Stub::Ptr hostname_service_;
     RfkillManager::Ptr rfkill_manager_;
+    std::string driver_cmd_iface_;
 };
 
 } // namespace w11tng
