@@ -66,8 +66,7 @@ void SourceClient::ResetDelegate() {
 }
 
 void SourceClient::DumpRtsp(const std::string &prefix, const std::string &data) {
-    static bool enabled = getenv("AETHERCAST_RTSP_DEBUG") != nullptr;
-
+    static bool enabled = utils::IsEnvSet("AETHERCAST_RTSP_DEBUG");
     if (!enabled)
         return;
 
