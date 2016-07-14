@@ -66,7 +66,7 @@ void SourceClient::ResetDelegate() {
 }
 
 void SourceClient::DumpRtsp(const std::string &prefix, const std::string &data) {
-    static bool enabled = getenv("MIRACAST_RTSP_AC_DEBUG") != nullptr;
+    static bool enabled = getenv("AETHERCAST_RTSP_DEBUG") != nullptr;
 
     if (!enabled)
         return;
