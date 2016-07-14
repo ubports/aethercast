@@ -1,0 +1,10 @@
+case ${interface} in
+  p2p*)
+    # Prevent any default routes being applied for p2p network devices. We
+    # don't need a default route for those as we just connect to specific
+    # peers in those networks and nothing else.
+    unset new_routers
+    ;;
+  *)
+    ;;
+esac
