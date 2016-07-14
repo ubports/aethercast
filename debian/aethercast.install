@@ -4,3 +4,4 @@ usr/bin/aethercastctl
 etc/init/aethercast.conf
 etc/aethercast/dhcpd.conf
 etc/dbus-1/system.d/aethercast-dbus.conf
+etc/dhcp/dhclient-enter-hooks.d/aethercast-p2p
