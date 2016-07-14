@@ -65,7 +65,7 @@ void FileMonitor::OnChanged(GFileMonitor *monitor, GFile *file, GFile *other_fil
     if (not thiz)
         return;
 
-    if (event_type != G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
+    if (event_type != G_FILE_MONITOR_EVENT_CHANGED)
         return;
 
     if (auto sp = thiz->delegate_.lock())
