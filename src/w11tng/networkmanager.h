@@ -148,6 +148,7 @@ private:
     ac::NetworkManager::Delegate *delegate_;
     std::shared_ptr<ManagerStub> manager_;
     std::shared_ptr<InterfaceStub> mgmt_interface_;
+    std::string driver_cmd_iface_;
     std::shared_ptr<P2PDeviceStub> p2p_device_;
     std::unordered_map<std::string,w11tng::NetworkDevice::Ptr> devices_;
     NetworkDevice::Ptr current_device_;
@@ -163,7 +164,6 @@ private:
     std::vector<Capability> capabilities_;
     Hostname1Stub::Ptr hostname_service_;
     RfkillManager::Ptr rfkill_manager_;
-    std::string driver_cmd_iface_;
 };
 
 } // namespace w11tng
