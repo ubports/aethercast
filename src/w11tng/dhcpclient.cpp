@@ -76,8 +76,8 @@ void DhcpClient::Start() {
     std::vector<std::string> argv = {
         // Disable background on lease (let dhclient not fork)
         "-d",
-        // Don't be verbose
-        "-q",
+        // Be verbose and not quiet on startup
+        "-v",
         // Force us to be IPv4 no matter what the default is
         "-4",
         // Use the temporary lease file we used above to not interfere
