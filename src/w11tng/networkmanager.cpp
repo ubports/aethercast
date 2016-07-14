@@ -31,7 +31,9 @@ namespace {
 // We take two minutes as timeout here which corresponds to what wpa
 // takes for the group formation.
 static const std::chrono::seconds kConnectTimeout{120};
-static constexpr std::int32_t kSourceGoIntent = 7;
+// As we play the source role we don't intent to be the group owner
+// and therefor use the lowest intent possible.
+static constexpr std::int32_t kSourceGoIntent = 0;
 }
 
 namespace w11tng {
