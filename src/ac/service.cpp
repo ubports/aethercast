@@ -385,13 +385,13 @@ void Service::OnDeviceStateChanged(const NetworkDevice::Ptr &device) {
           device->Address(),
           ac::NetworkDevice::StateToStr(device->State()));
 
+    if (auto sp = delegate_.lock())
+        sp->OnDeviceChanged(device);
+
     if (device != current_device_)
         return;
 
     AdvanceState(device->State());
-
-    if (auto sp = delegate_.lock())
-        sp->OnDeviceChanged(device);
 }
 
 void Service::OnDeviceChanged(const NetworkDevice::Ptr &device) {
