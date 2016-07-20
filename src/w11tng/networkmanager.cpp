@@ -145,8 +145,6 @@ void NetworkManager::SetupInterface(const std::string &object_path) {
 
     mgmt_interface_ = InterfaceStub::Create(object_path);
     mgmt_interface_->SetDelegate(shared_from_this());
-    driver_cmd_iface_ = ac::Utils::GetEnvValue("AETHERCAST_DRIVER_CMD_IFACE",
-                                               mgmt_interface_->Ifname());
 
     p2p_device_ = P2PDeviceStub::Create(object_path, shared_from_this());
 
@@ -691,6 +689,8 @@ void NetworkManager::OnInterfaceReady(const std::string &object_path) {
 }
 
 void NetworkManager::OnManagementInterfaceReady() {
+    driver_cmd_iface_ = ac::Utils::GetEnvValue("AETHERCAST_DRIVER_CMD_IFACE",
+                                               mgmt_interface_->Ifname());
 }
 
 std::string NetworkManager::BuildMiracastModeCommand(MiracastMode mode) {
