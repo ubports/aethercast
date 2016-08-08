@@ -20,7 +20,7 @@ namespace ubuntu {
 namespace unity {
 namespace screen {
 const char *kBusName{"com.canonical.Unity.Screen"};
-const char *kPath{"/"};
+const char *kPath{"/com/canonical/Unity/Screen"};
 const char *kInterfaceName{"com.canonical.Unity.Screen"};
 } // namespace screen
 } // namespace unity
