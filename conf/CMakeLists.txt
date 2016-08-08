@@ -8,3 +8,6 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/aethercast-dbus.conf
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dhcpd.conf
         DESTINATION /etc/aethercast/)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dhclient-hook-p2p
+        DESTINATION /etc/dhcp/dhclient-enter-hooks.d/aethercast-p2p)
