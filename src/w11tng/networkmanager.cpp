@@ -181,6 +181,8 @@ void NetworkManager::ReleaseInterface() {
 
     if (mgmt_interface_)
         mgmt_interface_.reset();
+
+    driver_cmd_iface_.clear();
 }
 
 void NetworkManager::SetDelegate(ac::NetworkManager::Delegate *delegate) {
@@ -481,8 +483,8 @@ void NetworkManager::AdvanceDeviceState(const NetworkDevice::Ptr &device, ac::Ne
     device->SetState(state);
 
     if (state == ac::kDisconnected) {
-        if (ac::NetworkUtils::SendDriverPrivateCommand(mgmt_interface_->Ifname(),
-                                                        BuildMiracastModeCommand(MiracastMode::kOff)) < 0)
+        if (ac::NetworkUtils::SendDriverPrivateCommand(driver_cmd_iface_,
+                                                       BuildMiracastModeCommand(MiracastMode::kOff)) < 0)
             AC_DEBUG("Failed to disable WiFi driver miracast mode (not supported?)");
         else
             AC_DEBUG("Disabled WiFi driver miracast mode");
@@ -739,6 +741,8 @@ void NetworkManager::OnInterfaceReady(const std::string &object_path) {
 }
 
 void NetworkManager::OnManagementInterfaceReady() {
+    driver_cmd_iface_ = ac::Utils::GetEnvValue("AETHERCAST_DRIVER_CMD_IFACE",
+                                               mgmt_interface_->Ifname());
 }
 
 std::string NetworkManager::BuildMiracastModeCommand(MiracastMode mode) {
@@ -754,8 +758,8 @@ void NetworkManager::OnGroupInterfaceReady() {
     // Android WiFi drivers have a special mode build in when they should
     // perform well for Miracast which we enable here. If the command is
     // not available this is a no-op.
-    if (ac::NetworkUtils::SendDriverPrivateCommand(mgmt_interface_->Ifname(),
-                                                    BuildMiracastModeCommand(MiracastMode::kSource)) < 0)
+    if (ac::NetworkUtils::SendDriverPrivateCommand(driver_cmd_iface_,
+                                                   BuildMiracastModeCommand(MiracastMode::kSource)) < 0)
         AC_WARNING("Failed to activate miracast mode of WiFi driver (not supported?)");
     else
         AC_DEBUG("Enabled WiFi driver miracast mode");

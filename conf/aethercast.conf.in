@@ -17,6 +17,12 @@ script
 			# not cause any for those which doesn't need any firmware as
 			# the Android WiFi firmware loader should just pass through
 			export AETHERCAST_NEED_FIRMWARE=1
+
+			# Not optimal but works for all devices we support right
+			# now. Generally if something uses a dedicated p2p device we
+			# we need to use the real wifi device to send any private
+			# commands to the driver.
+			export AETHERCAST_DRIVER_CMD_IFACE=`getprop wifi.interface`
 		fi
 	fi
 
