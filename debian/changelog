@@ -1,3 +1,18 @@
+aethercast (0.1+16.10.20160808-0ubuntu1) yakkety; urgency=medium
+
+  [ Simon Fels ]
+  * Fix integration tests
+  * Add URfkill support to manage kill switches on selected devices
+  * Switch to new object path for Screen service as its now provided by
+    repowerd
+  * Fix RTSP debugging and device state update reporting
+  * Fix several issues which prevent the Mii Box from connecting (LP:
+    #1576331, #1597449)
+  * Use a different network device on some devices for sending private
+    driver commands
+
+ -- morphis <simon.fels@canonical.com>  Mon, 08 Aug 2016 09:00:30 +0000
+
 aethercast (0.1+16.10.20160607-0ubuntu1) yakkety; urgency=medium
 
   [ Simon Fels ]
