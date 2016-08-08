@@ -107,6 +107,8 @@ private:
     void LoadState();
     void SaveState();
 
+    bool IsConnecting() const;
+
 private:
     std::weak_ptr<Controller::Delegate> delegate_;
     std::shared_ptr<NetworkManager> network_manager_;

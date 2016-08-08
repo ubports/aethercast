@@ -120,6 +120,8 @@ set(SOURCES
 
   w11tng/networkmanager.cpp
   w11tng/rfkillmanager.cpp
+  w11tng/kernelrfkillmanager.cpp
+  w11tng/urfkillmanager.cpp
   w11tng/networkdevice.cpp
   w11tng/interfaceselector.cpp
   w11tng/p2pdevicestub.cpp

@@ -109,9 +109,14 @@ private:
     static void OnServiceLost(GDBusConnection *connection, const gchar *name, gpointer user_data);
     static void OnServiceFound(GDBusConnection *connection, const gchar *name, const gchar *name_owner, gpointer user_data);
 
+    static void OnURfkillAvailable(GDBusConnection*, const gchar*, const gchar*, gpointer user_data);
+    static void OnURfkillNotAvailable(GDBusConnection*, const gchar*, gpointer user_data);
+
 private:
     NetworkManager();
     std::shared_ptr<NetworkManager> FinalizeConstruction();
+
+    void FinishRfkillInitialization();
 
     NetworkDevice::Ptr FindDevice(const std::string &address);
     void Initialize(bool firmware_loading = false);
@@ -163,6 +168,7 @@ private:
     std::vector<Capability> capabilities_;
     Hostname1Stub::Ptr hostname_service_;
     RfkillManager::Ptr rfkill_manager_;
+    guint urfkill_watch_;
 };
 
 } // namespace w11tng
