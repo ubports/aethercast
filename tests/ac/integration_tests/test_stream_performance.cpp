@@ -32,6 +32,8 @@
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/variance.hpp>
 
+#include <boost/filesystem.hpp>
+
 #include "ac/mediamanagerfactory.h"
 #include "ac/networkutils.h"
 #include "ac/utils.h"
@@ -41,10 +43,12 @@
 
 #include "tests/common/benchmark.h"
 #include "tests/common/statistics.h"
+#include "tests/common/glibhelpers.h"
 
 #include "tests/ac/integration_tests/config.h"
 
 namespace ba = boost::accumulators;
+namespace fs = boost::filesystem;
 
 using namespace ::testing;
 
@@ -157,11 +161,14 @@ public:
         media_manager->InitOptimalVideoFormat(sink_native_format, sink_codecs);
         media_manager->Play();
 
+        // Need to run glib mainloop for a bit to respect deferred pipeline startup
+        ac::testing::RunMainLoop(std::chrono::seconds{1});
+
         std::this_thread::sleep_for(config.duration);
 
         media_manager->Teardown();
 
-        system_controller->DisplayStateLock()->Acquire(ac::DisplayState::Off);
+        system_controller->DisplayStateLock()->Release(ac::DisplayState::Off);
 
         FillResultsFromStatistics(benchmark_result, stats);
         return benchmark_result;
@@ -172,7 +179,9 @@ public:
 TEST(StreamPerformance, EndToEndIsAcceptable) {
     ac::testing::Benchmark::Result reference_result;
 
-    std::ifstream in{ac::testing::stream_performance::kReferenceResultFile};
+    auto ref_path = ac::Utils::GetEnvValue("AETHERCAST_TESTS_REFERENCE_RESULTS",
+                                           ac::testing::stream_performance::kReferenceResultFile);
+    std::ifstream in{ref_path};
     reference_result.load_from_xml(in);
 
     StreamBenchmark benchmark;
