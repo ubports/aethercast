@@ -41,8 +41,8 @@ macro(AETHERCAST_ADD_TEST test_name src)
     aethercast-core
     aethercast-test-common
 
-    gmock
-    gmock_main
+    ${GMOCK_LIBRARIES}
+    ${GTEST_BOTH_LIBRARIES}
 
     process-cpp
     lxc-network
