@@ -1,10 +1,11 @@
-aethercast (0.1+16.10.20160808-0ubuntu5) zesty; urgency=high
+aethercast (0.1+17.04.20170328.1-0ubuntu1) zesty; urgency=medium
 
+  [ Balint Reczey ]
   * Fix zesty FTBFS by replacing the bundling of googletest
     with find_package from cmake-extra. (LP: #1640317, LP: #1644062)
   * Fix installation to multiarch path during build
 
- -- Balint Reczey <rbalint@ubuntu.com>  Thu, 23 Mar 2017 21:14:54 +0000
+ -- morphis <simon.fels@canonical.com>  Tue, 28 Mar 2017 05:51:12 +0000
 
 aethercast (0.1+16.10.20160808-0ubuntu4) zesty; urgency=high
 
