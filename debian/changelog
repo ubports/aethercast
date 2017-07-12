@@ -1,3 +1,9 @@
+aethercast (0.1+ubports1) xenial; urgency=medium
+
+  * Backport to xenial
+
+ -- Marius Gripsgard <mariogrip@ubports.com>  Wed, 12 Jul 2017 23:06:40 +0200
+
 aethercast (0.1+16.10.20160808-0ubuntu1) yakkety; urgency=medium
 
   [ Simon Fels ]
