@@ -43,7 +43,7 @@ export DEB_BUILD_OPTIONS="parallel=$(nproc) nocheck"
         unstash 'build'
         archiveArtifacts(artifacts: '*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,*.buildinfo', fingerprint: true, onlyIfSuccessful: true)
         sh '''export architecture="armhf"
-export REPOS="xenial"
+export release="xenial"
 mkdir -p binaries
 
 for suffix in gz bz2 xz deb dsc changes ; do
