@@ -18,6 +18,9 @@ include /usr/share/dpkg/default.mk
 %:
 	dh $@ --parallel --fail-missing
 
+override_dh_auto_configure:
+	dh_auto_configure -- -DCMAKE_INSTALL_LIBDIR=/usr/lib/$(DEB_HOST_MULTIARCH)
+
 override_dh_install:
 	dh_install
 	dh_apparmor -paethercast --profile-name=usr.sbin.dhcpd
