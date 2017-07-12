@@ -1,4 +1,4 @@
-aethercast (0.1.1+ubports1) xenial; urgency=medium
+aethercast (0.2+ubports1) xenial; urgency=medium
 
   * Backport to xenial
 
