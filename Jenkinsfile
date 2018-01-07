@@ -1,58 +1,59 @@
 pipeline {
   agent any
   stages {
-    stage('Preparation') {
-      steps {
-        dir(path: 'source') {
-          git 'https://github.com/ubports/aethercast.git'
-        }
-        
-      }
-    }
     stage('Build source') {
       steps {
-        sh 'rm -f ./* || true'
-        sh '''cd source
-export GIT_COMMIT=$(git rev-parse HEAD)
-export GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-cd ..
-/usr/bin/generate-git-snapshot
-'''
+        sh '/usr/bin/build-source.sh'
         stash(name: 'source', includes: '*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,*.buildinfo,lintian.txt')
+        cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenSuccess: true, cleanWhenUnstable: true, deleteDirs: true)
       }
     }
     stage('Build binary - armhf') {
       steps {
-        node(label: 'xenial-arm64') {
-          unstash 'source'
-          sh '''export architecture="armhf"
-export distribution="xenial"
-export REPOS="xenial"
-export BUILD_ONLY=true
-export DEB_BUILD_OPTIONS="parallel=$(nproc) nocheck"
-/usr/bin/generate-reprepro-codename "${REPOS}"
-/usr/bin/build-and-provide-package'''
-          stash(includes: '*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,*.buildinfo,lintian.txt', name: 'build')
-          cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenSuccess: true, cleanWhenUnstable: true, deleteDirs: true)
-        }
-        
+        parallel(
+          "Build binary - armhf": {
+            node(label: 'arm64') {
+              cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenSuccess: true, cleanWhenUnstable: true, deleteDirs: true)
+              unstash 'source'
+              sh '''export architecture="armhf"
+build-binary.sh'''
+              stash(includes: '*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,*.buildinfo,lintian.txt', name: 'build-armhf')
+              cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenSuccess: true, cleanWhenUnstable: true, deleteDirs: true)
+            }
+
+
+          },
+          "Build binary - arm64": {
+            node(label: 'arm64') {
+              cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenSuccess: true, cleanWhenUnstable: true, deleteDirs: true)
+              unstash 'source'
+              sh '''export architecture="arm64"
+    build-binary.sh'''
+              stash(includes: '*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,*.buildinfo,lintian.txt', name: 'build-arm64')
+              cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenSuccess: true, cleanWhenUnstable: true, deleteDirs: true)
+            }
+          },
+          "Build binary - amd64": {
+            node(label: 'amd64') {
+              cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenSuccess: true, cleanWhenUnstable: true, deleteDirs: true)
+              unstash 'source'
+              sh '''export architecture="amd64"
+    build-binary.sh'''
+              stash(includes: '*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,*.buildinfo,lintian.txt', name: 'build-amd64')
+              cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenSuccess: true, cleanWhenUnstable: true, deleteDirs: true)
+            }
+          }
+        )
       }
     }
     stage('Results') {
       steps {
-        unstash 'build'
+        cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenSuccess: true, cleanWhenUnstable: true, deleteDirs: true)
+        unstash 'build-armhf'
+        unstash 'build-arm64'
+        unstash 'build-amd64'
         archiveArtifacts(artifacts: '*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,*.buildinfo', fingerprint: true, onlyIfSuccessful: true)
-        sh '''export architecture="armhf"
-export release="xenial"
-mkdir -p binaries
-
-for suffix in gz bz2 xz deb dsc changes ; do
-  mv *.${suffix} binaries/ || true
-done
-
-export BASE_PATH="binaries/"
-export PROVIDE_ONLY=true
-/usr/bin/build-and-provide-package'''
+        sh '''/usr/bin/build-repo.sh'''
       }
     }
     stage('Cleanup') {
