@@ -1,0 +1,1 @@
+rm_conffile /etc/dhcp/dhclient-enter-hooks.d/aethercast-p2p/dhclient-hook-p2p
