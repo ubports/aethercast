@@ -1,3 +1,12 @@
+aethercast (0.3~0ubports1) xenial; urgency=medium
+
+  * debian/changelog:
+    - New versioning format
+  [ Simon Fels ]
+  * Fix dhclient hook installation (LP: #1639630)
+
+ -- Alberto Mardegan <mardy@users.sourceforge.net>  Wed, 19 Sep 2018 22:33:30 +0300
+
 aethercast (0.2+ubports1) xenial; urgency=medium
 
   * Backport to xenial
