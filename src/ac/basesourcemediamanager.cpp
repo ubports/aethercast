@@ -104,19 +104,21 @@ std::vector<wds::H264VideoCodec> BaseSourceMediaManager::GetH264VideoCodecs() {
         wds::RateAndResolutionsBitmap hh_rr;
 
         std::ifstream videoModesConfig("~/.config/aethercast/video_modes.conf");
-        for (std::string modeString; std::getline(videoModesConfig, modeString);) {
-            wds::CEARatesAndResolutions mode;
-            if (!CeaModeFromString(modeString, mode)) {
-                AC_WARNING("Unknown video mode found in config file");
-                continue;
-            }   
-            cea_rr.set(mode);
+        if (videoModesConfig.is_open()) {
+            for (std::string modeString; std::getline(videoModesConfig, modeString);) {
+                wds::CEARatesAndResolutions mode;
+                if (!CeaModeFromString(modeString, mode)) {
+                    AC_WARNING("Unknown video mode found in config file");
+                    continue;
+                }   
+                cea_rr.set(mode);
+            }
         }
 
         // We only support 720p here for now as that is our best performing
         // resolution with regard of all other bits in the pipeline. Eventually
         // we will add 60 Hz here too but for now only everything up to 30 Hz.
-        if (cea_rr.none()) {
+        else {
             cea_rr.set(wds::CEA1280x720p30);
             cea_rr.set(wds::CEA1280x720p25);
             cea_rr.set(wds::CEA1280x720p24);
