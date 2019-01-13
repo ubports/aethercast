@@ -29,7 +29,36 @@ static unsigned int next_session_id = 0;
 }
 
 namespace {
-static bool CeaModeFromString(std::string modeString, wds::CEARatesAndResolutions &mode);
+static bool CeaModeFromString(std::string modeString, wds::CEARatesAndResolutions &mode) {
+    static std::map<std::string, wds::CEARatesAndResolutions> knownCeaModes = {
+        {"CEA640x480p60"  , wds::CEA640x480p60  },
+        {"CEA720x480p60"  , wds::CEA720x480p60  },
+        {"CEA720x480i60"  , wds::CEA720x480i60  },
+        {"CEA720x576p50"  , wds::CEA720x576p50  },
+        {"CEA720x576i50"  , wds::CEA720x576i50  },
+        {"CEA1280x720p30" , wds::CEA1280x720p30 },
+        {"CEA1280x720p60" , wds::CEA1280x720p60 },
+        {"CEA1920x1080p30", wds::CEA1920x1080p30},
+        {"CEA1920x1080p60", wds::CEA1920x1080p60},
+        {"CEA1920x1080i60", wds::CEA1920x1080i60},
+        {"CEA1280x720p25" , wds::CEA1280x720p25 },
+        {"CEA1280x720p50" , wds::CEA1280x720p50 },
+        {"CEA1920x1080p25", wds::CEA1920x1080p25},
+        {"CEA1920x1080p50", wds::CEA1920x1080p50},
+        {"CEA1920x1080i50", wds::CEA1920x1080i50},
+        {"CEA1280x720p24" , wds::CEA1280x720p24 },
+        {"CEA1920x1080p24", wds::CEA1920x1080p24},
+    };
+
+    for (auto const &it : knownCeaModes) {
+        if (it.first == modeString) {
+            mode = it.second;
+            return true;
+        }
+    }
+
+    return false;
+}
 }
 
 namespace ac {
@@ -162,37 +191,6 @@ void BaseSourceMediaManager::SendIDRPicture() {
 
 std::string BaseSourceMediaManager::GetSessionId() const {
     return std::to_string(session_id_);
-}
-
-static bool CeaModeFromString(std::string modeString, wds::CEARatesAndResolutions &mode) {
-    static std::map<std::string, wds::CEARatesAndResolutions> knownCeaModes = {
-        {"CEA640x480p60"  , wds::CEA640x480p60  },
-        {"CEA720x480p60"  , wds::CEA720x480p60  },
-        {"CEA720x480i60"  , wds::CEA720x480i60  },
-        {"CEA720x576p50"  , wds::CEA720x576p50  },
-        {"CEA720x576i50"  , wds::CEA720x576i50  },
-        {"CEA1280x720p30" , wds::CEA1280x720p30 },
-        {"CEA1280x720p60" , wds::CEA1280x720p60 },
-        {"CEA1920x1080p30", wds::CEA1920x1080p30},
-        {"CEA1920x1080p60", wds::CEA1920x1080p60},
-        {"CEA1920x1080i60", wds::CEA1920x1080i60},
-        {"CEA1280x720p25" , wds::CEA1280x720p25 },
-        {"CEA1280x720p50" , wds::CEA1280x720p50 },
-        {"CEA1920x1080p25", wds::CEA1920x1080p25},
-        {"CEA1920x1080p50", wds::CEA1920x1080p50},
-        {"CEA1920x1080i50", wds::CEA1920x1080i50},
-        {"CEA1280x720p24" , wds::CEA1280x720p24 },
-        {"CEA1920x1080p24", wds::CEA1920x1080p24},
-    };
-
-    for (auto const &it : knownCeaModes) {
-        if (it.first == modeString) {
-            mode = it.second;
-            return true;
-        }
-    }
-
-    return false;
 }
 
 } // namespace ac
