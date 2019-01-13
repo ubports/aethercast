@@ -16,6 +16,9 @@
  */
 
 #include <iostream>
+#include <string>
+#include <map>
+#include <fstream>
 
 #include "ac/logger.h"
 #include "ac/basesourcemediamanager.h"
@@ -23,6 +26,10 @@
 
 namespace {
 static unsigned int next_session_id = 0;
+}
+
+namespace {
+static bool CeaModeFromString(std::string modeString, wds::CEARatesAndResolutions &mode);
 }
 
 namespace ac {
@@ -67,12 +74,23 @@ std::vector<wds::H264VideoCodec> BaseSourceMediaManager::GetH264VideoCodecs() {
         wds::RateAndResolutionsBitmap vesa_rr;
         wds::RateAndResolutionsBitmap hh_rr;
 
+        std::ifstream videoModesConfig("~/.config/aethercast/video_modes.conf");
+        for (std::string modeString; std::getline(videoModesConfig, modeString);) {
+            wds::CEARatesAndResolutions mode;
+            if (!CeaModeFromString(modeString, mode)) {
+                AC_WARNING("Unknown video mode found in config file");
+            }   
+            cea_rr.set(mode);
+        }
+
         // We only support 720p here for now as that is our best performing
         // resolution with regard of all other bits in the pipeline. Eventually
         // we will add 60 Hz here too but for now only everything up to 30 Hz.
-        cea_rr.set(wds::CEA1280x720p30);
-        cea_rr.set(wds::CEA1280x720p25);
-        cea_rr.set(wds::CEA1280x720p24);
+        if (cea_rr.none()) {
+            cea_rr.set(wds::CEA1280x720p30);
+            cea_rr.set(wds::CEA1280x720p25);
+            cea_rr.set(wds::CEA1280x720p24);
+        }
 
         // FIXME which profiles and formats we support highly depends on what
         // android supports. But for now we just consider CBP with level 3.1
@@ -145,4 +163,36 @@ void BaseSourceMediaManager::SendIDRPicture() {
 std::string BaseSourceMediaManager::GetSessionId() const {
     return std::to_string(session_id_);
 }
+
+static bool CeaModeFromString(std::string modeString, wds::CEARatesAndResolutions &mode) {
+    static std::map<std::string, wds::CEARatesAndResolutions> knownCeaModes = {
+        {"CEA640x480p60"  , wds::CEA640x480p60  },
+        {"CEA720x480p60"  , wds::CEA720x480p60  },
+        {"CEA720x480i60"  , wds::CEA720x480i60  },
+        {"CEA720x576p50"  , wds::CEA720x576p50  },
+        {"CEA720x576i50"  , wds::CEA720x576i50  },
+        {"CEA1280x720p30" , wds::CEA1280x720p30 },
+        {"CEA1280x720p60" , wds::CEA1280x720p60 },
+        {"CEA1920x1080p30", wds::CEA1920x1080p30},
+        {"CEA1920x1080p60", wds::CEA1920x1080p60},
+        {"CEA1920x1080i60", wds::CEA1920x1080i60},
+        {"CEA1280x720p25" , wds::CEA1280x720p25 },
+        {"CEA1280x720p50" , wds::CEA1280x720p50 },
+        {"CEA1920x1080p25", wds::CEA1920x1080p25},
+        {"CEA1920x1080p50", wds::CEA1920x1080p50},
+        {"CEA1920x1080i50", wds::CEA1920x1080i50},
+        {"CEA1280x720p24" , wds::CEA1280x720p24 },
+        {"CEA1920x1080p24", wds::CEA1920x1080p24},
+    };
+
+    for (auto const &it : knownCeaModes) {
+        if (it.first == modeString) {
+            mode = it.second;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 } // namespace ac
