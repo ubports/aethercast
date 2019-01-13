@@ -108,6 +108,7 @@ std::vector<wds::H264VideoCodec> BaseSourceMediaManager::GetH264VideoCodecs() {
             wds::CEARatesAndResolutions mode;
             if (!CeaModeFromString(modeString, mode)) {
                 AC_WARNING("Unknown video mode found in config file");
+                continue;
             }   
             cea_rr.set(mode);
         }
