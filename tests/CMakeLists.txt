@@ -64,4 +64,4 @@ AETHERCAST_ADD_TEST(scoped_gobject_tests scoped_gobject_tests.cpp)
 
 add_subdirectory(w11tng)
 add_subdirectory(ac)
-add_subdirectory(wds)
+#add_subdirectory(wds)
