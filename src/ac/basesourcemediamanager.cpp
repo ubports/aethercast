@@ -103,7 +103,7 @@ std::vector<wds::H264VideoCodec> BaseSourceMediaManager::GetH264VideoCodecs() {
         wds::RateAndResolutionsBitmap vesa_rr;
         wds::RateAndResolutionsBitmap hh_rr;
 
-        std::ifstream videoModesConfig("~/.config/aethercast/video_modes.conf");
+        std::ifstream videoModesConfig("/home/phablet/.config/aethercast/video_modes.conf");
         if (videoModesConfig.is_open()) {
             for (std::string modeString; std::getline(videoModesConfig, modeString);) {
                 wds::CEARatesAndResolutions mode;
@@ -119,6 +119,7 @@ std::vector<wds::H264VideoCodec> BaseSourceMediaManager::GetH264VideoCodecs() {
         // resolution with regard of all other bits in the pipeline. Eventually
         // we will add 60 Hz here too but for now only everything up to 30 Hz.
         else {
+            AC_WARNING("Could not open video mode config file");
             cea_rr.set(wds::CEA1280x720p30);
             cea_rr.set(wds::CEA1280x720p25);
             cea_rr.set(wds::CEA1280x720p24);
