@@ -8,7 +8,11 @@ respawn
 script
 	if [ -f /system/build.prop ] ; then
 		# Wait for Android properties to be set
-		while [ "$(getprop init.svc.upstart-watcher)" != "running" ]; do sleep 0.2; done
+		# In theory we can wait for the socket to show up. However, the read of
+		# system properties can happen a bit later. Instead, wait for
+		# "wifi.interface" property, which is usually set together with
+		# "wifi.direct.interface" (if it's set).
+		while [ -z "$(getprop wifi.interface)" ]; do sleep 0.2; done
 
 		iface=`getprop wifi.direct.interface`
 		if [ "$iface" != "" ] ; then
