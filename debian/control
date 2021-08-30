@@ -28,6 +28,7 @@ Build-Depends: android-headers-19 (>= 23),
                libreadline-dev,
                libreadline6-dev,
                libwds-dev,
+               libandroid-properties-dev,
                pkg-config
 Standards-Version: 3.9.4
 Homepage: http://launchpad.net/aethercast

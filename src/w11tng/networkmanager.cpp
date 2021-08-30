@@ -24,10 +24,13 @@
 #include <ac/keep_alive.h>
 #include <ac/networkutils.h>
 
+#include <hybris/properties/properties.h>
+
 #include "w11tng/networkmanager.h"
 #include "w11tng/informationelement.h"
 #include "w11tng/kernelrfkillmanager.h"
 #include "w11tng/urfkillmanager.h"
+
 
 namespace {
 // We take two minutes as timeout here which corresponds to what wpa
@@ -71,9 +74,21 @@ std::shared_ptr<NetworkManager> NetworkManager::FinalizeConstruction() {
 
 NetworkManager::NetworkManager() :
     firmware_loader_("", this),
-    dedicated_p2p_interface_(ac::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE")),
+    dedicated_p2p_interface_(""),
     session_available_(true),
     urfkill_watch_(0) {
+        char interface_prop[PROP_VALUE_MAX];
+        const std::string interface_env = ac::Utils::GetEnvValue("AETHERCAST_DEDICATED_P2P_INTERFACE");
+
+        // First get the fixed interface name through Android properties, though
+        // if an environment variable is set then always let that have higher priority.
+        property_get("ubuntu.widi.interface", interface_prop, "");
+        if (strlen(interface_prop) > 0) {
+            dedicated_p2p_interface_ = std::string(interface_prop);
+        }
+        if (interface_env.length() > 0) {
+            dedicated_p2p_interface_ = interface_env;
+        }
 }
 
 NetworkManager::~NetworkManager() {

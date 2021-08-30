@@ -178,6 +178,7 @@ target_link_libraries(aethercast-core
   ${EGL_LIBRARIES}
   ${GLESV2_LDFLAGS}
   ${GLESV2_LIBRARIES}
+  -landroid-properties
   -ldl
 )
 
