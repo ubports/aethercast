@@ -68,7 +68,7 @@ pkg_check_modules(GIO-UNIX REQUIRED gio-unix-2.0)
 pkg_check_modules(WDS REQUIRED wds)
 pkg_check_modules(MIRCLIENT REQUIRED mirclient)
 pkg_check_modules(HYBRIS_MEDIA REQUIRED libmedia)
-pkg_check_modules(ANDROID_HEADERS REQUIRED android-headers-19)
+pkg_check_modules(ANDROID_HEADERS REQUIRED android-headers-28)
 
 include(cmake/EnableCoverageReport.cmake)
 

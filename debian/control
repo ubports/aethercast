@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: Simon Fels <simon.fels@canonical.com>
-Build-Depends: android-headers-19 (>= 23),
+Build-Depends: android-headers-28,
                cmake,
                cmake-extras,
                debhelper (>= 9),
