@@ -31,6 +31,7 @@
 #include "ac/network/udpstream.h"
 
 #include "ac/android/h264encoder.h"
+#include "ac/gst/h264encoder.h"
 
 namespace ac {
 
@@ -65,10 +66,14 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
     AC_DEBUG("Creating source media manager of type %s", type.c_str());
 
     if (type == "mir") {
+        const bool legacy = Utils::GetEnvValue("MIRACAST_LEGACY").length() > 0;
+
         const auto executor_factory = std::make_shared<common::ThreadedExecutorFactory>();
         const auto report_factory = report::ReportFactory::Create();
         const auto screencast = std::make_shared<ac::mir::Screencast>();
-        const auto encoder = ac::android::H264Encoder::Create(report_factory->CreateEncoderReport());
+        const auto encoder = legacy ? 
+            ac::android::H264Encoder::Create(report_factory->CreateEncoderReport()) :
+            ac::gst::H264Encoder::Create(report_factory->CreateEncoderReport());
 
         return std::make_shared<ac::mir::SourceMediaManager>(
                     remote_address,

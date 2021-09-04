@@ -69,6 +69,8 @@ pkg_check_modules(WDS REQUIRED wds)
 pkg_check_modules(MIRCLIENT REQUIRED mirclient)
 pkg_check_modules(HYBRIS_MEDIA REQUIRED libmedia)
 pkg_check_modules(ANDROID_HEADERS REQUIRED android-headers-19)
+pkg_check_modules(GST REQUIRED gstreamer-1.0)
+pkg_check_modules(GST-APP REQUIRED gstreamer-app-1.0)
 
 include(cmake/EnableCoverageReport.cmake)
 
@@ -98,7 +100,7 @@ set(AETHERCAST_TRACEPOINT_LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/aethercast/too
 
 add_subdirectory(conf)
 add_subdirectory(src)
-add_subdirectory(tests)
+#add_subdirectory(tests)
 add_subdirectory(tools)
 
 set(COVERAGE_IGNORE_FILES

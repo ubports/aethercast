@@ -1,2 +1,2 @@
-usr/sbin/aethercast-integration-tests
-usr/share/aethercast/tests/*
+#usr/sbin/aethercast-integration-tests
+#usr/share/aethercast/tests/*

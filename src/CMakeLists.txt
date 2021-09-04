@@ -111,6 +111,7 @@ set(SOURCES
   ac/mir/streamrenderer.cpp
 
   ac/android/h264encoder.cpp
+  ac/gst/h264encoder.cpp
 
   ac/systemcontroller.cpp
 
@@ -150,6 +151,8 @@ include_directories(
   ${MIRCLIENT_INCLUDE_DIRS}
   ${EGL_INCLUDE_DIRS}
   ${GLESV2_INCLUDE_DIRS}
+  ${GST_INCLUDE_DIRS}
+  ${GST-APP_INCLUDE_DIRS}
   ${CMAKE_CURRENT_BINARY_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}/src/w11tng
 )
@@ -178,6 +181,10 @@ target_link_libraries(aethercast-core
   ${EGL_LIBRARIES}
   ${GLESV2_LDFLAGS}
   ${GLESV2_LIBRARIES}
+  ${GST_LDFLAGS}
+  ${GST_LIBRARIES}
+  ${GST-APP_LDFLAGS}
+  ${GST-APP_LIBRARIES}
   -landroid-properties
   -ldl
 )

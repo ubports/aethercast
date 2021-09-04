@@ -33,8 +33,6 @@
 
 #include "ac/mir/sourcemediamanager.h"
 
-#include "ac/android/h264encoder.h"
-
 namespace {
 // Number of milliseconds was choosen by measurement
 static constexpr std::chrono::milliseconds kStreamDelayOnPlay{300};
