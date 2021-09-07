@@ -24,6 +24,7 @@
 #pragma GCC diagnostic pop
 
 #include <boost/concept_check.hpp>
+#include <hybris/properties/properties.h>
 
 #include "ac/logger.h"
 #include "ac/keep_alive.h"
@@ -187,29 +188,39 @@ bool H264Encoder::Configure(const Config &config) {
 
     media_message_set_string(format, kFormatKeyMime, kH264MimeType, 0);
 
-    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffers, true);
+    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffers, 1);
     media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffersOutput, false);
+    media_message_set_int32(format, "android._input-metadata-buffer-type", 1);
+    media_message_set_int32(format, "android._store-metadata-in-buffers-output", false);
 
     media_message_set_int32(format, kFormatKeyWidth, config.width);
     media_message_set_int32(format, kFormatKeyHeight, config.height);
     media_message_set_int32(format, kFormatKeyStride, config.width);
     media_message_set_int32(format, kFormatKeySliceHeight, config.width);
 
-    media_message_set_int32(format, kFormatKeyColorFormat, kOMXColorFormatAndroidOpaque);
+    int32_t colorFormat = kOMXColorFormatAndroidOpaque;
+    char colorProp[PROP_VALUE_MAX];
+    if (property_get("ubuntu.widi.colorformat", colorProp, "0")) {
+        const int32_t colorFormatOverride = atoi(colorProp);
+        if (colorFormatOverride > 0) {
+            colorFormat = colorFormatOverride;
+        }
+    }
+    media_message_set_int32(format, kFormatKeyColorFormat, colorFormat);
 
     media_message_set_int32(format, kFormatKeyBitrate, config.bitrate);
     media_message_set_int32(format, kFormatKeyBitrateMode, kOMXVideoControlRateConstant);
     media_message_set_int32(format, kFormatKeyFramerate, config.framerate);
 
-    media_message_set_int32(format, kFormatKeyIntraRefreshMode, 0);
+    //media_message_set_int32(format, kFormatKeyIntraRefreshMode, 0);
 
     // Update macroblocks in a cyclic fashion with 10% of all MBs within
     // frame gets updated at one time. It takes about 10 frames to
     // completely update a whole video frame. If the frame rate is 30,
     // it takes about 333 ms in the best case (if next frame is not an IDR)
     // to recover from a lost/corrupted packet.
-    const int32_t mbs = (((config.width + 15) / 16) * ((config.height + 15) / 16) * 10) / 100;
-    media_message_set_int32(format, kFormatKeyIntraRefreshCIRMbs, mbs);
+    //const int32_t mbs = (((config.width + 15) / 16) * ((config.height + 15) / 16) * 10) / 100;
+    //media_message_set_int32(format, kFormatKeyIntraRefreshCIRMbs, mbs);
 
     if (config.i_frame_interval > 0)
         media_message_set_int32(format, kFormatKeyIFrameInterval, config.i_frame_interval);
@@ -225,7 +236,11 @@ bool H264Encoder::Configure(const Config &config) {
 
     // FIXME we need to find a way to check if the encoder supports prepending
     // SPS/PPS to the buffers it is producing or if we have to manually do that
-    media_message_set_int32(format, kFormatKeyPrependSpsPpstoIdrFrames, 1);
+    //media_message_set_int32(format, kFormatKeyPrependSpsPpstoIdrFrames, 1);
+
+    media_message_set_int32(format, "android._using-recorder", 1);
+    media_message_set_int32(format, "feature-tunneled-playback", 1);
+
 
     auto source = media_source_create();
     if (!source) {
@@ -269,7 +284,6 @@ bool H264Encoder::Configure(const Config &config) {
     media_meta_data_set_int32(source_format,
         media_meta_data_get_key_id(MEDIA_META_DATA_KEY_FRAMERATE),
         config.framerate);
-
     media_source_set_format(source, source_format);
 
     media_source_set_start_callback(source, &H264Encoder::OnSourceStart, this);
