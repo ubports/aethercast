@@ -27,7 +27,13 @@ set(MIRSCREENCAST_TO_STREAM_SOURCES
 
 add_executable(mirscreencast_to_stream
     ${MIRSCREENCAST_TO_STREAM_SOURCES})
-target_link_libraries(mirscreencast_to_stream aethercast-core)
+target_link_libraries(mirscreencast_to_stream
+  aethercast-core
+  ${GLESV2_LIBRARIES}
+  ${GLESV2_LDFLAGS}
+  ${EGL_LIBRARIES}
+  ${EGL_LDFLAGS}
+)
 
 install(
   TARGETS mirscreencast_to_stream

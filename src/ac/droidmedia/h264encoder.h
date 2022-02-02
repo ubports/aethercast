@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Canonical, Ltd.
+ * Copyright (C) 2021 Alfred Neumayer
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3, as published
@@ -15,13 +16,13 @@
  *
  */
 
-#ifndef AC_ANDORID_ENCODER_H_
-#define AC_ANDORID_ENCODER_H_
+#ifndef AC_DROIDMEDIA_ENCODER_H_
+#define AC_DROIDMEDIA_ENCODER_H_
 
 #include <memory>
 #include <thread>
 
-#include <hybris/media/media_codec_source_layer.h>
+#include <droidmediacodec.h>
 
 #include "ac/non_copyable.h"
 #include "ac/utils.h"
@@ -33,13 +34,13 @@
 #include "ac/video/bufferqueue.h"
 
 namespace ac {
-namespace android {
+namespace droidmedia {
 
 class H264Encoder : public video::BaseEncoder {
 public:
     typedef std::shared_ptr<H264Encoder> Ptr;
 
-    static BaseEncoder::Ptr Create(const video::EncoderReport::Ptr &report, bool readout);
+    static BaseEncoder::Ptr Create(const video::EncoderReport::Ptr &report);
 
     ~H264Encoder();
 
@@ -47,7 +48,7 @@ public:
 
     bool Configure(const BaseEncoder::Config &config) override;
 
-    void QueueBuffer(const ac::video::Buffer::Ptr &buffer) override;
+    void QueueBuffer(const ac::video::Buffer::Ptr &input_buffer) override;
 
     bool Running() const override { return running_; }
     BaseEncoder::Config Configuration() const override;
@@ -61,41 +62,23 @@ public:
     std::string Name() const override;
 
 private:
-    H264Encoder(const video::EncoderReport::Ptr &report, bool readout);
+    H264Encoder(const video::EncoderReport::Ptr &report);
 
-    bool DoesBufferContainCodecConfig(MediaBufferWrapper *buffer);
-
-    MediaBufferWrapper* PackBuffer(const ac::video::Buffer::Ptr &input_buffer, const ac::TimestampUs &timestamp);
-
-private:
-    static int OnSourceRead(MediaBufferWrapper **buffer, void *user_data);
-    static int OnSourceStart(MediaMetaDataWrapper *meta, void *user_data);
-    static int OnSourceStop(void *user_data);
-    static int OnSourcePause(void *user_data);
-
-    static void OnBufferReturned(MediaBufferWrapper *buffer, void *user_data);
+public:
+    std::weak_ptr<video::BaseEncoder::Delegate> Delegate();
+    video::EncoderReport::Ptr Report();
 
 private:
-    struct BufferItem {
-        ac::video::Buffer::Ptr buffer;
-        MediaBufferWrapper *media_buffer;
-    };
-
-private:
+    DroidMediaCodec *codec_ = nullptr;
     video::EncoderReport::Ptr report_;
     BaseEncoder::Config config_;
-    MediaMessageWrapper *format_;
-    MediaMetaDataWrapper *source_format_;
-    MediaCodecSourceWrapper *encoder_;
     bool running_;
-    bool readout_;
     ac::video::BufferQueue::Ptr input_queue_;
-    std::vector<BufferItem> pending_buffers_;
     ac::TimestampUs start_time_;
     uint32_t frame_count_;
 };
 
-} // namespace android
+} // namespace droidmedia
 } // namespace ac
 
 #endif

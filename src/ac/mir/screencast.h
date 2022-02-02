@@ -31,23 +31,55 @@
 namespace ac {
 namespace mir {
 
+struct ScreencastConfiguration
+{
+    uint32_t width;
+    uint32_t height;
+    MirPixelFormat pixel_format;
+};
+
+class ScreencastFetcher
+{
+public:
+    virtual ~ScreencastFetcher() = default;
+    virtual std::string pixel_format() = 0;
+
+    virtual void Capture() = 0;
+    virtual ac::video::Buffer::Ptr CurrentReadout() = 0;
+
+protected:
+    ScreencastFetcher(bool readout) :
+        readout_(readout)
+    {
+    }
+
+    bool readout_;
+
+private:
+    ScreencastFetcher(ScreencastFetcher const&) = delete;
+    ScreencastFetcher& operator=(ScreencastFetcher const&) = delete;
+};
+
 class Screencast : public ac::video::BufferProducer {
 public:
-    explicit Screencast();
+    explicit Screencast(bool readout = false);
     ~Screencast();
 
     bool Setup(const video::DisplayOutput &output) override;
 
     // From ac::video::BufferProducer
     void SwapBuffers() override;
-    void* CurrentBuffer() const override;
+    video::Buffer::Ptr CurrentBuffer() const override;
     video::DisplayOutput OutputMode() const override;
 
 private:
     MirConnection *connection_;
     MirScreencast *screencast_;
+    ScreencastConfiguration fetcher_config_;
+    std::unique_ptr<ScreencastFetcher> fetcher_;
     MirBufferStream *buffer_stream_;
     video::DisplayOutput output_;
+    bool readout_;
 };
 
 } // namespace mir

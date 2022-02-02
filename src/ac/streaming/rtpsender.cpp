@@ -79,6 +79,8 @@ bool RTPSender::Execute() {
                 != network::Stream::Error::kNone) {
             network_error_.exchange(true);
             break;
+        } else {
+            AC_DEBUG("Sent packet %lu", (unsigned long)packet->Length());
         }
 
         report_->SentPacket(packet->Timestamp(), packet->Length());
@@ -154,7 +156,9 @@ bool RTPSender::Queue(const video::Buffer::Ptr &packets) {
         queue_->PushUnlocked(packet);
     }
 
+    AC_DEBUG("QUeue unlockiing");
     queue_->Unlock();
+    AC_DEBUG("Queue unlocked");
 
     return true;
 }

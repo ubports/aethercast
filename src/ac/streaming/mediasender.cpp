@@ -68,6 +68,8 @@ bool MediaSender::Stop() {
 void MediaSender::ProcessBuffer(const ac::video::Buffer::Ptr &buffer) {
     ac::video::Buffer::Ptr packets;
 
+    AC_DEBUG("ProcessBuffer");
+
     // FIXME: By default we're expecting the encoder to insert SPS and PPS
     // with each IDR frame but we need to handle also the case where the
     // encoder is not capable of doing this. For that we simply have to set
@@ -86,6 +88,7 @@ void MediaSender::ProcessBuffer(const ac::video::Buffer::Ptr &buffer) {
         AC_ERROR("MPEGTS packetizing failed");
         return;
     }
+    AC_DEBUG("Packetized");
 
     packets->SetTimestamp(buffer->Timestamp());
     sender_->Queue(packets);

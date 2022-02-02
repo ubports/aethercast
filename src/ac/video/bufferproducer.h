@@ -22,6 +22,7 @@
 
 #include "ac/non_copyable.h"
 
+#include "ac/video/buffer.h"
 #include "ac/video/displayoutput.h"
 
 namespace ac {
@@ -35,7 +36,7 @@ public:
 
     virtual bool Setup(const video::DisplayOutput &output) = 0;
     virtual void SwapBuffers() = 0;
-    virtual void* CurrentBuffer() const = 0;
+    virtual Buffer::Ptr CurrentBuffer() const = 0;
     virtual DisplayOutput OutputMode() const = 0;
 };
 

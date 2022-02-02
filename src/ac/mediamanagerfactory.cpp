@@ -17,6 +17,8 @@
 
 #include <string.h>
 
+#include <hybris/properties/properties.h>
+
 #include "ac/logger.h"
 #include "ac/mediamanagerfactory.h"
 #include "ac/utils.h"
@@ -32,6 +34,7 @@
 
 #include "ac/android/h264encoder.h"
 #include "ac/gst/h264encoder.h"
+#include "ac/droidmedia/h264encoder.h"
 
 namespace ac {
 
@@ -66,14 +69,30 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
     AC_DEBUG("Creating source media manager of type %s", type.c_str());
 
     if (type == "mir") {
-        const bool legacy = Utils::GetEnvValue("MIRACAST_LEGACY").length() > 0;
+        // Shipped encoders: "", "droidmedia", "gst"
+        // Effectively only the legacy and droidmedia are tested
+        std::string encoder_name = "";
+        char encoder_prop[PROP_VALUE_MAX];
+        property_get("ubuntu.widi.encoder", encoder_prop, "");
+        if (strlen(encoder_prop) > 0) {
+            encoder_name = std::string(encoder_prop);
+        }
+
+        // Decide whether to copy pixels into main memory
+        bool readout = false;
+        char readout_prop[PROP_VALUE_MAX];
+        property_get("ubuntu.widi.readout", readout_prop, "");
+        if (strlen(readout_prop) > 0 && !strcmp(readout_prop, "true")) {
+            readout = true;
+        }
 
         const auto executor_factory = std::make_shared<common::ThreadedExecutorFactory>();
         const auto report_factory = report::ReportFactory::Create();
-        const auto screencast = std::make_shared<ac::mir::Screencast>();
-        const auto encoder = legacy ? 
-            ac::android::H264Encoder::Create(report_factory->CreateEncoderReport()) :
-            ac::gst::H264Encoder::Create(report_factory->CreateEncoderReport());
+        const auto screencast = std::make_shared<ac::mir::Screencast>(readout);
+        const auto encoder = 
+            (encoder_name == "gst") ? ac::gst::H264Encoder::Create(report_factory->CreateEncoderReport()) :
+            (encoder_name == "droidmedia") ? ac::droidmedia::H264Encoder::Create(report_factory->CreateEncoderReport()) :
+            ac::android::H264Encoder::Create(report_factory->CreateEncoderReport(), readout);
 
         return std::make_shared<ac::mir::SourceMediaManager>(
                     remote_address,

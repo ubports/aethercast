@@ -16,7 +16,9 @@
  */
 
 #include "service.h"
+#include <droidmedia.h>
 
 int main(int argc, char **argv) {
+    droid_media_init();
     return ac::Service::Main(ac::Service::MainOptions::FromCommandLine(argc, argv));
 }

@@ -63,9 +63,7 @@ bool StreamRenderer::Execute() {
     // and will block until that is done and we received a new buffer
     buffer_producer_->SwapBuffers();
 
-    const auto native_buffer = buffer_producer_->CurrentBuffer();
-
-    auto buffer = ac::video::Buffer::Create(native_buffer);
+    auto buffer = buffer_producer_->CurrentBuffer();
     buffer->SetDelegate(shared_from_this());
 
     // FIXME: at optimum we would get the timestamp directly supplied
