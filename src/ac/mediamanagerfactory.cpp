@@ -34,7 +34,6 @@
 
 #include "ac/android/h264encoder.h"
 #include "ac/gst/h264encoder.h"
-#include "ac/droidmedia/h264encoder.h"
 
 namespace ac {
 
@@ -69,8 +68,8 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
     AC_DEBUG("Creating source media manager of type %s", type.c_str());
 
     if (type == "mir") {
-        // Shipped encoders: "", "droidmedia", "gst"
-        // Effectively only the legacy and droidmedia are tested
+        // Shipped encoders: "", "gst"
+        // Effectively only the legacy one is tested
         std::string encoder_name = "";
         char encoder_prop[PROP_VALUE_MAX];
         property_get("ubuntu.widi.encoder", encoder_prop, "");
@@ -91,7 +90,6 @@ std::shared_ptr<BaseSourceMediaManager> MediaManagerFactory::CreateSource(const 
         const auto screencast = std::make_shared<ac::mir::Screencast>(readout);
         const auto encoder = 
             (encoder_name == "gst") ? ac::gst::H264Encoder::Create(report_factory->CreateEncoderReport()) :
-            (encoder_name == "droidmedia") ? ac::droidmedia::H264Encoder::Create(report_factory->CreateEncoderReport()) :
             ac::android::H264Encoder::Create(report_factory->CreateEncoderReport(), readout);
 
         return std::make_shared<ac::mir::SourceMediaManager>(

@@ -110,10 +110,8 @@ set(SOURCES
   ac/mir/screencast.cpp
   ac/mir/streamrenderer.cpp
 
-  /usr/share/droidmedia/hybris.c
   ac/android/h264encoder.cpp
   ac/gst/h264encoder.cpp
-  ac/droidmedia/h264encoder.cpp
 
   ac/systemcontroller.cpp
 
@@ -155,7 +153,6 @@ include_directories(
   ${GLESV2_INCLUDE_DIRS}
   ${GST_INCLUDE_DIRS}
   ${GST-APP_INCLUDE_DIRS}
-  /usr/include/droidmedia
   ${CMAKE_CURRENT_BINARY_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}/src/w11tng
 )

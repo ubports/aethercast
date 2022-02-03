@@ -32,7 +32,6 @@ Build-Depends: android-headers-29,
                libegl1-mesa-dev,
                libgles2-mesa-dev,
                libgstreamer1.0-dev,
-               droidmedia,
                pkg-config
 Standards-Version: 3.9.4
 Homepage: http://launchpad.net/aethercast
