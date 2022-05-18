@@ -181,14 +181,7 @@ public:
     typedef std::shared_ptr<MediaSourceBuffer> Ptr;
 
     ~MediaSourceBuffer() {
-        if (!buffer_)
-            return;
-
-        delete[] buffer_;
-        buffer_ = nullptr;
-
-        /*const auto ref_count = media_buffer_get_refcount(buffer_);
-        AC_DEBUG("ref count: %d", ref_count);
+        const auto ref_count = media_buffer_get_refcount(buffer_);
 
         // If someone has set a reference on the buffer we just have to
         // release it here and the other one will take care about actually
@@ -196,15 +189,72 @@ public:
         if (ref_count > 0)
             media_buffer_release(buffer_);
         else
-            media_buffer_destroy(buffer_);*/
+            media_buffer_destroy(buffer_);
     }
 
     static MediaSourceBuffer::Ptr Create(MediaBufferWrapper *buffer) {
         const auto sp = std::shared_ptr<MediaSourceBuffer>(new MediaSourceBuffer);
-        
-        // Copy contents rather than keeping reference of the MediaSourceBuffer,
-        // since on Halium 9.0 there is a Reference Counting bug that causes
-        // trouble otherwise.
+        sp->buffer_ = buffer;
+        sp->ExtractTimestamp();
+        return sp;
+    }
+
+    virtual uint32_t Length() const {
+        return media_buffer_get_size(buffer_);
+    }
+
+    virtual uint8_t* Data() {
+        return static_cast<uint8_t*>(media_buffer_get_data(buffer_));
+    }
+
+    virtual bool IsValid() const {
+        return buffer_ != nullptr;
+    }
+
+private:
+    void ExtractTimestamp() {
+        const auto meta_data = media_buffer_get_meta_data(buffer_);
+        if (!meta_data)
+            return;
+
+        const uint32_t key_time = media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME);
+        int64_t time_us = 0;
+        media_meta_data_find_int64(meta_data, key_time, &time_us);
+
+        SetTimestamp(time_us);
+    }
+
+private:
+    MediaBufferWrapper *buffer_;
+};
+
+
+class MediaSourceRamBuffer : public video::Buffer
+{
+public:
+    typedef std::shared_ptr<MediaSourceRamBuffer> Ptr;
+
+    ~MediaSourceRamBuffer() {
+        const auto ref_count = media_buffer_get_refcount(buffer_);
+
+        // If someone has set a reference on the buffer we just have to
+        // release it here and the other one will take care about actually
+        // destroying it.
+        if (ref_count > 0)
+            media_buffer_release(buffer_);
+        else
+            media_buffer_destroy(buffer_);
+
+        if (!buffer_)
+            return;
+
+        delete[] buffer_;
+        buffer_ = nullptr;
+    }
+
+    static MediaSourceRamBuffer::Ptr Create(MediaBufferWrapper *buffer) {
+        const auto sp = std::shared_ptr<MediaSourceRamBuffer>(new MediaSourceRamBuffer);
+
         uint32_t size = media_buffer_get_size(buffer);
         uint8_t *pixels = new uint8_t[size];
         memcpy(pixels, media_buffer_get_data(buffer), size);
@@ -216,12 +266,10 @@ public:
     }
 
     virtual uint32_t Length() const {
-        //return media_buffer_get_size(buffer_);
         return size_;
     }
 
     virtual uint8_t* Data() {
-        //return static_cast<uint8_t*>(media_buffer_get_data(buffer_));
         return buffer_;
     }
 
@@ -297,41 +345,44 @@ bool H264Encoder::Configure(const Config &config) {
 
     media_message_set_string(format, kFormatKeyMime, kH264MimeType, 0);
 
-    //media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffers, kMetadataBufferTypeANWBuffer);
-    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffers, readout_ ? kMetadataBufferTypeInvalid : kMetadataBufferTypeANWBuffer);
-    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffersOutput, false);
-    //media_message_set_int32(format, "android._input-metadata-buffer-type", kMetadataBufferTypeANWBuffer);
-    media_message_set_int32(format, "android._input-metadata-buffer-type", readout_ ? kMetadataBufferTypeInvalid : kMetadataBufferTypeANWBuffer);
-    media_message_set_int32(format, "android._store-metadata-in-buffers-output", false);
+    if (!readout_) {
+        media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffers, kMetadataBufferTypeANWBuffer);
+        media_message_set_int32(format, "android._input-metadata-buffer-type", kMetadataBufferTypeANWBuffer);
+        media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffersOutput, false);
+        media_message_set_int32(format, "android._store-metadata-in-buffers-output", false);
+    }
+
+    media_message_set_int32(format, "android._using-recorder", 1);
 
     media_message_set_int32(format, kFormatKeyWidth, config.width);
     media_message_set_int32(format, kFormatKeyHeight, config.height);
     media_message_set_int32(format, kFormatKeyStride, config.width);
     media_message_set_int32(format, kFormatKeySliceHeight, config.height);
 
-    int32_t colorFormat = kOMXColorFormatAndroidOpaque;
+    int32_t colorFormatOut = kOMXColorFormatAndroidOpaque;
     char colorProp[PROP_VALUE_MAX];
-    if (property_get("ubuntu.widi.colorformat", colorProp, "0")) {
+    if (property_get("ubuntu.widi.colorformat.out", colorProp, "0")) {
         const int32_t colorFormatOverride = atoi(colorProp);
         if (colorFormatOverride > 0) {
-            colorFormat = colorFormatOverride;
+            colorFormatOut = colorFormatOverride;
         }
     }
-    media_message_set_int32(format, kFormatKeyColorFormat, colorFormat);
+    media_message_set_int32(format, kFormatKeyColorFormat, colorFormatOut);
+    media_message_set_int32(format, "android._color-format", colorFormatOut);
 
     media_message_set_int32(format, kFormatKeyBitrate, config.bitrate);
     media_message_set_int32(format, kFormatKeyBitrateMode, kOMXVideoControlRateConstant);
     media_message_set_int32(format, kFormatKeyFramerate, config.framerate);
 
-    media_message_set_int32(format, kFormatKeyIntraRefreshMode, 0);
+    //media_message_set_int32(format, kFormatKeyIntraRefreshMode, 0);
 
     // Update macroblocks in a cyclic fashion with 10% of all MBs within
     // frame gets updated at one time. It takes about 10 frames to
     // completely update a whole video frame. If the frame rate is 30,
     // it takes about 333 ms in the best case (if next frame is not an IDR)
     // to recover from a lost/corrupted packet.
-    const int32_t mbs = (((config.width + 15) / 16) * ((config.height + 15) / 16) * 10) / 100;
-    media_message_set_int32(format, kFormatKeyIntraRefreshCIRMbs, mbs);
+    //const int32_t mbs = (((config.width + 15) / 16) * ((config.height + 15) / 16) * 10) / 100;
+    //media_message_set_int32(format, kFormatKeyIntraRefreshCIRMbs, mbs);
 
     if (config.i_frame_interval > 0)
         media_message_set_int32(format, kFormatKeyIFrameInterval, config.i_frame_interval);
@@ -347,7 +398,7 @@ bool H264Encoder::Configure(const Config &config) {
 
     // FIXME we need to find a way to check if the encoder supports prepending
     // SPS/PPS to the buffers it is producing or if we have to manually do that
-    media_message_set_int32(format, kFormatKeyPrependSpsPpstoIdrFrames, 1);
+    //media_message_set_int32(format, kFormatKeyPrependSpsPpstoIdrFrames, 1);
 
     //media_message_set_int32(format, "max-input-size", config.width * config.height * 4);
 
@@ -372,11 +423,17 @@ bool H264Encoder::Configure(const Config &config) {
         media_meta_data_get_key_id(MEDIA_META_DATA_KEY_MIME),
         kRawMimeType);
 
-    // We're setting the opaque color format here as the encoder is then
-    // meant to figure out the color format from the GL frames itself.
+    int32_t colorFormatIn = kOMXColorFormatAndroidOpaque;
+    char colorPropIn[PROP_VALUE_MAX];
+    if (property_get("ubuntu.widi.colorformat.in", colorPropIn, "0")) {
+        const int32_t colorFormatOverride = atoi(colorPropIn);
+        if (colorFormatOverride > 0) {
+            colorFormatIn = colorFormatOverride;
+        }
+    }
     media_meta_data_set_int32(source_format,
         media_meta_data_get_key_id(MEDIA_META_DATA_KEY_COLOR_FORMAT),
-        kOMXColorFormatAndroidOpaque);
+        colorFormatIn);
 
     media_meta_data_set_int32(source_format,
         media_meta_data_get_key_id(MEDIA_META_DATA_KEY_WIDTH),
@@ -631,19 +688,29 @@ bool H264Encoder::Execute() {
     }
 
     AC_DEBUG("creating mbuf");
-    auto mbuf = MediaSourceBuffer::Create(buffer);
-    report_->FinishedFrame(mbuf->Timestamp());
+    if (!readout_) {
+        auto mbuf = MediaSourceBuffer::Create(buffer);
+        report_->FinishedFrame(mbuf->Timestamp());
 
-    if (DoesBufferContainCodecConfig(buffer)) {
+        if (DoesBufferContainCodecConfig(buffer)) {
+            if (auto sp = delegate_.lock())
+                sp->OnBufferWithCodecConfig(mbuf);
+        }
+
         if (auto sp = delegate_.lock())
-            sp->OnBufferWithCodecConfig(mbuf);
+            sp->OnBufferAvailable(mbuf);
+    } else {
+        auto mbuf = MediaSourceRamBuffer::Create(buffer);
+        report_->FinishedFrame(mbuf->Timestamp());
+
+        if (DoesBufferContainCodecConfig(buffer)) {
+            if (auto sp = delegate_.lock())
+                sp->OnBufferWithCodecConfig(mbuf);
+        }
+
+        if (auto sp = delegate_.lock())
+            sp->OnBufferAvailable(mbuf);
     }
-
-    if (auto sp = delegate_.lock())
-        sp->OnBufferAvailable(mbuf);
-
-    //OnBufferReturned(buffer, (void*)this);
-
     return true;
 }
 
