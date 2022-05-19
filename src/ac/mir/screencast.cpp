@@ -233,19 +233,10 @@ public:
         if (readout_) {
             void* data = buffer->Data();
             glReadPixels(x, y, width, height, read_pixel_format, GL_UNSIGNED_BYTE, data);
-            /*auto write_out_future = std::async(
-                std::launch::async,
-                [this] {
-                stream.write(buffer.data(), buffer.size());
-                });*/
         }
 
         if (eglSwapBuffers(egl_display, egl_surface) != EGL_TRUE)
             AC_WARNING("Failed to swap screencast surface buffers");
-
-        /*if (readout_) {
-            write_out_future.wait();
-        }*/
 
         if (eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) != EGL_TRUE)
         {
@@ -405,7 +396,6 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
                   mir_connection_get_error_message(connection_));
         return false;
     }
-    pixel_format = mir_pixel_format_xbgr_8888;
 
     auto spec = mir_create_screencast_spec(connection_);
     if (!spec) {

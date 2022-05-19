@@ -235,16 +235,6 @@ public:
     typedef std::shared_ptr<MediaSourceRamBuffer> Ptr;
 
     ~MediaSourceRamBuffer() {
-        const auto ref_count = media_buffer_get_refcount(buffer_);
-
-        // If someone has set a reference on the buffer we just have to
-        // release it here and the other one will take care about actually
-        // destroying it.
-        if (ref_count > 0)
-            media_buffer_release(buffer_);
-        else
-            media_buffer_destroy(buffer_);
-
         if (!buffer_)
             return;
 
@@ -586,10 +576,6 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const ac::video::Buffer::Ptr &input_
     }
 
     media_buffer_set_return_callback(buffer, &H264Encoder::OnBufferReturned, this);
-
-    // We need to put a reference on the buffer here if we want the
-    // callback we set above being called.
-    //media_buffer_ref(buffer);
 
     auto meta = media_buffer_get_meta_data(buffer);
     const auto key_time = media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME);
