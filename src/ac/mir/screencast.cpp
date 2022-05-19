@@ -311,7 +311,6 @@ Screencast::~Screencast() {
         mir_connection_release(connection_);
 }
 
-#if 1
 bool Screencast::Setup(const video::DisplayOutput &output) {
     if (screencast_ || connection_ || buffer_stream_)
         return false;
@@ -371,12 +370,8 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
     // If we request a screen region outside the available screen area
     // mir will create a mir output which is then available for everyone
     // as just another display.
-    //region.left = display_mode->horizontal_resolution / 2;
-    //region.top = display_mode->vertical_resolution / 2;
     region.width = output.width;
     region.height = output.height;
-    //region.left = 0;
-    //region.top = 0;
     region.left = display_mode->horizontal_resolution;
     region.top = 0;
 
@@ -408,7 +403,7 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
     mir_screencast_spec_set_width(spec, output.width);
     mir_screencast_spec_set_height(spec, output.height);
     mir_screencast_spec_set_pixel_format(spec, pixel_format);
-    mir_screencast_spec_set_mirror_mode(spec, mir_mirror_mode_none);
+    mir_screencast_spec_set_mirror_mode(spec, readout_ ? mir_mirror_mode_none : mir_mirror_mode_vertical);
     mir_screencast_spec_set_number_of_buffers(spec, 2);
 
     screencast_ = mir_screencast_create_sync(spec);
@@ -434,124 +429,6 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
 
     return true;
 }
-#else
-bool Screencast::Setup(const video::DisplayOutput &output) {
-    if (screencast_ || connection_ || buffer_stream_)
-        return false;
-
-    if (output.mode != video::DisplayOutput::Mode::kExtend) {
-        AC_ERROR("Unsupported display output mode specified '%s'", output.mode);
-        return false;
-    }
-
-    AC_DEBUG("Setting up screencast [%s %dx%d]", output.mode,
-              output.width, output.height);
-
-    connection_ = mir_connect_sync(kMirSocket, kMirConnectionName);
-    if (!mir_connection_is_valid(connection_)) {
-        AC_ERROR("Failed to connect to Mir server: %s",
-                  mir_connection_get_error_message(connection_));
-        return false;
-    }
-
-    const auto config = mir_connection_create_display_config(connection_);
-    if (!config) {
-        AC_ERROR("Failed to create display configuration: %s",
-                  mir_connection_get_error_message(connection_));
-        return false;
-    }
-
-    MirDisplayOutput *active_output = nullptr;
-    unsigned int output_index = 0;
-
-    for (unsigned int i = 0; i < config->num_outputs; ++i) {
-        if (config->outputs[i].connected &&
-            config->outputs[i].used &&
-            config->outputs[i].current_mode < config->outputs[i].num_modes) {
-            // Found an active connection we can just use for our purpose
-            active_output = &config->outputs[i];
-            output_index = i;
-            break;
-        }
-    }
-
-    if (!active_output) {
-        AC_ERROR("Failed to find a suitable display output");
-        return false;
-    }
-
-    const MirDisplayMode *display_mode = &active_output->modes[active_output->current_mode];
-
-    auto spec = mir_create_screencast_spec(connection_);
-    if (!spec) {
-        AC_ERROR("Failed to create Mir screencast specification: %s",
-              mir_screencast_get_error_message(screencast_));
-        return false;
-    }
-
-    mir_screencast_spec_set_width(spec, output.width);
-    mir_screencast_spec_set_height(spec, output.height);
-
-    MirRectangle region;
-    // If we request a screen region outside the available screen area
-    // mir will create a mir output which is then available for everyone
-    // as just another display.
-    region.left = display_mode->horizontal_resolution;
-    region.top = 0;
-    region.width = display_mode->vertical_resolution;
-    region.height = display_mode->horizontal_resolution;
-
-    mir_screencast_spec_set_capture_region(spec, &region);
-
-    output_.refresh_rate = display_mode->refresh_rate;
-
-    AC_INFO("Selected output ID %i [(%ix%i)+(%ix%i)] orientation %d",
-             output_index,
-             display_mode->vertical_resolution,
-             display_mode->horizontal_resolution,
-             region.left, region.top,
-             active_output->orientation);
-
-    unsigned int num_pixel_formats = 0;
-    MirPixelFormat pixel_format;
-    mir_connection_get_available_surface_formats(connection_, &pixel_format,
-                                                 1, &num_pixel_formats);
-    if (num_pixel_formats == 0) {
-        AC_ERROR("Failed to find suitable pixel format: %s",
-                  mir_connection_get_error_message(connection_));
-        return false;
-    }
-
-    mir_screencast_spec_set_pixel_format(spec, pixel_format);
-    mir_screencast_spec_set_mirror_mode(spec, mir_mirror_mode_vertical);
-    mir_screencast_spec_set_number_of_buffers(spec, 2);
-
-    screencast_ = mir_screencast_create_sync(spec);
-    mir_screencast_spec_release(spec);
-    if (!mir_screencast_is_valid(screencast_)) {
-        AC_ERROR("Failed to create Mir screencast: %s",
-              mir_screencast_get_error_message(screencast_));
-        return false;
-    }
-
-    buffer_stream_ = mir_screencast_get_buffer_stream(screencast_);
-    if (!buffer_stream_) {
-        AC_ERROR("Failed to setup Mir buffer stream");
-        return false;
-    }
-
-    output_ = output;
-    fetcher_config_.width = region.width;
-    fetcher_config_.height = region.height;
-    fetcher_config_.region.width = region.width;
-    fetcher_config_.region.height = region.height;
-    fetcher_config_.region.top = 0;
-    fetcher_config_.region.left = 0;
-    fetcher_config_.pixel_format = pixel_format;
-
-    return true;
-}
-#endif
 
 void Screencast::SwapBuffers() {
     if (!buffer_stream_)
