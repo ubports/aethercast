@@ -41,7 +41,19 @@ const int32_t kOMXVideoIntraRefreshCyclic = 0;
 // From frameworks/native/include/media/openmax/OMX_Video.h
 const int32_t kOMXVideoControlRateConstant = 2;
 // From frameworks/native/include/media/hardware/MetadataBufferType.h
-const uint32_t kMetadataBufferTypeGrallocSource = 1;
+typedef enum {
+    kMetadataBufferTypeCameraSource  = 0,
+    kMetadataBufferTypeGrallocSource = 1,
+    kMetadataBufferTypeANWBuffer = 2,
+    kMetadataBufferTypeNativeHandleSource = 3,
+    kMetadataBufferTypeInvalid = -1,
+} MetadataBufferType;
+
+struct VideoNativeMetadata {
+    MetadataBufferType eType;               // must be kMetadataBufferTypeANWBuffer
+    ANativeWindowBuffer *pBuffer;
+    int nFenceFd;                           // -1 if unused
+};
 
 class MockEncoderDelegate : public ac::video::BaseEncoder::Delegate {
 public:
@@ -335,9 +347,16 @@ TEST_F(H264EncoderFixture, CorrectConfiguration) {
 
     EXPECT_CALL(*mock, media_message_set_string(format_message, StrEq("mime"), StrEq("video/avc"), 0))
             .Times(1);
-    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("store-metadata-in-buffers"), 1))
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("store-metadata-in-buffers"), 2))
+            .Times(1);
+
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("android._input-metadata-buffer-type"), 2))
             .Times(1);
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("store-metadata-in-buffers-output"), 0))
+            .Times(1);
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("android._store-metadata-in-buffers-output"), 0))
+            .Times(1);
+    EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("android._using-recorder"), 1))
             .Times(1);
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("width"), config.width))
             .Times(1);
@@ -355,14 +374,18 @@ TEST_F(H264EncoderFixture, CorrectConfiguration) {
             .Times(1);
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("frame-rate"), config.framerate))
             .Times(1);
+#if 0
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("intra-refresh-mode"), config.intra_refresh_mode))
             .Times(1);
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("intra-refresh-CIR-mbs"), 360))
             .Times(1);
+#endif
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("i-frame-interval"), config.i_frame_interval))
             .Times(1);
+#if 0
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("prepend-sps-pps-to-idr-frames"), 1))
             .Times(1);
+#endif
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("profile-idc"), 1))
             .Times(1);
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("level-idc"), 2))
@@ -555,7 +578,7 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
 
     MediaBufferWrapper *output_buffer = nullptr;
     auto mbuf = new DummyMediaBufferWrapper;
-    size_t mbuf_size = sizeof(buffer_handle_t) + 4;
+    size_t mbuf_size = sizeof(VideoNativeMetadata);
     auto mbuf_data = new uint8_t[mbuf_size];
 
     EXPECT_CALL(*mock, media_buffer_create(mbuf_size))
@@ -566,8 +589,10 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
             .Times(1)
             .WillRepeatedly(Return(mbuf_data));
 
+#if 0
     EXPECT_CALL(*mock, media_buffer_ref(mbuf))
             .Times(1);
+#endif
 
     EXPECT_CALL(*mock, media_buffer_get_meta_data(mbuf))
             .Times(1);

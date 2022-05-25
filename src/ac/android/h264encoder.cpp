@@ -39,8 +39,6 @@ static constexpr int32_t kOMXColorFormatAndroidOpaque = 0x7F000789;
 static constexpr int32_t kOMXVideoIntraRefreshCyclic = 0;
 // From frameworks/native/include/media/openmax/OMX_Video.h
 static constexpr int32_t kOMXVideoControlRateConstant = 2;
-// From frameworks/native/include/media/hardware/MetadataBufferType.h
-static constexpr uint32_t kMetadataBufferTypeGrallocSource = 1;
 // Supplying -1 as framerate means the encoder decides on which framerate
 // it provides.
 static constexpr int32_t kAnyFramerate = -1;
@@ -60,7 +58,10 @@ enum AndroidMediaError {
 // structure to configure the MediaCodec instance for our needs.
 static constexpr const char *kFormatKeyMime{"mime"};
 static constexpr const char *kFormatKeyStoreMetaDataInBuffers{"store-metadata-in-buffers"};
+static constexpr const char *kFormatKeyStoreMetaDataInBuffers2{"android._input-metadata-buffer-type"};
 static constexpr const char *kFormatKeyStoreMetaDataInBuffersOutput{"store-metadata-in-buffers-output"};
+static constexpr const char *kFormatKeyStoreMetaDataInBuffersOutput2{"android._store-metadata-in-buffers-output"};
+static constexpr const char *kFormatKeyUsingRecorder{"android._using-recorder"};
 static constexpr const char *kFormatKeyWidth{"width"};
 static constexpr const char *kFormatKeyHeight{"height"};
 static constexpr const char *kFormatKeyStride{"stride"};
@@ -76,6 +77,20 @@ static constexpr const char *kFormatKeyProfileIdc{"profile-idc"};
 static constexpr const char *kFormatKeyLevelIdc{"level-idc"};
 static constexpr const char *kFormatKeyConstraintSet{"constraint-set"};
 static constexpr const char *kFormatKeyPrependSpsPpstoIdrFrames{"prepend-sps-pps-to-idr-frames"};
+
+typedef enum {
+    kMetadataBufferTypeCameraSource  = 0,
+    kMetadataBufferTypeGrallocSource = 1,
+    kMetadataBufferTypeANWBuffer = 2,
+    kMetadataBufferTypeNativeHandleSource = 3,
+    kMetadataBufferTypeInvalid = -1,
+} MetadataBufferType;
+
+struct VideoNativeMetadata {
+    MetadataBufferType eType;               // must be kMetadataBufferTypeANWBuffer
+    ANativeWindowBuffer *pBuffer;
+    int nFenceFd;                           // -1 if unused
+};
 }
 
 namespace ac {
@@ -187,8 +202,12 @@ bool H264Encoder::Configure(const Config &config) {
 
     media_message_set_string(format, kFormatKeyMime, kH264MimeType, 0);
 
-    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffers, true);
+    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffers, kMetadataBufferTypeANWBuffer);
+    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffers2, kMetadataBufferTypeANWBuffer);
     media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffersOutput, false);
+    media_message_set_int32(format, kFormatKeyStoreMetaDataInBuffersOutput2, false);
+
+    media_message_set_int32(format, kFormatKeyUsingRecorder, true);
 
     media_message_set_int32(format, kFormatKeyWidth, config.width);
     media_message_set_int32(format, kFormatKeyHeight, config.height);
@@ -201,6 +220,7 @@ bool H264Encoder::Configure(const Config &config) {
     media_message_set_int32(format, kFormatKeyBitrateMode, kOMXVideoControlRateConstant);
     media_message_set_int32(format, kFormatKeyFramerate, config.framerate);
 
+#if 0
     media_message_set_int32(format, kFormatKeyIntraRefreshMode, 0);
 
     // Update macroblocks in a cyclic fashion with 10% of all MBs within
@@ -210,6 +230,7 @@ bool H264Encoder::Configure(const Config &config) {
     // to recover from a lost/corrupted packet.
     const int32_t mbs = (((config.width + 15) / 16) * ((config.height + 15) / 16) * 10) / 100;
     media_message_set_int32(format, kFormatKeyIntraRefreshCIRMbs, mbs);
+#endif
 
     if (config.i_frame_interval > 0)
         media_message_set_int32(format, kFormatKeyIFrameInterval, config.i_frame_interval);
@@ -223,9 +244,11 @@ bool H264Encoder::Configure(const Config &config) {
     if (config.constraint_set > 0)
         media_message_set_int32(format, kFormatKeyConstraintSet, config.constraint_set);
 
+#if 0
     // FIXME we need to find a way to check if the encoder supports prepending
     // SPS/PPS to the buffers it is producing or if we have to manually do that
     media_message_set_int32(format, kFormatKeyPrependSpsPpstoIdrFrames, 1);
+#endif
 
     auto source = media_source_create();
     if (!source) {
@@ -351,30 +374,26 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const ac::video::Buffer::Ptr &input_
 
     const auto anwb = reinterpret_cast<ANativeWindowBuffer*>(input_buffer->NativeHandle());
 
-    uint32_t type = kMetadataBufferTypeGrallocSource;
-    const size_t size = sizeof(buffer_handle_t) + sizeof(type);
-
     // We let the media buffer allocate the memory here to let it keep
     // the ownership and release the memory once its destroyed.
-    auto buffer = media_buffer_create(size);
+    auto buffer = media_buffer_create(sizeof(VideoNativeMetadata));
     if (!buffer)
         return nullptr;
 
-    auto data = media_buffer_get_data(buffer);
+    VideoNativeMetadata* data = (VideoNativeMetadata*)media_buffer_get_data(buffer);
 
-    // We're passing the buffer handle directly as part of the buffer data
-    // here to the encoder and it will figure out it has to deal with a
-    // buffer with the key value we put in front of it. See also
-    // frameworks/av/media/libstagefright/SurfaceMediaSource.cpp for more
-    // details about this.
-    memcpy(data, &type, sizeof(type));
-    memcpy(data + sizeof(type), &anwb->handle, sizeof(buffer_handle_t));
+    memset(data, 0, sizeof(VideoNativeMetadata));
+    data->eType = kMetadataBufferTypeANWBuffer;
+    data->pBuffer = anwb;
+    data->nFenceFd = -1;
 
     media_buffer_set_return_callback(buffer, &H264Encoder::OnBufferReturned, this);
 
+#if 0
     // We need to put a reference on the buffer here if we want the
     // callback we set above being called.
     media_buffer_ref(buffer);
+#endif
 
     auto meta = media_buffer_get_meta_data(buffer);
     const auto key_time = media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME);
