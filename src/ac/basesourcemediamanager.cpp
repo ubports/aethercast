@@ -70,6 +70,7 @@ std::vector<wds::H264VideoCodec> BaseSourceMediaManager::GetH264VideoCodecs() {
         // We only support 720p here for now as that is our best performing
         // resolution with regard of all other bits in the pipeline. Eventually
         // we will add 60 Hz here too but for now only everything up to 30 Hz.
+        cea_rr.set(wds::CEA1280x720p60);
         cea_rr.set(wds::CEA1280x720p30);
         cea_rr.set(wds::CEA1280x720p25);
         cea_rr.set(wds::CEA1280x720p24);
@@ -105,10 +106,6 @@ bool BaseSourceMediaManager::InitOptimalVideoFormat(const wds::NativeVideoFormat
                                          GetH264VideoCodecs(),
                                          sink_supported_codecs,
                                          &success);
-
-    // Workaround buggy wds code ..
-    if (format_.rate_resolution == wds::CEA1280x720p60)
-        format_.rate_resolution = wds::CEA1280x720p30;
 
     if (!success) {
         AC_ERROR("Failed to select proper video format");
