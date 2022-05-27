@@ -27,6 +27,7 @@ namespace {
 class MockBufferProducer : public ac::video::BufferProducer {
 public:
     MOCK_METHOD1(Setup, bool(const ac::video::DisplayOutput&));
+    MOCK_METHOD0(Stop, bool());
     MOCK_METHOD0(SwapBuffers, void());
     MOCK_CONST_METHOD0(CurrentBuffer, void*());
     MOCK_CONST_METHOD0(OutputMode, ac::video::DisplayOutput());

@@ -1,6 +1,6 @@
 description "Display cast service"
 
-start on started dbus and started urfkill
+start on started dbus and started urfkill and started lightdm
 stop on stopping dbus
 
 respawn
