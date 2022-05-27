@@ -40,8 +40,13 @@ Screencast::~Screencast() {
     if (screencast_)
         mir_screencast_release_sync(screencast_);
 
+    screencast_ = nullptr;
+    buffer_stream_ = nullptr;
+
     if (connection_)
         mir_connection_release(connection_);
+
+    connection_ = nullptr;
 }
 
 bool Screencast::Setup(const video::DisplayOutput &output) {
@@ -107,8 +112,8 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
     // as just another display.
     region.left = display_mode->horizontal_resolution;
     region.top = 0;
-    region.width = display_mode->vertical_resolution;
-    region.height = display_mode->horizontal_resolution;
+    region.width = output.width;
+    region.height = output.height;
 
     mir_screencast_spec_set_capture_region(spec, &region);
 

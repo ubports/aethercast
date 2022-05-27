@@ -167,8 +167,8 @@ TEST(Screencast, NoPixelFormatAvailable) {
 
     ac::video::DisplayOutput output;
     output.mode = ac::video::DisplayOutput::Mode::kExtend;
-    output.width = 640;
-    output.height = 480;
+    output.width = 1280;
+    output.height = 720;
 
     auto connection = reinterpret_cast<MirConnection*>(1);
 
@@ -218,8 +218,8 @@ TEST(Screencast, NoPixelFormatAvailable) {
                 boost::ignore_unused_variable_warning(spec);
                 EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->left);
                 EXPECT_EQ(0, rect->top);
-                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, rect->width);
-                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->height);
+                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, output.height);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, output.width);
             }));
 
     EXPECT_CALL(*mir, mir_connection_get_available_surface_formats(connection, _, _, _))
@@ -238,8 +238,8 @@ TEST(Screencast, ScreencastCreationFails) {
 
     ac::video::DisplayOutput output;
     output.mode = ac::video::DisplayOutput::Mode::kExtend;
-    output.width = 640;
-    output.height = 480;
+    output.width = 1280;
+    output.height = 720;
 
     auto connection = reinterpret_cast<MirConnection*>(1);
 
@@ -289,8 +289,8 @@ TEST(Screencast, ScreencastCreationFails) {
                 boost::ignore_unused_variable_warning(spec);
                 EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->left);
                 EXPECT_EQ(0, rect->top);
-                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, rect->width);
-                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->height);
+                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, output.height);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, output.width);
             }));
 
     EXPECT_CALL(*mir, mir_connection_get_available_surface_formats(connection, _, _, _))
@@ -330,8 +330,8 @@ TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
 
     ac::video::DisplayOutput output;
     output.mode = ac::video::DisplayOutput::Mode::kExtend;
-    output.width = 640;
-    output.height = 480;
+    output.width = 1280;
+    output.height = 720;
 
     auto connection = reinterpret_cast<MirConnection*>(1);
 
@@ -381,8 +381,8 @@ TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
                 boost::ignore_unused_variable_warning(spec);
                 EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->left);
                 EXPECT_EQ(0, rect->top);
-                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, rect->width);
-                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->height);
+                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, output.height);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, output.width);
             }));
 
     EXPECT_CALL(*mir, mir_connection_get_available_surface_formats(connection, _, _, _))
@@ -436,8 +436,8 @@ TEST(Screencast, DoesSwapBuffersAndReturnsCurrentBuffer) {
 
     ac::video::DisplayOutput output;
     output.mode = ac::video::DisplayOutput::Mode::kExtend;
-    output.width = 640;
-    output.height = 480;
+    output.width = 1280;
+    output.height = 720;
     output.refresh_rate = 30;
 
     auto connection = reinterpret_cast<MirConnection*>(1);
@@ -488,8 +488,8 @@ TEST(Screencast, DoesSwapBuffersAndReturnsCurrentBuffer) {
                 boost::ignore_unused_variable_warning(spec);
                 EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->left);
                 EXPECT_EQ(0, rect->top);
-                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, rect->width);
-                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, rect->height);
+                EXPECT_EQ(display_config.outputs[0].modes[0].vertical_resolution, output.height);
+                EXPECT_EQ(display_config.outputs[0].modes[0].horizontal_resolution, output.width);
             }));
 
     EXPECT_CALL(*mir, mir_connection_get_available_surface_formats(connection, _, _, _))
