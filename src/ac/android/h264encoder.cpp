@@ -220,7 +220,6 @@ bool H264Encoder::Configure(const Config &config) {
     media_message_set_int32(format, kFormatKeyBitrateMode, kOMXVideoControlRateConstant);
     media_message_set_int32(format, kFormatKeyFramerate, config.framerate);
 
-#if 0
     media_message_set_int32(format, kFormatKeyIntraRefreshMode, 0);
 
     // Update macroblocks in a cyclic fashion with 10% of all MBs within
@@ -230,7 +229,6 @@ bool H264Encoder::Configure(const Config &config) {
     // to recover from a lost/corrupted packet.
     const int32_t mbs = (((config.width + 15) / 16) * ((config.height + 15) / 16) * 10) / 100;
     media_message_set_int32(format, kFormatKeyIntraRefreshCIRMbs, mbs);
-#endif
 
     if (config.i_frame_interval > 0)
         media_message_set_int32(format, kFormatKeyIFrameInterval, config.i_frame_interval);

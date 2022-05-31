@@ -37,6 +37,7 @@ public:
     ~Screencast();
 
     bool Setup(const video::DisplayOutput &output) override;
+    bool Stop() override;
 
     // From ac::video::BufferProducer
     void SwapBuffers() override;

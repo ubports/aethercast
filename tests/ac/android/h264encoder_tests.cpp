@@ -374,12 +374,10 @@ TEST_F(H264EncoderFixture, CorrectConfiguration) {
             .Times(1);
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("frame-rate"), config.framerate))
             .Times(1);
-#if 0
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("intra-refresh-mode"), config.intra_refresh_mode))
             .Times(1);
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("intra-refresh-CIR-mbs"), 360))
             .Times(1);
-#endif
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("i-frame-interval"), config.i_frame_interval))
             .Times(1);
 #if 0

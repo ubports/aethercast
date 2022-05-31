@@ -34,6 +34,7 @@ public:
     virtual ~BufferProducer() { }
 
     virtual bool Setup(const video::DisplayOutput &output) = 0;
+    virtual bool Stop() = 0;
     virtual void SwapBuffers() = 0;
     virtual void* CurrentBuffer() const = 0;
     virtual DisplayOutput OutputMode() const = 0;

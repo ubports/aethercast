@@ -35,17 +35,15 @@ Screencast::Screencast() :
 }
 
 Screencast::~Screencast() {
-    AC_DEBUG("");
-
-    if (screencast_)
-        mir_screencast_release_sync(screencast_);
+    Stop();
 
     if (connection_)
         mir_connection_release(connection_);
+    connection_ = nullptr;
 }
 
 bool Screencast::Setup(const video::DisplayOutput &output) {
-    if (screencast_ || connection_ || buffer_stream_)
+    if (screencast_ || buffer_stream_)
         return false;
 
     if (output.mode != video::DisplayOutput::Mode::kExtend) {
@@ -56,7 +54,9 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
     AC_DEBUG("Setting up screencast [%s %dx%d]", output.mode,
               output.width, output.height);
 
-    connection_ = mir_connect_sync(kMirSocket, kMirConnectionName);
+    if (!connection_)
+        connection_ = mir_connect_sync(kMirSocket, kMirConnectionName);
+
     if (!mir_connection_is_valid(connection_)) {
         AC_ERROR("Failed to connect to Mir server: %s",
                   mir_connection_get_error_message(connection_));
@@ -107,8 +107,8 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
     // as just another display.
     region.left = display_mode->horizontal_resolution;
     region.top = 0;
-    region.width = display_mode->vertical_resolution;
-    region.height = display_mode->horizontal_resolution;
+    region.width = output.width;
+    region.height = output.height;
 
     mir_screencast_spec_set_capture_region(spec, &region);
 
@@ -150,6 +150,16 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
     }
 
     output_ = output;
+
+    return true;
+}
+
+bool Screencast::Stop() {
+    if (screencast_)
+        mir_screencast_release_sync(screencast_);
+
+    screencast_ = nullptr;
+    buffer_stream_ = nullptr;
 
     return true;
 }

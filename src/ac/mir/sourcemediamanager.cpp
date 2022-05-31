@@ -60,8 +60,10 @@ SourceMediaManager::SourceMediaManager(const std::string &remote_address,
 }
 
 SourceMediaManager::~SourceMediaManager() {
-    if (state_ != State::Stopped)
+    if (state_ != State::Stopped) {
+        producer_->Stop();
         pipeline_.Stop();
+    }
 }
 
 bool SourceMediaManager::Configure() {
