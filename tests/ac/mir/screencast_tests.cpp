@@ -303,7 +303,7 @@ TEST(Screencast, ScreencastCreationFails) {
     EXPECT_CALL(*mir, mir_screencast_spec_set_mirror_mode(mir_spec, mir_mirror_mode_vertical))
             .Times(1);
 
-    EXPECT_CALL(*mir, mir_screencast_spec_set_number_of_buffers(mir_spec, 2))
+    EXPECT_CALL(*mir, mir_screencast_spec_set_number_of_buffers(mir_spec, 1))
             .Times(1);
 
     EXPECT_CALL(*mir, mir_screencast_create_sync(mir_spec))
@@ -395,7 +395,7 @@ TEST(Screencast, ScreencastDoesNotProvideBufferStream) {
     EXPECT_CALL(*mir, mir_screencast_spec_set_mirror_mode(mir_spec, mir_mirror_mode_vertical))
             .Times(1);
 
-    EXPECT_CALL(*mir, mir_screencast_spec_set_number_of_buffers(mir_spec, 2))
+    EXPECT_CALL(*mir, mir_screencast_spec_set_number_of_buffers(mir_spec, 1))
             .Times(1);
 
     auto mir_screencast = reinterpret_cast<MirScreencast*>(2);
@@ -502,7 +502,7 @@ TEST(Screencast, DoesSwapBuffersAndReturnsCurrentBuffer) {
     EXPECT_CALL(*mir, mir_screencast_spec_set_mirror_mode(mir_spec, mir_mirror_mode_vertical))
             .Times(1);
 
-    EXPECT_CALL(*mir, mir_screencast_spec_set_number_of_buffers(mir_spec, 2))
+    EXPECT_CALL(*mir, mir_screencast_spec_set_number_of_buffers(mir_spec, 1))
             .Times(1);
 
     auto mir_screencast = reinterpret_cast<MirScreencast*>(2);
