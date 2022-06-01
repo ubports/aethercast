@@ -133,7 +133,7 @@ bool Screencast::Setup(const video::DisplayOutput &output) {
 
     mir_screencast_spec_set_pixel_format(spec, pixel_format);
     mir_screencast_spec_set_mirror_mode(spec, mir_mirror_mode_vertical);
-    mir_screencast_spec_set_number_of_buffers(spec, 2);
+    mir_screencast_spec_set_number_of_buffers(spec, 1);
 
     screencast_ = mir_screencast_create_sync(spec);
     mir_screencast_spec_release(spec);
