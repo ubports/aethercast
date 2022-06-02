@@ -176,7 +176,7 @@ TEST_F(H264EncoderFixture, ValidDefaultConfiguration) {
 
     const auto config = encoder->DefaultConfiguration();
     EXPECT_EQ(-1, config.framerate);
-    EXPECT_EQ(5000000, config.bitrate);
+    EXPECT_EQ(15000000, config.bitrate);
     EXPECT_EQ(15, config.i_frame_interval);
     EXPECT_EQ(0, config.intra_refresh_mode);
     EXPECT_EQ(0, config.width);

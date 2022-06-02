@@ -43,7 +43,7 @@ static constexpr int32_t kOMXVideoControlRateConstant = 2;
 // it provides.
 static constexpr int32_t kAnyFramerate = -1;
 // Default is a bitrate of 5 MBit/s
-static constexpr int32_t kDefaultBitrate = 5000000;
+static constexpr int32_t kDefaultBitrate = 15000000;
 // By default send an I frame every 15 seconds which is the
 // same Android currently configures in its WiFi Display code path.
 static constexpr std::chrono::seconds kDefaultIFrameInterval{15};
