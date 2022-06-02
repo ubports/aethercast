@@ -747,10 +747,6 @@ TEST_F(H264EncoderFixture, ExecuteProvidesBuffers) {
             .Times(1)
             .WillRepeatedly(DoAll(SetArgPointee<2>(0), Return(true)));
 
-    EXPECT_CALL(*mock, media_buffer_get_refcount(input_buffer))
-            .Times(1)
-            .WillRepeatedly(Return(0));
-
     EXPECT_CALL(*mock, media_buffer_destroy(input_buffer))
             .Times(1);
 
@@ -810,10 +806,6 @@ TEST_F(H264EncoderFixture, HandsBuffersWithCodecSpecificDataBack) {
     EXPECT_CALL(*mock, media_meta_data_find_int32(meta_data, 2, _))
             .Times(1)
             .WillRepeatedly(DoAll(SetArgPointee<2>(1 /* marks this as a buffer with CSD */), Return(true)));
-
-    EXPECT_CALL(*mock, media_buffer_get_refcount(input_buffer))
-            .Times(1)
-            .WillRepeatedly(Return(0));
 
     EXPECT_CALL(*mock, media_buffer_destroy(input_buffer))
             .Times(1);

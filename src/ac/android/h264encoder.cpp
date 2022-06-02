@@ -105,16 +105,7 @@ public:
         if (!buffer_)
             return;
 
-        const auto ref_count = media_buffer_get_refcount(buffer_);
-
-        // If someone has set a reference on the buffer we just have to
-        // release it here and the other one will take care about actually
-        // destroying it.
-        if (ref_count > 0)
-            media_buffer_release(buffer_);
-        else
-            media_buffer_destroy(buffer_);
-
+        media_buffer_destroy(buffer_);
     }
 
     static MediaSourceBuffer::Ptr Create(MediaBufferWrapper *buffer) {
