@@ -67,9 +67,11 @@ std::vector<wds::H264VideoCodec> BaseSourceMediaManager::GetH264VideoCodecs() {
         wds::RateAndResolutionsBitmap vesa_rr;
         wds::RateAndResolutionsBitmap hh_rr;
 
-        // We only support 720p here for now as that is our best performing
-        // resolution with regard of all other bits in the pipeline. Eventually
-        // we will add 60 Hz here too but for now only everything up to 30 Hz.
+        cea_rr.set(wds::CEA1920x1080p60);
+        cea_rr.set(wds::CEA1920x1080p30);
+        cea_rr.set(wds::CEA1920x1080p25);
+        cea_rr.set(wds::CEA1920x1080p24);
+
         cea_rr.set(wds::CEA1280x720p60);
         cea_rr.set(wds::CEA1280x720p30);
         cea_rr.set(wds::CEA1280x720p25);
