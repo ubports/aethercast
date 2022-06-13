@@ -380,10 +380,8 @@ TEST_F(H264EncoderFixture, CorrectConfiguration) {
             .Times(1);
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("i-frame-interval"), config.i_frame_interval))
             .Times(1);
-#if 0
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("prepend-sps-pps-to-idr-frames"), 1))
             .Times(1);
-#endif
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("profile-idc"), 1))
             .Times(1);
     EXPECT_CALL(*mock, media_message_set_int32(format_message, StrEq("level-idc"), 2))
