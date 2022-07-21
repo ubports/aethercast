@@ -43,7 +43,7 @@ static constexpr int32_t kOMXVideoControlRateConstant = 2;
 // it provides.
 static constexpr int32_t kAnyFramerate = -1;
 // Default is a bitrate of 5 MBit/s
-static constexpr int32_t kDefaultBitrate = 5000000;
+static constexpr int32_t kDefaultBitrate = 15000000;
 // By default send an I frame every 15 seconds which is the
 // same Android currently configures in its WiFi Display code path.
 static constexpr std::chrono::seconds kDefaultIFrameInterval{15};
@@ -242,11 +242,9 @@ bool H264Encoder::Configure(const Config &config) {
     if (config.constraint_set > 0)
         media_message_set_int32(format, kFormatKeyConstraintSet, config.constraint_set);
 
-#if 0
     // FIXME we need to find a way to check if the encoder supports prepending
     // SPS/PPS to the buffers it is producing or if we have to manually do that
     media_message_set_int32(format, kFormatKeyPrependSpsPpstoIdrFrames, 1);
-#endif
 
     auto source = media_source_create();
     if (!source) {
