@@ -113,9 +113,8 @@ public:
         EXPECT_CALL(*mock, media_meta_data_create())
                 .Times(1)
                 .WillRepeatedly(Return(meta_data));
-        EXPECT_CALL(*mock, media_meta_data_release(meta_data))
-                .Times(1)
-                .WillOnce(Invoke([](MediaMetaDataWrapper *meta) { delete meta; }));
+        EXPECT_CALL(*mock, media_meta_data_release(_))
+                .Times(AtLeast(0));
         EXPECT_CALL(*mock, media_meta_data_set_cstring(meta_data, _, _))
                 .Times(AtLeast(0));
         EXPECT_CALL(*mock, media_meta_data_set_int32(meta_data, _, _))

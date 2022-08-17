@@ -105,6 +105,7 @@ public:
         if (!buffer_)
             return;
 
+        media_meta_data_release(meta_data);
         const auto ref_count = media_buffer_get_refcount(buffer_);
 
         // If someone has set a reference on the buffer we just have to
@@ -120,6 +121,7 @@ public:
     static MediaSourceBuffer::Ptr Create(MediaBufferWrapper *buffer) {
         const auto sp = std::shared_ptr<MediaSourceBuffer>(new MediaSourceBuffer);
         sp->buffer_ = buffer;
+        sp->meta_data = media_buffer_get_meta_data(buffer);;
         sp->ExtractTimestamp();
         return sp;
     }
@@ -138,7 +140,6 @@ public:
 
 private:
     void ExtractTimestamp() {
-        const auto meta_data = media_buffer_get_meta_data(buffer_);
         if (!meta_data)
             return;
 
@@ -151,6 +152,7 @@ private:
 
 private:
     MediaBufferWrapper *buffer_;
+    MediaMetaDataWrapper *meta_data;
 };
 
 video::BaseEncoder::Config H264Encoder::DefaultConfiguration() {
@@ -466,6 +468,7 @@ bool H264Encoder::DoesBufferContainCodecConfig(MediaBufferWrapper *buffer) {
     uint32_t key_is_codec_config = media_meta_data_get_key_id(MEDIA_META_DATA_KEY_IS_CODEC_CONFIG);
     int32_t is_codec_config = 0;
     media_meta_data_find_int32(meta_data, key_is_codec_config, &is_codec_config);
+    media_meta_data_release(meta_data);
     return static_cast<bool>(is_codec_config);
 }
 
