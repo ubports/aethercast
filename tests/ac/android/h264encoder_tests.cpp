@@ -113,9 +113,8 @@ public:
         EXPECT_CALL(*mock, media_meta_data_create())
                 .Times(1)
                 .WillRepeatedly(Return(meta_data));
-        EXPECT_CALL(*mock, media_meta_data_release(meta_data))
-                .Times(1)
-                .WillOnce(Invoke([](MediaMetaDataWrapper *meta) { delete meta; }));
+        EXPECT_CALL(*mock, media_meta_data_release(_))
+                .Times(AtLeast(0));
         EXPECT_CALL(*mock, media_meta_data_set_cstring(meta_data, _, _))
                 .Times(AtLeast(0));
         EXPECT_CALL(*mock, media_meta_data_set_int32(meta_data, _, _))
@@ -585,10 +584,8 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
             .Times(1)
             .WillRepeatedly(Return(mbuf_data));
 
-#if 0
     EXPECT_CALL(*mock, media_buffer_ref(mbuf))
             .Times(1);
-#endif
 
     EXPECT_CALL(*mock, media_buffer_get_meta_data(mbuf))
             .Times(1);
@@ -596,6 +593,8 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
             .Times(1)
             .WillRepeatedly(Return(42));
     EXPECT_CALL(*mock, media_meta_data_set_int64(_, 42, now));
+    EXPECT_CALL(*mock, media_meta_data_release(_))
+            .Times(AtLeast(1));
 
     MediaBufferReturnCallback return_callback;
     void *return_callback_data = nullptr;
