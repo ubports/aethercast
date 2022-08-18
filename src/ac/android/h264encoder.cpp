@@ -387,15 +387,14 @@ MediaBufferWrapper* H264Encoder::PackBuffer(const ac::video::Buffer::Ptr &input_
 
     media_buffer_set_return_callback(buffer, &H264Encoder::OnBufferReturned, this);
 
-#if 0
     // We need to put a reference on the buffer here if we want the
     // callback we set above being called.
     media_buffer_ref(buffer);
-#endif
 
     auto meta = media_buffer_get_meta_data(buffer);
     const auto key_time = media_meta_data_get_key_id(MEDIA_META_DATA_KEY_TIME);
     media_meta_data_set_int64(meta, key_time, timestamp);
+    media_meta_data_release(meta);
 
     pending_buffers_.push_back(BufferItem{input_buffer, buffer});
 

@@ -584,10 +584,8 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
             .Times(1)
             .WillRepeatedly(Return(mbuf_data));
 
-#if 0
     EXPECT_CALL(*mock, media_buffer_ref(mbuf))
             .Times(1);
-#endif
 
     EXPECT_CALL(*mock, media_buffer_get_meta_data(mbuf))
             .Times(1);
@@ -595,6 +593,8 @@ TEST_F(H264EncoderFixture, ReturnsPackedBufferAndReleaseProperly) {
             .Times(1)
             .WillRepeatedly(Return(42));
     EXPECT_CALL(*mock, media_meta_data_set_int64(_, 42, now));
+    EXPECT_CALL(*mock, media_meta_data_release(_))
+            .Times(AtLeast(1));
 
     MediaBufferReturnCallback return_callback;
     void *return_callback_data = nullptr;
