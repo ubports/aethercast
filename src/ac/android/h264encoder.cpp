@@ -106,16 +106,18 @@ public:
             return;
 
         media_meta_data_release(meta_data);
-        const auto ref_count = media_buffer_get_refcount(buffer_);
 
-        // If someone has set a reference on the buffer we just have to
-        // release it here and the other one will take care about actually
-        // destroying it.
-        if (ref_count > 0)
-            media_buffer_release(buffer_);
-        else
-            media_buffer_destroy(buffer_);
+        // "Steal" buffer from MediaCodecSource to properly release wrapper & buffer.
+        // Newer versions of Android expose a refcounting problem where MediaBufferBase objects
+        // tied to an observer don't get released properly, possibly because of
+        // signalBufferReturned not getting called.
+        // LineageOS seems to have uncovered a similar problem:
+        // https://review.lineageos.org/c/LineageOS/android_frameworks_av/+/258972/2
 
+        // As there is always one last remaining reference
+        // on the buffer and we're ultimately done processing it, just steal & destroy it.
+        media_buffer_set_return_callback(buffer_, nullptr, nullptr);
+        media_buffer_destroy(buffer_);
     }
 
     static MediaSourceBuffer::Ptr Create(MediaBufferWrapper *buffer) {
@@ -449,7 +451,9 @@ void H264Encoder::OnBufferReturned(MediaBufferWrapper *buffer, void *user_data) 
     // an observer is still set or not before it will actually release
     // itself.
     media_buffer_set_return_callback(iter->media_buffer, nullptr, nullptr);
-    media_buffer_release(iter->media_buffer);
+
+    // Destroy the wrapper with an explicit release of the buffer it holds.
+    media_buffer_destroy(iter->media_buffer);
 
     auto buf = iter->buffer;
     thiz->pending_buffers_.erase(iter);
